@@ -279,6 +279,7 @@ describe("an end no date holds", () => {
           current,
           { open: false, profiles: [], rows: [], notice: null },
           {
+            language: "en",
             sidebar: { state: "hidden" },
             appearance: {
               tint: true,

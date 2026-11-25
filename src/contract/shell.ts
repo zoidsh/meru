@@ -308,6 +308,8 @@ export const SHELL_CALLS = {
 
 /** The slices of main's state the shell may subscribe to. */
 export const SHELL_STATE = {
+  /** The language Meru shows, as a catalog's tag. */
+  language: z.string(),
   profiles: z.object({
     profiles: z.array(
       z.object({

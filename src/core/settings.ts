@@ -322,6 +322,22 @@ export const SETTINGS = {
     ),
     default: [],
   }),
+  /**
+   * Meru's own language, as a catalog's tag, or `system` for the one the
+   * system prefers. A tag this build has no catalog for reads as `system`.
+   */
+  language: setting<string>({
+    schema: z.string(),
+    default: "system",
+  }),
+  /**
+   * The languages checked as you type besides the system's, on Windows and
+   * Linux; macOS checks its own. One with no dictionary is kept, unchecked.
+   */
+  spellcheckLanguages: setting<string[]>({
+    schema: z.array(z.string()),
+    default: [],
+  }),
 } satisfies SettingDeclarations;
 
 export type SettingKey = keyof typeof SETTINGS;

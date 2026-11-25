@@ -39,6 +39,8 @@ export const GMAIL_PAGE_KEYS = [
  * profile. Open at login is the system's login item, not a setting.
  */
 export const GENERAL_PAGE_KEYS = [
+  "language",
+  "spellcheckLanguages",
   "openInBackground",
   "downloadsSaveAs",
   "downloadsShowInFolder",
@@ -377,7 +379,25 @@ export const SETTINGS_STATE = {
      * the system's Downloads folder.
      */
     downloadsFolder: z.object({ path: z.string(), available: z.boolean() }),
+    /**
+     * What Language offers: what System shows Meru in and every language this
+     * build has, each named in itself.
+     */
+    language: z.object({
+      system: z.string(),
+      choices: z.array(z.object({ language: z.string(), name: z.string() })),
+    }),
+    /**
+     * What Spelling offers: the system's language, always checked, and every
+     * other one there is a dictionary for; `null` on macOS, which checks with
+     * its own.
+     */
+    spelling: z.nullable(
+      z.object({ system: z.string(), available: z.array(z.string()) })
+    ),
   }),
+  /** The language Meru shows, as a catalog's tag. */
+  language: z.string(),
   /** The page shown, and whether Back and Forward have one to go to. */
   page: z.object({
     ...page.shape,

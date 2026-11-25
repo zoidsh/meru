@@ -5,6 +5,7 @@ import type { createTheme } from "#platform/theme.ts";
 import { createUnreadBadge } from "../badge.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import { createDockIcon } from "../dock.ts";
+import type { Language } from "../language.ts";
 import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
 import type { SettingsStore } from "../settings.ts";
@@ -22,6 +23,7 @@ import { systemBadge, systemDock, systemTrays } from "./test-build.ts";
  */
 export const wireTray = ({
   platform,
+  language,
   isMacOS,
   background,
   lifecycle,
@@ -35,6 +37,8 @@ export const wireTray = ({
   doNotDisturb,
 }: {
   platform: Platform;
+  /** The tray's menu is labelled again in each language chosen. */
+  language: Pick<Language, "onChange">;
   isMacOS: boolean;
   background: boolean;
   lifecycle: ReturnType<typeof createAppLifecycle>;
@@ -107,6 +111,7 @@ export const wireTray = ({
     }
   });
   theme.onChange(tray.update);
+  language.onChange(tray.update);
   // The menu's Show or Hide follows the window.
   shell.window.on("show", tray.update);
   shell.window.on("hide", tray.update);

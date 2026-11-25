@@ -79,6 +79,7 @@ const setup = () => {
   const logs: string[] = [];
   const changeListeners: (() => void)[] = [];
   let state: ShellState = {
+    language: "en",
     profiles: profilesSlice("a"),
     tabs: TABS,
     sidebar: { state: "hidden" },

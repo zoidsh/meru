@@ -16,6 +16,7 @@ import type { Downloads } from "../downloads.ts";
 import type { Find } from "../find.ts";
 import type { Focus } from "../focus.ts";
 import type { Inbox } from "../inbox.ts";
+import type { Language } from "../language.ts";
 import type { MailPoller } from "../mail.ts";
 import type { OpenApp } from "../open-app.ts";
 import type { Overlays } from "../overlay.ts";
@@ -71,8 +72,11 @@ export const wireShellContract = ({
   clipboard,
   systemBrowser,
   settings,
+  language,
 }: {
   platform: Platform;
+  /** The language Meru shows, which the shell shows too. */
+  language: Pick<Language, "current" | "onChange">;
   apps: readonly App[];
   ipc: ReturnType<typeof createIpc>;
   senders: SenderRegistry;
@@ -208,6 +212,7 @@ export const wireShellContract = ({
           doNotDisturb.current(),
           inbox.shellSlice(),
           {
+            language: language.current(),
             sidebar: { state: sidebar.current() },
             appearance: {
               tint: settings.get("profileTint"),
@@ -255,6 +260,7 @@ export const wireShellContract = ({
           apps
         ),
       onChange: (listener) => {
+        language.onChange(listener);
         profiles.onChange(listener);
         mail.onChange(listener);
         views.onChange(listener);

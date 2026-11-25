@@ -3,10 +3,13 @@ import path from "node:path";
 import type { SettingsState } from "#contract/settings.ts";
 import { downloadsFolder, shownFolder } from "#core/downloads-folder.ts";
 import type { Platform } from "#core/platform.ts";
+import { languageName } from "#i18n/index.ts";
 import type { DownloadFiles } from "#platform/downloads.ts";
 import type { LoginItem } from "#platform/login-item.ts";
 
+import type { Language } from "./language.ts";
 import type { SettingsStore } from "./settings.ts";
+import type { Spellcheck } from "./spellcheck.ts";
 
 export interface GeneralPageDeps {
   platform: Platform;
@@ -21,12 +24,15 @@ export interface GeneralPageDeps {
   home: string;
   /** The system's folder picker on the Settings window, at `defaultPath`. */
   pickFolder: (defaultPath: string) => Promise<string | undefined>;
+  language: Pick<Language, "system" | "available" | "onChange">;
+  /** None on macOS, which checks spelling with its own. */
+  spellcheck: Pick<Spellcheck, "read"> | undefined;
 }
 
 /**
- * What the General page shows that is not a plain setting: the system's
- * login item, which Linux has none of here, as in v3, and the folder
- * downloads are saved to, which only the system's picker sets.
+ * What the General page shows that is not a plain setting: the languages it
+ * offers, the system's login item, which Linux has none of here, as in v3,
+ * and the folder downloads are saved to, which only the system's picker sets.
  */
 export const createGeneralPage = ({
   platform,
@@ -35,6 +41,8 @@ export const createGeneralPage = ({
   files,
   home,
   pickFolder,
+  language,
+  spellcheck,
 }: GeneralPageDeps) => {
   const listeners = new Set<() => void>();
 
@@ -45,6 +53,8 @@ export const createGeneralPage = ({
   };
 
   settings.onChange("downloadsFolder", notify);
+  // System is named in the language shown.
+  language.onChange(notify);
 
   /** Where the next download goes: the chosen folder while it is usable. */
   const saveFolder = () =>
@@ -69,6 +79,14 @@ export const createGeneralPage = ({
           }),
           available: chosen === null || files.usable(chosen),
         },
+        language: {
+          system: languageName(language.system()),
+          choices: language.available.map((tag) => ({
+            language: tag,
+            name: languageName(tag),
+          })),
+        },
+        spelling: spellcheck?.read() ?? null,
       };
     },
     setOpenAtLogin: (on: boolean) => {

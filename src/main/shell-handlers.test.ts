@@ -450,6 +450,7 @@ describe(createShellHandlers, () => {
 const CLOSED_INBOX = { open: false, profiles: [], rows: [], notice: null };
 
 const CHROME = {
+  language: "en",
   sidebar: { state: "hidden" },
   appearance: {
     tint: true,

@@ -34,6 +34,7 @@ import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
 import { checkedDockChange } from "./dock.ts";
 import type { GeneralPage } from "./general-page.ts";
+import type { Language } from "./language.ts";
 import type { MailPoller } from "./mail.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
@@ -81,6 +82,8 @@ export interface SettingsContractDeps {
     "current" | "switchOn" | "switchOff"
   >;
   sound: Pick<SoundOutput, "play">;
+  /** The language Meru shows, which the window shows too. */
+  language: Pick<Language, "current">;
   pages: Pick<
     SettingsPages,
     "current" | "canGoBack" | "canGoForward" | "open" | "step"
@@ -373,9 +376,16 @@ export const readSettingsState = ({
   doNotDisturb,
   pages,
   general,
+  language,
 }: Pick<
   SettingsContractDeps,
-  "settings" | "profiles" | "mail" | "doNotDisturb" | "pages" | "general"
+  | "settings"
+  | "profiles"
+  | "mail"
+  | "doNotDisturb"
+  | "pages"
+  | "general"
+  | "language"
 >): SettingsState => {
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
@@ -415,6 +425,7 @@ export const readSettingsState = ({
       ) as PageOverrides,
     })),
     general: general.read(),
+    language: language.current(),
     page: {
       ...pages.current(),
       canGoBack: pages.canGoBack(),

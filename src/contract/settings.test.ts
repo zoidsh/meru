@@ -347,6 +347,8 @@ describe("the settings contract", () => {
       verificationCodeCopyMode: "notificationClick",
       verificationCodeMarkRead: false,
       verificationCodeTrash: false,
+      language: "system",
+      spellcheckLanguages: ["de"],
       openInBackground: true,
       downloadsSaveAs: true,
       downloadsShowInFolder: false,

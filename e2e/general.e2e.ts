@@ -4,11 +4,14 @@ import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
 
+import { pseudoText } from "#i18n/pseudo.ts";
+
 import {
   SHELL_URL,
   expect,
   findOverlayDocument,
   findPage,
+  readMenuLabel,
   readState,
   test,
   writeSettings,
@@ -327,7 +330,7 @@ const changeFolder = (page: Page) =>
   });
 
 test.describe("the General page", () => {
-  test("is first in the sidebar, with Startup and Downloads and no scopes", async ({
+  test("is first in the sidebar, with Language, Startup and Downloads and no scopes", async ({
     app,
   }) => {
     const page = await openSettings(app);
@@ -338,6 +341,9 @@ test.describe("the General page", () => {
     await expect(sections.getByRole("button").nth(0)).toHaveText("General");
     await openSection(page, "General");
     await expect(page.getByRole("tablist")).toHaveCount(0);
+    // The suite's build has the pseudo-language beside English, so its
+    // Language row shows.
+    await expect(page.getByRole("group", { name: "Language" })).toBeVisible();
     await expect(page.getByRole("group", { name: "Startup" })).toBeVisible();
     await expect(page.getByRole("group", { name: "Downloads" })).toBeVisible();
     await expect(switchNamed(page, "Open at login")).toHaveCount(
@@ -487,6 +493,201 @@ test.describe("the General page", () => {
     await expect(changeFolder(page)).toHaveAccessibleDescription(
       `${gone} This folder isn't available. Downloads go to Downloads until it's back.`
     );
+  });
+});
+
+/** The tray's menu as last set or popped up, each item's label. */
+const trayLabels = (app: ElectronApplication) =>
+  app.evaluate(() => {
+    const tray = Reflect.get(globalThis, "meruTestTray") as
+      | {
+          menu: { kind: string; label?: string }[];
+          rightClick: () => void;
+        }
+      | undefined;
+
+    if (process.platform !== "linux") {
+      tray?.rightClick();
+    }
+
+    return (tray?.menu ?? []).flatMap((item) =>
+      item.kind === "item" && item.label !== undefined ? [item.label] : []
+    );
+  });
+
+const languageMenu = (page: Page, name = "Language") =>
+  page.getByRole("combobox", { name, exact: true });
+
+/** The language a page's root names. */
+const pageLanguage = (page: Page) =>
+  page.evaluate(() => document.documentElement.lang);
+
+const savedSetting = async (userDataDir: string, key: string) => {
+  const saved = await readSettings(userDataDir);
+
+  return saved[key];
+};
+
+const spellingButton = (page: Page) =>
+  page.getByRole("button", { name: "Spelling", exact: true });
+
+/** The languages a profile's session checks, as Chromium holds them. */
+const checkedLanguages = (app: ElectronApplication, profileId: string) =>
+  app.evaluate(
+    ({ session }, partition) =>
+      session.fromPartition(partition).getSpellCheckerLanguages(),
+    `persist:${profileId}`
+  );
+
+test.describe("Language and Spelling", () => {
+  test("a language chosen reaches the menu, the tray, the shell, its overlay and Settings at once, and System goes back to the system's", async ({
+    launchApp,
+    userDataDir,
+  }) => {
+    await writeSettings(userDataDir, { tray: true });
+
+    const app = await launchApp();
+    const shell = await findPage(app, SHELL_URL);
+    const overlay = await findOverlayDocument(app);
+    const page = await openGeneral(app);
+    const english = await trayLabels(app);
+
+    expect(english.length).toBeGreaterThan(0);
+    await expect(languageMenu(page)).toContainText("System (English)");
+
+    await languageMenu(page).click();
+    await page.getByRole("option", { name: "Pseudo-English" }).click();
+
+    await expect(
+      page.getByRole("heading", { level: 1, name: pseudoText("General") })
+    ).toBeVisible();
+    await expect.poll(() => pageLanguage(page)).toBe("en-XA");
+    await expect
+      .poll(() => readMenuLabel(app, "app.settings"))
+      .toBe(pseudoText("Settings…"));
+    await expect
+      .poll(() => trayLabels(app))
+      .toStrictEqual(
+        english.map((label) =>
+          // The product name is a placeholder, never translated.
+          label.replace(/^\S+/u, (word) => pseudoText(word))
+        )
+      );
+
+    const downloads = shell.getByRole("button", {
+      name: pseudoText("Downloads"),
+      exact: true,
+    });
+
+    await expect.poll(() => pageLanguage(shell)).toBe("en-XA");
+    await downloads.click();
+    await expect(
+      overlay.getByRole("dialog", { name: pseudoText("Downloads") })
+    ).toBeVisible();
+    await expect.poll(() => pageLanguage(overlay)).toBe("en-XA");
+    await overlay.keyboard.press("Escape");
+
+    await expect
+      .poll(() => savedSetting(userDataDir, "language"))
+      .toBe("en-XA");
+
+    await languageMenu(page, pseudoText("Language")).click();
+    await page.getByRole("option", { name: "Sýstém (English)" }).click();
+
+    await expect(
+      page.getByRole("heading", { level: 1, name: "General" })
+    ).toBeVisible();
+    await expect(
+      shell.getByRole("button", { name: "Downloads", exact: true })
+    ).toBeVisible();
+    await expect
+      .poll(() => readMenuLabel(app, "app.settings"))
+      .toBe("Settings…");
+    await expect.poll(() => trayLabels(app)).toStrictEqual(english);
+  });
+
+  test("a chosen language holds across a relaunch, the first paint already in it", async ({
+    launchApp,
+    userDataDir,
+  }) => {
+    await writeSettings(userDataDir, { language: "en-XA" });
+
+    const app = await launchApp();
+    const shell = await findPage(app, SHELL_URL);
+
+    await expect.poll(() => pageLanguage(shell)).toBe("en-XA");
+    await expect(
+      shell.getByRole("button", { name: pseudoText("Downloads"), exact: true })
+    ).toBeVisible();
+    await expect
+      .poll(() => readMenuLabel(app, "app.settings"))
+      .toBe(pseudoText("Settings…"));
+  });
+
+  test("Spelling has no row on macOS, which checks spelling with its own", async ({
+    app,
+  }) => {
+    test.skip(process.platform !== "darwin", "macOS alone");
+
+    const page = await openGeneral(app);
+
+    await expect(spellingButton(page)).toHaveCount(0);
+  });
+
+  test("Spelling adds a language to every profile's session at once, the system's always checked", async ({
+    launchApp,
+    standIn,
+    userDataDir,
+  }) => {
+    test.skip(
+      process.platform === "darwin",
+      "macOS checks spelling with its own"
+    );
+
+    const app = await launchApp();
+
+    await findPage(app, standIn.url);
+
+    const state = await readState<{ profiles: { id: string }[] }>(userDataDir);
+    const profileId = state.profiles[0]?.id ?? "";
+    const page = await openGeneral(app);
+
+    await expect(spellingButton(page)).toHaveText("System language");
+
+    const system = await checkedLanguages(app, profileId);
+
+    expect(system).toHaveLength(1);
+
+    await spellingButton(page).click();
+
+    const items = page.getByRole("menuitemcheckbox");
+
+    await expect(items.first()).toBeChecked();
+    await expect(items.first()).toBeDisabled();
+
+    const added = items.nth(1);
+    const addedName = (await added.textContent()) ?? "";
+
+    await added.click();
+    await expect(added).toBeChecked();
+    await page.keyboard.press("Escape");
+
+    await expect(spellingButton(page)).toHaveText(
+      `System language, ${addedName}`
+    );
+
+    await expect
+      .poll(() => savedSetting(userDataDir, "spellcheckLanguages"))
+      .toHaveLength(1);
+
+    const chosen = (await savedSetting(
+      userDataDir,
+      "spellcheckLanguages"
+    )) as string[];
+
+    await expect
+      .poll(() => checkedLanguages(app, profileId))
+      .toStrictEqual([...system, ...chosen]);
   });
 });
 

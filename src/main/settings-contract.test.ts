@@ -17,6 +17,7 @@ import type { State } from "#core/state.ts";
 
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createGeneralPage } from "./general-page.ts";
+import { createLanguage } from "./language.ts";
 import { createMailPoller } from "./mail.ts";
 import { createProfiles } from "./profiles.ts";
 import { createRemoveProfile } from "./remove-profile.ts";
@@ -27,6 +28,7 @@ import {
 } from "./settings-contract.ts";
 import { createSettingsPages } from "./settings-pages.ts";
 import { createSettingsStore } from "./settings.ts";
+import { createSpellcheck } from "./spellcheck.ts";
 
 const stateOf = (...names: string[]): State => ({
   version: 1,
@@ -37,7 +39,8 @@ const stateOf = (...names: string[]): State => ({
 const setup = (
   state: State,
   initial?: Settings,
-  platform: Platform = "darwin"
+  platform: Platform = "darwin",
+  languages: readonly [string, ...string[]] = ["en"]
 ) => {
   const saved: unknown[] = [];
   const announced: string[] = [];
@@ -93,6 +96,32 @@ const setup = (
   const folders = new Set<string>(["/Users/example/Mail"]);
   let pickerAnswer: string | undefined;
   const pickedAt: string[] = [];
+  const activated: string[] = [];
+  const language = createLanguage({
+    settings,
+    available: languages,
+    preferredLanguages: () => ["en-US"],
+    activate: (tag) => {
+      activated.push(tag);
+    },
+  });
+  // A Linux session's checker, holding what each partition was given.
+  const checked = new Map<string, readonly string[]>();
+  const spellcheck =
+    platform === "darwin"
+      ? undefined
+      : createSpellcheck({
+          checker: {
+            systemLanguage: () => "en-US",
+            available: () => ["de", "en-US", "fr"],
+            defaults: () => ["en-US"],
+            set: (partition, next) => {
+              checked.set(partition, next);
+            },
+          },
+          settings,
+          log: () => false,
+        });
   const general = createGeneralPage({
     platform,
     loginItem: {
@@ -114,6 +143,8 @@ const setup = (
 
       return Promise.resolve(pickerAnswer);
     },
+    language,
+    spellcheck,
   });
   const deps = {
     settings,
@@ -158,6 +189,7 @@ const setup = (
       return Promise.resolve();
     },
     general,
+    language,
   };
 
   settings.onChange("notificationSender", () =>
@@ -186,6 +218,9 @@ const setup = (
     deleted,
     signedIn,
     loginCalls,
+    activated,
+    spellcheck,
+    checked,
     folders,
     pickedAt,
     /** What the folder picker answers next, nothing as a cancel. */
@@ -597,6 +632,8 @@ describe("the Settings window's General page", () => {
 
     expect([before, app.saved.at(-1)]).toStrictEqual([
       {
+        language: "system",
+        spellcheckLanguages: [],
         openInBackground: false,
         downloadsSaveAs: false,
         downloadsShowInFolder: false,
@@ -723,6 +760,63 @@ describe("the Settings window's General page", () => {
     expect([app.read().general.openAtLogin, app.loginCalls]).toStrictEqual([
       null,
       [],
+    ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Language and Spelling", () => {
+  it("offers System and English while the build has English alone", () => {
+    const app = setup(stateOf("Work"));
+
+    expect([app.read().general.language, app.read().language]).toStrictEqual([
+      { system: "English", choices: [{ language: "en", name: "English" }] },
+      "en",
+    ]);
+    app.dispose();
+  });
+
+  it("offers System, named as the language it shows, and each language in its own name, and switches at once", async () => {
+    const app = setup(stateOf("Work"), undefined, "darwin", ["en", "xx"]);
+    const sends = app.sends();
+
+    expect(app.read().general.language).toStrictEqual({
+      system: "English",
+      choices: [
+        { language: "en", name: "English" },
+        { language: "xx", name: "xx" },
+      ],
+    });
+
+    await app.handlers.update({ key: "language", value: "xx" });
+
+    expect([app.read().language, app.activated]).toStrictEqual([
+      "xx",
+      ["en", "xx"],
+    ]);
+    expect(sends()).toBeGreaterThan(0);
+    app.dispose();
+  });
+
+  it("has no Spelling on macOS, which checks with its own", () => {
+    const app = setup(stateOf("Work"));
+
+    expect(app.read().general.spelling).toBeNull();
+    app.dispose();
+  });
+
+  it("offers every other language Chromium has a dictionary for on Linux, and a choice reaches each profile's session", async () => {
+    const app = setup(stateOf("Work"), undefined, "linux");
+
+    app.spellcheck?.prepare("persist:work");
+    await app.handlers.update({ key: "spellcheckLanguages", value: ["de"] });
+
+    expect([
+      app.read().general.spelling,
+      app.checked.get("persist:work"),
+    ]).toStrictEqual([
+      { system: "en-US", available: ["de", "fr"] },
+      ["en-US", "de"],
     ]);
     app.dispose();
   });

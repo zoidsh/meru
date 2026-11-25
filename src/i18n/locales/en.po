@@ -75,6 +75,11 @@ msgstr "{MAX_SHOWN_UNREAD}+"
 msgid "{minutes, plural, one {For # Minute} other {For # Minutes}}"
 msgstr "{minutes, plural, one {For # Minute} other {For # Minutes}}"
 
+#. What the Spelling menu's button in Settings reads with three or more languages checked beside the system's; {shownNames} names the first two, # counts the rest
+#: src/settings/language-group.tsx
+msgid "{more, plural, one {System language, {shownNames} and # more} other {System language, {shownNames} and # more}}"
+msgstr "{more, plural, one {System language, {shownNames} and # more} other {System language, {shownNames} and # more}}"
+
 #. Tooltip of a profile's button in the title bar while the profile sleeps: its pages are closed, its mail still checked; {name} is the profile's name
 #: src/shell/titlebar.tsx
 msgid "{name} · asleep"
@@ -465,6 +470,11 @@ msgstr "Change…"
 msgid "Changes here only apply to {chosenName}."
 msgstr "Changes here only apply to {chosenName}."
 
+#. Description of the Language menu in Settings; Gmail's language is set in the person's Google account, not in Meru
+#: src/settings/language-group.tsx
+msgid "Changes the language Meru uses. Gmail uses the one set in your Google account."
+msgstr "Changes the language Meru uses. Gmail uses the one set in your Google account."
+
 #. Label of the switch on a profile's page in Settings that turns checking its mail on or off
 #: src/settings/profile-page.tsx
 msgid "Check mail"
@@ -484,6 +494,11 @@ msgstr "Choose a color"
 #: src/settings/scope-tabs.tsx
 msgid "Choose a profile"
 msgstr "Choose a profile"
+
+#. Description of the Spelling menu in Settings; the system's language is always checked
+#: src/settings/language-group.tsx
+msgid "Choose more languages to check as you type."
+msgstr "Choose more languages to check as you type."
 
 #. Button in the Downloads card's header that takes every download off the list but those still running
 #: src/shell/downloads.tsx
@@ -1002,6 +1017,12 @@ msgstr "Knock"
 #: src/settings/saved-searches-card.tsx
 msgid "label:receipts is:unread"
 msgstr "label:receipts is:unread"
+
+#. Heading of the group of Settings about Meru's language and the languages spelling is checked in
+#. Label of the menu in Settings choosing the language of Meru's own menus, windows and settings
+#: src/settings/language-group.tsx
+msgid "Language"
+msgstr "Language"
 
 #. Said by screen readers of the gap between two panes side by side: how much of the two the left one takes; {percent} is a percentage, such as 60%
 #: src/shell/pane-handle.tsx
@@ -1931,6 +1952,11 @@ msgstr "Sleep Tab"
 msgid "Sound"
 msgstr "Sound"
 
+#. Label of the menu in Settings choosing the languages spelling is checked in as you type
+#: src/settings/language-group.tsx
+msgid "Spelling"
+msgstr "Spelling"
+
 #. Menu item, in the Tabs menu and a tab's context menu, that lists Google apps and bookmarks to open in a new pane below the tab's
 #: src/main/menu-labels.ts
 msgid "Split Down"
@@ -1982,10 +2008,26 @@ msgstr "Stopped working"
 msgid "System"
 msgstr "System"
 
+#. Choice of the Language menu in Settings: Meru shows the language the system prefers, named in brackets in its own language, as Deutsch or Français
+#. placeholder {0}: offered.system
+#: src/settings/language-group.tsx
+msgid "System ({0})"
+msgstr "System ({0})"
+
 #. Description of the Icon color menu in Settings; System is the menu's first choice
 #: src/settings/menu-bar-page.tsx
 msgid "System changes with light and dark mode."
 msgstr "System changes with light and dark mode."
+
+#. What the Spelling menu's button in Settings reads when only the system's language is checked
+#: src/settings/language-group.tsx
+msgid "System language"
+msgstr "System language"
+
+#. What the Spelling menu's button in Settings reads with one or two languages checked beside the system's; {shownNames} names them
+#: src/settings/language-group.tsx
+msgid "System language, {shownNames}"
+msgstr "System language, {shownNames}"
 
 #. Heading of the group of Settings on Windows and Linux for Meru's icon in the system tray
 #: src/settings/menu-bar-page.tsx

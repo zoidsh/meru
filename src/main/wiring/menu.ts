@@ -16,6 +16,7 @@ import type { Find } from "../find.ts";
 import type { Focus } from "../focus.ts";
 import type { createGmailNavigation } from "../gmail-navigation.ts";
 import type { Inbox } from "../inbox.ts";
+import type { Language } from "../language.ts";
 import type { OpenApp } from "../open-app.ts";
 import type { Overlays } from "../overlay.ts";
 import type { Profiles } from "../profiles.ts";
@@ -37,6 +38,7 @@ const devToolsAccelerator = (platform: Platform) =>
  */
 export const wireMenu = ({
   platform,
+  language,
   background,
   lifecycle,
   shell,
@@ -60,6 +62,8 @@ export const wireMenu = ({
   settingsPages,
 }: {
   platform: Platform;
+  /** The menu is set again in each language chosen. */
+  language: Pick<Language, "onChange">;
   background: boolean;
   lifecycle: ReturnType<typeof createAppLifecycle>;
   shell: ReturnType<typeof createShellWindow>;
@@ -235,6 +239,7 @@ export const wireMenu = ({
     log: console.error,
   });
 
+  language.onChange(menu.refresh);
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);
   // Opening and closing the inbox, which Back, Forward and Reload follow.

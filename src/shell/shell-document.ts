@@ -132,20 +132,32 @@ const documents = createShellDocuments((name, gone) => {
     return;
   }
 
-  target.documentElement.lang = document.documentElement.lang;
   Object.assign(
     target.documentElement.dataset,
     document.documentElement.dataset
   );
 
   const stopStyles = mirrorStyles(target);
+  const copyLanguage = () => {
+    target.documentElement.lang = document.documentElement.lang;
+  };
+  const language = new MutationObserver(copyLanguage);
+
+  copyLanguage();
+  language.observe(document.documentElement, { attributeFilter: ["lang"] });
 
   // Clear wherever nothing is drawn, so the page shows through.
   target.body.className = "bg-transparent";
   // Main closes its view as its window or the shell's renderer goes.
   view.addEventListener("pagehide", gone, { once: true });
 
-  return { view, stop: stopStyles };
+  return {
+    view,
+    stop: () => {
+      stopStyles();
+      language.disconnect();
+    },
+  };
 });
 
 /** Told as a document is opened or closed; returns what stops it. */

@@ -22,9 +22,26 @@ const connect = () => {
     "profiles",
     "general",
     "page",
+    "language",
   ]);
 
   return connection;
+};
+
+/**
+ * Shows the page in each language main names after the one it was loaded
+ * in, every string at once.
+ */
+export const followLanguage = (show: (language: string) => void) => {
+  const { subscribe, read } = connect();
+
+  subscribe(() => {
+    const language = read("language");
+
+    if (language !== undefined) {
+      show(language);
+    }
+  });
 };
 
 /** A slice of main's state, or nothing until the first snapshot. */

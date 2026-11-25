@@ -534,6 +534,7 @@ export const createApplicationMenu = ({
   // With Do Not Disturb's end, which its menu says, and the saved searches
   // it lists.
   const offered = (current: CommandContext) => [
+    locale(),
     current.doNotDisturb?.until,
     enabledProfiles(current.state).map((profile) => profile.name),
     savedSearchCommands(current.state).map(({ open }) => [

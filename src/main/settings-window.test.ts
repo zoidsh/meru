@@ -70,7 +70,7 @@ const setup = (background = false) => {
 
       return window;
     },
-    url: "meru-app://settings/index.html",
+    url: () => "meru-app://settings/index.html",
     background,
     register: (id) => {
       calls.push(`register ${id}`);

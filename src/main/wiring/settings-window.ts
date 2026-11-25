@@ -20,6 +20,7 @@ import { createWindowFactory } from "#platform/window.ts";
 import { serveContract } from "../contract-ipc.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import { createGeneralPage } from "../general-page.ts";
+import type { Language } from "../language.ts";
 import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
 import { createRemoveProfile } from "../remove-profile.ts";
@@ -34,6 +35,7 @@ import { createSettingsWindow } from "../settings-window.ts";
 import type { SettingsStore } from "../settings.ts";
 import { createRendererRecovery } from "../shell-recovery.ts";
 import type { SoundOutput } from "../sounds.ts";
+import type { Spellcheck } from "../spellcheck.ts";
 import { openingOptions } from "../windows.ts";
 import { folderPicker, systemLoginItem } from "./test-build.ts";
 
@@ -56,6 +58,8 @@ export const wireSettingsWindow = ({
   theme,
   url,
   origin,
+  language,
+  spellcheck,
   ipc,
   senders,
   settings,
@@ -78,8 +82,11 @@ export const wireSettingsWindow = ({
   displays: Displays;
   theme: Theme;
   /** The Settings page, its language named in the query. */
-  url: string;
+  url: () => string;
   origin: string;
+  language: Language;
+  /** None on macOS, which checks spelling with its own. */
+  spellcheck: Spellcheck | undefined;
   ipc: Ipc;
   senders: SenderRegistry;
   settings: SettingsStore;
@@ -112,7 +119,7 @@ export const wireSettingsWindow = ({
           backgroundColor: windowBackground(theme.isDark()),
         }),
         preloadPath: path.join(import.meta.dirname, "preload-settings.cjs"),
-        contentUrl: url,
+        contentUrl: url(),
         isShellDocument: () => false,
       }),
     url,
@@ -147,6 +154,8 @@ export const wireSettingsWindow = ({
         ? picker.pick(window, defaultPath)
         : Promise.reject(new Error("The Settings window is not open"));
     },
+    language,
+    spellcheck,
   });
 
   profiles.onChange(() => {
@@ -174,6 +183,7 @@ export const wireSettingsWindow = ({
       addProfile,
       mail,
       doNotDisturb,
+      language,
       sound,
       pages,
       showTestNotification,
@@ -200,6 +210,7 @@ export const wireSettingsWindow = ({
           doNotDisturb,
           pages,
           general,
+          language,
         }),
       onChange: (listener) => {
         onSettingsStateChange(

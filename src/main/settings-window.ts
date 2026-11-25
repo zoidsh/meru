@@ -20,7 +20,8 @@ export type SettingsWindowHandle = Pick<
 export interface SettingsWindowDeps<Window extends SettingsWindowHandle> {
   /** Opens a new window, hidden until shown. */
   create: () => Window;
-  url: string;
+  /** The page, in the language Meru shows as it opens. */
+  url: () => string;
   background: boolean;
   /** Enters the window's page as the Settings window's; returns what drops it. */
   register: (webContentsId: number) => () => void;
@@ -60,7 +61,7 @@ export const createSettingsWindow = <Window extends SettingsWindowHandle>({
 
   const load = async (window: Window) => {
     try {
-      await window.loadURL(url);
+      await window.loadURL(url());
     } catch (error) {
       log(
         `The Settings window did not load: ${error instanceof Error ? error.message : String(error)}`

@@ -4,12 +4,17 @@ import { launchWindow } from "#core/launch-window.ts";
 import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import { tabKey } from "#core/tabs.ts";
-import { activateLanguage, resolveLanguage } from "#i18n/index.ts";
+import {
+  activateLanguage,
+  AVAILABLE_LANGUAGES,
+  resolveLanguage,
+} from "#i18n/index.ts";
 import { createAppLifecycle } from "#platform/app.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
+import { createSpellChecker } from "#platform/spellcheck.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTheme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
@@ -17,9 +22,11 @@ import { createWindowFactory } from "#platform/window.ts";
 import { createDeleteBrowsingData } from "./browsing-data.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
+import { createLanguage } from "./language.ts";
 import { createOverlays } from "./overlay.ts";
 import { createSenderRegistry } from "./senders.ts";
 import { createShellWindow } from "./shell-window.ts";
+import { createSpellcheck } from "./spellcheck.ts";
 import { createTabViews } from "./tab-views.ts";
 import { followThemeSetting } from "./theme.ts";
 import { wireContentBlocker } from "./wiring/content-blocker.ts";
@@ -108,9 +115,8 @@ const start = async () => {
 
   shellSource.apply(appProtocol);
 
-  const language = resolveLanguage(lifecycle.preferredLanguages());
-
-  activateLanguage(language);
+  // Until the settings say otherwise, for whatever the stores tell first.
+  activateLanguage(resolveLanguage(lifecycle.preferredLanguages()));
 
   const {
     platform,
@@ -124,6 +130,13 @@ const start = async () => {
     entitlementStore,
   } = await wireStores({ lifecycle, newId });
 
+  // Before anything that shows a string, as the entitlement's launch prompt.
+  const language = createLanguage({
+    settings,
+    available: AVAILABLE_LANGUAGES,
+    preferredLanguages: lifecycle.preferredLanguages,
+    activate: activateLanguage,
+  });
   const clipboard = systemClipboard();
 
   await wireEntitlement({
@@ -133,13 +146,18 @@ const start = async () => {
     clipboard,
   });
 
+  // A renderer's first paint is in the language it is loaded with; a change
+  // after reaches it through its contract.
   const shellUrl = new URL(shellSource.url);
 
-  shellUrl.searchParams.set("lang", language);
+  shellUrl.searchParams.set("lang", language.current());
 
   const settingsUrl = new URL(shellSource.settingsUrl);
+  const settingsUrlNow = () => {
+    settingsUrl.searchParams.set("lang", language.current());
 
-  settingsUrl.searchParams.set("lang", language);
+    return settingsUrl.href;
+  };
 
   // Built by hand: URL's `origin` is "null" for a scheme it does not know.
   const shellOrigin = `${shellUrl.protocol}//${shellUrl.host}`;
@@ -291,6 +309,14 @@ const start = async () => {
 
   const systemBrowser = createSystemBrowser();
   const contentBlocker = wireContentBlocker({ settings, signInOrigins });
+  // macOS checks spelling with its own, whatever a session is given.
+  const spellcheck = isMacOS
+    ? undefined
+    : createSpellcheck({
+        checker: createSpellChecker(),
+        settings,
+        log: console.error,
+      });
   // A page's links leave through it; Meru's own, as Open in Browser, do not.
   const { linkOpener } = wireLinks({ settings, systemBrowser, clipboard });
   const preloads = new Map([
@@ -331,6 +357,7 @@ const start = async () => {
     prepareSession: (partition) => {
       sessions.guard(partition, (ask) => allowsPermission(apps, ask));
       contentBlocker.prepare(partition);
+      spellcheck?.prepare(partition);
       watchDownloads(partition, (webContentsId) => {
         // oxlint-disable-next-line no-use-before-define -- no download starts before a view exists
         views.closeIfOnlyDownloading(webContentsId);
@@ -466,8 +493,10 @@ const start = async () => {
     contextMenus,
     displays,
     theme,
-    url: settingsUrl.href,
+    url: settingsUrlNow,
     origin: settingsOrigin,
+    language,
+    spellcheck,
     ipc,
     senders,
     settings,
@@ -488,6 +517,7 @@ const start = async () => {
 
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({
     platform,
+    language,
     background,
     lifecycle,
     shell,
@@ -513,6 +543,7 @@ const start = async () => {
 
   wireShellContract({
     platform,
+    language,
     apps,
     ipc,
     senders,
@@ -544,6 +575,7 @@ const start = async () => {
 
   wireTray({
     platform,
+    language,
     isMacOS,
     background,
     lifecycle,

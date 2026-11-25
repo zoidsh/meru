@@ -258,6 +258,7 @@ export const shellState = (
   inbox: ShellState["inbox"],
   fixed: Pick<
     ShellState,
+    | "language"
     | "sidebar"
     | "appearance"
     | "shortcuts"

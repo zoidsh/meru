@@ -5,6 +5,7 @@ import type { SettingChange } from "#contract/settings.ts";
 import { Button } from "#ui/button.tsx";
 import { Switch } from "#ui/switch.tsx";
 
+import { LanguageGroup } from "./language-group.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
@@ -17,7 +18,8 @@ type SwitchKey =
 const platform = () => document.documentElement.dataset.platform;
 
 /**
- * How Meru starts and where downloads go. App settings alone, so the page
+ * Meru's language and spelling, how it starts and where downloads go. App
+ * settings alone, so the page
  * has no scopes; the login item and the folder are main's to set, through
  * calls of their own.
  */
@@ -74,6 +76,12 @@ export const GeneralPage = () => {
 
   return (
     <SettingGroups>
+      <LanguageGroup
+        language={settings.language}
+        spellcheckLanguages={settings.spellcheckLanguages}
+        general={general}
+        write={write}
+      />
       <SettingGroup
         title={t({
           message: "Startup",

@@ -64,6 +64,8 @@ const APP: PageSettings = {
   verificationCodeCopyMode: "notificationClick",
   verificationCodeMarkRead: false,
   verificationCodeTrash: false,
+  language: "system",
+  spellcheckLanguages: [],
   openInBackground: false,
   downloadsSaveAs: false,
   downloadsShowInFolder: false,

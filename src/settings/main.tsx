@@ -4,10 +4,16 @@ import { I18nProvider } from "@lingui/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { activateLanguage, i18n, resolveLanguage } from "#i18n/index.ts";
+import {
+  activateLanguage,
+  AVAILABLE_LANGUAGES,
+  i18n,
+  resolveLanguage,
+} from "#i18n/index.ts";
 import { TooltipProvider } from "#ui/tooltip.tsx";
 
 import { App } from "./app.tsx";
+import { followLanguage } from "./sync.ts";
 
 const root = document.querySelector("#root");
 
@@ -15,14 +21,22 @@ if (!root) {
   throw new Error("The Settings page has no #root element");
 }
 
-// Main resolves the language once and names it in the URL, so the first paint
-// is already in it.
-const language = resolveLanguage([
-  new URLSearchParams(location.search).get("lang") ?? "",
-]);
+const showLanguage = (language: string) => {
+  if (i18n.locale === language && document.documentElement.lang === language) {
+    return;
+  }
 
-activateLanguage(language);
-document.documentElement.lang = language;
+  activateLanguage(language);
+  document.documentElement.lang = language;
+};
+
+// Main names the language in the URL, so the first paint is already in it.
+const named = new URLSearchParams(location.search).get("lang") ?? "";
+
+showLanguage(
+  AVAILABLE_LANGUAGES.includes(named) ? named : resolveLanguage([named])
+);
+followLanguage(showLanguage);
 
 createRoot(root).render(
   <StrictMode>

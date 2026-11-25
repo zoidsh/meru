@@ -14,6 +14,7 @@ import {
 } from "#core/tray.ts";
 import type { TrayEntry, TrayProfile } from "#core/tray.ts";
 import { totalUnread } from "#core/unread.ts";
+import { i18n } from "#i18n/index.ts";
 import type { TrayFactory, TrayIcon, TrayMenuItem } from "#platform/tray.ts";
 import type { AppWindow } from "#platform/window.ts";
 
@@ -88,7 +89,10 @@ export const createTray = ({
   log,
 }: TrayDeps) => {
   let tray: TrayIcon | undefined;
-  let shown: { image: string; title: string; menu?: TrayEntry[] } | undefined;
+  // The menu is set again for its entries or the language they read in.
+  let shown:
+    | { image: string; title: string; menu?: [string, TrayEntry[]] }
+    | undefined;
 
   const profiles = (): TrayProfile[] =>
     enabledProfiles(state()).map((profile) => ({
@@ -256,11 +260,14 @@ export const createTray = ({
         ? trayEntries({ profiles: listed, windowVisible: windowShown() })
         : undefined;
 
-      if (entries && !isEqual(entries, shown?.menu)) {
+      const menuShown =
+        entries && ([i18n.locale, entries] as [string, TrayEntry[]]);
+
+      if (menuShown && !isEqual(menuShown, shown?.menu)) {
         tray.setContextMenu(menu(entries));
       }
 
-      shown = { image, title, ...(entries && { menu: entries }) };
+      shown = { image, title, ...(menuShown && { menu: menuShown }) };
     },
     /** On quit: takes the icon away for good, whatever changes after. */
     close: () => {
