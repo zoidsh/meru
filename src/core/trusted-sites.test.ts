@@ -5,6 +5,7 @@ import {
   shownUrl,
   siteName,
   siteOf,
+  trustableSite,
   withSite,
   withoutSite,
 } from "./trusted-sites.ts";
@@ -90,5 +91,19 @@ describe(shownUrl, () => {
       shownUrl(long).length,
       shownUrl(long).endsWith("…"),
     ]).toStrictEqual(["https://example.com/", 256, true]);
+  });
+});
+
+describe(trustableSite, () => {
+  it("is the link's site, but none for a link still wrapped in Google's redirect", () => {
+    expect([
+      trustableSite("https://example.com/page"),
+      trustableSite("https://www.google.com/url?q=javascript:alert(1)"),
+      trustableSite("https://www.google.com/search?q=meru"),
+    ]).toStrictEqual([
+      "https://example.com",
+      undefined,
+      "https://www.google.com",
+    ]);
   });
 });

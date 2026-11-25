@@ -129,6 +129,20 @@ describe(createLinkOpener, () => {
     ]);
   });
 
+  it("offers no trust for a link still wrapped in Google's redirect, and trusts nothing from it", async () => {
+    const { opener, asked, opened, trustedSites, answer } = setup();
+    const wrapped = "https://www.google.com/url?q=javascript:alert(1)";
+
+    answer({ choice: "open", trust: true });
+    await opener.open(wrapped);
+
+    expect([
+      asked.map((question) => question.trustLabel),
+      opened,
+      trustedSites.list(),
+    ]).toStrictEqual([[undefined], [wrapped], []]);
+  });
+
   it("opens every link without asking while asking is off", async () => {
     const { opener, asked, opened } = setup({
       version: 1,

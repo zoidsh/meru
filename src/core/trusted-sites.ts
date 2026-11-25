@@ -1,3 +1,5 @@
+import { isGoogleRedirect } from "./google-redirect.ts";
+
 /**
  * The site a link belongs to, as trusted sites are kept: its origin, such as
  * `https://example.com`, which is what v3 stores, so its list carries over
@@ -9,6 +11,17 @@ export const siteOf = (url: string) => {
   return parsed?.protocol === "http:" || parsed?.protocol === "https:"
     ? parsed.origin
     : undefined;
+};
+
+/**
+ * The site a person may trust from the prompt for this link, or `undefined`:
+ * not a link that is still Google's redirect, since trusting Google's site
+ * would let every later wrapped link through unasked.
+ */
+export const trustableSite = (url: string) => {
+  const parsed = URL.parse(url);
+
+  return parsed && !isGoogleRedirect(parsed) ? siteOf(url) : undefined;
 };
 
 /** How a site is named to a person: its host, `example.com`. */

@@ -4,7 +4,7 @@ import {
   asksBeforeOpening,
   shownUrl,
   siteName,
-  siteOf,
+  trustableSite,
 } from "#core/trusted-sites.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type { LinkPrompt, LinkQuestion } from "#platform/link-prompt.ts";
@@ -16,38 +16,37 @@ import type { TrustedSites } from "./trusted-sites.ts";
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
-const question = (url: string, site: string | undefined): LinkQuestion => {
-  const name = siteName(site ?? url);
+const trustLabel = (name: string) =>
+  t({
+    message: `Always open links to ${name} without asking`,
+    comment:
+      "Checkbox in the dialog that asks before a link opens in the default browser; {name} is the site, such as example.com, which is then listed under Trusted sites in Settings",
+  });
 
-  return {
-    message: t({
-      message: "Open this link in your default browser?",
-      comment:
-        "Question in the dialog Meru shows before a link from a page opens in the person's web browser; the link shows below it",
-    }),
-    detail: shownUrl(url),
-    openLabel: t({
-      message: "Open Link",
-      comment:
-        "Button in the dialog that asks before a link opens in the default browser, which opens it there",
-    }),
-    copyLabel: t({
-      message: "Copy Link",
-      comment:
-        "Button in the dialog that asks before a link opens in the default browser, which copies it and opens nothing",
-    }),
-    cancelLabel: t({
-      message: "Cancel",
-      comment:
-        "Button in the dialog that asks before a link opens in the default browser, which opens nothing",
-    }),
-    trustLabel: t({
-      message: `Always open links to ${name} without asking`,
-      comment:
-        "Checkbox in the dialog that asks before a link opens in the default browser; {name} is the site, such as example.com, which is then listed under Trusted sites in Settings",
-    }),
-  };
-};
+const question = (url: string, site: string | undefined): LinkQuestion => ({
+  message: t({
+    message: "Open this link in your default browser?",
+    comment:
+      "Question in the dialog Meru shows before a link from a page opens in the person's web browser; the link shows below it",
+  }),
+  detail: shownUrl(url),
+  openLabel: t({
+    message: "Open Link",
+    comment:
+      "Button in the dialog that asks before a link opens in the default browser, which opens it there",
+  }),
+  copyLabel: t({
+    message: "Copy Link",
+    comment:
+      "Button in the dialog that asks before a link opens in the default browser, which copies it and opens nothing",
+  }),
+  cancelLabel: t({
+    message: "Cancel",
+    comment:
+      "Button in the dialog that asks before a link opens in the default browser, which opens nothing",
+  }),
+  ...(site === undefined ? {} : { trustLabel: trustLabel(siteName(site)) }),
+});
 
 /**
  * Opens a link a page sends out of Meru in the default browser, first asking
@@ -76,7 +75,7 @@ export const createLinkOpener = ({
         trusted: trustedSites.list(),
       })
     ) {
-      const site = siteOf(url);
+      const site = trustableSite(url);
       const { choice, trust } = await prompt.ask(question(url, site));
 
       if (choice === "copy") {

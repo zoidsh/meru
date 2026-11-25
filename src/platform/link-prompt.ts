@@ -10,7 +10,8 @@ export interface LinkQuestion {
   openLabel: string;
   copyLabel: string;
   cancelLabel: string;
-  trustLabel: string;
+  /** The checkbox that trusts the link's site; none when it cannot be trusted. */
+  trustLabel?: string;
 }
 
 export interface LinkAnswer {
@@ -43,11 +44,15 @@ export const createLinkPrompt = (): LinkPrompt => ({
       defaultId: 0,
       cancelId: 2,
       noLink: true,
-      checkboxLabel: trustLabel,
-      checkboxChecked: false,
+      ...(trustLabel === undefined
+        ? {}
+        : { checkboxLabel: trustLabel, checkboxChecked: false }),
     });
 
-    return { choice: CHOICES[response] ?? "cancel", trust: checkboxChecked };
+    return {
+      choice: CHOICES[response] ?? "cancel",
+      trust: trustLabel !== undefined && checkboxChecked,
+    };
   },
 });
 
