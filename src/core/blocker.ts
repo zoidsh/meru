@@ -1,3 +1,5 @@
+import { escapeRegExp } from "es-toolkit";
+
 import {
   EMAIL_TRACKER_PATTERNS,
   EMAIL_TRACKER_SUBSTRINGS,
@@ -22,73 +24,118 @@ export interface BlockAsk {
   resourceType: string;
 }
 
-const escapeRegExp = (value: string) =>
-  value.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);
+/**
+ * How much of a URL's host, path and query the list's text entries are
+ * matched against. Every entry names a host and the start of a path, so a
+ * tracker's shape sits well inside the first few hundred characters; the
+ * rest is a sender's to make as long as it likes, and a regular expression
+ * over it costs time that grows faster than its length.
+ */
+export const MATCHED_TEXT_LENGTH = 2048;
 
 /**
- * A host or any subdomain of it, only where it ends at a label, so neither a
- * look-alike such as `evildoubleclick.net` nor the name in a path matches. A
- * host after a fragment's `://` matches too, which is how a proxied image is
- * caught by its own URL.
+ * A list entry as a regular expression. One that starts with a character
+ * class repeated, `[…]+`, finds a match exactly where the class alone
+ * would, since the match is not anchored; alone, it no longer runs to the
+ * end of a long run of that class from every position in it.
  */
-const hostPattern = (hosts: readonly string[]) =>
+const compilePattern = (pattern: string) =>
   new RegExp(
-    String.raw`://(?:[a-z0-9-]+\.)*(?:${hosts.map(escapeRegExp).join("|")})(?=[:/?#]|$)`,
+    pattern.replace(/^(?<repeated>\[[^\]]+\])\+/u, "$<repeated>"),
     "u"
   );
 
-/** One alternation of literals, which V8 can prefilter as a whole. */
-const literalPattern = (literals: readonly string[]) =>
-  new RegExp(literals.map(escapeRegExp).join("|"), "u");
+/** The host, or any host it is a subdomain of, is in `hosts`. */
+const onHost = (hostname: string, hosts: ReadonlySet<string>) => {
+  let suffix = hostname.endsWith(".") ? hostname.slice(0, -1) : hostname;
+
+  for (;;) {
+    if (hosts.has(suffix)) {
+      return true;
+    }
+
+    const dot = suffix.indexOf(".");
+
+    if (dot === -1) {
+      return false;
+    }
+
+    suffix = suffix.slice(dot + 1);
+  }
+};
+
+/** The URL Gmail's image proxy carries after `#`, where there is one. */
+const carriedUrl = ({ hash }: URL) =>
+  hash.startsWith("#http") ? URL.parse(hash.slice(1)) : null;
+
+/** What the text entries see of a URL: from its host to its query, bounded. */
+const matchedText = ({ host, pathname, search }: URL) =>
+  `${host}${pathname}${search}`.slice(0, MATCHED_TEXT_LENGTH);
 
 /**
  * Whether a request is stopped, or `undefined` when nothing is, so a session
  * needs no hook at all. Ads are Google's ad hosts; trackers are Google's
  * tracker hosts, its telemetry paths and email open-tracking pixels, so the
- * two are independent. Never stopped, whatever the list says: a `mainFrame`
- * request, since it is a page the person goes to or a download they start,
- * and a request to one of `protectedOrigins`, Google's sign-in.
+ * two are independent. A pixel behind Gmail's image proxy is judged by the
+ * URL the proxy carries too. Never stopped, whatever the list says: a
+ * `mainFrame` request, since it is a page the person goes to or a download
+ * they start; a request to one of `protectedOrigins`, Google's sign-in; and
+ * a URL that does not parse.
  */
 export const createBlockMatcher = (
   { ads, trackers }: BlockChoice,
   protectedOrigins: readonly string[]
 ): ((ask: BlockAsk) => boolean) | undefined => {
-  const patterns: RegExp[] = [];
-  const hosts = [
-    ...(ads ? GOOGLE_AD_HOSTS : []),
-    ...(trackers ? GOOGLE_TRACKER_HOSTS : []),
-  ];
-
-  if (hosts.length > 0) {
-    patterns.push(hostPattern(hosts));
-  }
-
-  if (trackers) {
-    patterns.push(
-      literalPattern([
-        ...GOOGLE_TELEMETRY_PATHS,
-        ...EMAIL_TRACKER_SUBSTRINGS,
-        ...EXTRA_EMAIL_TRACKER_SUBSTRINGS,
-      ]),
-      new RegExp(
-        [...EMAIL_TRACKER_PATTERNS, ...EXTRA_EMAIL_TRACKER_PATTERNS].join("|"),
-        "u"
-      )
-    );
-  }
-
-  if (patterns.length === 0) {
+  if (!ads && !trackers) {
     return undefined;
   }
 
-  const isProtected = (url: string) =>
-    protectedOrigins.some(
-      (origin) =>
-        url.startsWith(origin) && /^(?:[/?#]|$)/u.test(url.slice(origin.length))
-    );
+  const hosts = new Set([
+    ...(ads ? GOOGLE_AD_HOSTS : []),
+    ...(trackers ? GOOGLE_TRACKER_HOSTS : []),
+  ]);
+  const text = trackers
+    ? [
+        new RegExp(
+          [
+            ...GOOGLE_TELEMETRY_PATHS,
+            ...EMAIL_TRACKER_SUBSTRINGS,
+            ...EXTRA_EMAIL_TRACKER_SUBSTRINGS,
+          ]
+            .map(escapeRegExp)
+            .join("|"),
+          "u"
+        ),
+        ...[...EMAIL_TRACKER_PATTERNS, ...EXTRA_EMAIL_TRACKER_PATTERNS].map(
+          compilePattern
+        ),
+      ]
+    : [];
+  const protectedSet = new Set(protectedOrigins);
 
-  return ({ url, resourceType }) =>
-    resourceType !== "mainFrame" &&
-    !isProtected(url) &&
-    patterns.some((pattern) => pattern.test(url));
+  const blocks = (url: URL) => {
+    if (onHost(url.hostname, hosts)) {
+      return true;
+    }
+
+    const matched = matchedText(url);
+
+    return text.some((pattern) => pattern.test(matched));
+  };
+
+  return ({ url, resourceType }) => {
+    if (resourceType === "mainFrame") {
+      return false;
+    }
+
+    const parsed = URL.parse(url);
+
+    if (!parsed || protectedSet.has(parsed.origin)) {
+      return false;
+    }
+
+    const carried = carriedUrl(parsed);
+
+    return blocks(parsed) || (carried !== null && blocks(carried));
+  };
 };

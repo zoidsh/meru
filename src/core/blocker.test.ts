@@ -42,6 +42,8 @@ const PIXELS = [
   "https://example.com/track/open",
   "https://u123.ct.sendgrid.net/wf/open?upn=abc",
   "https://t.hubspotemail.net/e2t/o/abc",
+  // A list entry that starts with a repeated character class.
+  "https://news.example.com/e/FooterImages/FooterImage?id=1",
   // Gmail's image proxy keeps the image's own URL in the fragment.
   "https://ci3.googleusercontent.com/meips/ADKq_NbXyz=s0-d-e1-ft#https://email.airbnb.com/wf/open?upn=abc",
   "https://ci3.googleusercontent.com/meips/ADKq_Nb=s0-d-e1-ft#https://stripe.com/trk/abc",
@@ -154,5 +156,32 @@ describe(createBlockMatcher, () => {
         "https://example.com/redirect?url=doubleclick.net",
       ])
     ).toStrictEqual([]);
+  });
+
+  it("blocks a host written with its trailing dot, and nothing that does not parse", () => {
+    expect([
+      blocked(BOTH, ["https://ad.doubleclick.net./pagead/x"]),
+      blocked(BOTH, ["not a url gen_204", "https://[doubleclick.net/"]),
+    ]).toStrictEqual([["https://ad.doubleclick.net./pagead/x"], []]);
+  });
+
+  it("classifies a 100,000-character URL, and one carried in a fragment that long, in a few milliseconds", () => {
+    const matcher = createBlockMatcher(BOTH, SIGN_IN_ORIGINS);
+    // Long runs of what the patterns' unbounded parts take, where a match
+    // tried at each position would rescan the rest of the string.
+    const filler = "a.".repeat(50_000);
+    const urls = [
+      `https://email.example.com/${filler}`,
+      `https://ci3.googleusercontent.com/meips/x#https://email.example.com/${filler}`,
+      `https://example.com/?q=${"/o/".repeat(33_000)}`,
+    ];
+
+    for (const url of urls) {
+      const start = performance.now();
+
+      matcher?.({ url, resourceType: "image" });
+
+      expect(performance.now() - start).toBeLessThan(50);
+    }
   });
 });
