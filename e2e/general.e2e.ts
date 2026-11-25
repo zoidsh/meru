@@ -114,13 +114,25 @@ test("with no tray on Windows and Linux, Open in the background starts Meru mini
   // The suite's X server runs no window manager, which alone can iconify a
   // window, so on Linux the window is shown, never hidden, and no more is
   // asserted.
+  if (process.platform === "linux") {
+    await expect.poll(() => mainWindow(app)).toMatchObject({ visible: true });
+
+    return;
+  }
+
+  // Electron's `isVisible()` on Windows is false for any minimized window,
+  // shown or not, so reach is proven by opening Meru again restoring it.
   await expect
     .poll(() => mainWindow(app))
-    .toMatchObject(
-      process.platform === "linux"
-        ? { visible: true }
-        : { visible: true, minimized: true }
-    );
+    .toStrictEqual({ visible: false, minimized: true });
+
+  await app.evaluate(({ app: electron }) => {
+    electron.emit("second-instance");
+  });
+
+  await expect
+    .poll(() => mainWindow(app))
+    .toStrictEqual({ visible: true, minimized: false });
 });
 
 test("a download is saved to the folder chosen in Settings", async ({
