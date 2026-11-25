@@ -168,6 +168,16 @@ const assertSearch = (
   }
 };
 
+/**
+ * Throws while a profile's own values do not apply, so the free version never
+ * writes one it would not read.
+ */
+const assertProfileValues = (entitlement: Pick<Entitlement, "can">) => {
+  if (!entitlement.can("profiles")) {
+    throw new Error("A profile's own values need Meru Pro");
+  }
+};
+
 /** What the Settings window's calls do. */
 export const settingsHandlers = ({
   settings,
@@ -203,10 +213,12 @@ export const settingsHandlers = ({
       const { profileId, key, value } = change as OverrideChange;
 
       assertListed(profiles, profileId);
+      assertProfileValues(entitlement);
       await store.setOverride(profileId, key, value);
     },
     clearOverride: async ({ profileId, key }) => {
       assertListed(profiles, profileId);
+      assertProfileValues(entitlement);
       await settings.clearOverride(profileId, key);
     },
     // On from here holds until turned off; the durations are the titlebar's.
@@ -302,6 +314,7 @@ export const settingsHandlers = ({
     // profile without one of its own out.
     setUnifiedInbox: async ({ profileId, on }) => {
       assertListed(profiles, profileId);
+      assertProfileValues(entitlement);
       await (on === settings.get("unifiedInbox")
         ? settings.clearOverride(profileId, "unifiedInbox")
         : settings.setOverride(profileId, "unifiedInbox", on));

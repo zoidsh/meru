@@ -24,7 +24,13 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
-import { openProfiles, openSection, openSettings } from "./lib/settings.ts";
+import {
+  openProfiles,
+  openSection,
+  openSettings,
+  profileRow,
+  switchNamed,
+} from "./lib/settings.ts";
 import {
   THEMES,
   emulateTheme,
@@ -38,6 +44,9 @@ const KEY = "MERU-TEST-AAAA-BBBB-CCCC-7Q2K";
 
 const ONE_PROFILE =
   "The free version uses one profile. Upgrade to Meru Pro to use as many as you like, along with everything else Meru Pro adds.";
+
+const storedSettings = async (userDataDir: string): Promise<unknown> =>
+  JSON.parse(await readFile(path.join(userDataDir, "settings.json"), "utf-8"));
 
 interface SavedState {
   profiles: { id: string; name: string }[];
@@ -80,7 +89,10 @@ const seed = async (userDataDir: string, standIn: StandIn) => {
     selectedProfileId: "work",
   });
   await writeSettings(userDataDir, {
-    profiles: { work: { notificationSender: false } },
+    profiles: {
+      personal: { unifiedInbox: false },
+      work: { notificationSender: false },
+    },
   });
 
   return work;
@@ -203,9 +215,9 @@ test("a write while free keeps the other profile, its settings and the stored se
 
   expect(saved.selectedProfileId).toBe("work");
   expect(saved.profiles[1]).toStrictEqual(work);
-  expect(
-    JSON.parse(await readFile(path.join(userDataDir, "settings.json"), "utf-8"))
-  ).toMatchObject({ profiles: { work: { notificationSender: false } } });
+  await expect(storedSettings(userDataDir)).resolves.toMatchObject({
+    profiles: { work: { notificationSender: false } },
+  });
 });
 
 test("Settings on the free version shows the other profile dimmed with the Meru Pro badge, and Add profile disabled", async ({
@@ -252,6 +264,25 @@ test("Settings on the free version shows the other profile dimmed with the Meru 
   await expect
     .poll(() => readOpenedExternally(app))
     .toStrictEqual([MERU_PRO_URL]);
+});
+
+test("the first profile's page on the free version has no Show in Unified inbox, and its own value stays stored", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seed(userDataDir, standIn);
+
+  const { app } = await launchFree(launchApp, userDataDir);
+  const page = await openSettings(app);
+
+  await openProfiles(page);
+  await profileRow(page, "Personal").click();
+  await expect(switchNamed(page, "Check mail")).toBeEnabled();
+  await expect(switchNamed(page, "Show in Unified inbox")).toHaveCount(0);
+  await expect(storedSettings(userDataDir)).resolves.toMatchObject({
+    profiles: { personal: { unifiedInbox: false } },
+  });
 });
 
 test("Add another account on the free version adds no profile and says why", async ({

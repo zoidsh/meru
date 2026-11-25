@@ -1177,6 +1177,40 @@ describe(readSettingsState, () => {
     ).resolves.toBeUndefined();
   });
 
+  it("writes no profile's own value on the free version, Show in Unified inbox included, until a license", async () => {
+    const { handlers, deps, saved } = freeWithThree();
+    const refused = await Promise.allSettled([
+      handlers.setOverride({
+        profileId: "personal",
+        key: "notifications",
+        value: false,
+      }),
+      handlers.clearOverride({
+        profileId: "personal",
+        key: "notificationSender",
+      }),
+      handlers.setUnifiedInbox({ profileId: "personal", on: false }),
+    ]);
+
+    expect([refused.map(({ status }) => status), saved]).toStrictEqual([
+      ["rejected", "rejected", "rejected"],
+      [],
+    ]);
+
+    await deps.entitlement.activate("MERU-TEST-AAAA-BBBB-CCCC-7Q2K");
+    await handlers.setUnifiedInbox({ profileId: "work", on: false });
+
+    expect(saved).toStrictEqual([
+      {
+        version: 1,
+        profiles: {
+          personal: { notificationSender: false },
+          work: { unifiedInbox: false },
+        },
+      },
+    ]);
+  });
+
   it("sends a lone profile no own value of a key off the page or one that does not parse", () => {
     const app = setup(stateOf("Work"), {
       version: 1,
