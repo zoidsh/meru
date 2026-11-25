@@ -220,3 +220,30 @@ test("Ask where to save each file asks through the save dialog at the name it wo
     [expect.anything()],
   ]);
 });
+
+/** The files the test build showed in their folder in place of the system. */
+const shownInFolder = async (app: ElectronApplication) => {
+  const files = await app.evaluate(
+    () =>
+      Reflect.get(globalThis, "meruTestDownloadFiles") as { shown: string[] }
+  );
+
+  return files.shown.map((file) => canonical(file));
+};
+
+test("Show files when done shows each finished download in its folder", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeSettings(userDataDir, { downloadsShowInFolder: true });
+
+  const app = await launchApp();
+  const gmail = await downloadsPage(app, standIn);
+
+  await downloadReport(gmail);
+
+  await expect
+    .poll(() => shownInFolder(app))
+    .toStrictEqual([path.join(systemFolder(userDataDir), REPORT)]);
+});

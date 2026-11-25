@@ -66,6 +66,7 @@ const APP: PageSettings = {
   verificationCodeTrash: false,
   openInBackground: false,
   downloadsSaveAs: false,
+  downloadsShowInFolder: false,
   theme: "system",
   profileTint: true,
   titlebarNewTab: true,

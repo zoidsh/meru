@@ -593,10 +593,20 @@ describe("the Settings window's General page", () => {
 
     await app.handlers.update({ key: "openInBackground", value: true });
     await app.handlers.update({ key: "downloadsSaveAs", value: true });
+    await app.handlers.update({ key: "downloadsShowInFolder", value: true });
 
     expect([before, app.saved.at(-1)]).toStrictEqual([
-      { openInBackground: false, downloadsSaveAs: false },
-      { version: 1, openInBackground: true, downloadsSaveAs: true },
+      {
+        openInBackground: false,
+        downloadsSaveAs: false,
+        downloadsShowInFolder: false,
+      },
+      {
+        version: 1,
+        openInBackground: true,
+        downloadsSaveAs: true,
+        downloadsShowInFolder: true,
+      },
     ]);
     app.dispose();
   });

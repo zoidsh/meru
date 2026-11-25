@@ -148,6 +148,14 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: false,
   }),
+  /**
+   * Each finished download is shown in its folder: in Finder, File Explorer
+   * or the file manager.
+   */
+  downloadsShowInFolder: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
+  }),
   /** Light or dark for every window of Meru, or as the system is. */
   theme: setting<ThemeChoice>({
     schema: z.enum(THEMES),

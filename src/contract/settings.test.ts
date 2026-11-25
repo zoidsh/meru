@@ -349,6 +349,7 @@ describe("the settings contract", () => {
       verificationCodeTrash: false,
       openInBackground: true,
       downloadsSaveAs: true,
+      downloadsShowInFolder: false,
       theme: "dark",
       profileTint: false,
       titlebarNewTab: true,

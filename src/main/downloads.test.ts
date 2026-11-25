@@ -137,6 +137,7 @@ const setup = ({
   const progress: (number | null | undefined)[] = [];
   let chosenFolder: string | null = null;
   let saveAs = false;
+  let showWhenDone = false;
   const files: DownloadFiles = {
     folder: () => FOLDER,
     usable: (folder) => folders.includes(folder),
@@ -194,6 +195,7 @@ const setup = ({
     choices: {
       folder: () => chosenFolder,
       saveAs: () => saveAs,
+      showWhenDone: () => showWhenDone,
     },
     onFolderMissing: (folder) => {
       calls.push(`missing ${folder}`);
@@ -243,6 +245,9 @@ const setup = ({
     },
     askEachTime: () => {
       saveAs = true;
+    },
+    showEachWhenDone: () => {
+      showWhenDone = true;
     },
     calls,
     progress,
@@ -319,6 +324,33 @@ describe("taking a download", () => {
         "/Other/report.pdf",
       ],
       ["missing /Gone", "missing /Other"],
+    ]);
+  });
+
+  it("shows each finished download in its folder where Settings says so, after it is quarantined, and never one that failed", async () => {
+    const { downloads, showEachWhenDone, calls } = setup();
+    const before = fakeItem();
+    const finished = fakeItem({ fileName: "minutes.pdf" });
+    const failed = fakeItem({ fileName: "agenda.pdf" });
+
+    downloads.take(before);
+    before.end("completed");
+    await settle();
+    showEachWhenDone();
+    downloads.take(finished);
+    downloads.take(failed);
+    finished.end("completed");
+    failed.end("failed");
+    await settle();
+
+    expect(
+      calls.filter(
+        (call) => call.startsWith("show") || call.startsWith("quarantine")
+      )
+    ).toStrictEqual([
+      "quarantine /Downloads/report.pdf",
+      "quarantine /Downloads/minutes.pdf",
+      "show /Downloads/minutes.pdf",
     ]);
   });
 

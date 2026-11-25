@@ -41,6 +41,7 @@ export const GMAIL_PAGE_KEYS = [
 export const GENERAL_PAGE_KEYS = [
   "openInBackground",
   "downloadsSaveAs",
+  "downloadsShowInFolder",
 ] as const;
 
 /** The Appearance page's settings, in its order; the app holds them, never a profile. */

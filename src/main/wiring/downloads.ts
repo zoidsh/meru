@@ -57,6 +57,7 @@ export const wireDownloads = ({
     choices: {
       folder: () => settings.get("downloadsFolder"),
       saveAs: () => settings.get("downloadsSaveAs"),
+      showWhenDone: () => settings.get("downloadsShowInFolder"),
     },
     // Said where the downloads show, unless a card or menu holds the overlay.
     onFolderMissing: (folder) => {

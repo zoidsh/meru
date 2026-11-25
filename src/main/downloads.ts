@@ -47,6 +47,8 @@ export interface DownloadsDeps {
     folder: () => string | null;
     /** Whether each download asks where to save it. */
     saveAs: () => boolean;
+    /** Whether each finished download is shown in its folder. */
+    showWhenDone: () => boolean;
   };
   /**
    * Told once a run of each chosen folder that was not there or could not be
@@ -228,6 +230,10 @@ export const createDownloads = ({
       // The Dock tells nothing a window in front already shows.
       if (!signals.focused()) {
         signals.landed(filePath);
+      }
+
+      if (choices.showWhenDone()) {
+        files.showInFolder(filePath);
       }
 
       if (!isOpen()) {
