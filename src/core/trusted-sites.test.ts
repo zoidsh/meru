@@ -92,6 +92,12 @@ describe(shownUrl, () => {
       shownUrl(long).endsWith("…"),
     ]).toStrictEqual(["https://example.com/", 256, true]);
   });
+
+  it("cuts between characters, never inside one written with two code units", () => {
+    const cut = shownUrl(`https://example.com/${"😀".repeat(300)}`);
+
+    expect([[...cut].length, cut.at(-2)]).toStrictEqual([256, "😀".at(-1)]);
+  });
 });
 
 describe(trustableSite, () => {

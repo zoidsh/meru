@@ -48,8 +48,14 @@ export const withoutSite = (trusted: readonly string[], site: string) =>
 /** What v3 shows of a long link in its prompt, and no more. */
 const MAX_SHOWN_URL_LENGTH = 256;
 
-/** The link as the prompt shows it, cut with an ellipsis past its limit. */
-export const shownUrl = (url: string) =>
-  url.length > MAX_SHOWN_URL_LENGTH
-    ? `${url.slice(0, MAX_SHOWN_URL_LENGTH - 1)}…`
+/**
+ * The link as the prompt shows it, cut with an ellipsis past its limit,
+ * between characters, never inside one written with two code units.
+ */
+export const shownUrl = (url: string) => {
+  const characters = [...url];
+
+  return characters.length > MAX_SHOWN_URL_LENGTH
+    ? `${characters.slice(0, MAX_SHOWN_URL_LENGTH - 1).join("")}…`
     : url;
+};
