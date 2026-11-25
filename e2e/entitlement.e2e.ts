@@ -3,7 +3,7 @@
 // it is in settings-meru-pro.e2e.ts.
 import type { ElectronApplication } from "@playwright/test";
 
-import { SHELL_URL, expect, findPage, test } from "./lib/app.ts";
+import { NO_TRIAL, SHELL_URL, expect, findPage, test } from "./lib/app.ts";
 
 interface Snapshot {
   status: string;
@@ -36,7 +36,7 @@ const activate = (app: ElectronApplication, licenseKey: string) =>
 test("starts a 14-day trial at the first launch and keeps a license offline", async ({
   launchApp,
 }) => {
-  const first = await launchApp();
+  const first = await launchApp(NO_TRIAL);
 
   await findPage(first, SHELL_URL);
   await expect

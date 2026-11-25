@@ -5,6 +5,7 @@ import path from "node:path";
 import { isReleaseAppId } from "#core/app-identity.ts";
 import { APPS, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
+import type { EntitlementFile } from "#core/entitlement-file.ts";
 import { KEEP_ALIVE_TIMING, KEEP_ALIVE_URL } from "#core/keep-alive.ts";
 import type { KeepAliveTiming } from "#core/keep-alive.ts";
 import type { Platform } from "#core/platform.ts";
@@ -65,6 +66,7 @@ import {
   exposeTestEntitlement,
   exposeTestSettings,
   holdEntitlementServer,
+  seedTestEntitlement,
 } from "../test-hooks.ts";
 
 /**
@@ -171,6 +173,13 @@ export const exposeEntitlementToSuite = (entitlement: Entitlement) => {
     exposeTestEntitlement(entitlement);
   }
 };
+
+/** The suite's build starts a trial at launch unless its test says otherwise. */
+export const suiteEntitlementFile = (
+  file: EntitlementFile,
+  deviceId: string
+): EntitlementFile =>
+  MERU_E2E_BUILD ? seedTestEntitlement(file, deviceId, Date.now()) : file;
 
 /**
  * The suite's build lets a test hold the server's answers, through

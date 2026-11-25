@@ -42,6 +42,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only development and the end-to-end build hold the entitlement API's stand-in",
     },
     {
+      marker: "MERU_TEST_ENTITLEMENT",
+      why: "only the end-to-end build may start a trial its test asked for",
+    },
+    {
       marker: "meruTestEntitlement",
       why: "only the end-to-end build may expose the entitlement to the suite",
     },

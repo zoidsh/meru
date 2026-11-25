@@ -9,6 +9,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
 
 import {
+  NO_TRIAL,
   expect,
   readOpenedExternally,
   stubSystemBrowser,
@@ -407,7 +408,7 @@ test("with no trial or key and no answer, reads as the free version; a key carri
   launchApp,
   userDataDir,
 }) => {
-  const free = await launchApp({ MERU_STUB_OFFLINE: "1" });
+  const free = await launchApp({ ...NO_TRIAL, MERU_STUB_OFFLINE: "1" });
 
   await expectStatus(
     await openPro(free),
@@ -464,7 +465,7 @@ test.describe("shots", () => {
     await trial.close();
 
     const seeded: [string, object, Record<string, string>][] = [
-      ["none", {}, { MERU_STUB_OFFLINE: "1" }],
+      ["none", {}, { ...NO_TRIAL, MERU_STUB_OFFLINE: "1" }],
       [
         "provisional",
         { licenseKey: KEY, keyStoredAt: Date.now() },
@@ -517,7 +518,7 @@ test.describe("shots", () => {
     await writeEntitlement(userDataDir, {});
     await writeStub(userDataDir, { trialStartedAt: Date.now() - 15 * DAY });
 
-    const ended = await launchApp();
+    const ended = await launchApp(NO_TRIAL);
     const endedPage = await openPro(ended);
 
     await expect(

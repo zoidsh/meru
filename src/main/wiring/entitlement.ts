@@ -18,6 +18,7 @@ import { createEntitlement, saveEntitlementFile } from "../entitlement.ts";
 import { createLicenseRequests } from "../license-requests.ts";
 import {
   exposeEntitlementToSuite,
+  suiteEntitlementFile,
   suiteEntitlementServer,
 } from "./test-build.ts";
 
@@ -47,7 +48,7 @@ const entitlementSource = (userDataPath: string) => {
 
 /**
  * The entitlement, read from its store with no network and refreshed in the
- * background from here on. Nothing asks it yet.
+ * background from here on.
  */
 export const wireEntitlement = async ({
   lifecycle,
@@ -67,7 +68,7 @@ export const wireEntitlement = async ({
     return "";
   });
   const entitlement = createEntitlement({
-    initial,
+    initial: suiteEntitlementFile(initial, deviceId),
     save: (next) => saveEntitlementFile(file, next),
     ...entitlementSource(lifecycle.userDataPath),
     deviceId,

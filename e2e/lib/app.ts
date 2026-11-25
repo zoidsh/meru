@@ -64,11 +64,20 @@ const executablePath = path.join(
   ...unpackedExecutable()
 );
 
-/** Only the e2e build honours `MERU_TEST_BACKGROUND`. */
-const env = { ...process.env, MERU_TEST_BACKGROUND: "1" } as Record<
-  string,
-  string
->;
+/**
+ * Only the e2e build honours `MERU_TEST_BACKGROUND`, and
+ * `MERU_TEST_ENTITLEMENT`, under which a launch whose `entitlement.json`
+ * holds no token or key is a trial from its first frame; a test of an
+ * install with neither launches with `NO_TRIAL`.
+ */
+const env = {
+  ...process.env,
+  MERU_TEST_BACKGROUND: "1",
+  MERU_TEST_ENTITLEMENT: "trial",
+} as Record<string, string>;
+
+/** The environment of a launch with no trial seeded, as a first install starts. */
+export const NO_TRIAL = { MERU_TEST_ENTITLEMENT: "" };
 
 const launchArgs = (userDataDir: string) => [
   `--user-data-dir=${userDataDir}`,

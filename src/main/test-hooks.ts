@@ -3,6 +3,13 @@
 
 import type { GmailHealth } from "#contract/gmail.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
+import {
+  storedLicenseKey,
+  storedToken,
+  withToken,
+} from "#core/entitlement-file.ts";
+import type { EntitlementFile } from "#core/entitlement-file.ts";
+import { DAY } from "#core/entitlement.ts";
 import type {
   OverridableSettingKey,
   SettingKey,
@@ -11,6 +18,7 @@ import type {
 import type { TabKey } from "#core/tabs.ts";
 import type { EntitlementServer } from "#platform/entitlement-server.ts";
 
+import { signDevToken } from "./entitlement-stub.ts";
 import type { Entitlement } from "./entitlement.ts";
 import type { SettingsStore } from "./settings.ts";
 
@@ -48,6 +56,39 @@ export const captureSounds = () => {
   return (request: SoundRequest) => {
     captured.push(request);
   };
+};
+
+/**
+ * `file` with a trial of this device's when `MERU_TEST_ENTITLEMENT` is
+ * `trial` and it holds no token or key, so a launch is a trial from its first
+ * frame, as an installed trial's is, rather than free until the stand-in's
+ * first answer.
+ */
+export const seedTestEntitlement = (
+  file: EntitlementFile,
+  deviceId: string,
+  now: number
+): EntitlementFile => {
+  if (
+    process.env.MERU_TEST_ENTITLEMENT !== "trial" ||
+    deviceId === "" ||
+    storedToken(file) !== undefined ||
+    storedLicenseKey(file) !== undefined
+  ) {
+    return file;
+  }
+
+  const ends = now + 14 * DAY;
+  const token = signDevToken({
+    v: 1,
+    tier: "trial",
+    deviceId,
+    issuedAt: now,
+    expiresAt: ends,
+    trialEndsAt: ends,
+  });
+
+  return withToken(file, token, { tier: "trial" });
 };
 
 /** What the entitlement answers, on the main process's global under `meruTestEntitlement`. */
