@@ -25,6 +25,10 @@ import {
   createDownloadSignals,
 } from "#platform/downloads.ts";
 import {
+  createCapturedFolderPicker,
+  createFolderPicker,
+} from "#platform/folder-picker.ts";
+import {
   createCapturedLoginItem,
   createHeldLoginItem,
   createLoginItem,
@@ -209,3 +213,7 @@ export const systemLoginItem = () => {
     ? createLoginItem()
     : createHeldLoginItem();
 };
+
+/** The suite's build answers the folder picker as the test says. */
+export const folderPicker = () =>
+  MERU_E2E_BUILD ? createCapturedFolderPicker() : createFolderPicker();

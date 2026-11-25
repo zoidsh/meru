@@ -60,6 +60,11 @@ export const Toast = ({
       comment:
         "Short notice at the foot of the window once the selected tab's page is no longer bookmarked",
     }),
+    "downloads-folder-missing": t({
+      message: "Saved to Downloads, since your chosen folder isn't available",
+      comment:
+        "Short notice at the foot of the window when the folder chosen in Settings for downloads is missing or cannot be written, so a download went to the system's Downloads folder",
+    }),
   }[message];
 
   useEffect(() => {

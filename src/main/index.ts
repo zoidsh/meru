@@ -235,7 +235,11 @@ const start = async () => {
 
   // One for every kind, so the suite's build captures them in one list.
   const notifier = systemNotifier();
-  const { downloads, watch: watchDownloads } = wireDownloads({
+  const {
+    downloads,
+    files: downloadFiles,
+    watch: watchDownloads,
+  } = wireDownloads({
     platform,
     isMacOS,
     background,
@@ -437,6 +441,7 @@ const start = async () => {
     settingsPages,
   } = wireSettingsWindow({
     platform,
+    downloadFiles,
     isMacOS,
     background,
     lifecycle,

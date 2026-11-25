@@ -118,6 +118,7 @@ const createFakeWindow = () => {
     host: { hostId: 1 },
     showContextMenu: () => false,
     confirm: () => Promise.resolve(false),
+    pickFolder: () => Promise.resolve(undefined),
   };
 
   return {

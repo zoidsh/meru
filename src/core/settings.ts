@@ -135,6 +135,14 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: false,
   }),
+  /**
+   * The folder downloads are saved to, as the folder picker gave it; `null`
+   * for the system's Downloads folder. Only Change… writes it.
+   */
+  downloadsFolder: setting<string | null>({
+    schema: z.nullable(z.string().check(z.minLength(1))),
+    default: null,
+  }),
   /** Light or dark for every window of Meru, or as the system is. */
   theme: setting<ThemeChoice>({
     schema: z.enum(THEMES),

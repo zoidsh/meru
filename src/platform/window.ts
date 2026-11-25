@@ -93,6 +93,11 @@ export interface AppWindow extends PlainWindow {
   addContentView: (options: ContentViewOptions) => ContentView;
   /** A native warning, modal to the window, with cancel the default. */
   confirm: (confirmation: Confirmation) => Promise<boolean>;
+  /**
+   * The system's folder picker, modal to the window, opened at `defaultPath`;
+   * the folder chosen, or nothing when cancelled.
+   */
+  pickFolder: (defaultPath: string) => Promise<string | undefined>;
 }
 
 export interface WindowFactory {
@@ -271,6 +276,14 @@ export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
         });
 
         return response === 0;
+      },
+      pickFolder: async (defaultPath) => {
+        const { canceled, filePaths } = await dialog.showOpenDialog(window, {
+          defaultPath,
+          properties: ["openDirectory", "createDirectory"],
+        });
+
+        return canceled ? undefined : filePaths[0];
       },
     };
   },

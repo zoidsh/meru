@@ -4,6 +4,7 @@ import {
   APPEARANCE_PAGE_KEYS,
   GENERAL_PAGE_KEYS,
   GMAIL_PAGE_KEYS,
+  SETTINGS_CALLS,
   MENU_BAR_PAGE_KEYS,
 } from "#contract/settings.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
@@ -88,6 +89,10 @@ const setup = (
   // The system's login item as a build that only pretends holds it.
   const loginCalls: boolean[] = [];
   let loginOn = false;
+  // The folders there to be chosen, and what the picker answers.
+  const folders = new Set<string>(["/Users/example/Mail"]);
+  let pickerAnswer: string | undefined;
+  const pickedAt: string[] = [];
   const general = createGeneralPage({
     platform,
     loginItem: {
@@ -97,6 +102,17 @@ const setup = (
         loginCalls.push(on);
         loginOn = on;
       },
+    },
+    settings,
+    files: {
+      folder: () => "/Users/example/Downloads",
+      usable: (folder) => folders.has(folder),
+    },
+    home: "/Users/example",
+    pickFolder: (defaultPath) => {
+      pickedAt.push(defaultPath);
+
+      return Promise.resolve(pickerAnswer);
     },
   });
   const deps = {
@@ -170,6 +186,12 @@ const setup = (
     deleted,
     signedIn,
     loginCalls,
+    folders,
+    pickedAt,
+    /** What the folder picker answers next, nothing as a cancel. */
+    answerPicker: (folder: string | undefined) => {
+      pickerAnswer = folder;
+    },
     confirming: (next: boolean) => {
       confirms = next;
     },
@@ -576,6 +598,86 @@ describe("the Settings window's General page", () => {
       { version: 1, openInBackground: true },
     ]);
     app.dispose();
+  });
+
+  it("shows the system's Downloads folder until one is chosen, from ~ on macOS", () => {
+    const app = setup(stateOf("Work"));
+
+    expect(app.read().general.downloadsFolder).toStrictEqual({
+      path: "~/Downloads",
+      available: true,
+    });
+    app.dispose();
+  });
+
+  it("chooses the folder through the picker, opened where downloads go now, and a cancel changes nothing", async () => {
+    const app = setup(stateOf("Work"));
+    const sends = app.sends();
+
+    await app.handlers.chooseDownloadsFolder({});
+    app.answerPicker("/Users/example/Mail");
+    await app.handlers.chooseDownloadsFolder({});
+    app.answerPicker(undefined);
+    await app.handlers.chooseDownloadsFolder({});
+
+    expect([
+      app.pickedAt,
+      app.saved,
+      app.read().general.downloadsFolder,
+      sends(),
+    ]).toStrictEqual([
+      [
+        "/Users/example/Downloads",
+        "/Users/example/Downloads",
+        "/Users/example/Mail",
+      ],
+      [{ version: 1, downloadsFolder: "/Users/example/Mail" }],
+      { path: "~/Mail", available: true },
+      1,
+    ]);
+    app.dispose();
+  });
+
+  it("refuses a folder that is not a whole path", async () => {
+    const app = setup(stateOf("Work"));
+
+    app.answerPicker("Mail");
+
+    await expect(app.handlers.chooseDownloadsFolder({})).rejects.toThrow(
+      "The folder picker gave a relative path"
+    );
+    expect(app.saved).toStrictEqual([]);
+    app.dispose();
+  });
+
+  it("says a chosen folder that is gone is not available, opens the picker at the system's, and keeps it as stored", async () => {
+    const app = setup(stateOf("Work"), {
+      version: 1,
+      downloadsFolder: "/Volumes/Gone/Downloads",
+    });
+
+    await app.handlers.chooseDownloadsFolder({});
+
+    expect([
+      app.read().general.downloadsFolder,
+      app.pickedAt,
+      app.read().settings,
+    ]).toStrictEqual([
+      { path: "/Volumes/Gone/Downloads", available: false },
+      ["/Users/example/Downloads"],
+      expect.not.objectContaining({ downloadsFolder: expect.anything() }),
+    ]);
+    expect(app.saved).toStrictEqual([]);
+    app.dispose();
+  });
+
+  it("never takes the folder as a plain setting from the page", () => {
+    expect(
+      SETTINGS_CALLS.update.request.safeParse({
+        key: "downloadsFolder",
+        value: "/tmp",
+      }).success
+    ).toBeFalsy();
   });
 });
 

@@ -47,12 +47,24 @@ export const wireDownloads = ({
   newId: () => string;
 }) => {
   const sessions = createDownloadSessions();
+  const files = downloadFiles();
   const downloads = createDownloads({
     platform,
     state: profiles.get,
     commit: profiles.change,
-    files: downloadFiles(),
+    files,
     signals: downloadSignals(shell.window),
+    choices: {
+      folder: () => settings.get("downloadsFolder"),
+    },
+    // Said where the downloads show, unless a card or menu holds the overlay.
+    onFolderMissing: (folder) => {
+      console.error(`The downloads folder ${folder} is not usable`);
+
+      if (overlays.current() === undefined) {
+        overlays.open({ kind: "toast", message: "downloads-folder-missing" });
+      }
+    },
     overlay: {
       isOpen: () => overlays.current()?.kind === "downloads",
       open: () => {
@@ -108,6 +120,7 @@ export const wireDownloads = ({
 
   return {
     downloads,
+    files,
     /** `started` hears of each download after it is taken, by the webContents it began in. */
     watch: (partition: string, started: (webContentsId: number) => void) => {
       sessions.watch(partition, (item, startedIn) => {

@@ -87,7 +87,10 @@ export interface SettingsContractDeps {
   >;
   /** For a profile, or the app with none. */
   showTestNotification: (profileId: string | undefined) => void;
-  general: Pick<GeneralPage, "read" | "onChange" | "setOpenAtLogin">;
+  general: Pick<
+    GeneralPage,
+    "read" | "onChange" | "setOpenAtLogin" | "chooseDownloadsFolder"
+  >;
 }
 
 /** The checks keep each key's value to its own type, which a loop over keys loses. */
@@ -358,6 +361,7 @@ export const settingsHandlers = ({
       Promise.try(() => {
         general.setOpenAtLogin(on);
       }),
+    chooseDownloadsFolder: () => general.chooseDownloadsFolder(),
   };
 };
 

@@ -300,6 +300,11 @@ export const SETTINGS_CALLS = {
     request: z.object({ on: z.boolean() }),
     response: z.undefined(),
   },
+  /**
+   * Opens the system's folder picker on the Settings window and saves
+   * downloads to the folder chosen; a cancel changes nothing.
+   */
+  chooseDownloadsFolder: { request: none, response: z.undefined() },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -362,6 +367,12 @@ export const SETTINGS_STATE = {
      * which only pretends.
      */
     openAtLogin: z.nullable(z.object({ on: z.boolean(), real: z.boolean() })),
+    /**
+     * Where downloads are saved, as the page shows it, and whether a chosen
+     * folder is there to take them, which while it is not sends them to
+     * the system's Downloads folder.
+     */
+    downloadsFolder: z.object({ path: z.string(), available: z.boolean() }),
   }),
   /** The page shown, and whether Back and Forward have one to go to. */
   page: z.object({

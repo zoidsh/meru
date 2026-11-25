@@ -28,6 +28,7 @@ export const SETTINGS_CALL_NAMES = [
   "deleteBrowsingData",
   "signIn",
   "setOpenAtLogin",
+  "chooseDownloadsFolder",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];

@@ -1,5 +1,11 @@
 import { execFile } from "node:child_process";
-import { existsSync, mkdirSync } from "node:fs";
+import {
+  accessSync,
+  constants,
+  existsSync,
+  mkdirSync,
+  statSync,
+} from "node:fs";
 import { access, rm } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -121,6 +127,11 @@ export interface DownloadFiles {
    * takes a download's path in the turn it starts.
    */
   folder: () => string;
+  /**
+   * Whether a folder the person chose is there and can be written, read at
+   * once as `folder` is.
+   */
+  usable: (folder: string) => boolean;
   /** Whether something is at the path now; read as Chromium is about to write. */
   taken: (file: string) => boolean;
   exists: (file: string) => Promise<boolean>;
@@ -167,12 +178,27 @@ const quarantine = async (file: string, at: Date) => {
   ]);
 };
 
+const usable = (folder: string) => {
+  try {
+    if (!statSync(folder).isDirectory()) {
+      return false;
+    }
+
+    accessSync(folder, constants.W_OK);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const sharedFiles = (folder: string) => ({
   folder: () => {
     mkdirSync(folder, { recursive: true });
 
     return folder;
   },
+  usable,
   taken: existsSync,
   exists,
   remove: (file: string) => rm(file, { force: true }),

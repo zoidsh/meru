@@ -94,11 +94,14 @@ const setup = ({
   platform = "darwin",
   onDisk = [],
   focused = false,
+  folders = [],
 }: {
   entries?: DownloadEntry[];
   platform?: Platform;
   onDisk?: string[];
   focused?: boolean;
+  /** The folders there to be chosen, each writable. */
+  folders?: string[];
 } = {}) => {
   let state = initial(entries);
   let open = false;
@@ -108,8 +111,10 @@ const setup = ({
   const repeating = new Set<() => void>();
   const calls: string[] = [];
   const progress: (number | null | undefined)[] = [];
+  let chosenFolder: string | null = null;
   const files: DownloadFiles = {
     folder: () => FOLDER,
+    usable: (folder) => folders.includes(folder),
     // As the volumes macOS and Windows format by default, which ignore case.
     taken: (file) =>
       platform === "linux"
@@ -161,6 +166,12 @@ const setup = ({
     },
     files,
     signals,
+    choices: {
+      folder: () => chosenFolder,
+    },
+    onFolderMissing: (folder) => {
+      calls.push(`missing ${folder}`);
+    },
     overlay: {
       isOpen: () => open,
       open: () => {
@@ -200,6 +211,10 @@ const setup = ({
 
   return {
     downloads,
+    /** The folder Settings holds, `null` for the system's. */
+    choose: (folder: string | null) => {
+      chosenFolder = folder;
+    },
     calls,
     progress,
     disk,
@@ -235,6 +250,46 @@ describe("taking a download", () => {
         startedAt: NOW,
         state: "progressing",
       },
+    ]);
+  });
+
+  it("saves it in the folder chosen in Settings, under a name nothing there has", () => {
+    const { downloads, choose } = setup({
+      folders: ["/Chosen"],
+      onDisk: ["/Chosen/report.pdf"],
+    });
+    const item = fakeItem();
+
+    choose("/Chosen");
+    downloads.take(item);
+
+    expect(item.savedTo).toBe("/Chosen/report (1).pdf");
+  });
+
+  it("saves it in the system's folder while the chosen one is missing or cannot be written, saying so once for each, and the chosen one again once it is back", () => {
+    const folders: string[] = [];
+    const { downloads, choose, calls } = setup({ folders });
+    const items = [fakeItem(), fakeItem(), fakeItem(), fakeItem()];
+
+    choose("/Gone");
+    downloads.take(items[0] ?? fakeItem());
+    downloads.take(items[1] ?? fakeItem());
+    choose("/Other");
+    downloads.take(items[2] ?? fakeItem());
+    folders.push("/Other");
+    downloads.take(items[3] ?? fakeItem());
+
+    expect([
+      items.map((item) => item.savedTo),
+      calls.filter((call) => call.startsWith("missing")),
+    ]).toStrictEqual([
+      [
+        "/Downloads/report.pdf",
+        "/Downloads/report (1).pdf",
+        "/Downloads/report (2).pdf",
+        "/Other/report.pdf",
+      ],
+      ["missing /Gone", "missing /Other"],
     ]);
   });
 

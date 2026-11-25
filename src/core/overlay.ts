@@ -17,6 +17,7 @@ export const TOAST_MESSAGES = [
   "no-room",
   "bookmarked",
   "bookmark-removed",
+  "downloads-folder-missing",
 ] as const;
 
 export type ToastMessage = (typeof TOAST_MESSAGES)[number];

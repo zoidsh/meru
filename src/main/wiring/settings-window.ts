@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import path from "node:path";
 
 import {
@@ -11,6 +12,7 @@ import { windowBackground } from "#core/shell-grey.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { ContextMenus } from "#platform/context-menu.ts";
 import type { Displays } from "#platform/displays.ts";
+import type { DownloadFiles } from "#platform/downloads.ts";
 import type { Ipc } from "#platform/ipc.ts";
 import type { Theme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
@@ -33,7 +35,7 @@ import type { SettingsStore } from "../settings.ts";
 import { createRendererRecovery } from "../shell-recovery.ts";
 import type { SoundOutput } from "../sounds.ts";
 import { openingOptions } from "../windows.ts";
-import { systemLoginItem } from "./test-build.ts";
+import { folderPicker, systemLoginItem } from "./test-build.ts";
 
 /** As the approved prototype draws it. */
 const SETTINGS_SIZE = { width: 800, height: 600 };
@@ -45,6 +47,7 @@ const SETTINGS_SIZE = { width: 800, height: 600 };
  */
 export const wireSettingsWindow = ({
   platform,
+  downloadFiles,
   isMacOS,
   background,
   lifecycle,
@@ -66,6 +69,8 @@ export const wireSettingsWindow = ({
   signIn,
 }: {
   platform: Platform;
+  /** The downloads' own, for the folder they are saved to. */
+  downloadFiles: Pick<DownloadFiles, "folder" | "usable">;
   isMacOS: boolean;
   background: boolean;
   lifecycle: ReturnType<typeof createAppLifecycle>;
@@ -93,10 +98,6 @@ export const wireSettingsWindow = ({
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
-  const general = createGeneralPage({
-    platform,
-    loginItem: systemLoginItem(),
-  });
 
   const settingsWindow = createSettingsWindow({
     create: () =>
@@ -129,6 +130,23 @@ export const wireSettingsWindow = ({
       });
     },
     log: console.error,
+  });
+
+  const picker = folderPicker();
+  const general = createGeneralPage({
+    platform,
+    loginItem: systemLoginItem(),
+    settings,
+    files: downloadFiles,
+    home: homedir(),
+    // As a sheet on the Settings window, which asked.
+    pickFolder: (defaultPath) => {
+      const window = settingsWindow.current();
+
+      return window
+        ? picker.pick(window, defaultPath)
+        : Promise.reject(new Error("The Settings window is not open"));
+    },
   });
 
   profiles.onChange(() => {

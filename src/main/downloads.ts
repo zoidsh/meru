@@ -41,6 +41,16 @@ export interface DownloadsDeps {
   commit: (change: (state: State) => State | undefined) => Promise<unknown>;
   files: DownloadFiles;
   signals: DownloadSignals;
+  /** What the person chose in Settings, read as each download starts. */
+  choices: {
+    /** The folder they chose, `null` for the system's. */
+    folder: () => string | null;
+  };
+  /**
+   * Told once a run of each chosen folder that was not there or could not be
+   * written, a download having gone to the system's folder instead.
+   */
+  onFolderMissing: (folder: string) => void;
   /** The main window's overlay it shows in there, which keeps whether it is open. */
   overlay: {
     isOpen: () => boolean;
@@ -102,6 +112,8 @@ export const createDownloads = ({
   commit,
   files,
   signals,
+  choices,
+  onFolderMissing,
   overlay,
   windows,
   newId,
@@ -117,6 +129,8 @@ export const createDownloads = ({
   const gone = new Set<string>();
   /** The tab whose own window shows the card, while it is open there. */
   let inWindow: TabKey | undefined;
+  /** The chosen folders found missing, each told of once. */
+  const missing = new Set<string>();
   /** Bytes of those that finished since nothing last ran. */
   let finishedBytes = 0;
   let unseen = false;
@@ -174,13 +188,11 @@ export const createDownloads = ({
 
   const pathTaken = (folder: string) => {
     const held = new Set(
-      [...running.values()].map((each) =>
-        nameKey(path.basename(each.path), platform)
-      )
+      [...running.values()].map((each) => nameKey(each.path, platform))
     );
 
     return (fileName: string) =>
-      held.has(nameKey(fileName, platform)) ||
+      held.has(nameKey(path.join(folder, fileName), platform)) ||
       files.taken(path.join(folder, fileName));
   };
 
@@ -240,12 +252,31 @@ export const createDownloads = ({
   };
 
   /**
+   * The chosen folder where it can take the file, else the system's, the
+   * chosen one left as stored for when it is back.
+   */
+  const saveFolder = () => {
+    const chosen = choices.folder();
+
+    if (chosen === null || files.usable(chosen)) {
+      return chosen ?? files.folder();
+    }
+
+    if (!missing.has(chosen)) {
+      missing.add(chosen);
+      onFolderMissing(chosen);
+    }
+
+    return files.folder();
+  };
+
+  /**
    * Names and saves a download as its session starts it, at once, since
    * Chromium asks where to save it once the item's turn ends.
    */
   const take = (item: DownloadItem) => {
     const id = newId();
-    const folder = files.folder();
+    const folder = saveFolder();
     const fileName = unusedName(
       withExtension(safeName(item.fileName), item.mimeType),
       pathTaken(folder)

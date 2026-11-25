@@ -1549,6 +1549,11 @@ msgstr "Saved searches"
 msgid "Saved Searches"
 msgstr "Saved Searches"
 
+#. Short notice at the foot of the window when the folder chosen in Settings for downloads is missing or cannot be written, so a download went to the system's Downloads folder
+#: src/shell/toast.tsx
+msgid "Saved to Downloads, since your chosen folder isn't available"
+msgstr "Saved to Downloads, since your chosen folder isn't available"
+
 #. Accessible name of the switcher atop a Settings page choosing whether it edits every profile's setting or one profile's own
 #: src/settings/scope-tabs.tsx
 msgid "Scope"
