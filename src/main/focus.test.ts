@@ -134,6 +134,29 @@ describe(createFocus, () => {
     expect(focused).toStrictEqual(["overlay", "shell"]);
   });
 
+  it("where the app can never be activated, focuses the shell before the front page asked for while the window is not focused, so the page's focus is real, but gives back focus a page took directly", () => {
+    vi.useFakeTimers();
+
+    const { focus, focused, window } = setup({ focusWhileInactive: true });
+
+    window.visible = true;
+    focus.focus([{ kind: "front" }, { kind: "shell" }]);
+    focus.focus([overlay]);
+    focus.giveBack();
+    vi.runAllTimers();
+    window.focused = true;
+    focus.focus([{ kind: "front" }]);
+    vi.useRealTimers();
+
+    expect(focused).toStrictEqual([
+      "shell",
+      "front",
+      "overlay",
+      "front",
+      "front",
+    ]);
+  });
+
   it("remembers which web contents last gained focus", () => {
     const { focus } = setup();
 

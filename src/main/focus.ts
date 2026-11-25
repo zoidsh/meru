@@ -50,16 +50,26 @@ export const createFocus = ({
 }: FocusDeps) => {
   let focused: FocusTarget | undefined;
   let pending: readonly FocusTarget[] | undefined;
+  /** Whether `pending` gives back focus a page took, so moved the first responder already. */
+  let pendingGivesBack = false;
   const listeners = new Set<() => void>();
 
   const mayFocus = () =>
     window.isFocused() || (focusWhileInactive && window.isVisible());
 
-  const apply = (preferences: readonly FocusTarget[]) => {
+  const apply = (preferences: readonly FocusTarget[], inactive = false) => {
     for (const target of preferences) {
       const focus = resolve(target);
 
       if (focus) {
+        // Chromium on macOS gives a view's page no focus when the view becomes
+        // first responder in a window that is not key, and then ignores a
+        // focus on it while it stays first responder; moving the first
+        // responder away first makes the page's focus real.
+        if (inactive && target.kind === "front") {
+          resolve({ kind: "shell" })?.();
+        }
+
         focus();
 
         return;
@@ -72,7 +82,7 @@ export const createFocus = ({
       const preferences = pending;
 
       pending = undefined;
-      apply(preferences);
+      apply(preferences, !window.isFocused() && !pendingGivesBack);
     }
   };
 
@@ -113,6 +123,7 @@ export const createFocus = ({
     /** Focuses the first of `preferences` that is there to focus. */
     focus: (preferences: readonly FocusTarget[]) => {
       pending = preferences;
+      pendingGivesBack = false;
       flush();
     },
     /**
@@ -170,6 +181,7 @@ export const createFocus = ({
           { kind: "front" },
           { kind: "shell" },
         ];
+        pendingGivesBack = true;
         flush();
       }, 0);
     },
