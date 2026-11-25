@@ -157,9 +157,10 @@ const activate = async (page: Page) => {
   await page.getByRole("button", { name: "Enter license key…" }).click();
   await page.getByRole("textbox", { name: "License key" }).fill(KEY);
   await page.getByRole("button", { name: "Activate" }).click();
+  // Shown once main holds the license, not merely once the dialog closes.
   await expect(
-    page.getByRole("button", { name: "Enter license key…" })
-  ).toHaveCount(0);
+    page.getByRole("button", { name: "Change license key" })
+  ).toBeVisible();
 };
 
 /** The application menu's item: its label, any badge, which no item may carry, and whether it is enabled. */
@@ -513,8 +514,6 @@ test("the free version loads no user styles into Gmail's page and leaves the fil
   const page = await openSettings(app);
 
   await activate(page);
-  // A load before main holds the license would rightly get none.
-  await expect.poll(() => snapshot(app)).toMatchObject({ status: "licensed" });
   await gmail.reload();
   await expect.poll(() => outline(gmail)).toBe("rgb(1, 2, 3)");
 });
