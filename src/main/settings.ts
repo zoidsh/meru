@@ -20,9 +20,9 @@ import type {
   SettingValue,
   Settings,
 } from "#core/settings.ts";
-import type { State } from "#core/state.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
+import type { Profiles } from "./profiles.ts";
 import { openStore, saveStore } from "./store-file.ts";
 
 export const SETTINGS_FILE_NAME = "settings.json";
@@ -213,9 +213,10 @@ export const createSettingsStore = ({
 export type SettingsStore = ReturnType<typeof createSettingsStore>;
 
 /**
- * Deletes the overrides of each profile a change of the state no longer
- * lists, after that change is committed. An entry a crash leaves behind is
- * inert, since a profile's id is never used again.
+ * Deletes the overrides of each profile taken off the stored list, after that
+ * change is committed; a profile the run only stops using keeps them. An
+ * entry a crash leaves behind is inert, since a profile's id is never used
+ * again.
  */
 export const followRemovedProfiles = ({
   settings,
@@ -223,14 +224,9 @@ export const followRemovedProfiles = ({
   log,
 }: {
   settings: Pick<SettingsStore, "removeProfile">;
-  profiles: {
-    get: () => State;
-    onChange: (listener: (state: State) => void) => unknown;
-  };
+  profiles: Pick<Profiles, "onRemoved">;
   log: (message: string) => void;
 }) => {
-  let listed = new Set(profiles.get().profiles.map((profile) => profile.id));
-
   const remove = async (profileId: string) => {
     try {
       await settings.removeProfile(profileId);
@@ -241,15 +237,7 @@ export const followRemovedProfiles = ({
     }
   };
 
-  profiles.onChange((state) => {
-    const next = new Set(state.profiles.map((profile) => profile.id));
-
-    for (const profileId of listed) {
-      if (!next.has(profileId)) {
-        void remove(profileId);
-      }
-    }
-
-    listed = next;
+  profiles.onRemoved((profileId) => {
+    void remove(profileId);
   });
 };

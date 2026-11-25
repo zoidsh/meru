@@ -360,4 +360,35 @@ describe(followRemovedProfiles, () => {
       { version: 1, profiles: { a: { unreadBadge: false } } },
     ]);
   });
+
+  it("keeps the overrides of a profile the run stops using, and of the one it uses through a write", async () => {
+    const { settings, saved } = setup({
+      version: 1,
+      profiles: { a: { unreadBadge: false }, b: { notifications: false } },
+    });
+    let multiple = true;
+    const profiles = createProfiles({
+      initial: {
+        version: 1,
+        profiles: [newProfile("a", "Default"), newProfile("b", "Work")],
+        selectedProfileId: "b",
+      },
+      save: () => Promise.resolve(),
+      newId: () => "c",
+      profileName: (n) => `Profile ${n}`,
+      clearSession: () => Promise.resolve(),
+      now: () => 0,
+      log: () => {},
+      multipleProfiles: () => multiple,
+    });
+
+    followRemovedProfiles({ settings, profiles, log: () => {} });
+    multiple = false;
+    profiles.recheck();
+    await profiles.rename("a", "Mine");
+    await profiles.settled();
+
+    expect(profiles.get().profiles).toHaveLength(1);
+    expect(saved).toStrictEqual([]);
+  });
 });

@@ -99,6 +99,7 @@ export const createProfiles = ({
 }: ProfilesDeps) => {
   const mutex = new Mutex();
   const listeners = new Set<(state: State) => void>();
+  const removalListeners = new Set<(profileId: string) => void>();
   let allowed = multipleProfiles();
   // What the file holds, and what this run may use of it, which every reader
   // and every change but the clears sees.
@@ -128,9 +129,25 @@ export const createProfiles = ({
     );
 
     await save(written);
+
+    const kept = new Set(written.profiles.map(({ id }) => id));
+    const removed = stored.profiles
+      .map(({ id }) => id)
+      .filter((id) => !kept.has(id));
+
     stored = written;
     state = entitledState(stored, allowed);
     notify();
+
+    for (const profileId of removed) {
+      for (const listener of removalListeners) {
+        try {
+          listener(profileId);
+        } catch (error) {
+          log(`A profile removal listener failed: ${describe(error)}`);
+        }
+      }
+    }
 
     return true;
   };
@@ -226,6 +243,13 @@ export const createProfiles = ({
     settled: () => exclusive(() => Promise.resolve()),
     onChange: (listener: (state: State) => void) => {
       listeners.add(listener);
+    },
+    /**
+     * Called with each profile a committed change took off the stored list,
+     * after the change's listeners; never for one the run only stops using.
+     */
+    onRemoved: (listener: (profileId: string) => void) => {
+      removalListeners.add(listener);
     },
     /** Selects the profile, waking it if it sleeps. */
     select: (profileId: string) =>
