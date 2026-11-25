@@ -43,6 +43,11 @@ export const TRAY_ICON_COLORS = ["system", "light", "dark"] as const;
 export type TrayIconColor = (typeof TRAY_ICON_COLORS)[number];
 
 /** The default first. */
+export const THEMES = ["system", "light", "dark"] as const;
+
+export type ThemeChoice = (typeof THEMES)[number];
+
+/** The default first. */
 export const VERIFICATION_CODE_COPY_MODES = [
   "notificationClick",
   "immediately",
@@ -122,6 +127,11 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: false,
   }),
+  /** Light or dark for every window of Meru, or as the system is. */
+  theme: setting<ThemeChoice>({
+    schema: z.enum(THEMES),
+    default: "system",
+  }),
   /**
    * The tray or menu bar icon. Off on macOS, where the Dock already shows the
    * count and reaches the window, as in v3.
@@ -130,7 +140,10 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: (platform) => platform !== "darwin",
   }),
-  /** Read on Windows and Linux; "system" follows the dark or light theme. */
+  /**
+   * Read on Windows and Linux; "system" follows the taskbar's light or dark
+   * mode, not `theme` (`Theme.systemIsDark`).
+   */
   trayIconColor: setting<TrayIconColor>({
     schema: z.enum(TRAY_ICON_COLORS),
     default: "system",

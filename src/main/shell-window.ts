@@ -16,7 +16,7 @@ export interface ShellWindowDeps {
   preloadPath: string;
   isMacOS: boolean;
   background: boolean;
-  theme: Theme;
+  theme: Pick<Theme, "isDark" | "onChange">;
 }
 
 const DEFAULT_SIZE = { width: 1280, height: 800 };

@@ -56,7 +56,7 @@ export const wireTray = ({
     platform,
     productName: lifecycle.name,
     setting: settings.get,
-    isDark: theme.isDark,
+    isDark: theme.systemIsDark,
     state: profiles.get,
     unread,
     window: shell.window,

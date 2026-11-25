@@ -20,6 +20,7 @@ import { createOverlays } from "./overlay.ts";
 import { createSenderRegistry } from "./senders.ts";
 import { createShellWindow } from "./shell-window.ts";
 import { createTabViews } from "./tab-views.ts";
+import { followThemeSetting } from "./theme.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
@@ -131,6 +132,9 @@ const start = async () => {
   const ipc = createIpc();
 
   const theme = createTheme();
+
+  followThemeSetting({ theme, settings });
+
   const displays = createDisplays();
   const shell = createShellWindow({
     windows: createWindowFactory(contextMenus),
