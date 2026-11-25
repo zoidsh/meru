@@ -388,6 +388,36 @@ describe(createSettingsStore, () => {
       [true, true],
     ]);
   });
+
+  it("writes an ungated setting changed without Meru Pro with every gated one as stored, not as read", async () => {
+    const saved: Record<string, unknown>[] = [];
+    const gated = {
+      unifiedInbox: true,
+      titlebarDoNotDisturb: true,
+      quietHours: [{ start: "22:00", end: "07:00" }],
+      notificationImportantOnly: true,
+      verificationCodes: true,
+      verificationCodeTrash: true,
+      notificationSound: "system",
+    };
+    const settings = createSettingsStore({
+      initial: { version: 1, ...gated },
+      save: (next) => {
+        saved.push(structuredClone(next) as Record<string, unknown>);
+
+        return Promise.resolve();
+      },
+      platform: "darwin",
+      log: () => {},
+      can: () => false,
+    });
+
+    await settings.update("notificationSoundVolume", () => 0.2);
+
+    expect(saved).toStrictEqual([
+      expect.objectContaining({ ...gated, notificationSoundVolume: 0.2 }),
+    ]);
+  });
 });
 
 describe(followRemovedProfiles, () => {
