@@ -48,8 +48,8 @@ msgstr "{count, plural, one {Links to # site open without asking.} other {Links 
 msgid "{count, plural, one {Set differently for # profile:} other {Set differently for # profiles:}}"
 msgstr "{count, plural, one {Set differently for # profile:} other {Set differently for # profiles:}}"
 
-#. On the Meru Pro page of Settings during the trial; # counts the calendar days left, two or more
-#: src/settings/pro-page.tsx
+#. About Meru Pro (in Settings and in the main window's notice) during the trial; # counts the calendar days left, two or more
+#: src/shared/license-status.ts
 msgid "{days, plural, one {Your trial ends in # day.} other {Your trial ends in # days.}}"
 msgstr "{days, plural, one {Your trial ends in # day.} other {Your trial ends in # days.}}"
 
@@ -250,8 +250,8 @@ msgstr "A download finished"
 msgid "About {appName}"
 msgstr "About {appName}"
 
-#. Button in the license key dialog of Settings that checks the key and, once it is accepted, unlocks Meru Pro on this computer
-#: src/settings/license-dialog.tsx
+#. Button in the license key dialog that checks the key and, once it is accepted, unlocks Meru Pro on this computer
+#: src/shared/license-dialog.tsx
 msgid "Activate"
 msgstr "Activate"
 
@@ -474,13 +474,13 @@ msgstr "Cached images and files"
 #. Button in the alert saying Meru is the default browser, which opens nothing
 #. Button in the dialog that asks before a link opens in the default browser, which opens nothing
 #. Button in the dialog that confirms removing a profile, which keeps it
-#. Button in the license key dialog of Settings that closes it, changing nothing
+#. Button in the license key dialog that closes it, changing nothing
 #: src/main/default-browser-guard.ts
 #: src/main/link-opener.ts
 #: src/main/profile-copy.ts
 #: src/settings/delete-browsing-data.tsx
-#: src/settings/license-dialog.tsx
 #: src/settings/saved-searches-card.tsx
+#: src/shared/license-dialog.tsx
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -495,8 +495,9 @@ msgid "Canceled · {when}"
 msgstr "Canceled · {when}"
 
 #. Accessible name of the Change… button beside the license key on the Meru Pro page of Settings
-#. Title of the dialog on the Meru Pro page of Settings that replaces the license key
-#: src/settings/license-dialog.tsx
+#. Title of the dialog that replaces the license key
+#: src/settings/pro-page.tsx
+#: src/shared/license-dialog.tsx
 msgid "Change license key"
 msgstr "Change license key"
 
@@ -508,7 +509,7 @@ msgstr "Change where downloads are saved"
 #. Button beside the license key on the Meru Pro page of Settings that opens a dialog to enter another key
 #. Button in Settings beside the downloads folder that opens the system's folder picker
 #: src/settings/general-page.tsx
-#: src/settings/license-dialog.tsx
+#: src/settings/pro-page.tsx
 msgid "Change…"
 msgstr "Change…"
 
@@ -609,8 +610,8 @@ msgstr "Color"
 msgid "Compose"
 msgstr "Compose"
 
-#. Second sentence on the Meru Pro page of Settings when the license server no longer accepts the license, after a refund or the device's removal
-#: src/settings/pro-page.tsx
+#. Second sentence about Meru Pro (in Settings and in the main window's notice) when the license server no longer accepts the license, after a refund or the device's removal
+#: src/shared/license-status.ts
 msgid "Contact support if you think this is a mistake."
 msgstr "Contact support if you think this is a mistake."
 
@@ -888,13 +889,13 @@ msgstr "Enabled"
 msgid "Enter a search."
 msgstr "Enter a search."
 
-#. Title of the dialog on the Meru Pro page of Settings where a license key is entered
-#: src/settings/license-dialog.tsx
+#. Title of the dialog where a license key is entered
+#: src/shared/license-dialog.tsx
 msgid "Enter license key"
 msgstr "Enter license key"
 
 #. Button on the Meru Pro page of Settings that opens a dialog to enter a license key
-#: src/settings/license-dialog.tsx
+#: src/settings/pro-page.tsx
 msgid "Enter license key…"
 msgstr "Enter license key…"
 
@@ -984,8 +985,8 @@ msgstr "Gmail page"
 msgid "Gmail Settings"
 msgstr "Gmail Settings"
 
-#. Second sentence on the Meru Pro page of Settings when the license or trial could not be confirmed, beside the Try again button
-#: src/settings/pro-page.tsx
+#. Second sentence about Meru Pro (in Settings and in the main window's notice) when the license or trial could not be confirmed, beside the Try again button
+#: src/shared/license-status.ts
 msgid "Go online and try again."
 msgstr "Go online and try again."
 
@@ -1130,10 +1131,10 @@ msgstr "Left pane {percent}"
 msgid "License"
 msgstr "License"
 
-#. Label of the field in the license key dialog on the Meru Pro page of Settings
+#. Label of the field in the license key dialog
 #. Label of the row on the Meru Pro page of Settings that shows or enters the license key
-#: src/settings/license-dialog.tsx
 #: src/settings/pro-page.tsx
+#: src/shared/license-dialog.tsx
 msgid "License key"
 msgstr "License key"
 
@@ -1250,8 +1251,8 @@ msgstr "Menu Bar & Dock"
 msgid "Meru asks before a link opens in your default browser."
 msgstr "Meru asks before a link opens in your default browser."
 
-#. First sentence on the Meru Pro page of Settings when the computer's date looks wrong; it is the date
-#: src/settings/pro-page.tsx
+#. First sentence about Meru Pro (in Settings and in the main window's notice) when the computer's date looks wrong; it is the date
+#: src/shared/license-status.ts
 msgid "Meru can't confirm Meru Pro until it's right."
 msgstr "Meru can't confirm Meru Pro until it's right."
 
@@ -1259,13 +1260,13 @@ msgstr "Meru can't confirm Meru Pro until it's right."
 msgid "Meru can't reach its license server. Check your connection and try again."
 msgstr "Meru can't reach its license server. Check your connection and try again."
 
-#. Status on the Meru Pro page of Settings when the license could not be confirmed for 14 days, as Meru could not reach its server
-#: src/settings/pro-page.tsx
+#. Status about Meru Pro (in Settings and in the main window's notice) when the license could not be confirmed for 14 days, as Meru could not reach its server
+#: src/shared/license-status.ts
 msgid "Meru couldn't confirm your license"
 msgstr "Meru couldn't confirm your license"
 
-#. Status on the Meru Pro page of Settings when the trial could not be confirmed for 14 days, as Meru could not reach its server
-#: src/settings/pro-page.tsx
+#. Status about Meru Pro (in Settings and in the main window's notice) when the trial could not be confirmed for 14 days, as Meru could not reach its server
+#: src/shared/license-status.ts
 msgid "Meru couldn't confirm your trial"
 msgstr "Meru couldn't confirm your trial"
 
@@ -1282,8 +1283,8 @@ msgstr "Meru couldn't save your license. Check that your disk isn't full, then t
 msgid "Meru holds notifications until quiet hours end."
 msgstr "Meru holds notifications until quiet hours end."
 
-#. On the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed, beside the Try again button
-#: src/settings/pro-page.tsx
+#. About Meru Pro (in Settings and in the main window's notice) while a license key carried over from an earlier Meru is not yet confirmed, beside the Try again button
+#: src/shared/license-status.ts
 msgid "Meru is checking your license."
 msgstr "Meru is checking your license."
 
@@ -1304,17 +1305,17 @@ msgstr "Meru keeps trying by itself."
 
 #. Badge beside a setting in Settings on the free version, which opens a popover saying the setting needs Meru Pro
 #. Name of the Settings section for the trial and the license, in its list and as its title; Meru Pro is the product's name
-#. Status on the Meru Pro page of Settings on the free version with no trial; Meru Pro is the product's name
-#. Status on the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed; Meru Pro is the product's name
-#. Status on the Meru Pro page of Settings with a license; Meru Pro is the product's name
+#. Status about Meru Pro (in Settings and in the main window's notice) on the free version with no trial; Meru Pro is the product's name
+#. Status about Meru Pro (in Settings and in the main window's notice) while a license key carried over from an earlier Meru is not yet confirmed; Meru Pro is the product's name
+#. Status about Meru Pro (in Settings and in the main window's notice) with a license; Meru Pro is the product's name
 #: src/settings/app.tsx
 #: src/settings/pro-badge.tsx
-#: src/settings/pro-page.tsx
+#: src/shared/license-status.ts
 msgid "Meru Pro"
 msgstr "Meru Pro"
 
-#. Status on the Meru Pro page of Settings during the trial
-#: src/settings/pro-page.tsx
+#. Status about Meru Pro (in Settings and in the main window's notice) during the trial
+#: src/shared/license-status.ts
 msgid "Meru Pro trial"
 msgstr "Meru Pro trial"
 
@@ -1329,7 +1330,7 @@ msgid "Meru uses it for the profile dot and to tint the title bar."
 msgstr "Meru uses it for the profile dot and to tint the title bar."
 
 #. Placeholder of the license key field, showing a key's shape; MERU stays as it is and each X stands for a letter or digit
-#: src/settings/license-dialog.tsx
+#: src/shared/license-dialog.tsx
 msgid "MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
 msgstr "MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
 
@@ -1662,8 +1663,8 @@ msgstr "Previous match"
 msgid "Privacy & Security"
 msgstr "Privacy & Security"
 
-#. First sentence on the Meru Pro page of Settings when the trial or license ended while Meru was running; what Pro unlocked stays on until Meru is quit
-#: src/settings/pro-page.tsx
+#. First sentence about Meru Pro (in Settings and in the main window's notice) when the trial or license ended while Meru was running; what Pro unlocked stays on until Meru is quit
+#: src/shared/license-status.ts
 msgid "Pro features turn off when you quit Meru."
 msgstr "Pro features turn off when you quit Meru."
 
@@ -1956,8 +1957,8 @@ msgstr "Services"
 msgid "Set for {name} only. For all profiles, it's {appValue}."
 msgstr "Set for {name} only. For all profiles, it's {appValue}."
 
-#. Second sentence on the Meru Pro page of Settings when the computer's date looks wrong, beside the Try again button
-#: src/settings/pro-page.tsx
+#. Second sentence about Meru Pro (in Settings and in the main window's notice) when the computer's date looks wrong, beside the Try again button
+#: src/shared/license-status.ts
 msgid "Set the correct date and time, then try again."
 msgstr "Set the correct date and time, then try again."
 
@@ -2565,13 +2566,13 @@ msgstr "Until Turned Off"
 msgid "Upgrade"
 msgstr "Upgrade"
 
-#. Second sentence on the Meru Pro page of Settings during the trial, beside the Upgrade button
-#: src/settings/pro-page.tsx
+#. Second sentence about Meru Pro (in Settings and in the main window's notice) during the trial, beside the Upgrade button
+#: src/shared/license-status.ts
 msgid "Upgrade to keep every feature."
 msgstr "Upgrade to keep every feature."
 
-#. Second sentence on the Meru Pro page of Settings when the trial ended while Meru was running; them are Pro's features
-#: src/settings/pro-page.tsx
+#. Second sentence about Meru Pro (in Settings and in the main window's notice) when the trial ended while Meru was running; them are Pro's features
+#: src/shared/license-status.ts
 msgid "Upgrade to keep them."
 msgstr "Upgrade to keep them."
 
@@ -2669,8 +2670,8 @@ msgstr "You can't remove the only profile that's turned on."
 msgid "You can't remove your only profile."
 msgstr "You can't remove your only profile."
 
-#. On the Meru Pro page of Settings with a license
-#: src/settings/pro-page.tsx
+#. About Meru Pro (in Settings and in the main window's notice) with a license
+#: src/shared/license-status.ts
 msgid "You have every feature, and you can use Meru for work. Thanks for your support."
 msgstr "You have every feature, and you can use Meru for work. Thanks for your support."
 
@@ -2699,8 +2700,8 @@ msgstr "You set Do Not Disturb under All profiles. It applies to every profile."
 msgid "You'll be signed out, and its tabs, saved searches and settings will be deleted from this computer. Your Google account isn't affected."
 msgstr "You'll be signed out, and its tabs, saved searches and settings will be deleted from this computer. Your Google account isn't affected."
 
-#. Description of the License key field on the Meru Pro page of Settings
-#: src/settings/license-dialog.tsx
+#. Description of the License key field in the license key dialog
+#: src/shared/license-dialog.tsx
 msgid "You'll find it in the email you got when you bought Meru Pro."
 msgstr "You'll find it in the email you got when you bought Meru Pro."
 
@@ -2714,23 +2715,23 @@ msgstr "You're not signed in, so Meru can't check mail for this profile."
 msgid "You’re offline"
 msgstr "You’re offline"
 
-#. First sentence on the Meru Pro page of Settings when the license or trial could not be confirmed
-#: src/settings/pro-page.tsx
+#. First sentence about Meru Pro (in Settings and in the main window's notice) when the license or trial could not be confirmed
+#: src/shared/license-status.ts
 msgid "You're using the free version until it's confirmed."
 msgstr "You're using the free version until it's confirmed."
 
-#. First sentence on the Meru Pro page of Settings when the license can't be used, on the free version
-#: src/settings/pro-page.tsx
+#. First sentence about Meru Pro (in Settings and in the main window's notice) when the license can't be used, on the free version
+#: src/shared/license-status.ts
 msgid "You're using the free version."
 msgstr "You're using the free version."
 
-#. On the Meru Pro page of Settings after the trial, on the free version
-#: src/settings/pro-page.tsx
+#. About Meru Pro (in Settings and in the main window's notice) after the trial, on the free version
+#: src/shared/license-status.ts
 msgid "You're using the free version. Upgrade to get every feature back."
 msgstr "You're using the free version. Upgrade to get every feature back."
 
-#. On the Meru Pro page of Settings on the free version with no trial
-#: src/settings/pro-page.tsx
+#. About Meru Pro (in Settings and in the main window's notice) on the free version with no trial
+#: src/shared/license-status.ts
 msgid "You're using the free version. Upgrade to get every feature."
 msgstr "You're using the free version. Upgrade to get every feature."
 
@@ -2739,13 +2740,13 @@ msgstr "You're using the free version. Upgrade to get every feature."
 msgid "You've already saved this search."
 msgstr "You've already saved this search."
 
-#. Status on the Meru Pro page of Settings when the computer's clock reads well before the license or trial was last confirmed
-#: src/settings/pro-page.tsx
+#. Status about Meru Pro (in Settings and in the main window's notice) when the computer's clock reads well before the license or trial was last confirmed
+#: src/shared/license-status.ts
 msgid "Your computer's date looks wrong"
 msgstr "Your computer's date looks wrong"
 
-#. Status on the Meru Pro page of Settings when the license server no longer accepts the license, after a refund or the device's removal
-#: src/settings/pro-page.tsx
+#. Status about Meru Pro (in Settings and in the main window's notice) when the license server no longer accepts the license, after a refund or the device's removal
+#: src/shared/license-status.ts
 msgid "Your license can't be used"
 msgstr "Your license can't be used"
 
@@ -2759,18 +2760,18 @@ msgstr "Your system's language can't be checked"
 msgid "Your test notification request"
 msgstr "Your test notification request"
 
-#. On the Meru Pro page of Settings on the trial's last day
-#: src/settings/pro-page.tsx
+#. About Meru Pro (in Settings and in the main window's notice) on the trial's last day
+#: src/shared/license-status.ts
 msgid "Your trial ends today."
 msgstr "Your trial ends today."
 
-#. On the Meru Pro page of Settings on the trial's last day but one
-#: src/settings/pro-page.tsx
+#. About Meru Pro (in Settings and in the main window's notice) on the trial's last day but one
+#: src/shared/license-status.ts
 msgid "Your trial ends tomorrow."
 msgstr "Your trial ends tomorrow."
 
-#. Status on the Meru Pro page of Settings after the trial
-#: src/settings/pro-page.tsx
+#. Status about Meru Pro (in Settings and in the main window's notice) after the trial
+#: src/shared/license-status.ts
 msgid "Your trial has ended"
 msgstr "Your trial has ended"
 

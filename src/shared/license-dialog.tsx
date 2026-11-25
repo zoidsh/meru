@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { useId, useRef, useState } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 import { Button } from "#ui/button.tsx";
 import {
@@ -21,21 +22,28 @@ export type ActivationResult =
   | undefined;
 
 /**
- * Enter license key… or Change…, and the dialog it opens. While the key is
- * being checked nothing in it can be changed and it cannot be closed; a
- * failure shows under the field and keeps it open, success closes it.
+ * A button that opens the license key dialog, which every window that takes a
+ * key shows the same. While the key is being checked nothing in it can be
+ * changed and it cannot be closed; a failure shows under the field and keeps
+ * it open, success closes it.
  */
 export const LicenseDialog = ({
   changing,
   disabled,
-  describedBy,
+  trigger,
+  label,
+  accessibleName,
   onActivate,
 }: {
   /** A key is stored, so this one replaces it. */
   changing: boolean;
   /** Another license request is out. */
   disabled: boolean;
-  describedBy: string;
+  /** The button that opens it, drawn as its window draws one. */
+  trigger: ReactElement;
+  label: ReactNode;
+  /** Where the label alone does not say what the button does. */
+  accessibleName?: string | undefined;
   /** Sends the key; `undefined` when it could not be sent at all. */
   onActivate: (licenseKey: string) => Promise<ActivationResult>;
 }) => {
@@ -101,34 +109,10 @@ export const LicenseDialog = ({
     >
       <DialogTrigger
         disabled={disabled}
-        aria-label={
-          changing
-            ? t({
-                message: "Change license key",
-                comment:
-                  "Accessible name of the Change… button beside the license key on the Meru Pro page of Settings",
-              })
-            : undefined
-        }
-        render={
-          <Button
-            variant="outline"
-            size="sm"
-            aria-describedby={describedBy || undefined}
-          />
-        }
+        aria-label={accessibleName}
+        render={trigger}
       >
-        {changing
-          ? t({
-              message: "Change…",
-              comment:
-                "Button beside the license key on the Meru Pro page of Settings that opens a dialog to enter another key",
-            })
-          : t({
-              message: "Enter license key…",
-              comment:
-                "Button on the Meru Pro page of Settings that opens a dialog to enter a license key",
-            })}
+        {label}
       </DialogTrigger>
       <DialogContent showCloseButton={false} initialFocus={input}>
         <form
@@ -144,12 +128,12 @@ export const LicenseDialog = ({
                 ? t({
                     message: "Change license key",
                     comment:
-                      "Title of the dialog on the Meru Pro page of Settings that replaces the license key",
+                      "Title of the dialog that replaces the license key",
                   })
                 : t({
                     message: "Enter license key",
                     comment:
-                      "Title of the dialog on the Meru Pro page of Settings where a license key is entered",
+                      "Title of the dialog where a license key is entered",
                   })}
             </DialogTitle>
           </DialogHeader>
@@ -160,8 +144,7 @@ export const LicenseDialog = ({
             <FieldLabel htmlFor={inputId}>
               {t({
                 message: "License key",
-                comment:
-                  "Label of the field in the license key dialog on the Meru Pro page of Settings",
+                comment: "Label of the field in the license key dialog",
               })}
             </FieldLabel>
             <Input
@@ -190,7 +173,7 @@ export const LicenseDialog = ({
                 message:
                   "You'll find it in the email you got when you bought Meru Pro.",
                 comment:
-                  "Description of the License key field on the Meru Pro page of Settings",
+                  "Description of the License key field in the license key dialog",
               })}
             </FieldDescription>
             {error && <FieldError id={errorId}>{error}</FieldError>}
@@ -203,14 +186,14 @@ export const LicenseDialog = ({
               {t({
                 message: "Cancel",
                 comment:
-                  "Button in the license key dialog of Settings that closes it, changing nothing",
+                  "Button in the license key dialog that closes it, changing nothing",
               })}
             </DialogClose>
             <Button type="submit" disabled={running || key.trim() === ""}>
               {t({
                 message: "Activate",
                 comment:
-                  "Button in the license key dialog of Settings that checks the key and, once it is accepted, unlocks Meru Pro on this computer",
+                  "Button in the license key dialog that checks the key and, once it is accepted, unlocks Meru Pro on this computer",
               })}
             </Button>
           </DialogFooter>

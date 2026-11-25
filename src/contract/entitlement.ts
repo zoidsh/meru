@@ -108,6 +108,21 @@ export const ENTITLEMENT_STATE = {
   }),
 } as const;
 
+/**
+ * What the status of Meru Pro is worded from, wherever it is shown: Settings'
+ * Meru Pro page, and the main window's license notice.
+ */
+export const licenseStanding = z.object({
+  status: z.enum(ENTITLEMENT_STATUSES),
+  unconfirmedReason: z.nullable(z.enum(UNCONFIRMED_REASONS)),
+  trialDaysLeft: z.nullable(z.number()),
+  downgradePending: z.boolean(),
+  /** A license key is stored, so what could not be confirmed is a license, not a trial. */
+  hasLicenseKey: z.boolean(),
+});
+
+export type LicenseStanding = z.output<typeof licenseStanding>;
+
 export type EntitlementState = z.output<
   (typeof ENTITLEMENT_STATE)["entitlement"]
 >;

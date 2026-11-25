@@ -1,4 +1,3 @@
-import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
 import { BadgeCheckIcon, CheckIcon, CopyIcon } from "lucide-react";
@@ -6,224 +5,19 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { EntitlementState } from "#contract/entitlement.ts";
+import { LicenseDialog } from "#shared/license-dialog.tsx";
+import type { ActivationResult } from "#shared/license-dialog.tsx";
+import { useLicenseStatus } from "#shared/license-status.ts";
 import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
 import { Input } from "#ui/input.tsx";
 
-import { LicenseDialog } from "./license-dialog.tsx";
-import type { ActivationResult } from "./license-dialog.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
 
 /** How long Copy shows that it copied. */
 const COPIED_FOR = 2000;
-
-type Action = "upgrade" | "retry" | "licensed";
-
-/** The status row: what the install has, in a line and a sentence, and what to do. */
-const useStatus = (
-  entitlement: EntitlementState
-): { title: string; description: string; action: Action } => {
-  const { t } = useLingui();
-  const { status, downgradePending, trialDaysLeft, licenseKey } = entitlement;
-  const endsAtQuit = t({
-    message: "Pro features turn off when you quit Meru.",
-    comment:
-      "First sentence on the Meru Pro page of Settings when the trial or license ended while Meru was running; what Pro unlocked stays on until Meru is quit",
-  });
-
-  switch (status) {
-    case "trial": {
-      const days = trialDaysLeft ?? 0;
-      let ends: string;
-
-      if (days >= 2) {
-        ends = t({
-          message: plural(days, {
-            one: "Your trial ends in # day.",
-            other: "Your trial ends in # days.",
-          }),
-          comment:
-            "On the Meru Pro page of Settings during the trial; # counts the calendar days left, two or more",
-        });
-      } else if (days === 1) {
-        ends = t({
-          message: "Your trial ends tomorrow.",
-          comment:
-            "On the Meru Pro page of Settings on the trial's last day but one",
-        });
-      } else {
-        ends = t({
-          message: "Your trial ends today.",
-          comment: "On the Meru Pro page of Settings on the trial's last day",
-        });
-      }
-
-      return {
-        title: t({
-          message: "Meru Pro trial",
-          comment: "Status on the Meru Pro page of Settings during the trial",
-        }),
-        description: `${ends} ${t({
-          message: "Upgrade to keep every feature.",
-          comment:
-            "Second sentence on the Meru Pro page of Settings during the trial, beside the Upgrade button",
-        })}`,
-        action: "upgrade",
-      };
-    }
-    case "licensed": {
-      return {
-        title: t({
-          message: "Meru Pro",
-          comment:
-            "Status on the Meru Pro page of Settings with a license; Meru Pro is the product's name",
-        }),
-        description: t({
-          message:
-            "You have every feature, and you can use Meru for work. Thanks for your support.",
-          comment: "On the Meru Pro page of Settings with a license",
-        }),
-        action: "licensed",
-      };
-    }
-    case "provisional": {
-      return {
-        title: t({
-          message: "Meru Pro",
-          comment:
-            "Status on the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed; Meru Pro is the product's name",
-        }),
-        description: t({
-          message: "Meru is checking your license.",
-          comment:
-            "On the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed, beside the Try again button",
-        }),
-        action: "retry",
-      };
-    }
-    case "trialEnded": {
-      return {
-        title: t({
-          message: "Your trial has ended",
-          comment: "Status on the Meru Pro page of Settings after the trial",
-        }),
-        description: downgradePending
-          ? `${endsAtQuit} ${t({
-              message: "Upgrade to keep them.",
-              comment:
-                "Second sentence on the Meru Pro page of Settings when the trial ended while Meru was running; them are Pro's features",
-            })}`
-          : t({
-              message:
-                "You're using the free version. Upgrade to get every feature back.",
-              comment:
-                "On the Meru Pro page of Settings after the trial, on the free version",
-            }),
-        action: "upgrade",
-      };
-    }
-    case "refused": {
-      const support = t({
-        message: "Contact support if you think this is a mistake.",
-        comment:
-          "Second sentence on the Meru Pro page of Settings when the license server no longer accepts the license, after a refund or the device's removal",
-      });
-
-      return {
-        title: t({
-          message: "Your license can't be used",
-          comment:
-            "Status on the Meru Pro page of Settings when the license server no longer accepts the license, after a refund or the device's removal",
-        }),
-        description: `${
-          downgradePending
-            ? endsAtQuit
-            : t({
-                message: "You're using the free version.",
-                comment:
-                  "First sentence on the Meru Pro page of Settings when the license can't be used, on the free version",
-              })
-        } ${support}`,
-        action: "upgrade",
-      };
-    }
-    case "unconfirmed": {
-      if (entitlement.unconfirmedReason === "clock") {
-        return {
-          title: t({
-            message: "Your computer's date looks wrong",
-            comment:
-              "Status on the Meru Pro page of Settings when the computer's clock reads well before the license or trial was last confirmed",
-          }),
-          description: `${
-            downgradePending
-              ? endsAtQuit
-              : t({
-                  message: "Meru can't confirm Meru Pro until it's right.",
-                  comment:
-                    "First sentence on the Meru Pro page of Settings when the computer's date looks wrong; it is the date",
-                })
-          } ${t({
-            message: "Set the correct date and time, then try again.",
-            comment:
-              "Second sentence on the Meru Pro page of Settings when the computer's date looks wrong, beside the Try again button",
-          })}`,
-          action: "retry",
-        };
-      }
-
-      return {
-        title:
-          licenseKey === null
-            ? t({
-                message: "Meru couldn't confirm your trial",
-                comment:
-                  "Status on the Meru Pro page of Settings when the trial could not be confirmed for 14 days, as Meru could not reach its server",
-              })
-            : t({
-                message: "Meru couldn't confirm your license",
-                comment:
-                  "Status on the Meru Pro page of Settings when the license could not be confirmed for 14 days, as Meru could not reach its server",
-              }),
-        description: `${
-          downgradePending
-            ? endsAtQuit
-            : t({
-                message: "You're using the free version until it's confirmed.",
-                comment:
-                  "First sentence on the Meru Pro page of Settings when the license or trial could not be confirmed",
-              })
-        } ${t({
-          message: "Go online and try again.",
-          comment:
-            "Second sentence on the Meru Pro page of Settings when the license or trial could not be confirmed, beside the Try again button",
-        })}`,
-        action: "retry",
-      };
-    }
-    case "none": {
-      return {
-        title: t({
-          message: "Meru Pro",
-          comment:
-            "Status on the Meru Pro page of Settings on the free version with no trial; Meru Pro is the product's name",
-        }),
-        description: t({
-          message:
-            "You're using the free version. Upgrade to get every feature.",
-          comment:
-            "On the Meru Pro page of Settings on the free version with no trial",
-        }),
-        action: "upgrade",
-      };
-    }
-    default: {
-      return status satisfies never;
-    }
-  }
-};
 
 /** Copy beside the masked key, which has main put the whole key on the clipboard. */
 const CopyKey = () => {
@@ -399,7 +193,10 @@ const Page = ({
   requestOut: boolean;
 }) => {
   const { t } = useLingui();
-  const { title, description, action } = useStatus(entitlement);
+  const { title, description, action } = useLicenseStatus({
+    ...entitlement,
+    hasLicenseKey: entitlement.licenseKey !== null,
+  });
   // Ours until main says one is out, so a quick second click sends nothing.
   const [pending, setPending] = useState<Request | null>(null);
   const busy = pending !== null || requestOut;
@@ -531,7 +328,35 @@ const Page = ({
                   <LicenseDialog
                     changing={key !== null}
                     disabled={busy && pending !== "activate"}
-                    describedBy={ids.description}
+                    trigger={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-describedby={ids.description || undefined}
+                      />
+                    }
+                    accessibleName={
+                      key === null
+                        ? undefined
+                        : t({
+                            message: "Change license key",
+                            comment:
+                              "Accessible name of the Change… button beside the license key on the Meru Pro page of Settings",
+                          })
+                    }
+                    label={
+                      key === null
+                        ? t({
+                            message: "Enter license key…",
+                            comment:
+                              "Button on the Meru Pro page of Settings that opens a dialog to enter a license key",
+                          })
+                        : t({
+                            message: "Change…",
+                            comment:
+                              "Button beside the license key on the Meru Pro page of Settings that opens a dialog to enter another key",
+                          })
+                    }
                     onActivate={(licenseKey) =>
                       send("activate", () =>
                         calls.activateLicense({ licenseKey })

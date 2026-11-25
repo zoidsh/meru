@@ -12,9 +12,11 @@
 
 /*
  * Ours too: Tailwind scans from each renderer's Vite root, which holds none of
- * the components here, so their classes are named as a source.
+ * the components here nor the compositions the renderers share, so their
+ * classes are named as sources.
  */
 @source ".";
+@source "../shared";
 
 /*
  * Ours as well: Base UI hides a scroll area's native scrollbars with a style

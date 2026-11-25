@@ -119,7 +119,7 @@ export default defineConfig({
     },
     {
       // A renderer reaches main only through its preload's bridge, and no
-      // renderer another's code.
+      // renderer another's code; what two of them draw alike is in shared.
       files: ["src/shell/**", "src/settings/**"],
       rules: {
         "no-restricted-imports": [
@@ -134,8 +134,32 @@ export default defineConfig({
             ],
             patterns: [
               {
+                regex: "^#(?!(core|contract|i18n|ui|shared)/)",
+                message:
+                  "A renderer imports only core, contract, i18n, ui and shared.",
+              },
+              NO_RELATIVE_CROSSING,
+            ],
+          },
+        ],
+      },
+    },
+    {
+      files: ["src/shared/**"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "electron",
+                message: "shared imports nothing of Electron, types included.",
+              },
+            ],
+            patterns: [
+              {
                 regex: "^#(?!(core|contract|i18n|ui)/)",
-                message: "A renderer imports only core, contract, i18n and ui.",
+                message: "shared imports only core, contract, i18n and ui.",
               },
               NO_RELATIVE_CROSSING,
             ],
