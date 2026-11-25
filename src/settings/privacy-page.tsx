@@ -59,7 +59,9 @@ export const PrivacyPage = () => {
   };
 
   const count = trustedSites.length;
-  const sitesOff = !settings.confirmLinks;
+  const sitesPro = needsPro.setting("trustedSites");
+  // On the free version the row says Pro, not to turn asking on.
+  const sitesOff = !settings.confirmLinks && !sitesPro;
   let sitesDescription: string;
 
   if (sitesOff) {
@@ -156,12 +158,13 @@ export const PrivacyPage = () => {
                     "Label of the row in Settings for the sites whose links open in the default browser without asking",
                 })}
                 description={sitesDescription}
-                disabled={sitesOff}
+                disabled={sitesOff || sitesPro}
+                pro={sitesPro}
               >
                 {(ids) => (
                   <TrustedSitesDialog
                     sites={trustedSites}
-                    disabled={sitesOff}
+                    disabled={sitesOff || sitesPro}
                     describedBy={ids.description}
                   />
                 )}

@@ -16,8 +16,10 @@ import {
   expect,
   findPage,
   readState,
+  readOpenedExternally,
   readUnreadTotal,
   retitle,
+  stubSystemBrowser,
   test,
   writeSettings,
   writeState,
@@ -40,6 +42,7 @@ import {
   ANY_SESSION,
   BLOCKER_IMAGES,
   BLOCKER_WITHOUT_AD,
+  ELSEWHERE_URL,
   listing,
 } from "./lib/stand-in.ts";
 import type { BlockerImage, StandIn } from "./lib/stand-in.ts";
@@ -710,6 +713,70 @@ test("the free version blocks nothing, shows the blocker's switches as Pro rows 
     pixel: "blocked",
     logo: "loaded",
   });
+});
+
+/** What the suite's link prompt was asked, by each question's link. */
+const linkQuestions = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      (
+        Reflect.get(globalThis, "meruTestLinkPrompts") as
+          | { asked: { detail: string }[] }
+          | undefined
+      )?.asked ?? []
+    ).map(({ detail }) => detail)
+  );
+
+test("the free version opens a page's links without asking, keeps the trusted sites, shows both rows as Pro rows, and a license asks again", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedOneProfile(userDataDir, standIn);
+  await writeSettings(userDataDir, {
+    confirmLinks: true,
+    trustedSites: ["https://example.org", "https://example.net"],
+  });
+
+  const settingsBefore = await readStored(userDataDir, SETTINGS_FILE);
+  const { app, gmail } = await launchFree(launchApp, userDataDir, standIn);
+
+  await stubSystemBrowser(app);
+  await gmail.getByRole("link", { name: "Another site" }).click();
+  await expect
+    .poll(() => readOpenedExternally(app))
+    .toStrictEqual([ELSEWHERE_URL]);
+  expect(await linkQuestions(app)).toStrictEqual([]);
+
+  const page = await openSettings(app);
+
+  await openSection(page, "Privacy & Security");
+  await expect(switchNamed(page, "Ask before opening links")).toBeDisabled();
+  await expect(switchNamed(page, "Ask before opening links")).not.toBeChecked();
+  await expect(badgeOf(page, "Ask before opening links")).toBeVisible();
+  await expect(badgeOf(page, "Trusted sites")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Manage trusted sites" })
+  ).toBeDisabled();
+  await expect(
+    page.getByText("Links to 2 sites open without asking.")
+  ).toBeVisible();
+  await expect(
+    page.getByText("Turn on Ask before opening links first.")
+  ).toHaveCount(0);
+  await expect(readStored(userDataDir, SETTINGS_FILE)).resolves.toBe(
+    settingsBefore
+  );
+
+  await activate(page);
+  await openSection(page, "Privacy & Security");
+  await expect(switchNamed(page, "Ask before opening links")).toBeChecked();
+  await expect(
+    page.getByRole("button", { name: "Manage trusted sites" })
+  ).toBeEnabled();
+  await expect(badgeOf(page, "Trusted sites")).toHaveCount(0);
+  await gmail.getByRole("link", { name: "Another site" }).click();
+  await expect.poll(() => linkQuestions(app)).toStrictEqual([ELSEWHERE_URL]);
 });
 
 test.describe("shots", () => {

@@ -42,6 +42,9 @@ export const GATED_SETTINGS: {
   },
   blockAds: { capability: "blocker", free: () => false },
   blockTrackers: { capability: "blocker", free: () => false },
+  // Links open without asking; the trusted sites stay as stored, unwritten.
+  confirmLinks: { capability: "linkConfirmation", free: () => false },
+  trustedSites: { capability: "linkConfirmation" },
 };
 
 /** The capability the setting needs, if any. */

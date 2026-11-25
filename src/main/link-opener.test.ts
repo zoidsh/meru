@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { Capability } from "#core/entitlement.ts";
 import type { Settings } from "#core/settings.ts";
 import { fakeDefaultBrowser } from "#platform/default-browser.fake.ts";
 import type { LinkAnswer, LinkQuestion } from "#platform/link-prompt.ts";
@@ -11,7 +12,10 @@ import { createTrustedSites } from "./trusted-sites.ts";
 
 const LINK = "https://example.org/news?id=1";
 
-const setup = (initial?: Settings) => {
+const setup = (
+  initial?: Settings,
+  can?: (capability: Capability) => boolean
+) => {
   const asked: LinkQuestion[] = [];
   const opened: string[] = [];
   const copied: string[] = [];
@@ -26,6 +30,7 @@ const setup = (initial?: Settings) => {
     },
     platform: "darwin",
     log: () => false,
+    ...(can ? { can } : {}),
   });
   const trustedSites = createTrustedSites(settings);
   const { fake: system, defaultBrowser } = fakeDefaultBrowser();
@@ -70,6 +75,7 @@ const setup = (initial?: Settings) => {
     opened,
     copied,
     saved,
+    settings,
     answer: (next: LinkAnswer) => {
       answer = next;
     },
@@ -249,6 +255,56 @@ describe(createLinkOpener, () => {
       1,
       [LINK],
     ]);
+  });
+});
+
+describe("the link opener without Meru Pro", () => {
+  const TRUSTED = ["https://example.net"];
+
+  const freeSetup = () => {
+    let licensed = false;
+    const run = setup(
+      { version: 1, confirmLinks: true, trustedSites: TRUSTED },
+      (capability) => licensed || capability !== "linkConfirmation"
+    );
+
+    return {
+      ...run,
+      license: () => {
+        licensed = true;
+        run.settings.recheck();
+      },
+    };
+  };
+
+  it("opens every link without asking, trusts nothing and writes nothing, and asks again once a license arrives", async () => {
+    const { opener, asked, opened, saved, trustedSites, license } = freeSetup();
+
+    await opener.open(LINK);
+
+    expect([asked, opened, saved]).toStrictEqual([[], [LINK], []]);
+    await expect(trustedSites.add("https://example.org")).rejects.toThrow(
+      "needs Meru Pro"
+    );
+    await expect(trustedSites.remove("https://example.net")).rejects.toThrow(
+      "needs Meru Pro"
+    );
+    expect([trustedSites.list(), saved]).toStrictEqual([TRUSTED, []]);
+
+    license();
+    await opener.open(LINK);
+    await opener.open("https://example.net/");
+
+    expect(asked.map((question) => question.detail)).toStrictEqual([LINK]);
+  });
+
+  it("still shows the default browser guard's alert in place of opening, so a link handed back to Meru never loops", async () => {
+    const { opener, system, asked, opened } = freeSetup();
+
+    system.isDefault = true;
+    await opener.open(LINK);
+
+    expect([system.asked.length, asked, opened]).toStrictEqual([1, [], []]);
   });
 });
 

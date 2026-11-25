@@ -60,6 +60,13 @@ describe(entitledSetting, () => {
     ]).toStrictEqual([false, false]);
   });
 
+  it("asks before no link without Meru Pro, the trusted sites read as stored", () => {
+    expect([
+      entitledSetting("confirmLinks", true, free),
+      entitledSetting("trustedSites", ["https://example.com"], free),
+    ]).toStrictEqual([false, ["https://example.com"]]);
+  });
+
   it("asks only the capability the setting needs", () => {
     const asked: Capability[] = [];
 
