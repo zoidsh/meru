@@ -13,7 +13,7 @@ import type {
   SettingsState,
 } from "#contract/settings.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
-import { CAPABILITIES, MERU_PRO_URL } from "#core/entitlement.ts";
+import { CAPABILITIES } from "#core/entitlement.ts";
 import { UNTIL_OFF } from "#core/notification-gate.ts";
 import {
   isProfileColorName,
@@ -35,6 +35,7 @@ import type { SystemBrowser } from "#platform/system-browser.ts";
 import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
 import { checkedDockChange } from "./dock.ts";
+import { entitlementHandlers } from "./entitlement-handlers.ts";
 import type { Entitlement } from "./entitlement.ts";
 import type { GeneralPage } from "./general-page.ts";
 import type { Language } from "./language.ts";
@@ -410,14 +411,7 @@ export const settingsHandlers = ({
     setSpellcheckLanguage: ({ code, on }) =>
       general.setSpellcheckLanguage(code, on),
     removeTrustedSite: ({ site }) => trustedSites.remove(site),
-    activateLicense: ({ licenseKey }) =>
-      licenseRequests.run(() => entitlement.activate(licenseKey)),
-    setDeviceName: ({ name }) =>
-      licenseRequests.run(() => entitlement.setDeviceName(name)),
-    retryEntitlement: () => licenseRequests.run(entitlement.retry),
-    copyLicenseKey: () => entitlement.copyLicenseKey(),
-    continueFree: () => entitlement.continueFree(),
-    openMeruPro: () => systemBrowser.open(MERU_PRO_URL),
+    ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };
 };
 
