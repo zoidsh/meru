@@ -10,6 +10,8 @@ import {
   actionOf,
 } from "./actions.ts";
 import type { StandInAction } from "./actions.ts";
+import { BLOCKER_PATH, createBlockerPage } from "./blocker.ts";
+import type { BlockerImage } from "./blocker.ts";
 import { DOWNLOADS_PATH, createDownloadFiles } from "./downloads.ts";
 import type { DownloadFile } from "./downloads.ts";
 import {
@@ -88,6 +90,10 @@ export interface StandIn {
   driveUrl: string;
   /** The Gmail stand-in's page linking to files to download. */
   downloadsUrl: string;
+  /** The Gmail stand-in's message with an ad, a tracker and a pixel. */
+  blockerUrl: string;
+  /** Each of that message's images the stand-in served, in order. */
+  blockerServed: BlockerImage[];
   /** Sends the rest of each download of `file` under way, or drops a broken one. */
   releaseDownload: (file: DownloadFile) => void;
   /** What the app is given as `MERU_TEST_APP_URLS`. */
@@ -270,8 +276,12 @@ export const startStandIn = async (): Promise<StandIn> => {
     }
   };
   const downloadFiles = createDownloadFiles(() => origins.drive);
+  const blockerPage = createBlockerPage(() => origins.gmail);
   const answerMail = (request: IncomingMessage, response: ServerResponse) => {
-    if (downloadFiles.answer(request, response)) {
+    if (
+      downloadFiles.answer(request, response) ||
+      blockerPage.answer(request, response)
+    ) {
       return true;
     }
 
@@ -384,6 +394,8 @@ export const startStandIn = async (): Promise<StandIn> => {
     calendarUrl: calendar.url(),
     driveUrl: drive.url(),
     downloadsUrl: `${gmail.url()}${DOWNLOADS_PATH.slice(1)}`,
+    blockerUrl: `${gmail.url()}${BLOCKER_PATH.slice(1)}`,
+    blockerServed: blockerPage.served,
     releaseDownload: downloadFiles.release,
     popupUrl: `${signInServer.url()}${POPUP_PATH.slice(1)}`,
     signInUrl: `${signInServer.url()}${SIGN_IN_PATH.slice(1)}`,

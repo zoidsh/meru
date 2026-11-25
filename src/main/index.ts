@@ -22,6 +22,7 @@ import { createSenderRegistry } from "./senders.ts";
 import { createShellWindow } from "./shell-window.ts";
 import { createTabViews } from "./tab-views.ts";
 import { followThemeSetting } from "./theme.ts";
+import { wireContentBlocker } from "./wiring/content-blocker.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
@@ -276,6 +277,7 @@ const start = async () => {
   } = wireMailFeed({ apps, sessions, profiles, doNotDisturb });
 
   const systemBrowser = createSystemBrowser();
+  const contentBlocker = wireContentBlocker({ settings, signInOrigins });
   const clipboard = systemClipboard();
   const preloads = new Map([
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
@@ -314,6 +316,7 @@ const start = async () => {
     preloadFor: (app) => preloads.get(app),
     prepareSession: (partition) => {
       sessions.guard(partition, (ask) => allowsPermission(apps, ask));
+      contentBlocker.prepare(partition);
       watchDownloads(partition, (webContentsId) => {
         // oxlint-disable-next-line no-use-before-define -- no download starts before a view exists
         views.closeIfOnlyDownloading(webContentsId);
@@ -424,6 +427,7 @@ const start = async () => {
     apps,
     lifecycle,
     sessions,
+    contentBlocker,
     network,
     profiles,
     views,

@@ -1,5 +1,6 @@
 export * from "./stand-in/actions.ts";
 export * from "./stand-in/app.ts";
+export * from "./stand-in/blocker.ts";
 export * from "./stand-in/downloads.ts";
 export * from "./stand-in/feed.ts";
 export * from "./stand-in/gmail-dark.ts";

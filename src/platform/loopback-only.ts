@@ -3,16 +3,17 @@ import type { Session } from "electron";
 
 import { REFUSED_MARKER, staysOnMachine } from "#core/loopback.ts";
 
-const guard = (session: Session) => {
-  session.webRequest.onBeforeRequest((details, respond) => {
-    if (staysOnMachine(details.url)) {
-      respond({});
+import { guardRequests } from "./requests.ts";
 
-      return;
+const guard = (session: Session) => {
+  guardRequests(session, ({ url }) => {
+    if (staysOnMachine(url)) {
+      return false;
     }
 
-    console.error(`${REFUSED_MARKER} ${details.url}`);
-    respond({ cancel: true });
+    console.error(`${REFUSED_MARKER} ${url}`);
+
+    return true;
   });
 };
 

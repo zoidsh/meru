@@ -8,6 +8,7 @@ import { createKeepAlivePages } from "#platform/keep-alive.ts";
 import type { createNetwork } from "#platform/network.ts";
 import type { createSessions } from "#platform/sessions.ts";
 
+import type { ContentBlocker } from "../content-blocker.ts";
 import { createKeepAlive } from "../keep-alive.ts";
 import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
@@ -21,6 +22,7 @@ export const wireKeepAlive = ({
   apps,
   lifecycle,
   sessions,
+  contentBlocker,
   network,
   profiles,
   views,
@@ -31,6 +33,7 @@ export const wireKeepAlive = ({
   apps: readonly App[];
   lifecycle: ReturnType<typeof createAppLifecycle>;
   sessions: ReturnType<typeof createSessions>;
+  contentBlocker: ContentBlocker;
   network: ReturnType<typeof createNetwork>;
   profiles: Profiles;
   views: ReturnType<typeof createTabViews>;
@@ -46,6 +49,7 @@ export const wireKeepAlive = ({
     isOnline: network.isOnline,
     prepareSession: (partition) => {
       sessions.guard(partition, (ask) => allowsPermission(apps, ask));
+      contentBlocker.prepare(partition);
     },
     url: keepAliveUrl,
     cookie: ROTATING_COOKIE,

@@ -293,6 +293,16 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: true,
   }),
+  /** Google's ad hosts, in every profile's pages. */
+  blockAds: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /** Google's trackers and telemetry, and email open-tracking pixels. */
+  blockTrackers: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
 } satisfies SettingDeclarations;
 
 export type SettingKey = keyof typeof SETTINGS;
