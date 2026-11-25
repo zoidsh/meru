@@ -5,8 +5,11 @@ import { nextLocalDay, trialDaysLeft } from "./trial-days.ts";
 /**
  * What a free install lacks, in the order they are to be gated. `profiles`
  * is more than one profile, and with it profile sleep and per-profile
- * settings; `gmailPageSettings` is v3's Pro switches on Gmail's page;
- * `incomingLinks` is Meru as the default mail client and links sent to it.
+ * settings; `gmailPageSettings` is v3's Pro switches on Gmail's page, the
+ * extended dark theme among them though it is on by default;
+ * `incomingLinks` is Meru as the default mail client and links sent to it;
+ * `workspaceAppNotifications` is notifications from Google's apps other than
+ * Gmail.
  */
 export const CAPABILITIES = [
   "profiles",
@@ -27,6 +30,8 @@ export const CAPABILITIES = [
   "screenSharePicker",
   "extensions",
   "incomingLinks",
+  "labelColors",
+  "workspaceAppNotifications",
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
