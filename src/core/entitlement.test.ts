@@ -62,18 +62,18 @@ describe(entitlementAt, () => {
     });
   });
 
-  it("counts a trial's whole days left, 0 on its last", () => {
-    expect(entitlementAt({ token: trial }, ISSUED)).toMatchObject({
+  it("counts a trial's calendar days to its last, 0 on it", () => {
+    expect(entitlementAt({ token: trial }, ISSUED, "UTC")).toMatchObject({
       status: "trial",
       tier: "trial",
       trialDaysLeft: 9,
     });
-    expect(entitlementAt({ token: trial }, ISSUED + 8 * DAY)).toMatchObject({
-      trialDaysLeft: 1,
-    });
-    expect(entitlementAt({ token: trial }, ISSUED + 9 * DAY)).toMatchObject({
-      trialDaysLeft: 0,
-    });
+    expect(
+      entitlementAt({ token: trial }, ISSUED + 8.9 * DAY, "UTC")
+    ).toMatchObject({ trialDaysLeft: 1 });
+    expect(
+      entitlementAt({ token: trial }, ISSUED + 9 * DAY, "UTC")
+    ).toMatchObject({ trialDaysLeft: 0 });
   });
 
   it("ends a trial at its end, offline too", () => {
@@ -145,15 +145,16 @@ describe(entitlementAt, () => {
 });
 
 describe(nextChangeAt, () => {
-  it("is the next day boundary of a trial, then its end", () => {
-    expect(nextChangeAt({ token: trial }, ISSUED)).toBe(ISSUED + 0.5 * DAY + 1);
-    expect(
-      entitlementAt({ token: trial }, ISSUED + 0.5 * DAY + 1).trialDaysLeft
-    ).toBe(8);
-    expect(nextChangeAt({ token: trial }, ISSUED + 9 * DAY)).toBe(
+  it("is the next local midnight of a trial, then its end", () => {
+    expect(nextChangeAt({ token: trial }, ISSUED + 0.3 * DAY, "UTC")).toBe(
+      ISSUED + DAY
+    );
+    expect(nextChangeAt({ token: trial }, ISSUED + 9 * DAY, "UTC")).toBe(
       ISSUED + 9.5 * DAY
     );
-    expect(nextChangeAt({ token: trial }, ISSUED + 9.5 * DAY)).toBeUndefined();
+    expect(
+      nextChangeAt({ token: trial }, ISSUED + 9.5 * DAY, "UTC")
+    ).toBeUndefined();
   });
 
   it("is a license's expiry, or its issue's tolerance while the clock is behind", () => {

@@ -54,7 +54,10 @@ export const ENTITLEMENT_STATE = {
     tier: z.enum(TIERS),
     /** Why the license or trial could not be confirmed, while `status` is `unconfirmed`. */
     unconfirmedReason: z.nullable(z.enum(UNCONFIRMED_REASONS)),
-    /** Whole days left in a running trial: 0 on its last day. */
+    /**
+     * Calendar days, in the device's calendar, to a running trial's last
+     * day: 2 or more reads "ends in N days", 1 "ends tomorrow", 0 "ends today".
+     */
     trialDaysLeft: z.nullable(z.number()),
     /** Who the license is for, as the server words it. */
     licensee: z.nullable(z.string()),

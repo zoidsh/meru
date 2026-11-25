@@ -13,7 +13,8 @@ import type {
 
 import { REFRESH_INTERVAL, createEntitlement } from "./entitlement.ts";
 
-const START = Date.UTC(2026, 10, 1);
+// Midday, so a 14-day trial begun now has 14 calendar days to its last.
+const START = Date.UTC(2026, 10, 1, 12);
 const DEVICE = "device";
 const keys = generateKeyPairSync("ed25519");
 const strangers = generateKeyPairSync("ed25519");
@@ -83,6 +84,7 @@ const setup = (initial?: EntitlementFile) => {
       deviceId: DEVICE,
       defaultDeviceName: () => "Studio",
       now: Date.now,
+      timeZone: "UTC",
       log: (message) => logs.push(message),
     });
 

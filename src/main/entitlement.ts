@@ -46,6 +46,8 @@ export const saveEntitlementFile = (file: TextFile, value: EntitlementFile) =>
 export const openEntitlementFile = (deps: {
   file: TextFile;
   now: () => number;
+  /** Where trial days are counted; the device's own zone when absent. */
+  timeZone?: string;
   log: (message: string) => void;
 }) =>
   openStore({
@@ -99,6 +101,8 @@ export interface EntitlementDeps {
   /** Sent as the device's label when a key is activated. */
   defaultDeviceName: () => string;
   now: () => number;
+  /** Where trial days are counted; the device's own zone when absent. */
+  timeZone?: string;
   log: (message: string) => void;
 }
 
@@ -115,6 +119,7 @@ export const createEntitlement = ({
   deviceId,
   defaultDeviceName,
   now,
+  timeZone,
   log,
 }: EntitlementDeps) => {
   let file = initial;
@@ -138,10 +143,10 @@ export const createEntitlement = ({
     };
   };
 
-  let granted = entitlementAt(record(), now()).tier;
+  let granted = entitlementAt(record(), now(), timeZone).tier;
 
   const snapshot = (): EntitlementState => {
-    const current = entitlementAt(record(), now());
+    const current = entitlementAt(record(), now(), timeZone);
 
     granted = sessionTier(granted, current.tier);
 
@@ -164,7 +169,7 @@ export const createEntitlement = ({
   const scheduleChange = (onDue: () => void) => {
     clearTimeout(changeTimer);
 
-    const at = nextChangeAt(record(), now());
+    const at = nextChangeAt(record(), now(), timeZone);
 
     if (at !== undefined) {
       changeTimer = setTimeout(onDue, Math.min(at - now(), MAX_TIMER));

@@ -41,7 +41,7 @@ test("starts a 14-day trial at the first launch and keeps a license offline", as
   await findPage(first, SHELL_URL);
   await expect
     .poll(() => snapshot(first))
-    .toMatchObject({ status: "trial", tier: "trial", trialDaysLeft: 13 });
+    .toMatchObject({ status: "trial", tier: "trial", trialDaysLeft: 14 });
 
   await expect(
     activate(first, "MERU-USED-0000-0000-0000")

@@ -1,5 +1,7 @@
 import { z } from "zod/mini";
 
+import { nextLocalDay, trialDaysLeft } from "./trial-days.ts";
+
 /**
  * What a free install lacks, in the order they are to be gated. `profiles`
  * is more than one profile, and with it profile sleep and per-profile
@@ -106,7 +108,10 @@ export interface EntitlementView {
   status: EntitlementStatus;
   tier: Tier;
   unconfirmedReason: UnconfirmedReason | null;
-  /** Whole days left: 0 on the last day. `null` without a running trial. */
+  /**
+   * Calendar days in the device's calendar to the trial's last day: 0 on
+   * it, 1 the day before. `null` without a running trial.
+   */
   trialDaysLeft: number | null;
   licensee: string | null;
   deviceLabel: string | null;
@@ -160,10 +165,14 @@ const fromProvisional = (record: EntitlementRecord, now: number) => {
     : unconfirmed(undefined, "offline");
 };
 
-/** Where the entitlement stands at `now`, from what the store holds. */
+/**
+ * Where the entitlement stands at `now`, from what the store holds. Days are
+ * counted in `timeZone`, the device's own when none is given.
+ */
 export const entitlementAt = (
   record: EntitlementRecord,
-  now: number
+  now: number,
+  timeZone?: string
 ): EntitlementView => {
   const { token } = record;
 
@@ -202,7 +211,7 @@ export const entitlementAt = (
 
   return view("trial", token, {
     tier: "trial",
-    trialDaysLeft: Math.floor((Number(token.trialEndsAt) - now) / DAY),
+    trialDaysLeft: trialDaysLeft(Number(token.trialEndsAt), now, timeZone),
   });
 };
 
@@ -210,7 +219,11 @@ export const entitlementAt = (
  * The next instant after `now` at which `entitlementAt` can answer
  * differently with the record unchanged, or `undefined` for none.
  */
-export const nextChangeAt = (record: EntitlementRecord, now: number) => {
+export const nextChangeAt = (
+  record: EntitlementRecord,
+  now: number,
+  timeZone?: string
+) => {
   const { token } = record;
   const candidates: number[] = [];
 
@@ -223,16 +236,12 @@ export const nextChangeAt = (record: EntitlementRecord, now: number) => {
     }
   } else if (
     token.tier !== "free" &&
-    entitlementAt(record, now).status !== "trialEnded"
+    entitlementAt(record, now, timeZone).status !== "trialEnded"
   ) {
     candidates.push(token.issuedAt - CLOCK_TOLERANCE, token.expiresAt);
 
     if (token.trialEndsAt !== undefined) {
-      const { trialEndsAt } = token;
-      const daysLeft = Math.floor((trialEndsAt - now) / DAY);
-
-      // A day is left until less than a whole one is: the millisecond after.
-      candidates.push(trialEndsAt, trialEndsAt - daysLeft * DAY + 1);
+      candidates.push(token.trialEndsAt, nextLocalDay(now, timeZone));
     }
   }
 
