@@ -3,6 +3,7 @@ import {
   BellIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  DockIcon,
   MailIcon,
   SearchIcon,
   UsersIcon,
@@ -21,6 +22,7 @@ import {
 } from "#ui/input-group.tsx";
 
 import { GmailPage } from "./gmail-page.tsx";
+import { MenuBarPage, onMacOS } from "./menu-bar-page.tsx";
 import { NotificationsPage } from "./notifications-page.tsx";
 import { ProfilePage } from "./profile-page.tsx";
 import { ProfilesPage } from "./profiles-page.tsx";
@@ -29,6 +31,7 @@ import { settingsCalls, useSettingsState } from "./sync.ts";
 
 /** The sections whose page needs nothing from the window. */
 const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
+  "menu-bar": MenuBarPage,
   notifications: NotificationsPage,
   gmail: GmailPage,
 };
@@ -43,12 +46,48 @@ interface Section {
 
 /** The sections built so far, in the nav's groups. */
 const SECTION_GROUPS: readonly (readonly Section[])[] = [
+  [{ id: "menu-bar", icon: DockIcon }],
   [{ id: "profiles", icon: UsersIcon }],
   [
     { id: "notifications", icon: BellIcon },
     { id: "gmail", icon: MailIcon },
   ],
 ];
+
+/** Each section's name, in the nav, as the title and for the search. */
+const useSectionTitles = (): Record<SettingsSection, string> => {
+  const { t } = useLingui();
+
+  return {
+    // Named after the platform's own places.
+    "menu-bar": onMacOS()
+      ? t({
+          message: "Menu Bar & Dock",
+          comment:
+            "Name of the Settings section on macOS for Meru's icons in the menu bar and the Dock, in its list and as its title; Menu Bar and Dock are macOS's own names",
+        })
+      : t({
+          message: "Tray & Taskbar",
+          comment:
+            "Name of the Settings section on Windows and Linux for Meru's icons in the system tray and the taskbar, in its list and as its title",
+        }),
+    profiles: t({
+      message: "Profiles",
+      comment:
+        "Name of the Settings section listing the profiles, in its list and as its title",
+    }),
+    notifications: t({
+      message: "Notifications",
+      comment:
+        "Name of the Settings section for notifications, the unread badge and Do Not Disturb, in its list and as its title",
+    }),
+    gmail: t({
+      message: "Gmail",
+      comment:
+        "Name of the Settings section for Gmail's page, its conversations and verification codes, in its list and as its title; Gmail is the product's name",
+    }),
+  };
+};
 
 export const App = () => {
   const { t } = useLingui();
@@ -67,23 +106,7 @@ export const App = () => {
   }, []);
   const [query, setQuery] = useState("");
 
-  const titles: Record<SettingsSection, string> = {
-    profiles: t({
-      message: "Profiles",
-      comment:
-        "Name of the Settings section listing the profiles, in its list and as its title",
-    }),
-    notifications: t({
-      message: "Notifications",
-      comment:
-        "Name of the Settings section for notifications, the unread badge and Do Not Disturb, in its list and as its title",
-    }),
-    gmail: t({
-      message: "Gmail",
-      comment:
-        "Name of the Settings section for Gmail's page, its conversations and verification codes, in its list and as its title; Gmail is the product's name",
-    }),
-  };
+  const titles = useSectionTitles();
   const sectionId = page?.section ?? "notifications";
   const SectionPage = SECTION_PAGES[sectionId];
   const profile =

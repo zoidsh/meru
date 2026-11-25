@@ -458,6 +458,11 @@ msgstr "Choose a profile"
 msgid "Clear all"
 msgstr "Clear all"
 
+#. Description of the Jump to unread mail switch in Settings; the icon is Meru's in the menu bar or the system tray
+#: src/settings/menu-bar-page.tsx
+msgid "Clicking the icon opens the first profile that has unread mail."
+msgstr "Clicking the icon opens the first profile that has unread mail."
+
 #. Button in the find bar that ends the search and hides the bar
 #. Menu item in the Window menu that closes the window
 #: src/main/application-menu.ts
@@ -587,6 +592,11 @@ msgstr "Cut"
 msgid "Cyan"
 msgstr "Cyan"
 
+#. Choice of the Icon color menu in Settings: a dark tray icon
+#: src/settings/menu-bar-page.tsx
+msgid "Dark"
+msgstr "Dark"
+
 #. Label of the switch in Settings that darkens the parts of Gmail its own dark theme leaves white
 #: src/settings/gmail-page.tsx
 msgid "Dark theme for all of Gmail"
@@ -673,6 +683,11 @@ msgstr "Do Not Disturb is on until turned off"
 #: src/settings/notifications-page.tsx
 msgid "Do Not Disturb is on."
 msgstr "Do Not Disturb is on."
+
+#. Heading of the group of Settings on macOS for Meru's icon in the Dock; the Dock is macOS's own name
+#: src/settings/menu-bar-page.tsx
+msgid "Dock"
+msgstr "Dock"
 
 #. Title of the system notification when a download stops before it is done; the file's name is its text
 #: src/main/download-notifications.ts
@@ -878,6 +893,16 @@ msgstr "Hides offers from Google above your inbox."
 msgid "Hides the storage and account details below your inbox."
 msgstr "Hides the storage and account details below your inbox."
 
+#. Label of the menu in Settings on Windows and Linux choosing the color of Meru's tray icon
+#: src/settings/menu-bar-page.tsx
+msgid "Icon color"
+msgstr "Icon color"
+
+#. Description of the Show in Dock switch in Settings; Meru's icon in the menu bar opens it while the Dock icon is hidden
+#: src/settings/menu-bar-page.tsx
+msgid "If you hide it, you can still open Meru from the menu bar."
+msgstr "If you hide it, you can still open Meru from the menu bar."
+
 #. Said by screen readers after a sidebar row's title while its tab is moved to a window of its own, which a click brings forward
 #: src/shell/tab-strip.tsx
 msgid "In its own window"
@@ -903,6 +928,11 @@ msgstr "It’s back in the list."
 msgid "Its page quit unexpectedly. Reload it to carry on."
 msgstr "Its page quit unexpectedly. Reload it to carry on."
 
+#. Label of the switch in Settings that makes a click on Meru's menu bar or tray icon open the first profile with unread mail
+#: src/settings/menu-bar-page.tsx
+msgid "Jump to unread mail"
+msgstr "Jump to unread mail"
+
 #. Under the Downloads title: how long a downloaded file stays in the list below
 #: src/shell/downloads.tsx
 msgid "Kept for 30 days"
@@ -922,6 +952,11 @@ msgstr "label:receipts is:unread"
 #: src/shell/pane-handle.tsx
 msgid "Left pane {percent}"
 msgstr "Left pane {percent}"
+
+#. Choice of the Icon color menu in Settings: a light tray icon
+#: src/settings/menu-bar-page.tsx
+msgid "Light"
+msgstr "Light"
 
 #. Name of a profile's color
 #: src/settings/profile-page.tsx
@@ -979,10 +1014,25 @@ msgstr "Maximize Pane"
 msgid "Maximized · Restore"
 msgstr "Maximized · Restore"
 
+#. Heading of the group of Settings on macOS for Meru's icon in the menu bar at the top of the screen
+#: src/settings/menu-bar-page.tsx
+msgid "Menu bar"
+msgstr "Menu bar"
+
+#. Name of the Settings section on macOS for Meru's icons in the menu bar and the Dock, in its list and as its title; Menu Bar and Dock are macOS's own names
+#: src/settings/app.tsx
+msgid "Menu Bar & Dock"
+msgstr "Menu Bar & Dock"
+
 #. Description of Quiet hours in Settings
 #: src/settings/quiet-hours-field.tsx
 msgid "Meru holds notifications until quiet hours end."
 msgstr "Meru holds notifications until quiet hours end."
+
+#. Description of the Show in system tray switch in Settings on Windows and Linux
+#: src/settings/menu-bar-page.tsx
+msgid "Meru keeps running in the tray when you close its window."
+msgstr "Meru keeps running in the tray when you close its window."
 
 #. Explanation under the heading in place of a tab's page that could not load
 #: src/shell/tab-problem.tsx
@@ -1601,6 +1651,11 @@ msgstr "Show All"
 msgid "Show attachments first"
 msgstr "Show attachments first"
 
+#. Label of the switch in Settings on macOS that shows Meru's icon in the Dock
+#: src/settings/menu-bar-page.tsx
+msgid "Show in Dock"
+msgstr "Show in Dock"
+
 #. Button on the macOS notification of a finished download that shows the file in Finder
 #: src/main/download-notifications.ts
 msgid "Show in Finder"
@@ -1610,6 +1665,16 @@ msgstr "Show in Finder"
 #: src/main/download-notifications.ts
 msgid "Show in folder"
 msgstr "Show in folder"
+
+#. Label of the switch in Settings on macOS that shows Meru's icon in the menu bar at the top of the screen
+#: src/settings/menu-bar-page.tsx
+msgid "Show in menu bar"
+msgstr "Show in menu bar"
+
+#. Label of the switch in Settings on Windows and Linux that shows Meru's icon in the system tray
+#: src/settings/menu-bar-page.tsx
+msgid "Show in system tray"
+msgstr "Show in system tray"
 
 #. Label of the switch on a profile's page in Settings that lists its unread mail in the Unified inbox, the list of every profile's unread mail
 #: src/settings/profile-page.tsx
@@ -1646,7 +1711,9 @@ msgstr "Show test notification"
 msgid "Show trimmed content"
 msgstr "Show trimmed content"
 
+#. Label of the switch in Settings on macOS that shows the unread count beside Meru's menu bar icon
 #. Label of the switch in Settings that adds unread mail to the number on the app's icon
+#: src/settings/menu-bar-page.tsx
 #: src/settings/notifications-page.tsx
 msgid "Show unread count"
 msgstr "Show unread count"
@@ -1786,10 +1853,22 @@ msgstr "Stop"
 msgid "Stopped working"
 msgstr "Stopped working"
 
+#. Choice of the Icon color menu in Settings: the tray icon follows the system's light or dark mode
 #. Choice of the Sound menu in Settings: the system's own notification sound
+#: src/settings/menu-bar-page.tsx
 #: src/settings/notifications-page.tsx
 msgid "System"
 msgstr "System"
+
+#. Description of the Icon color menu in Settings; System is the menu's first choice
+#: src/settings/menu-bar-page.tsx
+msgid "System changes with light and dark mode."
+msgstr "System changes with light and dark mode."
+
+#. Heading of the group of Settings on Windows and Linux for Meru's icon in the system tray
+#: src/settings/menu-bar-page.tsx
+msgid "System tray"
+msgstr "System tray"
 
 #. Accessible name of the list of the profile's tabs down the left of the window, read by screen readers
 #. Name of the menu of commands on the selected profile's tabs
@@ -1872,6 +1951,11 @@ msgstr "To"
 msgid "Toggle Full Screen"
 msgstr "Toggle Full Screen"
 
+#. Name of the Settings section on Windows and Linux for Meru's icons in the system tray and the taskbar, in its list and as its title
+#: src/settings/app.tsx
+msgid "Tray & Taskbar"
+msgstr "Tray & Taskbar"
+
 #. Button in place of a tab's page that could not load, which tries to load it again now
 #: src/shell/tab-problem.tsx
 msgid "Try again"
@@ -1912,6 +1996,16 @@ msgstr "Turn on Enabled first."
 #: src/settings/gmail-page.tsx
 msgid "Turn on Find verification codes first."
 msgstr "Turn on Find verification codes first."
+
+#. Description of a setting in Settings on macOS while Show in menu bar, the switch it depends on, is off; it says what to do to use the setting
+#: src/settings/menu-bar-page.tsx
+msgid "Turn on Show in menu bar first."
+msgstr "Turn on Show in menu bar first."
+
+#. Description of a setting in Settings on Windows and Linux while Show in system tray, the switch it depends on, is off; it says what to do to use the setting
+#: src/settings/menu-bar-page.tsx
+msgid "Turn on Show in system tray first."
+msgstr "Turn on Show in system tray first."
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
