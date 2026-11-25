@@ -418,7 +418,7 @@ msgstr "Blue"
 msgid "Bookmark {title}"
 msgstr "Bookmark {title}"
 
-#. Short notice at the foot of the window once the selected tab's page is no longer bookmarked
+#. Short notice at the foot of the window once the selected tab's page is no longer bookmarked; at most two lines of a narrow notice
 #: src/shell/toast.tsx
 msgid "Bookmark removed"
 msgstr "Bookmark removed"
@@ -630,7 +630,7 @@ msgstr "Content"
 msgid "Content blocker"
 msgstr "Content blocker"
 
-#. Button of the main window's notice that the license or trial could not be confirmed; it closes the notice and Meru goes on as the free version
+#. Button of the main window's notice at launch that the license or trial could not be confirmed; it closes the notice and Meru goes on as the free version
 #: src/shell/license-notice.tsx
 msgid "Continue with free version"
 msgstr "Continue with free version"
@@ -1285,10 +1285,20 @@ msgstr "Meru can't reach its license server. Check your connection and try again
 msgid "Meru couldn't confirm your license"
 msgstr "Meru couldn't confirm your license"
 
+#. Short notice at the foot of the window when the license could not be confirmed for 14 days, as Meru could not reach its server, while Meru is running; at most two lines of a narrow notice
+#: src/shell/toast.tsx
+msgid "Meru couldn't confirm your license. Pro features turn off when you quit Meru."
+msgstr "Meru couldn't confirm your license. Pro features turn off when you quit Meru."
+
 #. Status about Meru Pro (in Settings and in the main window's notice) when the trial could not be confirmed for 14 days, as Meru could not reach its server
 #: src/shared/license-status.ts
 msgid "Meru couldn't confirm your trial"
 msgstr "Meru couldn't confirm your trial"
+
+#. Short notice at the foot of the window when the trial could not be confirmed for 14 days, as Meru could not reach its server, while Meru is running; at most two lines of a narrow notice
+#: src/shell/toast.tsx
+msgid "Meru couldn't confirm your trial. Pro features turn off when you quit Meru."
+msgstr "Meru couldn't confirm your trial. Pro features turn off when you quit Meru."
 
 #: src/main/entitlement.ts
 msgid "Meru couldn't identify this computer, so it can't check your license. Restart Meru and try again."
@@ -1508,15 +1518,10 @@ msgstr "None"
 msgid "Not enough room"
 msgstr "Not enough room"
 
-#. Short notice at the foot of the window when a split would leave a pane too small
+#. Short notice at the foot of the window when a split would leave a pane too small; at most two lines of a narrow notice
 #: src/shell/toast.tsx
 msgid "Not enough room to split"
 msgstr "Not enough room to split"
-
-#. Button of the main window's notice about Meru Pro that closes it, changing nothing
-#: src/shell/license-notice.tsx
-msgid "Not now"
-msgstr "Not now"
 
 #. Under a profile's name in Settings' list of profiles, when its Google account is signed out
 #: src/settings/signed-in.tsx
@@ -1929,7 +1934,7 @@ msgstr "Saved searches"
 msgid "Saved Searches"
 msgstr "Saved Searches"
 
-#. Short notice at the foot of the window when the folder chosen in Settings for downloads is missing or cannot be written, so a download went to the system's Downloads folder
+#. Short notice at the foot of the window when the folder chosen in Settings for downloads is missing or cannot be written, so a download went to the system's Downloads folder; at most two lines of a narrow notice
 #: src/shell/toast.tsx
 msgid "Saved to Downloads because your folder isn't available"
 msgstr "Saved to Downloads because your folder isn't available"
@@ -2347,7 +2352,7 @@ msgstr "Tabs"
 msgid "Test notification"
 msgstr "Test notification"
 
-#. Short notice at the foot of the window when Gmail's Add another account is clicked on the free version, which adds no profile
+#. Short notice at the foot of the window when Gmail's Add another account is clicked on the free version, which adds no profile; at most two lines of a narrow notice
 #: src/shell/toast.tsx
 msgid "The free version uses one profile. Upgrade to Meru Pro to add more."
 msgstr "The free version uses one profile. Upgrade to Meru Pro to add more."
@@ -2491,7 +2496,7 @@ msgid "Trusted sites"
 msgstr "Trusted sites"
 
 #. Button in place of a tab's page that could not load, which tries to load it again now
-#. Button of the main window's notice that the license or trial could not be confirmed; it asks Meru's license server again now
+#. Button of the main window's notice at launch that the license or trial could not be confirmed; it asks Meru's license server again now
 #. Button on the Meru Pro page of Settings that asks Meru's license server again now
 #: src/settings/pro-page.tsx
 #: src/shell/license-notice.tsx
@@ -2609,12 +2614,10 @@ msgid "Until Turned Off"
 msgstr "Until Turned Off"
 
 #. Button in the popover a Meru Pro badge opens in Settings, which opens Meru Pro's page in the default browser
-#. Button of the main window's notice that Meru Pro ends when Meru quits; it opens Meru Pro's page in the default browser
 #. Button of the trial-ended screen at launch that opens Meru Pro's page in the default browser
 #. Button on the Meru Pro page of Settings that opens Meru Pro's page in the default browser
 #: src/settings/pro-badge.tsx
 #: src/settings/pro-page.tsx
-#: src/shell/license-notice.tsx
 #: src/shell/trial-ended.tsx
 msgid "Upgrade"
 msgstr "Upgrade"
@@ -2803,10 +2806,20 @@ msgstr "You've already saved this search."
 msgid "Your computer's date looks wrong"
 msgstr "Your computer's date looks wrong"
 
+#. Short notice at the foot of the window when the computer's clock reads well before the license or trial was last confirmed, while Meru is running; at most two lines of a narrow notice
+#: src/shell/toast.tsx
+msgid "Your computer's date looks wrong. Pro features turn off when you quit Meru."
+msgstr "Your computer's date looks wrong. Pro features turn off when you quit Meru."
+
 #. Status about Meru Pro (in Settings and in the main window's notice) when the license server no longer accepts the license, after a refund or the device's removal
 #: src/shared/license-status.ts
 msgid "Your license can't be used"
 msgstr "Your license can't be used"
+
+#. Short notice at the foot of the window when the license server stops accepting the license (a refund, or the device removed) while Meru is running; at most two lines of a narrow notice
+#: src/shell/toast.tsx
+msgid "Your license can't be used. Pro features turn off when you quit Meru."
+msgstr "Your license can't be used. Pro features turn off when you quit Meru."
 
 #. Heading of the main window at the launch after the Meru Pro trial ended, before any profile starts
 #: src/shell/trial-ended.tsx
@@ -2837,6 +2850,11 @@ msgstr "Your trial ends tomorrow."
 #: src/shared/license-status.ts
 msgid "Your trial has ended"
 msgstr "Your trial has ended"
+
+#. Short notice at the foot of the window when the Meru Pro trial ends while Meru is running; what Pro unlocked stays on until Meru is quit; at most two lines of a narrow notice
+#: src/shell/toast.tsx
+msgid "Your trial has ended. Pro features turn off when you quit Meru."
+msgstr "Your trial has ended. Pro features turn off when you quit Meru."
 
 #. Menu item in the macOS Window menu that toggles the window between its size and filling the screen
 #: src/main/application-menu.ts

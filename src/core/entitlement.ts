@@ -243,25 +243,58 @@ export const entitlementAt = (
   });
 };
 
+/** The toasts that tell, while Meru runs, that Meru Pro ends when it quits, each worded by why. */
+export const DOWNGRADE_TOASTS = [
+  "pro-ends-trial-ended",
+  "pro-ends-license-refused",
+  "pro-ends-license-unconfirmed",
+  "pro-ends-trial-unconfirmed",
+  "pro-ends-date-wrong",
+] as const;
+
+export type DowngradeToast = (typeof DOWNGRADE_TOASTS)[number];
+
 /**
- * What the main window announces of the entitlement: that it could not be
- * confirmed, or that Meru Pro, still granted to this run, ends at the next
- * launch.
+ * The toast for Meru Pro ending at the next launch, while this run still has
+ * it, or `undefined`. A launch starts from the stored record, so this arises
+ * only while Meru runs, and a status that could not be confirmed then always
+ * comes with it, since a free token never reads as unconfirmed.
  */
-export const lapseNotice = ({
+export const downgradeToast = ({
   status,
+  unconfirmedReason,
   downgradePending,
+  hasLicenseKey,
 }: {
   status: EntitlementStatus;
+  unconfirmedReason: UnconfirmedReason | null;
   downgradePending: boolean;
-}): "unconfirmed" | "downgrade" | undefined => {
-  if (status === "unconfirmed") {
-    return "unconfirmed";
+  hasLicenseKey: boolean;
+}): DowngradeToast | undefined => {
+  if (!downgradePending) {
+    return undefined;
   }
 
-  return downgradePending && (status === "trialEnded" || status === "refused")
-    ? "downgrade"
-    : undefined;
+  switch (status) {
+    case "trialEnded": {
+      return "pro-ends-trial-ended";
+    }
+    case "refused": {
+      return "pro-ends-license-refused";
+    }
+    case "unconfirmed": {
+      if (unconfirmedReason === "clock") {
+        return "pro-ends-date-wrong";
+      }
+
+      return hasLicenseKey
+        ? "pro-ends-license-unconfirmed"
+        : "pro-ends-trial-unconfirmed";
+    }
+    default: {
+      return undefined;
+    }
+  }
 };
 
 /**

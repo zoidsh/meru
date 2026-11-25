@@ -1,3 +1,4 @@
+import { DOWNGRADE_TOASTS } from "./entitlement.ts";
 import { findRectangle } from "./find.ts";
 import { contentViewBounds } from "./layout.ts";
 import type { ShellFrame } from "./layout.ts";
@@ -19,6 +20,7 @@ export const TOAST_MESSAGES = [
   "bookmark-removed",
   "downloads-folder-missing",
   "one-profile",
+  ...DOWNGRADE_TOASTS,
 ] as const;
 
 export type ToastMessage = (typeof TOAST_MESSAGES)[number];
@@ -74,12 +76,12 @@ export const coversPage = (overlay: Pick<Overlay, "kind"> | undefined) =>
 
 /**
  * The view a toast is drawn in, at the page area's bottom right corner: the
- * toast, at most 384px wide, 16px in from its right and bottom, and 16px to
- * its left for the component's shadow, which reaches 12px there. A press in
- * that margin closes the toast rather than reaching the page, so it stays
- * no wider than the shadow needs.
+ * toast, at most 384px wide and two lines tall (74px), 16px in from its right
+ * and bottom, and 16px to its left and 6px above for the component's shadow.
+ * A press in that margin closes the toast rather than reaching the page, so
+ * it stays no larger than the shadow needs.
  */
-export const TOAST_VIEW = { width: 416, height: 88 } as const;
+export const TOAST_VIEW = { width: 416, height: 96 } as const;
 
 /** The card's width for each width class, in CSS pixels. */
 export const OVERLAY_WIDTHS = { medium: 448, wide: 704 } as const;

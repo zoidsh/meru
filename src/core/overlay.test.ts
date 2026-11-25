@@ -151,7 +151,7 @@ describe(overlayRectangle, () => {
         }
       ),
     ]).toStrictEqual([
-      { x: 576, y: 604, width: 416, height: 88 },
+      { x: 576, y: 596, width: 416, height: 96 },
       { x: 8, y: 40, width: 284, height: 52 },
     ]);
   });

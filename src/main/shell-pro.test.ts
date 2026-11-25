@@ -213,8 +213,15 @@ describe(followLicenseNotice, () => {
     tier: "free",
     unconfirmedReason: "offline",
   } as const;
+  const trial = {
+    ...LICENSED,
+    status: "trial",
+    tier: "trial",
+    trialDaysLeft: 3,
+    licenseKey: null,
+  } as const;
 
-  it("waits for the overlay's view, then tells a lapse once per launch, however often a refresh repeats it", () => {
+  it("opens the card for a license not confirmed at launch once the overlay's view is adopted, once, and closes it when confirmed", () => {
     const entitlement = fakeEntitlement(unconfirmed);
     const overlays = fakeOverlays();
 
@@ -230,43 +237,51 @@ describe(followLicenseNotice, () => {
     entitlement.move({ lastConfirmed: 5 });
 
     expect(overlays.opened).toHaveLength(1);
+
+    overlays.open({ kind: "license" });
+    entitlement.move({ status: "licensed", unconfirmedReason: null });
+
+    expect(overlays.current()).toBeUndefined();
   });
 
-  it("tells a downgrade pending after a lapse it already told, each once", () => {
-    const entitlement = fakeEntitlement(unconfirmed);
+  it("tells Pro ending at the next launch by a toast, once per wording, never by the card", () => {
+    const entitlement = fakeEntitlement(trial);
     const overlays = fakeOverlays();
 
     overlays.adopt();
     followLicenseNotice({ entitlement, overlays });
-    overlays.close();
     entitlement.move({
-      status: "refused",
-      unconfirmedReason: null,
+      status: "unconfirmed",
+      unconfirmedReason: "offline",
       downgradePending: true,
     });
     overlays.close();
     entitlement.move({ lastConfirmed: 9 });
+    entitlement.move({ status: "trialEnded", unconfirmedReason: null });
 
     expect(overlays.opened).toStrictEqual([
-      { kind: "license" },
-      { kind: "license" },
+      { kind: "toast", message: "pro-ends-trial-unconfirmed" },
+      { kind: "toast", message: "pro-ends-trial-ended" },
     ]);
   });
 
-  it("closes the notice once the license is confirmed, and leaves any other overlay be", () => {
-    const entitlement = fakeEntitlement(unconfirmed);
+  it("waits for an open overlay to close before its toast, which would replace it", () => {
+    const entitlement = fakeEntitlement(trial);
     const overlays = fakeOverlays();
 
     overlays.adopt();
     followLicenseNotice({ entitlement, overlays });
-    entitlement.move({ status: "licensed", unconfirmedReason: null });
-
-    expect(overlays.current()).toBeUndefined();
-
     overlays.open({ kind: "downloads" });
-    entitlement.move({ lastConfirmed: 3 });
+    entitlement.move({ status: "trialEnded", downgradePending: true });
 
     expect(overlays.current()).toStrictEqual({ kind: "downloads" });
+
+    overlays.close();
+
+    expect(overlays.current()).toStrictEqual({
+      kind: "toast",
+      message: "pro-ends-trial-ended",
+    });
   });
 
   it("tells nothing to a trial, a license, or a free run that never had Pro", () => {
@@ -275,7 +290,7 @@ describe(followLicenseNotice, () => {
     overlays.adopt();
 
     for (const snapshot of [
-      { ...LICENSED, status: "trial", trialDaysLeft: 3 } as const,
+      trial,
       LICENSED,
       { ...ENDED, trialChoicePending: false },
     ]) {

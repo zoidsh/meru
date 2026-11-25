@@ -1,6 +1,7 @@
 import type { EntitlementState } from "#contract/entitlement.ts";
 import type { ShellState } from "#contract/shell.ts";
-import { lapseNotice } from "#core/entitlement.ts";
+import { downgradeToast } from "#core/entitlement.ts";
+import type { DowngradeToast } from "#core/entitlement.ts";
 
 import type { LicenseRequests } from "./license-requests.ts";
 import type { Overlays } from "./overlay.ts";
@@ -90,11 +91,13 @@ export const showsTrialFooter = (
 ) => entitlement.snapshot().trialDaysLeft !== null;
 
 /**
- * Opens the license notice once per launch for each lapse: the license or
- * trial not confirmed, or Meru Pro ending at the next launch. A refresh that
- * says the same again opens nothing, and one that clears it closes the
- * notice. It waits for the overlay's view, which the shell opens as it
- * mounts.
+ * Tells what lapses of Meru Pro. A license or trial that could not be
+ * confirmed at launch gets the license card, opened once as the overlay's
+ * view is adopted, before anything else is open, and closed once the status
+ * moves on. Meru Pro that ends at the next launch, which only arises while
+ * Meru runs and the person may be typing, gets a toast, which takes no focus:
+ * once per launch for each wording, and only while no other overlay is open,
+ * which it would replace.
  */
 export const followLicenseNotice = ({
   entitlement,
@@ -106,26 +109,44 @@ export const followLicenseNotice = ({
     "current" | "open" | "close" | "onChange" | "webContentsId"
   >;
 }) => {
-  const told = new Set<NonNullable<ReturnType<typeof lapseNotice>>>();
+  let cardDue = entitlement.snapshot().status === "unconfirmed";
+  const told = new Set<DowngradeToast>();
 
   const follow = () => {
-    const notice = lapseNotice(entitlement.snapshot());
-    const shown = overlays.current()?.kind === "license";
+    const snapshot = entitlement.snapshot();
+    const open = overlays.current();
 
-    if (notice === undefined) {
-      if (shown) {
-        overlays.close();
+    if (open?.kind === "license" && snapshot.status !== "unconfirmed") {
+      overlays.close();
+
+      return;
+    }
+
+    if (overlays.webContentsId() === undefined) {
+      return;
+    }
+
+    if (cardDue) {
+      cardDue = false;
+
+      if (snapshot.status === "unconfirmed") {
+        overlays.open({ kind: "license" });
       }
 
       return;
     }
 
-    if (told.has(notice) || overlays.webContentsId() === undefined) {
+    const message = downgradeToast({
+      ...snapshot,
+      hasLicenseKey: snapshot.licenseKey !== null,
+    });
+
+    if (message === undefined || told.has(message) || open !== undefined) {
       return;
     }
 
-    told.add(notice);
-    overlays.open({ kind: "license" });
+    told.add(message);
+    overlays.open({ kind: "toast", message });
   };
 
   entitlement.onChange(follow);

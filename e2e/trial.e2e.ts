@@ -12,6 +12,7 @@ import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
 import {
   NO_TRIAL,
   SHELL_URL,
+  clickMenuItem,
   expect,
   findOverlayDocument,
   findPage,
@@ -135,6 +136,36 @@ const setOffline = (app: ElectronApplication, offline: boolean) =>
   app.evaluate((_electron, on) => {
     process.env.MERU_STUB_OFFLINE = on ? "1" : "";
   }, offline);
+
+/**
+ * Lets `document.hasFocus()` in the page say whether it holds Chromium's
+ * keyboard focus, which Playwright otherwise makes every page claim.
+ */
+const followRealFocus = async (page: Page) => {
+  const cdp = await page.context().newCDPSession(page);
+
+  await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false });
+
+  return () => page.evaluate(() => document.hasFocus());
+};
+
+/** New tab opens its card in the overlay, which works for the run. */
+const expectNewTab = async (app: ElectronApplication) => {
+  const overlay = await findOverlayDocument(app);
+
+  await clickMenuItem(app, "app.open");
+  await expect(
+    overlay.getByRole("combobox", { name: "New tab" })
+  ).toBeVisible();
+};
+
+/** A key the stand-in knows for this install. */
+const knownKey = () => ({ licenses: { [KEY]: { generated: "Device 4F2A" } } });
+
+const TRIAL_ENDED_TOAST =
+  "Your trial has ended. Pro features turn off when you quit Meru.";
+const REFUSED_TOAST =
+  "Your license can't be used. Pro features turn off when you quit Meru.";
 
 const footer = (shell: Page) =>
   shell.getByRole("contentinfo", { name: "Meru Pro trial" });
@@ -271,6 +302,7 @@ test("the launch after the trial ended asks first, running nothing of any profil
   await expect
     .poll(() => viewPartitions(app))
     .toStrictEqual(["persist:personal"]);
+  await expectNewTab(app);
 
   const continued = await menuLabels(app);
 
@@ -317,6 +349,17 @@ test("Enter License Key… on the trial-ended screen says why a key is refused, 
     .poll(() => viewPartitions(app))
     .toStrictEqual(["persist:personal", "persist:work"]);
   await expect(snapshot(app)).resolves.toMatchObject({ status: "licensed" });
+  await expectNewTab(app);
+
+  const overlay = await findOverlayDocument(app);
+
+  await overlay.keyboard.press("Escape");
+  await expect(overlay.getByRole("dialog")).toHaveCount(0);
+
+  // The license refused later in this run tells its toast too.
+  await writeStub(userDataDir, {});
+  await refresh(shell);
+  await expect(overlay.getByText(REFUSED_TOAST, { exact: true })).toBeVisible();
 });
 
 test("Upgrade on the trial-ended screen opens Meru Pro's page and keeps waiting", async ({
@@ -354,35 +397,8 @@ test("a refresh that brings a trial back while the screen waits starts the launc
   ).toBeVisible();
 });
 
-/** Each lapse the notice tells, the stored files and launch that reach it, and what it says. */
+/** Each lapse the launch's card tells, the stored files and launch that reach it, and what it says. */
 const LAPSES = [
-  {
-    name: "downgrade",
-    status: "trialEnded",
-    seed: (userDataDir: string) =>
-      writeStub(userDataDir, { trialStartedAt: Date.now() - 15 * DAY }),
-    env: {},
-    title: "Your trial has ended",
-    description:
-      "Pro features turn off when you quit Meru. Upgrade to keep them.",
-    buttons: ["Not now", "Upgrade"],
-  },
-  {
-    name: "refused",
-    status: "refused",
-    seed: async (userDataDir: string) => {
-      await writeEntitlement(userDataDir, {
-        licenseKey: KEY,
-        keyStoredAt: Date.now(),
-      });
-      await writeStub(userDataDir, {});
-    },
-    env: {},
-    title: "Your license can't be used",
-    description:
-      "Pro features turn off when you quit Meru. Contact support if you think this is a mistake.",
-    buttons: ["Not now", "Upgrade"],
-  },
   {
     name: "offline",
     status: "unconfirmed",
@@ -395,7 +411,6 @@ const LAPSES = [
     title: "Meru couldn't confirm your license",
     description:
       "You're using the free version until it's confirmed. Go online and try again.",
-    buttons: ["Continue with free version", "Try again"],
   },
   {
     name: "clock",
@@ -409,7 +424,6 @@ const LAPSES = [
     title: "Your computer's date looks wrong",
     description:
       "Meru can't confirm Meru Pro until it's right. Set the correct date and time, then try again.",
-    buttons: ["Continue with free version", "Try again"],
   },
 ] as const;
 
@@ -431,7 +445,7 @@ const launchLapsed = async (
 };
 
 for (const lapse of LAPSES) {
-  test(`the main window tells once per launch: ${lapse.title}`, async ({
+  test(`a launch tells once with the card: ${lapse.title}`, async ({
     launchApp,
     userDataDir,
   }) => {
@@ -444,11 +458,13 @@ for (const lapse of LAPSES) {
     await expect(
       notice.getByText(lapse.description, { exact: true })
     ).toBeVisible();
-    await expect(notice.getByRole("button")).toHaveText([...lapse.buttons]);
-
-    const [close] = lapse.buttons;
-
-    await notice.getByRole("button", { name: close }).click();
+    await expect(notice.getByRole("button")).toHaveText([
+      "Continue with free version",
+      "Try again",
+    ]);
+    await notice
+      .getByRole("button", { name: "Continue with free version" })
+      .click();
     await expect(notice).toHaveCount(0);
     await refresh(shell);
     await expect(notice).toHaveCount(0);
@@ -458,19 +474,56 @@ for (const lapse of LAPSES) {
   });
 }
 
-test("Upgrade in the notice opens Meru Pro's page and closes it", async ({
-  launchApp,
+test("Pro ending while Meru runs is a toast that takes no focus: the page typed into keeps it", async ({
+  app,
+  shell,
+  standIn,
   userDataDir,
 }) => {
-  const [downgrade] = LAPSES;
-  const { app, notice } = await launchLapsed(launchApp, userDataDir, downgrade);
+  const gmail = await findPage(app, standIn.url);
+  const overlay = await findOverlayDocument(app);
+  const gmailHasFocus = await followRealFocus(gmail);
 
-  await stubSystemBrowser(app);
-  await notice.getByRole("button", { name: "Upgrade" }).click();
-  await expect(notice).toHaveCount(0);
+  await expect.poll(gmailHasFocus).toBeTruthy();
+  await writeStub(userDataDir, { trialStartedAt: Date.now() - 15 * DAY });
+  await refresh(shell);
+  await expect(
+    overlay.getByText(TRIAL_ENDED_TOAST, { exact: true })
+  ).toBeVisible();
+  await expect(overlay.getByRole("dialog")).toHaveCount(0);
+  expect(await gmailHasFocus()).toBeTruthy();
+  await expect(snapshot(app)).resolves.toMatchObject({
+    status: "trialEnded",
+    downgradePending: true,
+  });
+});
+
+test("a licensed install has no footer, and the page keeps the window's bottom inset", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeEntitlement(userDataDir, {
+    licenseKey: KEY,
+    keyStoredAt: Date.now(),
+  });
+  await writeStub(userDataDir, knownKey());
+
+  const app = await launchApp();
+  const shell = await findPage(app, SHELL_URL);
+
+  await findPage(app, standIn.url);
+  await expect.poll(() => snapshot(app)).toMatchObject({ status: "licensed" });
+  await expect(footer(shell)).toHaveCount(0);
   await expect
-    .poll(() => readOpenedExternally(app))
-    .toStrictEqual([MERU_PRO_URL]);
+    .poll(async () => {
+      const { content, views } = await readViews(app);
+
+      return views.map(
+        (view) => content.height - view.bounds.y - view.bounds.height
+      );
+    })
+    .toStrictEqual([8]);
 });
 
 test("Try again in the notice closes it once the license is confirmed", async ({
@@ -486,9 +539,7 @@ test("Try again in the notice closes it once the license is confirmed", async ({
   const { app, notice } = await launchLapsed(launchApp, userDataDir, offline);
 
   await setOffline(app, false);
-  await writeStub(userDataDir, {
-    licenses: { [KEY]: { generated: "Device 4F2A" } },
-  });
+  await writeStub(userDataDir, knownKey());
   await notice.getByRole("button", { name: "Try again" }).click();
   await expect(notice).toHaveCount(0);
   await expect(snapshot(app)).resolves.toMatchObject({ status: "licensed" });
@@ -536,6 +587,31 @@ test.describe("shots", () => {
       await emulateTheme(app, theme);
       // oxlint-disable-next-line no-await-in-loop -- one theme at a time
       await shootWindow(app, shell, shotPath("trial-ended-key-error", theme));
+    }
+  });
+
+  test("the toast of a trial that ends while Meru runs, light and dark", async ({
+    app,
+    shell,
+    standIn,
+    userDataDir,
+  }) => {
+    await findPage(app, standIn.url);
+
+    const overlay = await findOverlayDocument(app);
+
+    await writeStub(userDataDir, { trialStartedAt: Date.now() - 15 * DAY });
+    await refresh(shell);
+    await expect(
+      overlay.getByText(TRIAL_ENDED_TOAST, { exact: true })
+    ).toBeVisible();
+
+    // Both within the toast's four seconds, as it is told once per launch.
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await shootWindow(app, shell, shotPath("toast-pro-ends", theme));
     }
   });
 

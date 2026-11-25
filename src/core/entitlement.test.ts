@@ -6,14 +6,18 @@ import {
   entitledProfiles,
   entitlementAt,
   isDowngradePending,
-  lapseNotice,
+  downgradeToast,
   maskLicenseKey,
   nextChangeAt,
   normalizeLicenseKey,
   sessionTier,
   tierCan,
 } from "./entitlement.ts";
-import type { Entitlement } from "./entitlement.ts";
+import type {
+  Entitlement,
+  EntitlementStatus,
+  UnconfirmedReason,
+} from "./entitlement.ts";
 
 const ISSUED = Date.UTC(2026, 10, 1);
 
@@ -216,29 +220,46 @@ describe(sessionTier, () => {
   });
 });
 
-describe(lapseNotice, () => {
-  it("announces a license or trial that could not be confirmed, a downgrade pending or not", () => {
-    expect([
-      lapseNotice({ status: "unconfirmed", downgradePending: false }),
-      lapseNotice({ status: "unconfirmed", downgradePending: true }),
-    ]).toStrictEqual(["unconfirmed", "unconfirmed"]);
+const pending = (
+  status: EntitlementStatus,
+  unconfirmedReason: UnconfirmedReason | null = null,
+  hasLicenseKey = true
+) =>
+  downgradeToast({
+    status,
+    unconfirmedReason,
+    downgradePending: true,
+    hasLicenseKey,
   });
 
-  it("announces a trial ended or a license refused only while this run still has Pro", () => {
+describe(downgradeToast, () => {
+  it("words Meru Pro ending at the next launch by why", () => {
     expect([
-      lapseNotice({ status: "trialEnded", downgradePending: true }),
-      lapseNotice({ status: "refused", downgradePending: true }),
-      lapseNotice({ status: "trialEnded", downgradePending: false }),
-      lapseNotice({ status: "refused", downgradePending: false }),
-    ]).toStrictEqual(["downgrade", "downgrade", undefined, undefined]);
+      pending("trialEnded"),
+      pending("refused"),
+      pending("unconfirmed", "offline"),
+      pending("unconfirmed", "offline", false),
+      pending("unconfirmed", "clock"),
+    ]).toStrictEqual([
+      "pro-ends-trial-ended",
+      "pro-ends-license-refused",
+      "pro-ends-license-unconfirmed",
+      "pro-ends-trial-unconfirmed",
+      "pro-ends-date-wrong",
+    ]);
   });
 
-  it("announces nothing for a trial, a license or none", () => {
-    expect(
-      (["trial", "licensed", "provisional", "none"] as const).map((status) =>
-        lapseNotice({ status, downgradePending: false })
-      )
-    ).toStrictEqual([undefined, undefined, undefined, undefined]);
+  it("tells nothing while no downgrade is pending, or of a status that keeps Pro", () => {
+    expect([
+      downgradeToast({
+        status: "unconfirmed",
+        unconfirmedReason: "offline",
+        downgradePending: false,
+        hasLicenseKey: true,
+      }),
+      pending("trial"),
+      pending("licensed"),
+    ]).toStrictEqual([undefined, undefined, undefined]);
   });
 });
 
