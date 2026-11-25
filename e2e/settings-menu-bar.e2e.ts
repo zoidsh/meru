@@ -42,7 +42,7 @@ const openPage = async (page: Page) => {
 const iconColor = (page: Page) =>
   page.getByRole("combobox", { name: "Icon color" });
 
-test("is named after the platform's places in the sidebar, the title and the search", async ({
+test("is named after the platform's places in the sidebar and the title", async ({
   app,
 }) => {
   const page = await openSettings(app);
@@ -51,11 +51,6 @@ test("is named after the platform's places in the sidebar, the title and the sea
   await expect(sections.getByRole("button").first()).toHaveText(SECTION);
   await openPage(page);
   await expect(page.getByRole("tablist")).toHaveCount(0);
-
-  const search = page.getByRole("searchbox", { name: "Search settings" });
-
-  await search.fill(isMacOS ? "dock" : "taskbar");
-  await expect(sections.getByRole("button")).toHaveText([SECTION]);
 });
 
 test("with the tray off, the rows under it are disabled and say why, and come back with their values", async ({

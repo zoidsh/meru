@@ -50,7 +50,7 @@ const openGmail = async (page: Page) => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Gmail");
 };
 
-test("opens from the sidebar and by search, and Back returns to the page before", async ({
+test("opens from the sidebar, and Back returns to the page before", async ({
   app,
 }) => {
   const page = await openSettings(app);
@@ -65,8 +65,6 @@ test("opens from the sidebar and by search, and Back returns to the page before"
     "Notifications"
   );
 
-  await page.getByRole("searchbox", { name: "Search settings" }).fill("gmail");
-  await expect(sections.getByRole("button")).toHaveText(["Gmail"]);
   await sections.getByRole("button", { name: "Gmail" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Gmail");
 });

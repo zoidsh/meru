@@ -5,7 +5,6 @@ import {
   ChevronRightIcon,
   DockIcon,
   MailIcon,
-  SearchIcon,
   UsersIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -15,11 +14,6 @@ import type { ReactNode } from "react";
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import type { SettingsSection } from "#core/settings-pages.ts";
 import { Button } from "#ui/button.tsx";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "#ui/input-group.tsx";
 
 import { GmailPage } from "./gmail-page.tsx";
 import { MenuBarPage, onMacOS } from "./menu-bar-page.tsx";
@@ -54,7 +48,7 @@ const SECTION_GROUPS: readonly (readonly Section[])[] = [
   ],
 ];
 
-/** Each section's name, in the nav, as the title and for the search. */
+/** Each section's name, in the nav and as the title. */
 const useSectionTitles = (): Record<SettingsSection, string> => {
   const { t } = useLingui();
 
@@ -104,7 +98,6 @@ export const App = () => {
   const removalSeen = useCallback(() => {
     setRemoving(undefined);
   }, []);
-  const [query, setQuery] = useState("");
 
   const titles = useSectionTitles();
   const sectionId = page?.section ?? "notifications";
@@ -114,12 +107,6 @@ export const App = () => {
       ? profiles?.find((candidate) => candidate.id === page.profileId)
       : undefined;
   const title = profile?.name ?? titles[sectionId];
-  const needle = query.trim().toLocaleLowerCase();
-  const shown = SECTION_GROUPS.map((group) =>
-    group.filter((section) =>
-      titles[section.id].toLocaleLowerCase().includes(needle)
-    )
-  ).filter((group) => group.length > 0);
 
   const settingsTitle = t({
     message: "Settings",
@@ -197,59 +184,25 @@ export const App = () => {
           style={{ width: NAV_WIDTH }}
           className="flex shrink-0 flex-col gap-3 overflow-y-auto px-3 pb-3"
         >
-          <InputGroup>
-            <InputGroupAddon>
-              <SearchIcon />
-            </InputGroupAddon>
-            <InputGroupInput
-              type="search"
-              value={query}
-              placeholder={t({
-                message: "Search",
-                comment:
-                  "Placeholder of the field atop the Settings window's sections that filters them by name",
-              })}
-              aria-label={t({
-                message: "Search settings",
-                comment:
-                  "Accessible name of the field atop the Settings window's sections that filters them by name",
-              })}
-              autoComplete="off"
-              spellCheck={false}
-              onChange={(event) => {
-                setQuery(event.target.value);
-              }}
-            />
-          </InputGroup>
-          {shown.length > 0 ? (
-            shown.map((group) => (
-              <div key={group[0]?.id} className="flex flex-col gap-1">
-                {group.map(({ id, icon: Icon }) => (
-                  <Button
-                    key={id}
-                    variant={id === sectionId ? "secondary" : "ghost"}
-                    size="sm"
-                    aria-current={id === sectionId ? "page" : undefined}
-                    onClick={() => {
-                      void calls.openPage({ section: id, profileId: null });
-                    }}
-                    className="w-full justify-start gap-2"
-                  >
-                    <Icon data-icon="inline-start" aria-hidden />
-                    {titles[id]}
-                  </Button>
-                ))}
-              </div>
-            ))
-          ) : (
-            <p className="px-2 py-1 text-[0.8rem] text-muted-foreground">
-              {t({
-                message: "No results",
-                comment:
-                  "Shown in place of the Settings window's sections when none matches the search",
-              })}
-            </p>
-          )}
+          {SECTION_GROUPS.map((group) => (
+            <div key={group[0]?.id} className="flex flex-col gap-1">
+              {group.map(({ id, icon: Icon }) => (
+                <Button
+                  key={id}
+                  variant={id === sectionId ? "secondary" : "ghost"}
+                  size="sm"
+                  aria-current={id === sectionId ? "page" : undefined}
+                  onClick={() => {
+                    void calls.openPage({ section: id, profileId: null });
+                  }}
+                  className="w-full justify-start gap-2"
+                >
+                  <Icon data-icon="inline-start" aria-hidden />
+                  {titles[id]}
+                </Button>
+              ))}
+            </div>
+          ))}
         </nav>
         <main aria-label={title} className="flex min-w-0 flex-1 pr-2 pb-2">
           <div

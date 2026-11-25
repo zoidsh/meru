@@ -1157,11 +1157,6 @@ msgstr "No Google apps open"
 msgid "No mail to show yet"
 msgstr "No mail to show yet"
 
-#. Shown in place of the Settings window's sections when none matches the search
-#: src/settings/app.tsx
-msgid "No results"
-msgstr "No results"
-
 #. Said in the New tab launcher when no Google app or bookmark matches what was typed
 #: src/shell/open-app.tsx
 msgid "No results."
@@ -1545,16 +1540,9 @@ msgid "Scroll profiles right"
 msgstr "Scroll profiles right"
 
 #. Label of the field in Settings that takes the Gmail query of a new saved search
-#. Placeholder of the field atop the Settings window's sections that filters them by name
-#: src/settings/app.tsx
 #: src/settings/saved-searches-card.tsx
 msgid "Search"
 msgstr "Search"
-
-#. Accessible name of the field atop the Settings window's sections that filters them by name
-#: src/settings/app.tsx
-msgid "Search settings"
-msgstr "Search settings"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
