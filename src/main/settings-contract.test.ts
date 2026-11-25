@@ -690,6 +690,42 @@ describe("the Settings window's General page", () => {
       }).success
     ).toBeFalsy();
   });
+
+  it("sets the login item, never a setting, and sends the page its state again", async () => {
+    const app = setup(stateOf("Work"));
+    const sends = app.sends();
+    const before = app.read().general.openAtLogin;
+
+    await app.handlers.setOpenAtLogin({ on: true });
+
+    expect([
+      before,
+      app.read().general.openAtLogin,
+      app.loginCalls,
+      app.saved,
+      sends(),
+    ]).toStrictEqual([
+      { on: false, real: false },
+      { on: true, real: false },
+      [true],
+      [],
+      1,
+    ]);
+    app.dispose();
+  });
+
+  it("has no login item on Linux, as v3, and refuses to set one", async () => {
+    const app = setup(stateOf("Work"), undefined, "linux");
+
+    await expect(app.handlers.setOpenAtLogin({ on: true })).rejects.toThrow(
+      "Meru has no login item on Linux"
+    );
+    expect([app.read().general.openAtLogin, app.loginCalls]).toStrictEqual([
+      null,
+      [],
+    ]);
+    app.dispose();
+  });
 });
 
 describe("the Settings window's Appearance page", () => {
@@ -787,42 +823,6 @@ describe("the Settings window's Menu Bar & Dock page", () => {
       { version: 1, tray: true },
       { version: 1, tray: true, dockIcon: false },
       { version: 1, tray: true, dockIcon: true },
-    ]);
-    app.dispose();
-  });
-
-  it("sets the login item, never a setting, and sends the page its state again", async () => {
-    const app = setup(stateOf("Work"));
-    const sends = app.sends();
-    const before = app.read().general.openAtLogin;
-
-    await app.handlers.setOpenAtLogin({ on: true });
-
-    expect([
-      before,
-      app.read().general.openAtLogin,
-      app.loginCalls,
-      app.saved,
-      sends(),
-    ]).toStrictEqual([
-      { on: false, real: false },
-      { on: true, real: false },
-      [true],
-      [],
-      1,
-    ]);
-    app.dispose();
-  });
-
-  it("has no login item on Linux, as v3, and refuses to set one", async () => {
-    const app = setup(stateOf("Work"), undefined, "linux");
-
-    await expect(app.handlers.setOpenAtLogin({ on: true })).rejects.toThrow(
-      "Meru has no login item on Linux"
-    );
-    expect([app.read().general.openAtLogin, app.loginCalls]).toStrictEqual([
-      null,
-      [],
     ]);
     app.dispose();
   });

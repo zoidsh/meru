@@ -315,7 +315,7 @@ const changeFolder = (page: Page) =>
   });
 
 test.describe("the General page", () => {
-  test("is first in the sidebar and the page Settings opens on, with Startup and Downloads and no scopes", async ({
+  test("is first in the sidebar, with Startup and Downloads and no scopes", async ({
     app,
   }) => {
     const page = await openSettings(app);

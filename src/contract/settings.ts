@@ -367,8 +367,8 @@ export const SETTINGS_STATE = {
   general: z.object({
     /**
      * Whether the system opens Meru at login, `null` on Linux, which has no
-     * login item here; `real` is false in every build but a release's,
-     * which only pretends.
+     * login item here; `real` is true in a release's build alone, every
+     * other build only pretending.
      */
     openAtLogin: z.nullable(z.object({ on: z.boolean(), real: z.boolean() })),
     /**

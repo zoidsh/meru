@@ -30,5 +30,4 @@ export const appIdentity = ({
 }: {
   version: string;
   isRelease: boolean;
-}) =>
-  isRelease && !isDevVersion(version) ? { ...RELEASE_IDENTITY } : DEV_IDENTITY;
+}) => (isRelease && !isDevVersion(version) ? RELEASE_IDENTITY : DEV_IDENTITY);
