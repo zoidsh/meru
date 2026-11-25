@@ -5,6 +5,12 @@ import { page } from "./pages.ts";
 /** The Gmail stand-in's message with an ad, a tracker and a pixel in it. */
 export const BLOCKER_PATH = "/blocker";
 
+/**
+ * After the message's URL, leaves the ad out: unblocked, as on the free
+ * version, it would leave the machine, which the suite's build refuses.
+ */
+export const BLOCKER_WITHOUT_AD = "?without-ad";
+
 export const BLOCKER_TITLE = "Blocker stand-in";
 
 /**
@@ -55,7 +61,9 @@ export const createBlockerPage = (origin: () => string) => {
     const path = request.url?.split(/[?=]/u, 1)[0] ?? "";
 
     if (path === BLOCKER_PATH) {
+      const withoutAd = request.url?.endsWith(BLOCKER_WITHOUT_AD) ?? false;
       const images = Object.entries(sources(origin()))
+        .filter(([name]) => !withoutAd || name !== "ad")
         .map(
           ([name, src]) =>
             `<li><img src="${src}" alt="" data-name="${BLOCKER_IMAGES[name as BlockerImage]}"> <span>${BLOCKER_IMAGES[name as BlockerImage]}: loading</span></li>`

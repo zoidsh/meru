@@ -40,6 +40,8 @@ export const GATED_SETTINGS: {
     capability: "notificationSound",
     free: (stored) => (stored === "none" ? "none" : FREE_SOUND),
   },
+  blockAds: { capability: "blocker", free: () => false },
+  blockTrackers: { capability: "blocker", free: () => false },
 };
 
 /** The capability the setting needs, if any. */

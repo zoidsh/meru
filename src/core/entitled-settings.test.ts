@@ -53,6 +53,13 @@ describe(entitledSetting, () => {
     ).toStrictEqual(["linen", "linen", "linen", "none"]);
   });
 
+  it("blocks neither ads nor trackers without Meru Pro", () => {
+    expect([
+      entitledSetting("blockAds", true, free),
+      entitledSetting("blockTrackers", true, free),
+    ]).toStrictEqual([false, false]);
+  });
+
   it("asks only the capability the setting needs", () => {
     const asked: Capability[] = [];
 

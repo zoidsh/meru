@@ -6,6 +6,7 @@ import type { PRIVACY_PAGE_KEYS } from "#contract/settings.ts";
 import { Button } from "#ui/button.tsx";
 import { Switch } from "#ui/switch.tsx";
 
+import { useNeedsPro } from "./pro-badge.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
@@ -19,6 +20,7 @@ export const PrivacyPage = () => {
   const { t } = useLingui();
   const settings = useSettingsState("settings");
   const trustedSites = useSettingsState("trustedSites");
+  const needsPro = useNeedsPro();
 
   if (!settings || !trustedSites) {
     return null;
@@ -30,20 +32,31 @@ export const PrivacyPage = () => {
     key: (typeof PRIVACY_PAGE_KEYS)[number],
     label: string,
     description?: string
-  ) => (
-    <SettingRow key={key} label={label} description={description}>
-      {(ids) => (
-        <Switch
-          checked={settings[key]}
-          aria-labelledby={ids.label}
-          aria-describedby={ids.description || undefined}
-          onCheckedChange={(checked) => {
-            calls.update({ key, value: checked }).catch(noop);
-          }}
-        />
-      )}
-    </SettingRow>
-  );
+  ) => {
+    const pro = needsPro.setting(key);
+
+    return (
+      <SettingRow
+        key={key}
+        label={label}
+        description={description}
+        disabled={pro}
+        pro={pro}
+      >
+        {(ids) => (
+          <Switch
+            checked={settings[key]}
+            disabled={pro}
+            aria-labelledby={ids.label}
+            aria-describedby={ids.description || undefined}
+            onCheckedChange={(checked) => {
+              calls.update({ key, value: checked }).catch(noop);
+            }}
+          />
+        )}
+      </SettingRow>
+    );
+  };
 
   const count = trustedSites.length;
   const sitesOff = !settings.confirmLinks;

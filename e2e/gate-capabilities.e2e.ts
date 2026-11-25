@@ -36,8 +36,13 @@ import {
   shootWindow,
   shotPath,
 } from "./lib/shots.ts";
-import { ANY_SESSION, listing } from "./lib/stand-in.ts";
-import type { StandIn } from "./lib/stand-in.ts";
+import {
+  ANY_SESSION,
+  BLOCKER_IMAGES,
+  BLOCKER_WITHOUT_AD,
+  listing,
+} from "./lib/stand-in.ts";
+import type { BlockerImage, StandIn } from "./lib/stand-in.ts";
 
 /** One profile, Home, with its Gmail tab, and whatever else the state holds. */
 const seedOneProfile = (
@@ -634,6 +639,77 @@ test("the free version lists no saved search and saves none, shows Add search as
       badge: undefined,
       enabled: true,
     });
+});
+
+/** Each image's line in the blocker's message once it has settled. */
+const expectImages = async (
+  gmail: Page,
+  outcomes: Partial<Record<BlockerImage, "loaded" | "blocked">>
+) => {
+  const images = gmail.getByRole("list", { name: "Images" });
+
+  for (const [image, outcome] of Object.entries(outcomes)) {
+    // oxlint-disable-next-line no-await-in-loop -- one line at a time reads better on failure
+    await expect(
+      images.getByText(`${BLOCKER_IMAGES[image as BlockerImage]}: ${outcome}`)
+    ).toBeVisible();
+  }
+};
+
+test("the free version blocks nothing, shows the blocker's switches as Pro rows with their values kept, and a license blocks from the next load", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedOneProfile(userDataDir, standIn);
+  await writeSettings(userDataDir, { blockAds: true, blockTrackers: true });
+
+  const settingsBefore = await readStored(userDataDir, SETTINGS_FILE);
+  const { app, gmail } = await launchFree(launchApp, userDataDir, standIn);
+
+  // Without the ad, which nothing would stop leaving the machine.
+  await gmail.goto(`${standIn.blockerUrl}${BLOCKER_WITHOUT_AD}`);
+  await expectImages(gmail, {
+    telemetry: "loaded",
+    pixel: "loaded",
+    logo: "loaded",
+  });
+  expect(standIn.blockerServed.toSorted()).toStrictEqual([
+    "logo",
+    "pixel",
+    "telemetry",
+  ]);
+
+  const page = await openSettings(app);
+
+  await openSection(page, "Privacy & Security");
+
+  for (const label of ["Block ads", "Block trackers"]) {
+    // oxlint-disable-next-line no-await-in-loop -- one row after another
+    await expect(switchNamed(page, label)).toBeDisabled();
+    // oxlint-disable-next-line no-await-in-loop -- one row after another
+    await expect(switchNamed(page, label)).not.toBeChecked();
+    // oxlint-disable-next-line no-await-in-loop -- one row after another
+    await expect(badgeOf(page, label)).toBeVisible();
+  }
+
+  await expect(readStored(userDataDir, SETTINGS_FILE)).resolves.toBe(
+    settingsBefore
+  );
+
+  await activate(page);
+  await openSection(page, "Privacy & Security");
+  await expect(switchNamed(page, "Block ads")).toBeChecked();
+  await expect(switchNamed(page, "Block trackers")).toBeEnabled();
+  await expect(badgeOf(page, "Block ads")).toHaveCount(0);
+  // With the ad, which a request leaving the machine would fail the test for.
+  await gmail.goto(standIn.blockerUrl);
+  await expectImages(gmail, {
+    ad: "blocked",
+    telemetry: "blocked",
+    pixel: "blocked",
+    logo: "loaded",
+  });
 });
 
 test.describe("shots", () => {
