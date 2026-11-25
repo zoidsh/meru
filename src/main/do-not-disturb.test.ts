@@ -280,6 +280,7 @@ describe("an end no date holds", () => {
           { open: false, profiles: [], rows: [], notice: null },
           {
             sidebar: { state: "hidden" },
+            appearance: { tint: true },
             shortcuts: {},
             ariaShortcuts: {},
             navigation: null,

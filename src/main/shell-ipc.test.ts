@@ -82,6 +82,7 @@ const setup = () => {
     profiles: profilesSlice("a"),
     tabs: TABS,
     sidebar: { state: "hidden" },
+    appearance: { tint: true },
     shortcuts: {},
     ariaShortcuts: {},
     navigation: null,

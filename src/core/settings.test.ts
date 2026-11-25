@@ -82,6 +82,23 @@ describe(readSetting, () => {
     ).toBeFalsy();
   });
 
+  it("follows the system's theme and tints with the profile's color by default, and reads a choice the file holds", () => {
+    const defaults = read({ version: 1 });
+    const chosen = read({ version: 1, theme: "dark", profileTint: false });
+    const broken = read({ version: 1, theme: "sepia", profileTint: "no" });
+
+    expect(
+      [defaults, chosen, broken].map((settings) => [
+        readSetting(settings, "theme", "linux"),
+        readSetting(settings, "profileTint", "linux"),
+      ])
+    ).toStrictEqual([
+      ["system", true],
+      ["dark", false],
+      ["system", true],
+    ]);
+  });
+
   it("shows notifications with the sender, subject and summary by default", () => {
     for (const key of [
       "notifications",

@@ -109,6 +109,7 @@ export const App = () => {
   const tabs = useShellState("tabs");
   const profiles = useShellState("profiles");
   const sidebar = useShellState("sidebar")?.state ?? "hidden";
+  const tint = useShellState("appearance")?.tint ?? true;
   const { inset, radius } = viewFrame(sidebar);
   const selected = profiles?.profiles.find(
     (profile) => profile.id === profiles.selectedProfileId
@@ -116,10 +117,12 @@ export const App = () => {
 
   return (
     <>
-      {/* The selected profile's colour, which `styles.css` mixes into the shell's greys. */}
+      {/* The selected profile's colour, which `styles.css` mixes into the shell's greys; with none set they stay plain. */}
       <div
         data-tint
-        style={{ "--tint": selected?.color } as CSSProperties}
+        style={
+          { "--tint": tint ? selected?.color : undefined } as CSSProperties
+        }
         className="flex h-full flex-col bg-shell"
       >
         <Titlebar

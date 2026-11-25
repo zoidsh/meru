@@ -20,6 +20,7 @@ const connect = () => {
     "profiles",
     "tabs",
     "sidebar",
+    "appearance",
     "shortcuts",
     "ariaShortcuts",
     "navigation",

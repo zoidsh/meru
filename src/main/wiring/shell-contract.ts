@@ -24,6 +24,7 @@ import { createPaneResize } from "../pane-resize.ts";
 import { createProfileMenu } from "../profile-menu.ts";
 import type { Profiles } from "../profiles.ts";
 import type { SenderRegistry } from "../senders.ts";
+import type { SettingsStore } from "../settings.ts";
 import {
   createShellHandlers,
   shellShortcuts,
@@ -69,6 +70,7 @@ export const wireShellContract = ({
   livePageUrl,
   clipboard,
   systemBrowser,
+  settings,
 }: {
   platform: Platform;
   apps: readonly App[];
@@ -97,6 +99,7 @@ export const wireShellContract = ({
   livePageUrl: (key: TabKey) => string | undefined;
   clipboard: ReturnType<typeof createClipboard>;
   systemBrowser: ReturnType<typeof createSystemBrowser>;
+  settings: Pick<SettingsStore, "get" | "onChange">;
 }) => {
   const shortcuts = shellShortcuts(COMMANDS, platform);
   const ariaShortcuts = shellShortcuts(COMMANDS, platform, true);
@@ -206,6 +209,7 @@ export const wireShellContract = ({
           inbox.shellSlice(),
           {
             sidebar: { state: sidebar.current() },
+            appearance: { tint: settings.get("profileTint") },
             shortcuts,
             ariaShortcuts,
             navigation: views.navigation(),
@@ -251,6 +255,7 @@ export const wireShellContract = ({
         inbox.onChange(listener);
         downloads.onChange(listener);
         sidebar.onChange(listener);
+        settings.onChange("profileTint", listener);
       },
     },
     log: console.error,

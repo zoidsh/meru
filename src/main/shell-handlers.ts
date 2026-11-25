@@ -259,6 +259,7 @@ export const shellState = (
   fixed: Pick<
     ShellState,
     | "sidebar"
+    | "appearance"
     | "shortcuts"
     | "ariaShortcuts"
     | "navigation"

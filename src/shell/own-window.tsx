@@ -83,13 +83,14 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
   const profiles = useShellState("profiles");
   const shortcuts = useShellState("shortcuts");
   const downloads = useShellState("downloads");
+  const tint = useShellState("appearance")?.tint ?? true;
   const profile = profiles?.profiles.find(({ id }) => id === own.profileId);
   const title = tabTitle(own);
 
   return (
     <div
       data-tint
-      style={{ "--tint": profile?.color } as CSSProperties}
+      style={{ "--tint": tint ? profile?.color : undefined } as CSSProperties}
       className="flex h-screen flex-col bg-shell"
     >
       <header

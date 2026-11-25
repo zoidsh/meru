@@ -133,6 +133,14 @@ export const SETTINGS = {
     default: "system",
   }),
   /**
+   * Whether the titlebar and the sidebar take a touch of the selected
+   * profile's colour, a tab's own window its profile's.
+   */
+  profileTint: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /**
    * The tray or menu bar icon. Off on macOS, where the Dock already shows the
    * count and reaches the window, as in v3.
    */

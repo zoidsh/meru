@@ -509,6 +509,7 @@ const start = async () => {
     livePageUrl,
     clipboard,
     systemBrowser,
+    settings,
   });
 
   wireTray({

@@ -420,6 +420,11 @@ export const SHELL_STATE = {
     })
   ),
   sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),
+  /** What the Appearance settings ask of the shell. */
+  appearance: z.object({
+    /** Whether the shell mixes the profile's colour into its greys. */
+    tint: z.boolean(),
+  }),
   /**
    * Each command's shortcut on this platform as a person reads it, such as
    * `⌘S`, by command id; a command with none is absent.
