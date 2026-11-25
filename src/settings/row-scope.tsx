@@ -14,7 +14,7 @@ import type { ListedProfile } from "./scope.ts";
 export interface RowScope {
   /** The last of its descriptions: who differs, or whose value it shows. */
   line?: ReactNode;
-  /** Use app setting, while the profile holds its own value. */
+  /** Reset, while the profile holds its own value. */
   reset?: ReactNode;
   /** The overriding profile's colour, for the bar at the card's edge. */
   bar?: string;
@@ -87,14 +87,14 @@ export const OverrideCaption = ({
     <FieldDescription>
       {appValue === undefined
         ? t({
-            message: "Using app setting",
+            message: "Same as All profiles.",
             comment:
               "Caption under a Settings row in a profile's scope while the profile has no value of its own",
           })
         : t({
-            message: `Set for ${name}. App setting is ${appValue}.`,
+            message: `Set for ${name} only. For all profiles, it's ${appValue}.`,
             comment:
-              "Caption under a Settings row in a profile's scope while the profile sets its own value; {name} is the profile, {appValue} the value every other profile uses, such as On, Chime or 22:00–07:00 every day",
+              "Caption under a Settings row in a profile's scope while the profile sets its own value; {name} is the profile, {appValue} the value set under All profiles, such as On, Chime or 22:00–07:00 every day",
           })}
     </FieldDescription>
   );
@@ -115,7 +115,7 @@ export const ResetButton = ({
       variant="ghost"
       size="xs"
       aria-label={t({
-        message: `Use app setting for ${label}`,
+        message: `Reset ${label} to All profiles`,
         comment:
           "Accessible name of the button under a Settings row in a profile's scope that drops the profile's own value; {label} is the row's label",
       })}
@@ -123,9 +123,9 @@ export const ResetButton = ({
     >
       <RotateCcwIcon data-icon="inline-start" />
       {t({
-        message: "Use app setting",
+        message: "Reset",
         comment:
-          "Button under a Settings row in a profile's scope that drops the profile's own value so it follows the app setting again",
+          "Button under a Settings row in a profile's scope that drops the profile's own value so it follows All profiles again",
       })}
     </Button>
   );

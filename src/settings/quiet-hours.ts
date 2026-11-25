@@ -16,7 +16,7 @@ export const dayName = (
     A_SUNDAY + day * 86_400_000
   );
 
-/** What Add quiet hours appends: the night, every day. */
+/** What Add under quiet hours appends: the night, every day. */
 export const NEW_QUIET_WINDOW: QuietWindow = { start: "22:00", end: "07:00" };
 
 /** The times a window's ends offer, every half hour. */

@@ -77,8 +77,7 @@ const notifications = (app: ElectronApplication) =>
     }))
   );
 
-const pausedLines = (page: Page) =>
-  page.getByText("Off while Do Not Disturb is on");
+const pausedLines = (page: Page) => page.getByText("Do Not Disturb is on.");
 
 test("Settings… opens one Settings window, which closes and opens again", async ({
   app,
@@ -182,7 +181,7 @@ test("a switch writes the app value, which a restart keeps", async ({
 }) => {
   const app = await launchApp();
   const page = await openSettings(app);
-  const summary = page.getByRole("switch", { name: "Show the summary" });
+  const summary = page.getByRole("switch", { name: "Show preview" });
 
   await expect(summary).toBeChecked();
 
@@ -198,13 +197,13 @@ test("a switch writes the app value, which a restart keeps", async ({
   const again = await openSettings(await launchApp());
 
   await expect(
-    again.getByRole("switch", { name: "Show the summary" })
+    again.getByRole("switch", { name: "Show preview" })
   ).not.toBeChecked();
 });
 
 test("a value set elsewhere shows in the open window", async ({ app }) => {
   const page = await openSettings(app);
-  const sender = page.getByRole("switch", { name: "Show the sender" });
+  const sender = page.getByRole("switch", { name: "Show sender" });
 
   await expect(sender).toBeChecked();
 
@@ -230,12 +229,12 @@ test("Do Not Disturb from the titlebar turns the row on and pauses the rows it o
 
   await expect(row).toBeChecked();
   await expect(
-    page.getByText("On until you turn it off. Holds every notification.")
+    page.getByText("On until you turn it off. Silences all notifications.")
   ).toBeVisible();
-  // Notifications, Important mail only, Sound, Volume and Quiet hours.
+  // Allow notifications, Only important mail, Sound, Volume and Quiet hours.
   await expect(pausedLines(page)).toHaveCount(5);
   await expect(
-    page.getByRole("switch", { name: "Notifications" })
+    page.getByRole("switch", { name: "Allow notifications" })
   ).toBeChecked();
 
   await row.click();
@@ -251,7 +250,7 @@ test("quiet hours are added, a day changed and removed, each edit writing the wh
   const page = await openSettings(app);
   const quietHours = () => readStoredSetting(userDataDir, "quietHours");
 
-  await page.getByRole("button", { name: "Add quiet hours" }).click();
+  await page.getByRole("button", { name: "Add", exact: true }).click();
 
   const window = page.getByRole("group", { name: "Quiet hours 1" });
 
@@ -314,11 +313,13 @@ test("with one profile there is no scope switcher, and with two it offers All pr
     "true"
   );
   await expect(
-    page.getByText("Every profile uses these, unless it sets its own.")
+    page.getByText(
+      "These apply to every profile unless you change them for one."
+    )
   ).toBeVisible();
 });
 
-test("in a profile's scope a switch sets the profile's own value, All profiles names it, and Use app setting removes it", async ({
+test("in a profile's scope a switch sets the profile's own value, All profiles names it, and Reset removes it", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -326,11 +327,11 @@ test("in a profile's scope a switch sets the profile's own value, All profiles n
   await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
 
   const page = await openSettings(await launchApp());
-  const sender = page.getByRole("switch", { name: "Show the sender" });
+  const sender = page.getByRole("switch", { name: "Show sender" });
 
   await scopeTab(page, "Work").click();
   await expect(
-    page.getByText("Changes here apply to Work alone.")
+    page.getByText("Changes here only apply to Work.")
   ).toBeVisible();
   await expect(sender).toBeChecked();
   await sender.click();
@@ -343,27 +344,27 @@ test("in a profile's scope a switch sets the profile's own value, All profiles n
     await readStoredSetting(userDataDir, "notificationSender")
   ).toBeUndefined();
   await expect(
-    page.getByText("Set for Work. App setting is On.")
+    page.getByText("Set for Work only. For all profiles, it's On.")
   ).toBeVisible();
 
   await scopeTab(page, "All profiles").click();
   await expect(sender).toBeChecked();
-  await expect(page.getByText("Differs in 1 profile:")).toBeVisible();
+  await expect(page.getByText("Set differently for 1 profile:")).toBeVisible();
   await page.getByRole("button", { name: "Show Work" }).click();
   await expect(scopeTab(page, "Work")).toHaveAttribute("aria-selected", "true");
 
   await page
-    .getByRole("button", { name: "Use app setting for Show the sender" })
+    .getByRole("button", { name: "Reset Show sender to All profiles" })
     .click();
 
   await expect(sender).toBeChecked();
   await expect.poll(() => storedOverrides(userDataDir)).toBeUndefined();
   await expect(
-    page.getByRole("button", { name: /^Use app setting for/u })
+    page.getByRole("button", { name: /^Reset .* to All profiles$/u })
   ).toHaveCount(0);
 
   await scopeTab(page, "All profiles").click();
-  await expect(page.getByText(/^Differs in/u)).toHaveCount(0);
+  await expect(page.getByText(/^Set differently for/u)).toHaveCount(0);
 });
 
 test("a profile's quiet hours are its own whole list, the app's left as it was", async ({
@@ -376,7 +377,7 @@ test("a profile's quiet hours are its own whole list, the app's left as it was",
   const page = await openSettings(await launchApp());
 
   await scopeTab(page, "Home").click();
-  await page.getByRole("button", { name: "Add quiet hours" }).click();
+  await page.getByRole("button", { name: "Add", exact: true }).click();
 
   await expect
     .poll(() => storedOverrides(userDataDir))
@@ -385,7 +386,7 @@ test("a profile's quiet hours are its own whole list, the app's left as it was",
     });
   expect(await readStoredSetting(userDataDir, "quietHours")).toBeUndefined();
   await expect(
-    page.getByText("Set for Home. App setting is none.")
+    page.getByText("Set for Home only. For all profiles, it's none.")
   ).toBeVisible();
 });
 
@@ -407,10 +408,10 @@ test("a profile's own value set elsewhere shows in the open window", async ({
     await settings.setOverride("home", "notificationSound", "chime");
   });
 
-  await expect(page.getByText("Differs in 1 profile:")).toBeVisible();
+  await expect(page.getByText("Set differently for 1 profile:")).toBeVisible();
   await page.getByRole("button", { name: "Show Home" }).click();
   await expect(
-    page.getByText("Set for Home. App setting is Linen.")
+    page.getByText("Set for Home only. For all profiles, it's Linen.")
   ).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Sound" })).toHaveText(
     /^Chime/u
@@ -507,7 +508,7 @@ test("long-named profiles fold into one menu beside All profiles, whose choice s
   await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(scopeTab(page, third)).toBeFocused();
   await expect(
-    page.getByText(`Changes here apply to ${third} alone.`)
+    page.getByText(`Changes here only apply to ${third}.`)
   ).toBeVisible();
 });
 
@@ -519,11 +520,11 @@ test("with two profiles Do Not Disturb holds whatever a profile sets, lives unde
   await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
 
   const page = await openSettings(await launchApp());
-  const offForAll = page.getByText("Off for all profiles");
+  const offForAll = page.getByText("Do Not Disturb is on.");
 
   await expect(
     page.getByText(
-      "Holds every notification, whatever a profile sets. The moon in the titlebar turns it on for a set time."
+      "Silences all notifications. You can also turn it on for a while from the moon in the title bar."
     )
   ).toBeVisible();
   await page.getByRole("switch", { name: "Do Not Disturb" }).click();
@@ -536,7 +537,7 @@ test("with two profiles Do Not Disturb holds whatever a profile sets, lives unde
   ).toHaveCount(0);
   await expect(
     page.getByText(
-      "Do Not Disturb is the same for every profile, under All profiles."
+      "You set Do Not Disturb under All profiles. It applies to every profile."
     )
   ).toBeVisible();
   await expect(offForAll).toHaveCount(4);
@@ -551,7 +552,7 @@ test("one profile that holds a value of its own has the switcher until its last 
 
   const app = await launchApp();
   const page = await openSettings(app);
-  const sender = page.getByRole("switch", { name: "Show the sender" });
+  const sender = page.getByRole("switch", { name: "Show sender" });
 
   await expect(page.getByRole("tablist")).toHaveCount(0);
   await app.evaluate(async () => {
@@ -565,7 +566,7 @@ test("one profile that holds a value of its own has the switcher until its last 
   await expect(
     page.getByRole("tablist", { name: "Scope" }).getByRole("tab")
   ).toHaveText(["All profiles", "Work"]);
-  await expect(page.getByText("Differs in 1 profile:")).toBeVisible();
+  await expect(page.getByText("Set differently for 1 profile:")).toBeVisible();
 
   await sender.click();
 
@@ -579,7 +580,7 @@ test("one profile that holds a value of its own has the switcher until its last 
 
   await scopeTab(page, "Work").click();
   await page
-    .getByRole("button", { name: "Use app setting for Show the sender" })
+    .getByRole("button", { name: "Reset Show sender to All profiles" })
     .click();
 
   await expect(page.getByRole("tablist")).toHaveCount(0);
@@ -755,7 +756,7 @@ test("Show test notification shows the stand-in as the app's settings show mail,
 }) => {
   const page = await openSettings(app);
 
-  await page.getByRole("switch", { name: "Show the sender" }).click();
+  await page.getByRole("switch", { name: "Show sender" }).click();
   await setSetting(app, "notifications", false);
   await setSetting(app, "quietHours", [{ start: "00:00", end: "00:00" }]);
   await setSetting(app, "notificationSoundVolume", 0.4);
@@ -788,15 +789,13 @@ test("under Do Not Disturb Show test notification is disabled, says why to the p
   });
 
   const button = page.getByRole("button", { name: "Show test notification" });
-  const reason = "Turn off Do Not Disturb to show a test notification.";
+  const reason = "Turn off Do Not Disturb first.";
 
   await expect(button).toBeEnabled();
   await page.getByRole("switch", { name: "Do Not Disturb" }).click();
 
   await expect(button).toBeDisabled();
-  await expect(button).toHaveAccessibleDescription(
-    `Show a test notification to see how notifications appear. ${reason}`
-  );
+  await expect(button).toHaveAccessibleDescription(reason);
 
   const tooltip = page.getByRole("tooltip");
 
@@ -807,7 +806,7 @@ test("under Do Not Disturb Show test notification is disabled, says why to the p
 
   await page.mouse.move(0, 0);
   await expect(tooltip).toHaveCount(0);
-  await page.getByRole("button", { name: "Add quiet hours" }).focus();
+  await page.getByRole("button", { name: "Add", exact: true }).focus();
   await page.keyboard.press("Tab");
   await expect(button).toBeFocused();
   await expect(tooltip).toHaveText(reason);
@@ -960,9 +959,11 @@ test.describe("shots", () => {
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await scopeTab(page, "All profiles").click();
       // oxlint-disable-next-line no-await-in-loop -- one after another
-      await page.getByText("Differs in 2 profiles:").evaluate((line) => {
-        line.scrollIntoView({ block: "center" });
-      });
+      await page
+        .getByText("Set differently for 2 profiles:")
+        .evaluate((line) => {
+          line.scrollIntoView({ block: "center" });
+        });
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await page.screenshot({ path: shotPath("settings-scope-all", theme) });
 
@@ -970,7 +971,7 @@ test.describe("shots", () => {
       await scopeTab(page, "Work").click();
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await page
-        .getByText("Set for Work. App setting is Linen.")
+        .getByText("Set for Work only. For all profiles, it's Linen.")
         .evaluate((line) => {
           line.scrollIntoView({ block: "center" });
         });
@@ -1078,14 +1079,16 @@ test.describe("shots", () => {
         }
       });
       // oxlint-disable-next-line no-await-in-loop -- one after another
-      await expect(page.getByText("Differs in 1 profile:")).toBeVisible();
+      await expect(
+        page.getByText("Set differently for 1 profile:")
+      ).toBeVisible();
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await page.screenshot({ path: shotPath("settings-scope-lone", theme) });
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await scopeTab(page, "Work").click();
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await page
-        .getByText("Set for Work. App setting is Chime.")
+        .getByText("Set for Work only. For all profiles, it's Chime.")
         .evaluate((line) => {
           line.scrollIntoView({ block: "center" });
         });

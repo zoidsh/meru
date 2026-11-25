@@ -72,8 +72,8 @@ const TimeSelect = ({
 
 /**
  * Quiet hours as a list of windows, each with its days, from and to, and a
- * remove button, with Add quiet hours under them. Every edit writes the
- * whole list. Use app setting sits in the row's head.
+ * remove button, with Add under them. Every edit writes the
+ * whole list. Reset sits in the row's head.
  */
 export const QuietHoursField = ({
   label,
@@ -107,9 +107,8 @@ export const QuietHoursField = ({
           </FieldLabel>
           <FieldDescription className={cn(dims && "opacity-50")}>
             {t({
-              message: "Notifications wait until a window ends.",
-              comment:
-                "Description of Quiet hours in Settings; a window is one of the listed spans of time",
+              message: "Meru holds notifications until quiet hours end.",
+              comment: "Description of Quiet hours in Settings",
             })}
           </FieldDescription>
           {paused && <FieldDescription>{paused}</FieldDescription>}
@@ -229,9 +228,9 @@ export const QuietHoursField = ({
         >
           <PlusIcon data-icon="inline-start" />
           {t({
-            message: "Add quiet hours",
+            message: "Add",
             comment:
-              "Button under the Settings list of quiet hours that adds a window from 22:00 to 07:00 every day",
+              "Button under the Settings list of quiet hours that adds quiet hours, a window a window from 22:00 to 07:00 every day",
           })}
         </Button>
       </div>

@@ -40,18 +40,18 @@ msgstr "{count, plural, one {# unread message} other {# unread messages}}"
 
 #. Muted line under a setting in Settings' All profiles, before a badge naming each profile that sets its own value; # is how many
 #: src/settings/scope.ts
-msgid "{count, plural, one {Differs in # profile:} other {Differs in # profiles:}}"
-msgstr "{count, plural, one {Differs in # profile:} other {Differs in # profiles:}}"
+msgid "{count, plural, one {Set differently for # profile:} other {Set differently for # profiles:}}"
+msgstr "{count, plural, one {Set differently for # profile:} other {Set differently for # profiles:}}"
 
 #. How much of a running download has arrived, in the Downloads card, such as 12.4 of 48 MB; done is a number, total a size with its unit
 #: src/shell/downloads.tsx
 msgid "{done} of {total}"
 msgstr "{done} of {total}"
 
-#. Description of the Do Not Disturb switch in Settings while it is off; {holds} is what it does, such as Holds every notification. The moon is the Do Not Disturb button in the main window's title bar
+#. Description of the Do Not Disturb switch in Settings while it is off; {holds} is what it does, such as Silences all notifications. The moon is the Do Not Disturb button in the main window's title bar
 #: src/settings/do-not-disturb.ts
-msgid "{holds} The moon in the titlebar turns it on for a set time."
-msgstr "{holds} The moon in the titlebar turns it on for a set time."
+msgid "{holds} You can also turn it on for a while from the moon in the title bar."
+msgstr "{holds} You can also turn it on for a while from the moon in the title bar."
 
 #. Item in the Do Not Disturb menu that holds notifications for this many hours
 #: src/main/commands.ts
@@ -160,7 +160,7 @@ msgstr "{saved} · {when}"
 msgid "{share} downloaded"
 msgstr "{share} downloaded"
 
-#. A window of quiet hours in the Settings caption naming the app setting; {start} and {end} are times such as 22:00 and 07:00, {days} when, such as every day or weekdays
+#. A window of quiet hours in the Settings caption naming the value under All profiles; {start} and {end} are times such as 22:00 and 07:00, {days} when, such as every day or weekdays
 #: src/settings/scope.ts
 msgid "{start}–{end} {days}"
 msgstr "{start}–{end} {days}"
@@ -245,11 +245,6 @@ msgstr "A disabled profile is not in the Unified inbox."
 msgid "A download finished"
 msgstr "A download finished"
 
-#. Description of the Notifications switch in Settings
-#: src/settings/notifications-page.tsx
-msgid "A notification for each new message."
-msgstr "A notification for each new message."
-
 #. Menu item in the macOS app menu that shows the app's version; {appName} is the app's name
 #: src/main/application-menu.ts
 msgid "About {appName}"
@@ -260,15 +255,15 @@ msgstr "About {appName}"
 msgid "Actual Size"
 msgstr "Actual Size"
 
+#. Button under the Settings list of quiet hours that adds quiet hours, a window a window from 22:00 to 07:00 every day
+#: src/settings/quiet-hours-field.tsx
+msgid "Add"
+msgstr "Add"
+
 #. Button under Settings' list of profiles that adds one and opens its page
 #: src/settings/profiles-page.tsx
 msgid "Add profile"
 msgstr "Add profile"
-
-#. Button under the Settings list of quiet hours that adds a window from 22:00 to 07:00 every day
-#: src/settings/quiet-hours-field.tsx
-msgid "Add quiet hours"
-msgstr "Add quiet hours"
 
 #. Button on a profile's page in Settings that opens the fields to add a saved search
 #. Name of the group of fields in Settings that adds a saved search to a profile
@@ -276,7 +271,7 @@ msgstr "Add quiet hours"
 msgid "Add saved search"
 msgstr "Add saved search"
 
-#. A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the app setting; {days} is when, such as every day or weekdays
+#. A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the value under All profiles; {days} is when, such as every day or weekdays
 #: src/settings/scope.ts
 msgid "all day {days}"
 msgstr "all day {days}"
@@ -285,6 +280,11 @@ msgstr "all day {days}"
 #: src/settings/scope-tabs.tsx
 msgid "All profiles"
 msgstr "All profiles"
+
+#. Label of the switch in Settings that shows a notification for new mail
+#: src/settings/notifications-page.tsx
+msgid "Allow notifications"
+msgstr "Allow notifications"
 
 #. Label over the band along the window's edge that lights up while a tab is dragged near it; dropping it puts the tab there beside every pane
 #: src/shell/drop-zone.tsx
@@ -436,8 +436,8 @@ msgstr "Canceled · {when}"
 
 #. Line under the Settings scope switcher while one profile's scope is chosen; {chosenName} is the profile's name
 #: src/settings/scope-tabs.tsx
-msgid "Changes here apply to {chosenName} alone."
-msgstr "Changes here apply to {chosenName} alone."
+msgid "Changes here only apply to {chosenName}."
+msgstr "Changes here only apply to {chosenName}."
 
 #. Label of the switch on a profile's page in Settings that turns checking its mail on or off
 #: src/settings/profile-page.tsx
@@ -578,11 +578,6 @@ msgstr "Couldn’t move the message to Trash."
 msgid "Couldn’t report the message as spam."
 msgstr "Couldn’t report the message as spam."
 
-#. Label of the switch in Settings that adds unread mail to the number on the app's icon
-#: src/settings/notifications-page.tsx
-msgid "Count unread in the badge"
-msgstr "Count unread in the badge"
-
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
 msgid "Cut"
@@ -680,10 +675,10 @@ msgstr "Do Not Disturb is on until {time}"
 msgid "Do Not Disturb is on until turned off"
 msgstr "Do Not Disturb is on until turned off"
 
-#. Line under the cards of the Notifications page in Settings while one profile's scope is chosen
+#. Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting or a profile says
 #: src/settings/notifications-page.tsx
-msgid "Do Not Disturb is the same for every profile, under All profiles."
-msgstr "Do Not Disturb is the same for every profile, under All profiles."
+msgid "Do Not Disturb is on."
+msgstr "Do Not Disturb is on."
 
 #. Title of the system notification when a download stops before it is done; the file's name is its text
 #: src/main/download-notifications.ts
@@ -738,15 +733,10 @@ msgstr "Enabled"
 msgid "Enter a search."
 msgstr "Enter a search."
 
-#. Days of a window of quiet hours, in the Settings caption naming the app setting, as in 22:00–07:00 every day
+#. Days of a window of quiet hours, in the Settings caption naming the value under All profiles, as in 22:00–07:00 every day
 #: src/settings/scope.ts
 msgid "every day"
 msgstr "every day"
-
-#. Line under the Settings scope switcher while All profiles is chosen
-#: src/settings/scope-tabs.tsx
-msgid "Every profile uses these, unless it sets its own."
-msgstr "Every profile uses these, unless it sets its own."
 
 #. Tray menu item that quits Meru
 #: src/main/tray.ts
@@ -878,21 +868,6 @@ msgstr "Hides offers from Google above your inbox."
 #: src/settings/gmail-page.tsx
 msgid "Hides the storage and account details below your inbox."
 msgstr "Hides the storage and account details below your inbox."
-
-#. What the Do Not Disturb switch in Settings does, with more than one profile
-#: src/settings/do-not-disturb.ts
-msgid "Holds every notification, whatever a profile sets."
-msgstr "Holds every notification, whatever a profile sets."
-
-#. What the Do Not Disturb switch in Settings does
-#: src/settings/do-not-disturb.ts
-msgid "Holds every notification."
-msgstr "Holds every notification."
-
-#. Label of the switch in Settings that limits notifications to mail Gmail marks important
-#: src/settings/notifications-page.tsx
-msgid "Important mail only"
-msgstr "Important mail only"
 
 #. Said by screen readers after a sidebar row's title while its tab is moved to a window of its own, which a click brings forward
 #: src/shell/tab-strip.tsx
@@ -1034,6 +1009,11 @@ msgstr "Maximized · Restore"
 #: src/settings/delete-browsing-data.tsx
 msgid "Meru couldn't delete this profile's browsing data. Try again."
 msgstr "Meru couldn't delete this profile's browsing data. Try again."
+
+#. Description of Quiet hours in Settings
+#: src/settings/quiet-hours-field.tsx
+msgid "Meru holds notifications until quiet hours end."
+msgstr "Meru holds notifications until quiet hours end."
 
 #. Explanation under the heading in place of a tab's page that could not load
 #: src/shell/tab-problem.tsx
@@ -1193,7 +1173,7 @@ msgstr "No saved searches yet. Save a search from the Mail menu, or add one here
 msgid "No unread messages"
 msgstr "No unread messages"
 
-#. The app setting of quiet hours when it has no window, in the Settings caption: App setting is none.
+#. Quiet hours under All profiles when they have no window, in the Settings caption: For all profiles, it's none.
 #: src/settings/scope.ts
 msgid "none"
 msgstr "none"
@@ -1224,33 +1204,16 @@ msgid "Not signed in to Google, so its mail is not checked."
 msgstr "Not signed in to Google, so its mail is not checked."
 
 #. Accessible name of the region at the foot of the window that holds Meru's short notices, such as one saying there is not enough room to split
-#. Label of the switch in Settings that shows a notification for new mail
 #. Name of the Settings section for notifications, the unread badge and Do Not Disturb, in its list and as its title
 #: src/settings/app.tsx
-#: src/settings/notifications-page.tsx
 #: src/shell/toast.tsx
 msgid "Notifications"
 msgstr "Notifications"
 
-#. Description of Quiet hours in Settings; a window is one of the listed spans of time
-#: src/settings/quiet-hours-field.tsx
-msgid "Notifications wait until a window ends."
-msgstr "Notifications wait until a window ends."
-
-#. A switch's app setting in the Settings caption under a profile's own value: App setting is Off.
+#. A switch's value under All profiles in the Settings caption under a profile's own value: For all profiles, it's Off.
 #: src/settings/scope.ts
 msgid "Off"
 msgstr "Off"
-
-#. Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting or a profile says
-#: src/settings/notifications-page.tsx
-msgid "Off for all profiles"
-msgstr "Off for all profiles"
-
-#. Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting says
-#: src/settings/notifications-page.tsx
-msgid "Off while Do Not Disturb is on"
-msgstr "Off while Do Not Disturb is on"
 
 #. Description of Enabled, turned off, on a profile's page in Settings
 #: src/settings/profile-page.tsx
@@ -1267,7 +1230,7 @@ msgstr "Off: no unread count and no notifications."
 msgid "Off: no unread count, no notifications, and nothing in the Unified inbox."
 msgstr "Off: no unread count, no notifications, and nothing in the Unified inbox."
 
-#. A switch's app setting in the Settings caption under a profile's own value: App setting is On.
+#. A switch's value under All profiles in the Settings caption under a profile's own value: For all profiles, it's On.
 #: src/settings/scope.ts
 msgid "On"
 msgstr "On"
@@ -1282,12 +1245,12 @@ msgstr "On its button in the titlebar."
 msgid "On Until {time}"
 msgstr "On Until {time}"
 
-#. Description of the Do Not Disturb switch in Settings while it is on for a time; {time} is the time of day it ends, such as 14:30, and {holds} what it does, such as Holds every notification.
+#. Description of the Do Not Disturb switch in Settings while it is on for a time; {time} is the time of day it ends, such as 14:30, and {holds} what it does, such as Silences all notifications.
 #: src/settings/do-not-disturb.ts
 msgid "On until {time}. {holds}"
 msgstr "On until {time}. {holds}"
 
-#. Description of the Do Not Disturb switch in Settings while it is on until midnight; {holds} is what it does, such as Holds every notification.
+#. Description of the Do Not Disturb switch in Settings while it is on until midnight; {holds} is what it does, such as Silences all notifications.
 #: src/settings/do-not-disturb.ts
 msgid "On until tomorrow. {holds}"
 msgstr "On until tomorrow. {holds}"
@@ -1297,15 +1260,20 @@ msgstr "On until tomorrow. {holds}"
 msgid "On Until Turned Off"
 msgstr "On Until Turned Off"
 
-#. Description of the Do Not Disturb switch in Settings while it is on with no end; {holds} is what it does, such as Holds every notification.
+#. Description of the Do Not Disturb switch in Settings while it is on with no end; {holds} is what it does, such as Silences all notifications.
 #: src/settings/do-not-disturb.ts
 msgid "On until you turn it off. {holds}"
 msgstr "On until you turn it off. {holds}"
 
-#. Description of the Important mail only switch in Settings
+#. Label of the switch in Settings that limits notifications to mail Gmail marks important
 #: src/settings/notifications-page.tsx
-msgid "Only mail Gmail marks important gets a notification."
-msgstr "Only mail Gmail marks important gets a notification."
+msgid "Only important mail"
+msgstr "Only important mail"
+
+#. Description of the Only important mail switch in Settings; important is Gmail's own marking of mail
+#: src/settings/notifications-page.tsx
+msgid "Only notifies you about email Gmail marks as important."
+msgstr "Only notifies you about email Gmail marks as important."
 
 #. Placeholder of the search field of the New tab launcher, which filters Google's apps and the profile's bookmarks
 #: src/shell/open-app.tsx
@@ -1525,6 +1493,16 @@ msgctxt "inbox action"
 msgid "Report spam"
 msgstr "Report spam"
 
+#. Button under a Settings row in a profile's scope that drops the profile's own value so it follows All profiles again
+#: src/settings/row-scope.tsx
+msgid "Reset"
+msgstr "Reset"
+
+#. Accessible name of the button under a Settings row in a profile's scope that drops the profile's own value; {label} is the row's label
+#: src/settings/row-scope.tsx
+msgid "Reset {label} to All profiles"
+msgstr "Reset {label} to All profiles"
+
 #. Accessible name of the gap between two panes of a split view, which a drag or the arrow keys move to resize them
 #: src/shell/pane-handle.tsx
 msgid "Resize panes"
@@ -1544,6 +1522,11 @@ msgstr "Restore Panes"
 #: src/settings/saved-searches-card.tsx
 msgid "Run from Saved Searches in the Mail menu while Gmail is open in this profile."
 msgstr "Run from Saved Searches in the Mail menu while Gmail is open in this profile."
+
+#. Caption under a Settings row in a profile's scope while the profile has no value of its own
+#: src/settings/row-scope.tsx
+msgid "Same as All profiles."
+msgstr "Same as All profiles."
 
 #. Button in Settings that adds the saved search typed above
 #: src/settings/saved-searches-card.tsx
@@ -1637,10 +1620,10 @@ msgstr "Separate from Split"
 msgid "Services"
 msgstr "Services"
 
-#. Caption under a Settings row in a profile's scope while the profile sets its own value; {name} is the profile, {appValue} the value every other profile uses, such as On, Chime or 22:00–07:00 every day
+#. Caption under a Settings row in a profile's scope while the profile sets its own value; {name} is the profile, {appValue} the value set under All profiles, such as On, Chime or 22:00–07:00 every day
 #: src/settings/row-scope.tsx
-msgid "Set for {name}. App setting is {appValue}."
-msgstr "Set for {name}. App setting is {appValue}."
+msgid "Set for {name} only. For all profiles, it's {appValue}."
+msgstr "Set for {name} only. For all profiles, it's {appValue}."
 
 #. Title of the Settings window
 #: src/settings/app.tsx
@@ -1662,6 +1645,11 @@ msgstr "Settings…"
 msgid "Shift+Delete removes the highlighted bookmark"
 msgstr "Shift+Delete removes the highlighted bookmark"
 
+#. Button of the Test notification row in Settings that shows a sample new mail notification, as the settings above would show one
+#: src/settings/notifications-page.tsx
+msgid "Show"
+msgstr "Show"
+
 #. Accessible name of the badge under a Settings row that switches to the profile's scope; {name} is the profile's name
 #: src/settings/row-scope.tsx
 msgid "Show {name}"
@@ -1671,11 +1659,6 @@ msgstr "Show {name}"
 #: src/main/tray.ts
 msgid "Show {productName}"
 msgstr "Show {productName}"
-
-#. Description of the Test notification row in Settings
-#: src/settings/notifications-page.tsx
-msgid "Show a test notification to see how notifications appear."
-msgstr "Show a test notification to see how notifications appear."
 
 #. Menu item in the macOS app menu that shows every hidden app again
 #: src/main/application-menu.ts
@@ -1702,35 +1685,40 @@ msgstr "Show in folder"
 msgid "Show in Unified inbox"
 msgstr "Show in Unified inbox"
 
+#. Label of the switch in Settings that shows the start of the mail's text in its notification
+#: src/settings/notifications-page.tsx
+msgid "Show preview"
+msgstr "Show preview"
+
+#. Label of the switch in Settings that names who sent the mail in its notification
+#: src/settings/notifications-page.tsx
+msgid "Show sender"
+msgstr "Show sender"
+
 #. Tooltip of the title bar button that shows the list of tabs down the left of the window
 #: src/shell/titlebar.tsx
 msgid "Show sidebar"
 msgstr "Show sidebar"
 
-#. Button in Settings that shows a sample new mail notification, as the settings above would show one
+#. Label of the switch in Settings that shows the mail's subject in its notification
+#: src/settings/notifications-page.tsx
+msgid "Show subject"
+msgstr "Show subject"
+
+#. Accessible name of the Show button of the Test notification row in Settings; it starts with the button's visible label, Show
 #: src/settings/notifications-page.tsx
 msgid "Show test notification"
 msgstr "Show test notification"
-
-#. Label of the switch in Settings that names who sent the mail in its notification
-#: src/settings/notifications-page.tsx
-msgid "Show the sender"
-msgstr "Show the sender"
-
-#. Label of the switch in Settings that shows the mail's subject in its notification
-#: src/settings/notifications-page.tsx
-msgid "Show the subject"
-msgstr "Show the subject"
-
-#. Label of the switch in Settings that shows the start of the mail's text in its notification
-#: src/settings/notifications-page.tsx
-msgid "Show the summary"
-msgstr "Show the summary"
 
 #. Label of the switch in Settings that shows the quoted text Gmail trims; trimmed content is Gmail's own name for it
 #: src/settings/gmail-page.tsx
 msgid "Show trimmed content"
 msgstr "Show trimmed content"
+
+#. Label of the switch in Settings that adds unread mail to the number on the app's icon
+#: src/settings/notifications-page.tsx
+msgid "Show unread count"
+msgstr "Show unread count"
 
 #. Description of the Find verification codes switch in Settings; quiet hours and Do Not Disturb are the Notifications page's settings of those names
 #: src/settings/gmail-page.tsx
@@ -1741,6 +1729,16 @@ msgstr "Shows a notification with the code, even during quiet hours or Do Not Di
 #: src/settings/gmail-page.tsx
 msgid "Shows attachments above the message instead of below it."
 msgstr "Shows attachments above the message instead of below it."
+
+#. Description of the Show unread count switch in Settings on Windows and Linux
+#: src/settings/notifications-page.tsx
+msgid "Shows how many unread emails you have on the app icon."
+msgstr "Shows how many unread emails you have on the app icon."
+
+#. Description of the Show unread count switch in Settings on macOS; the Dock is where macOS shows the app's icon
+#: src/settings/notifications-page.tsx
+msgid "Shows how many unread emails you have on the Dock icon."
+msgstr "Shows how many unread emails you have on the Dock icon."
 
 #. Description of the Newest message first switch in Settings; only what Meru shows changes, not the order in Gmail
 #: src/settings/gmail-page.tsx
@@ -1790,6 +1788,11 @@ msgstr "Signs out of this profile and deletes its data on this device. Your Goog
 #: src/settings/delete-browsing-data.tsx
 msgid "Signs you out of {name}."
 msgstr "Signs you out of {name}."
+
+#. What the Do Not Disturb switch in Settings does
+#: src/settings/do-not-disturb.ts
+msgid "Silences all notifications."
+msgstr "Silences all notifications."
 
 #. Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked
 #. Item of a tab's context menu that frees its page until it is woken, keeping its place
@@ -1879,6 +1882,11 @@ msgstr "The last awake profile can't sleep."
 msgid "The window stopped drawing several times in a row, so {productName} will quit. Open it again to carry on."
 msgstr "The window stopped drawing several times in a row, so {productName} will quit. Open it again to carry on."
 
+#. Line under the Settings scope switcher while All profiles is chosen
+#: src/settings/scope-tabs.tsx
+msgid "These apply to every profile unless you change them for one."
+msgstr "These apply to every profile unless you change them for one."
+
 #. Description of the Gmail page group in Settings: these settings change only what Meru shows, never the person's settings in Gmail
 #: src/settings/gmail-page.tsx
 msgid "These change how Gmail looks in Meru. Your Gmail settings stay the same."
@@ -1958,10 +1966,10 @@ msgstr "Trying again…"
 msgid "Turn Off"
 msgstr "Turn Off"
 
-#. Tooltip and description of the disabled Show test notification button in Settings while Do Not Disturb holds every notification
+#. Tooltip and description of the disabled Show button of Test notification in Settings while Do Not Disturb holds every notification
 #: src/settings/notifications-page.tsx
-msgid "Turn off Do Not Disturb to show a test notification."
-msgstr "Turn off Do Not Disturb to show a test notification."
+msgid "Turn off Do Not Disturb first."
+msgstr "Turn off Do Not Disturb first."
 
 #. Description of Show in Unified inbox on a profile's page in Settings, whose switch is disabled while Check mail, the row above, is off
 #: src/settings/profile-page.tsx
@@ -2009,16 +2017,6 @@ msgstr "Unpin Tab"
 msgid "Unread mail"
 msgstr "Unread mail"
 
-#. Description of the Count unread in the badge switch in Settings on Windows and Linux
-#: src/settings/notifications-page.tsx
-msgid "Unread mail adds to the number on the app's icon."
-msgstr "Unread mail adds to the number on the app's icon."
-
-#. Description of the Count unread in the badge switch in Settings on macOS; the Dock is where macOS shows the app's icon
-#: src/settings/notifications-page.tsx
-msgid "Unread mail adds to the number on the Dock icon."
-msgstr "Unread mail adds to the number on the Dock icon."
-
 #. Shown in the unified inbox before any profile's mail has been read, as when none is signed in or Meru is offline
 #: src/shell/inbox.tsx
 msgid "Unread mail appears here once a profile is signed in to Gmail."
@@ -2048,21 +2046,6 @@ msgstr "Until Turned Off"
 #: src/shell/pane-handle.tsx
 msgid "Upper pane {percent}"
 msgstr "Upper pane {percent}"
-
-#. Button under a Settings row in a profile's scope that drops the profile's own value so it follows the app setting again
-#: src/settings/row-scope.tsx
-msgid "Use app setting"
-msgstr "Use app setting"
-
-#. Accessible name of the button under a Settings row in a profile's scope that drops the profile's own value; {label} is the row's label
-#: src/settings/row-scope.tsx
-msgid "Use app setting for {label}"
-msgstr "Use app setting for {label}"
-
-#. Caption under a Settings row in a profile's scope while the profile has no value of its own
-#: src/settings/row-scope.tsx
-msgid "Using app setting"
-msgstr "Using app setting"
 
 #. Text of the notification for an email that carries a one-time code, which its Copy button copies. {verificationCode} is the code's digits, such as 482910
 #: src/main/notifications.ts
@@ -2103,20 +2086,20 @@ msgstr "Wake"
 msgid "Wake Tab"
 msgstr "Wake Tab"
 
-#. Days of a window of quiet hours, Monday to Friday, in the Settings caption naming the app setting, as in 22:00–07:00 weekdays
+#. Days of a window of quiet hours, Monday to Friday, in the Settings caption naming the value under All profiles, as in 22:00–07:00 weekdays
 #: src/settings/scope.ts
 msgid "weekdays"
 msgstr "weekdays"
 
-#. Days of a window of quiet hours, Saturday and Sunday, in the Settings caption naming the app setting, as in 22:00–07:00 weekends
+#. Days of a window of quiet hours, Saturday and Sunday, in the Settings caption naming the value under All profiles, as in 22:00–07:00 weekends
 #: src/settings/scope.ts
 msgid "weekends"
 msgstr "weekends"
 
 #. Title of the group of Settings for what a new mail notification says
 #: src/settings/notifications-page.tsx
-msgid "What a notification shows"
-msgstr "What a notification shows"
+msgid "What notifications show"
+msgstr "What notifications show"
 
 #. Choice of the Copy code menu in Settings: the code is copied when the Copy button on its notification is clicked
 #: src/settings/gmail-page.tsx
@@ -2127,6 +2110,11 @@ msgstr "When you click Copy"
 #: src/main/application-menu.ts
 msgid "Window"
 msgstr "Window"
+
+#. Line under the cards of the Notifications page in Settings while one profile's scope is chosen
+#: src/settings/notifications-page.tsx
+msgid "You set Do Not Disturb under All profiles. It applies to every profile."
+msgstr "You set Do Not Disturb under All profiles. It applies to every profile."
 
 #. Heading shown in place of a tab's page that could not load because the computer is offline
 #: src/shell/tab-problem.tsx

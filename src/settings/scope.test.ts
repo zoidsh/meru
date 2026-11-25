@@ -109,8 +109,8 @@ describe(differingProfiles, () => {
 
   it("counts in the line before the badges", () => {
     expect([differsText(1), differsText(4)]).toStrictEqual([
-      "Differs in 1 profile:",
-      "Differs in 4 profiles:",
+      "Set differently for 1 profile:",
+      "Set differently for 4 profiles:",
     ]);
   });
 });

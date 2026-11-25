@@ -199,12 +199,13 @@ export const ScopeTabs = ({
           <p className="text-sm text-muted-foreground">
             {chosenName === undefined
               ? t({
-                  message: "Every profile uses these, unless it sets its own.",
+                  message:
+                    "These apply to every profile unless you change them for one.",
                   comment:
                     "Line under the Settings scope switcher while All profiles is chosen",
                 })
               : t({
-                  message: `Changes here apply to ${chosenName} alone.`,
+                  message: `Changes here only apply to ${chosenName}.`,
                   comment:
                     "Line under the Settings scope switcher while one profile's scope is chosen; {chosenName} is the profile's name",
                 })}

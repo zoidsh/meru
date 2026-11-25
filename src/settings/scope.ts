@@ -69,7 +69,7 @@ const daysText = (window: QuietWindow, locale: string) => {
     return t({
       message: "every day",
       comment:
-        "Days of a window of quiet hours, in the Settings caption naming the app setting, as in 22:00–07:00 every day",
+        "Days of a window of quiet hours, in the Settings caption naming the value under All profiles, as in 22:00–07:00 every day",
     });
   }
 
@@ -77,7 +77,7 @@ const daysText = (window: QuietWindow, locale: string) => {
     return t({
       message: "weekdays",
       comment:
-        "Days of a window of quiet hours, Monday to Friday, in the Settings caption naming the app setting, as in 22:00–07:00 weekdays",
+        "Days of a window of quiet hours, Monday to Friday, in the Settings caption naming the value under All profiles, as in 22:00–07:00 weekdays",
     });
   }
 
@@ -85,7 +85,7 @@ const daysText = (window: QuietWindow, locale: string) => {
     return t({
       message: "weekends",
       comment:
-        "Days of a window of quiet hours, Saturday and Sunday, in the Settings caption naming the app setting, as in 22:00–07:00 weekends",
+        "Days of a window of quiet hours, Saturday and Sunday, in the Settings caption naming the value under All profiles, as in 22:00–07:00 weekends",
     });
   }
 
@@ -101,7 +101,7 @@ const windowText = (window: QuietWindow, locale: string) => {
     return t({
       message: `all day ${days}`,
       comment:
-        "A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the app setting; {days} is when, such as every day or weekdays",
+        "A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the value under All profiles; {days} is when, such as every day or weekdays",
     });
   }
 
@@ -110,7 +110,7 @@ const windowText = (window: QuietWindow, locale: string) => {
   return t({
     message: `${start}–${end} ${days}`,
     comment:
-      "A window of quiet hours in the Settings caption naming the app setting; {start} and {end} are times such as 22:00 and 07:00, {days} when, such as every day or weekdays",
+      "A window of quiet hours in the Settings caption naming the value under All profiles; {start} and {end} are times such as 22:00 and 07:00, {days} when, such as every day or weekdays",
   });
 };
 
@@ -135,7 +135,7 @@ export const appValueText = <Key extends PageOverridableKey>(
       ? t({
           message: "none",
           comment:
-            "The app setting of quiet hours when it has no window, in the Settings caption: App setting is none.",
+            "Quiet hours under All profiles when they have no window, in the Settings caption: For all profiles, it's none.",
         })
       : list.map((window) => windowText(window, locale)).join("; ");
   }
@@ -144,12 +144,12 @@ export const appValueText = <Key extends PageOverridableKey>(
     ? t({
         message: "On",
         comment:
-          "A switch's app setting in the Settings caption under a profile's own value: App setting is On.",
+          "A switch's value under All profiles in the Settings caption under a profile's own value: For all profiles, it's On.",
       })
     : t({
         message: "Off",
         comment:
-          "A switch's app setting in the Settings caption under a profile's own value: App setting is Off.",
+          "A switch's value under All profiles in the Settings caption under a profile's own value: For all profiles, it's Off.",
       });
 };
 
@@ -157,8 +157,8 @@ export const appValueText = <Key extends PageOverridableKey>(
 export const differsText = (count: number) =>
   t({
     message: plural(count, {
-      one: "Differs in # profile:",
-      other: "Differs in # profiles:",
+      one: "Set differently for # profile:",
+      other: "Set differently for # profiles:",
     }),
     comment:
       "Muted line under a setting in Settings' All profiles, before a badge naming each profile that sets its own value; # is how many",

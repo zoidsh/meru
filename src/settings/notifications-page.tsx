@@ -91,18 +91,13 @@ export const NotificationsPage = () => {
 
   const profile = profiles.find((candidate) => candidate.id === scope);
   const values = effectiveSettings(settings, profile);
-  const pausedLine = scoped
+  const paused = doNotDisturb.on
     ? t({
-        message: "Off for all profiles",
+        message: "Do Not Disturb is on.",
         comment:
           "Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting or a profile says",
       })
-    : t({
-        message: "Off while Do Not Disturb is on",
-        comment:
-          "Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting says",
-      });
-  const paused = doNotDisturb.on ? pausedLine : undefined;
+    : undefined;
 
   const soundNames: Record<SoundChoice, string> = {
     none: t({
@@ -223,9 +218,9 @@ export const NotificationsPage = () => {
       "Label of the menu in Settings choosing the sound a new mail notification makes",
   });
   const testBlocked = t({
-    message: "Turn off Do Not Disturb to show a test notification.",
+    message: "Turn off Do Not Disturb first.",
     comment:
-      "Tooltip and description of the disabled Show test notification button in Settings while Do Not Disturb holds every notification",
+      "Tooltip and description of the disabled Show button of Test notification in Settings while Do Not Disturb holds every notification",
   });
   const volumeHeardIn = volumeSound(settings.notificationSound, profiles);
   const shownSound = values.notificationSound;
@@ -254,11 +249,7 @@ export const NotificationsPage = () => {
                     comment:
                       "Label of the switch in Settings that holds every notification until turned off",
                   })}
-                  description={doNotDisturbCaption(
-                    doNotDisturb,
-                    i18n.locale,
-                    scoped
-                  )}
+                  description={doNotDisturbCaption(doNotDisturb, i18n.locale)}
                   paused={undefined}
                   scope={{}}
                 >
@@ -294,29 +285,25 @@ export const NotificationsPage = () => {
               switchRow(
                 "notifications",
                 t({
-                  message: "Notifications",
+                  message: "Allow notifications",
                   comment:
                     "Label of the switch in Settings that shows a notification for new mail",
                 }),
-                t({
-                  message: "A notification for each new message.",
-                  comment:
-                    "Description of the Notifications switch in Settings",
-                }),
+                undefined,
                 true
               ),
               switchRow(
                 "notificationImportantOnly",
                 t({
-                  message: "Important mail only",
+                  message: "Only important mail",
                   comment:
                     "Label of the switch in Settings that limits notifications to mail Gmail marks important",
                 }),
                 t({
                   message:
-                    "Only mail Gmail marks important gets a notification.",
+                    "Only notifies you about email Gmail marks as important.",
                   comment:
-                    "Description of the Important mail only switch in Settings",
+                    "Description of the Only important mail switch in Settings; important is Gmail's own marking of mail",
                 }),
                 true
               ),
@@ -426,12 +413,6 @@ export const NotificationsPage = () => {
                   comment:
                     "Label of the row in Settings whose button shows a sample new mail notification",
                 })}
-                description={t({
-                  message:
-                    "Show a test notification to see how notifications appear.",
-                  comment:
-                    "Description of the Test notification row in Settings",
-                })}
                 paused={undefined}
                 scope={{}}
               >
@@ -448,6 +429,11 @@ export const NotificationsPage = () => {
                           disabled={doNotDisturb.on}
                           focusableWhenDisabled
                           className="aria-disabled:opacity-50"
+                          aria-label={t({
+                            message: "Show test notification",
+                            comment:
+                              "Accessible name of the Show button of the Test notification row in Settings; it starts with the button's visible label, Show",
+                          })}
                           aria-describedby={[
                             ids.description,
                             doNotDisturb.on && testBlockedId,
@@ -467,9 +453,9 @@ export const NotificationsPage = () => {
                       }
                     >
                       {t({
-                        message: "Show test notification",
+                        message: "Show",
                         comment:
-                          "Button in Settings that shows a sample new mail notification, as the settings above would show one",
+                          "Button of the Test notification row in Settings that shows a sample new mail notification, as the settings above would show one",
                       })}
                     </TooltipTrigger>
                     {/* Base UI gives its popup no role of its own. */}
@@ -492,7 +478,7 @@ export const NotificationsPage = () => {
         <CardHeader>
           <CardTitle>
             {t({
-              message: "What a notification shows",
+              message: "What notifications show",
               comment:
                 "Title of the group of Settings for what a new mail notification says",
             })}
@@ -504,7 +490,7 @@ export const NotificationsPage = () => {
               switchRow(
                 "notificationSender",
                 t({
-                  message: "Show the sender",
+                  message: "Show sender",
                   comment:
                     "Label of the switch in Settings that names who sent the mail in its notification",
                 })
@@ -512,7 +498,7 @@ export const NotificationsPage = () => {
               switchRow(
                 "notificationSubject",
                 t({
-                  message: "Show the subject",
+                  message: "Show subject",
                   comment:
                     "Label of the switch in Settings that shows the mail's subject in its notification",
                 })
@@ -520,7 +506,7 @@ export const NotificationsPage = () => {
               switchRow(
                 "notificationSummary",
                 t({
-                  message: "Show the summary",
+                  message: "Show preview",
                   comment:
                     "Label of the switch in Settings that shows the start of the mail's text in its notification",
                 })
@@ -545,22 +531,22 @@ export const NotificationsPage = () => {
               switchRow(
                 "unreadBadge",
                 t({
-                  message: "Count unread in the badge",
+                  message: "Show unread count",
                   comment:
                     "Label of the switch in Settings that adds unread mail to the number on the app's icon",
                 }),
                 document.documentElement.dataset.platform === "darwin"
                   ? t({
                       message:
-                        "Unread mail adds to the number on the Dock icon.",
+                        "Shows how many unread emails you have on the Dock icon.",
                       comment:
-                        "Description of the Count unread in the badge switch in Settings on macOS; the Dock is where macOS shows the app's icon",
+                        "Description of the Show unread count switch in Settings on macOS; the Dock is where macOS shows the app's icon",
                     })
                   : t({
                       message:
-                        "Unread mail adds to the number on the app's icon.",
+                        "Shows how many unread emails you have on the app icon.",
                       comment:
-                        "Description of the Count unread in the badge switch in Settings on Windows and Linux",
+                        "Description of the Show unread count switch in Settings on Windows and Linux",
                     })
               ),
             ]}
@@ -571,7 +557,7 @@ export const NotificationsPage = () => {
         <p className="px-1 text-sm text-muted-foreground">
           {t({
             message:
-              "Do Not Disturb is the same for every profile, under All profiles.",
+              "You set Do Not Disturb under All profiles. It applies to every profile.",
             comment:
               "Line under the cards of the Notifications page in Settings while one profile's scope is chosen",
           })}

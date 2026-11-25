@@ -18,31 +18,23 @@ const isMidnight = (time: number) => {
 };
 
 /**
- * What the Do Not Disturb row says: off, what it holds and where the timed
- * choices are; on, when it ends first, as the titlebar names the end. With
- * scopes it says it holds whatever a profile sets.
+ * What the Do Not Disturb row says: off, what it does and where the timed
+ * choices are; on, when it ends first, as the title bar names the end.
  */
 export const doNotDisturbCaption = (
   { on, until }: SettingsState["doNotDisturb"],
-  locale: string,
-  scoped = false
+  locale: string
 ) => {
-  const holds = scoped
-    ? t({
-        message: "Holds every notification, whatever a profile sets.",
-        comment:
-          "What the Do Not Disturb switch in Settings does, with more than one profile",
-      })
-    : t({
-        message: "Holds every notification.",
-        comment: "What the Do Not Disturb switch in Settings does",
-      });
+  const holds = t({
+    message: "Silences all notifications.",
+    comment: "What the Do Not Disturb switch in Settings does",
+  });
 
   if (!on) {
     return t({
-      message: `${holds} The moon in the titlebar turns it on for a set time.`,
+      message: `${holds} You can also turn it on for a while from the moon in the title bar.`,
       comment:
-        "Description of the Do Not Disturb switch in Settings while it is off; {holds} is what it does, such as Holds every notification. The moon is the Do Not Disturb button in the main window's title bar",
+        "Description of the Do Not Disturb switch in Settings while it is off; {holds} is what it does, such as Silences all notifications. The moon is the Do Not Disturb button in the main window's title bar",
     });
   }
 
@@ -50,7 +42,7 @@ export const doNotDisturbCaption = (
     return t({
       message: `On until you turn it off. ${holds}`,
       comment:
-        "Description of the Do Not Disturb switch in Settings while it is on with no end; {holds} is what it does, such as Holds every notification.",
+        "Description of the Do Not Disturb switch in Settings while it is on with no end; {holds} is what it does, such as Silences all notifications.",
     });
   }
 
@@ -58,7 +50,7 @@ export const doNotDisturbCaption = (
     return t({
       message: `On until tomorrow. ${holds}`,
       comment:
-        "Description of the Do Not Disturb switch in Settings while it is on until midnight; {holds} is what it does, such as Holds every notification.",
+        "Description of the Do Not Disturb switch in Settings while it is on until midnight; {holds} is what it does, such as Silences all notifications.",
     });
   }
 
@@ -70,6 +62,6 @@ export const doNotDisturbCaption = (
   return t({
     message: `On until ${time}. ${holds}`,
     comment:
-      "Description of the Do Not Disturb switch in Settings while it is on for a time; {time} is the time of day it ends, such as 14:30, and {holds} what it does, such as Holds every notification.",
+      "Description of the Do Not Disturb switch in Settings while it is on for a time; {time} is the time of day it ends, such as 14:30, and {holds} what it does, such as Silences all notifications.",
   });
 };
