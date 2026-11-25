@@ -45,7 +45,7 @@ Compare `MERU_BUILD_MODE` and `MERU_E2E_BUILD` directly, never through a variabl
 - `--profile <name>` uses `.meru/<name>` as the user data directory; without it a linked worktree uses a profile named after its branch and the main checkout `default`.
 - `--debug-port <n>` opens Chromium's remote debugging port; `0` lets Chromium pick and print one.
 - `--background`, or `MERU_BACKGROUND=1` (which `.claude/settings.json` sets), opens the window without taking the foreground or focus. On this shared Mac drive it over CDP, never by raising it.
-- A page that prints or shows an `alert`, `confirm` or `prompt` (Gmail's Print all, a discard in its pop-out) brings the app forward even under the background flag; when driving Gmail live, replace `window.print`, `alert`, `confirm` and `prompt` in each page through `executeJavaScript` before any click.
+- A page that prints or shows an `alert`, `confirm` or `prompt` (Gmail's Print all, a discard in its pop-out) brings the app forward even under the background flag; when driving Gmail live, replace `window.print`, `alert`, `confirm` and `prompt` in each page through `executeJavaScript` before any click. A link that leaves Meru for the default browser shows a native alert first, so a driven dev profile sets `"confirmLinks": false` in its `settings.json` or clicks no such link.
 - Any other flag passes through to Electron. `pnpm dev` serves the shell from Vite on `PORT`, or a free port.
 - On the Mac mini the `v4` worktree's `.meru/signed-in` holds the Google test account: `--profile signed-in` there, one app at a time, never with `--debug-port`, which Google refuses; a second copy of the session gets signed out. `--inspect=0` opens main's inspector alone, enough to watch a view.
 
