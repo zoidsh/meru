@@ -983,6 +983,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "savedSearch.save",
+    capability: "savedSearches",
     title: () =>
       t({
         message: "Save Current Search",

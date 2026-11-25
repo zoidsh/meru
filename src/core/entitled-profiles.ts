@@ -7,6 +7,7 @@ import type { Profile, State } from "./state.ts";
 export const STATE_CAPABILITIES = [
   "profiles",
   "notificationGates",
+  "savedSearches",
 ] as const satisfies readonly Capability[];
 
 /** Whether the run holds each of `STATE_CAPABILITIES`. */
@@ -17,17 +18,50 @@ export const stateGrants = (
 ): StateGrants => ({
   profiles: can("profiles"),
   notificationGates: can("notificationGates"),
+  savedSearches: can("savedSearches"),
 });
 
 /**
- * The state a run may use: `entitledState`'s profiles, and without
- * `notificationGates` no Do Not Disturb, which stays stored, so nothing
- * holds a notification with no control on screen to end it.
+ * What a profile's saved searches read as while hidden, in their key's
+ * place, so the stored ones go back where they were found.
+ */
+const HIDDEN_SEARCHES: readonly never[] = Object.freeze([]);
+
+/** Each profile with its saved searches, if any, hidden. */
+const withoutSavedSearches = (state: State): State => ({
+  ...state,
+  profiles: state.profiles.map((profile) =>
+    Object.hasOwn(profile, "savedSearches")
+      ? { ...profile, savedSearches: HIDDEN_SEARCHES }
+      : profile
+  ),
+});
+
+/** Each profile whose saved searches were hidden with them as `stored` holds them. */
+const withSavedSearchesOf = (state: State, stored: State): State => ({
+  ...state,
+  profiles: state.profiles.map((profile) => {
+    const found = stored.profiles.find(({ id }) => id === profile.id);
+
+    return found && profile.savedSearches === HIDDEN_SEARCHES
+      ? { ...profile, savedSearches: found.savedSearches }
+      : profile;
+  }),
+});
+
+/**
+ * The state a run may use: `entitledState`'s profiles; without
+ * `notificationGates` no Do Not Disturb, so nothing holds a notification
+ * with no control on screen to end it; and without `savedSearches` none of
+ * any profile's. What it leaves out stays stored.
  */
 export const entitledView = (stored: State, grants: StateGrants): State => {
   const view = entitledState(stored, grants.profiles);
+  const held = grants.notificationGates
+    ? view
+    : switchDoNotDisturb(view, undefined);
 
-  return grants.notificationGates ? view : switchDoNotDisturb(view, undefined);
+  return grants.savedSearches ? held : withoutSavedSearches(held);
 };
 
 /**
@@ -46,9 +80,11 @@ export const storedAfterView = (
     next
   );
 
-  return grants.notificationGates
+  const held = grants.notificationGates
     ? written
     : withDoNotDisturbOf(written, stored);
+
+  return grants.savedSearches ? held : withSavedSearchesOf(held, stored);
 };
 
 /**

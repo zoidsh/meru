@@ -22,7 +22,13 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
-import { openSection, openSettings, switchNamed } from "./lib/settings.ts";
+import {
+  openProfiles,
+  openSection,
+  openSettings,
+  profileRow,
+  switchNamed,
+} from "./lib/settings.ts";
 import { ANY_SESSION, listing } from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 
@@ -471,4 +477,87 @@ test("the free version plays Linen at its volume for the system's sound, preview
   await expect(sound).toBeEnabled();
   await expect(sound).toContainText("System");
   await expect(page.getByRole("button", { name: "Play sound" })).toBeDisabled();
+});
+
+/** The labels of the application menu's items that run a saved search, in order. */
+const menuSearches = (app: ElectronApplication) =>
+  app.evaluate(({ Menu }) => {
+    const labels: string[] = [];
+    const walk = (menu: Electron.Menu | null | undefined) => {
+      for (const item of menu?.items ?? []) {
+        // An item made without an id has none.
+        if ((item.id as string | undefined)?.startsWith("savedSearch.open.")) {
+          labels.push(item.label);
+        }
+
+        walk(item.submenu);
+      }
+    };
+
+    walk(Menu.getApplicationMenu());
+
+    return labels;
+  });
+
+test("the free version lists no saved search and saves none, shows Add search as Pro, and keeps each one stored", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const searches = [
+    { id: "a", query: "is:unread" },
+    { id: "b", query: "has:attachment", label: "Files" },
+  ];
+
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "home",
+        name: "Home",
+        tabs: [{ id: "gmail", app: "gmail", url: standIn.url, title: "" }],
+        selectedTabId: "gmail",
+        savedSearches: searches,
+      },
+    ],
+    selectedProfileId: "home",
+  });
+
+  const { app, gmail } = await launchFree(launchApp, userDataDir, standIn);
+
+  await gmail.evaluate(() => {
+    location.hash = "#search/is%3Astarred";
+  });
+  await expect
+    .poll(() => menuItem(app, "savedSearch.save"))
+    .toStrictEqual(proItem("Save Current Search"));
+  expect(await menuSearches(app)).toStrictEqual([]);
+
+  const page = await openSettings(app);
+
+  await openProfiles(page);
+  await profileRow(page, "Home").click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Home");
+  await expect(
+    page.getByRole("button", { name: "Add search", exact: true })
+  ).toBeDisabled();
+  await expect(badgeOf(page, "Add search")).toBeVisible();
+  await expect(page.getByRole("group", { name: "Files" })).toHaveCount(0);
+  await expect(
+    page.getByText("You haven't saved any searches yet.")
+  ).toHaveCount(0);
+  await expect(
+    readState<{ profiles: { savedSearches?: unknown }[] }>(userDataDir)
+  ).resolves.toMatchObject({ profiles: [{ savedSearches: searches }] });
+
+  await activate(page);
+  await expect
+    .poll(() => menuSearches(app))
+    .toStrictEqual(["is:unread", "Files"]);
+  await expect
+    .poll(() => menuItem(app, "savedSearch.save"))
+    .toStrictEqual({
+      label: "Save Current Search",
+      badge: undefined,
+      enabled: true,
+    });
 });

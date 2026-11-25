@@ -1070,6 +1070,14 @@ describe("the Mail menu's commands", () => {
     expect(app.isAvailable("savedSearch.save")).toBeTruthy();
   });
 
+  it("offers no save without Meru Pro, a search in front or not", () => {
+    const app = setup(gmailAt(`${INBOX}#search/subject%3A%22out+of+office%22`));
+
+    app.refuse("savedSearches");
+
+    expect(app.isAvailable("savedSearch.save")).toBeFalsy();
+  });
+
   it("offers no save without a search in front", async () => {
     const app = setup(gmailAt(`${INBOX}#inbox`));
 

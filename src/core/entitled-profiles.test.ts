@@ -9,6 +9,7 @@ import {
   storedAfterView,
 } from "./entitled-profiles.ts";
 import type { StateGrants } from "./entitled-profiles.ts";
+import { savedSearches } from "./saved-searches.ts";
 import {
   decodeState,
   encodeState,
@@ -124,7 +125,11 @@ describe(storedAfter, () => {
   });
 });
 
-const ALL: StateGrants = { profiles: true, notificationGates: true };
+const ALL: StateGrants = {
+  profiles: true,
+  notificationGates: true,
+  savedSearches: true,
+};
 
 describe(entitledView, () => {
   it("is the stored state itself with every grant", () => {
@@ -160,6 +165,36 @@ describe(entitledView, () => {
       undefined,
       expect.objectContaining({ doNotDisturb: { until: null } }),
       expect.objectContaining({ doNotDisturb: "not one" }),
+    ]);
+  });
+
+  it("holds no saved searches without savedSearches, and writes each profile's back as found, in its place", () => {
+    const grants = { ...ALL, savedSearches: false };
+    const searches = [{ id: "s", query: "is:starred" }, "not a search"];
+    const decoded = decodeState({
+      version: 1,
+      profiles: [
+        { id: "a", name: "A", savedSearches: searches, color: "green" },
+        { id: "b", name: "B" },
+      ],
+      selectedProfileId: "a",
+    });
+
+    if (decoded.kind !== "read") {
+      throw new Error("The fixture does not decode");
+    }
+
+    const state = decoded.value;
+    const view = entitledView(state, grants);
+    const next = renameProfile(view, "a", "Mine");
+    const renamedStored = renameProfile(state, "a", "Mine");
+
+    expect([
+      savedSearches(view, "a"),
+      next && JSON.stringify(encodeState(storedAfterView(state, grants, next))),
+    ]).toStrictEqual([
+      [],
+      renamedStored && JSON.stringify(encodeState(renamedStored)),
     ]);
   });
 });

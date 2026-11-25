@@ -225,6 +225,13 @@ export const createProfiles = ({
     await clearAndForget(clear);
   };
 
+  /** Throws while the run holds no saved searches, which stay stored. */
+  const assertSavedSearches = () => {
+    if (!grants.savedSearches) {
+      throw new Error("Saved searches need Meru Pro");
+    }
+  };
+
   const exclusive = async <T>(work: () => Promise<T>) => {
     await mutex.acquire();
 
@@ -398,6 +405,8 @@ export const createProfiles = ({
     /** Why the search cannot be added, or nothing once it is. */
     addSavedSearch: (profileId: string, query: string, name?: string) =>
       exclusive(async (): Promise<SavedSearchRefusal | undefined> => {
+        assertSavedSearches();
+
         const added = addSavedSearch(state, profileId, { query, name }, newId);
 
         if ("refused" in added) {
@@ -409,11 +418,17 @@ export const createProfiles = ({
         return undefined;
       }),
     renameSavedSearch: (profileId: string, searchId: string, name: string) =>
-      exclusive(() =>
-        commit(renameSavedSearch(state, profileId, searchId, name))
-      ),
+      exclusive(() => {
+        assertSavedSearches();
+
+        return commit(renameSavedSearch(state, profileId, searchId, name));
+      }),
     removeSavedSearch: (profileId: string, searchId: string) =>
-      exclusive(() => commit(removeSavedSearch(state, profileId, searchId))),
+      exclusive(() => {
+        assertSavedSearches();
+
+        return commit(removeSavedSearch(state, profileId, searchId));
+      }),
     /**
      * Bookmarks the page in the profile, or removes its bookmark; says
      * whether it is bookmarked now, or nothing when nothing changed.

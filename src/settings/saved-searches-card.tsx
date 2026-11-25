@@ -24,6 +24,7 @@ import {
 } from "#ui/field.tsx";
 import { Input } from "#ui/input.tsx";
 
+import { ProBadge, useNeedsPro } from "./pro-badge.tsx";
 import { SettingGroup } from "./setting-group.tsx";
 import { settingsCalls } from "./sync.ts";
 
@@ -423,6 +424,8 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
   // each request so one asked for again runs again.
   const [focusNext, setFocusNext] = useState<{ target: string }>();
   const searches = profile.savedSearches;
+  const pro = useNeedsPro()("savedSearches");
+  const addId = useId();
 
   useEffect(() => {
     if (focusNext === undefined) {
@@ -503,13 +506,16 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
             ])}
           </FieldGroup>
         ) : (
-          <FieldDescription>
-            {t({
-              message: "You haven't saved any searches yet.",
-              comment:
-                "Shown in the Saved searches card on a profile's page in Settings while it has none",
-            })}
-          </FieldDescription>
+          // The free version lists none, whatever is stored.
+          !pro && (
+            <FieldDescription>
+              {t({
+                message: "You haven't saved any searches yet.",
+                comment:
+                  "Shown in the Saved searches card on a profile's page in Settings while it has none",
+              })}
+            </FieldDescription>
+          )
         )}
         {adding ? (
           <AddForm
@@ -521,11 +527,13 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
             }}
           />
         ) : (
-          <div>
+          <div className="flex items-center gap-2">
             <Button
               ref={addButton}
+              id={addId}
               variant="outline"
               size="sm"
+              disabled={pro}
               onClick={() => {
                 setAdding(true);
               }}
@@ -537,6 +545,7 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
                   "Button on a profile's page in Settings that opens the fields to add a saved search",
               })}
             </Button>
+            {pro && <ProBadge labelledBy={addId} />}
           </div>
         )}
       </div>

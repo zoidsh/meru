@@ -442,6 +442,51 @@ describe("Do Not Disturb without Meru Pro", () => {
   });
 });
 
+describe("saved searches without Meru Pro", () => {
+  const withSearches: State = {
+    ...two,
+    profiles: two.profiles.map((profile) => ({
+      ...profile,
+      savedSearches: [{ id: "s", query: "is:starred" }],
+    })),
+  };
+
+  it("lists none, changes none, and writes each stored list back as found", async () => {
+    const { profiles, saved } = setupGated(withSearches, "savedSearches");
+
+    const read = profiles
+      .get()
+      .profiles.map((profile) => profile.savedSearches);
+    const changed = await Promise.allSettled([
+      profiles.addSavedSearch("a", "is:unread"),
+      profiles.renameSavedSearch("a", "s", "Starred"),
+      profiles.removeSavedSearch("a", "s"),
+    ]);
+
+    await profiles.select("a");
+
+    expect([
+      read,
+      changed.map((result) => result.status),
+      saved.map((state) => state.profiles.map((p) => p.savedSearches)),
+    ]).toStrictEqual([
+      [[], []],
+      ["rejected", "rejected", "rejected"],
+      [withSearches.profiles.map((profile) => profile.savedSearches)],
+    ]);
+  });
+
+  it("brings them back at once with a license", () => {
+    const { profiles, license } = setupGated(withSearches, "savedSearches");
+
+    license();
+
+    expect(
+      profiles.get().profiles.map((profile) => profile.savedSearches)
+    ).toStrictEqual(withSearches.profiles.map((p) => p.savedSearches));
+  });
+});
+
 /** Profiles that may use the first profile alone until `license`. */
 const setupFree = (initial: State = two) => {
   let multiple = false;
