@@ -869,6 +869,8 @@ test.describe("shots", () => {
       notificationSound: "system",
       verificationCodes: true,
       verificationCodeTrash: true,
+      reverseConversation: true,
+      trustedSites: ["https://example.org", "https://example.net"],
     });
 
     const { app, shell } = await launchFree(launchApp, userDataDir, standIn);
@@ -896,8 +898,13 @@ test.describe("shots", () => {
         "settings-notifications-quiet-hours",
         badgeOf(page, "Quiet hours"),
       ],
+      ["Gmail", "settings-gmail-page", badgeOf(page, "Hide promotions")],
       ["Gmail", "settings-gmail", badgeOf(page, "Find verification codes")],
-      ["Privacy & Security", "settings-privacy"],
+      [
+        "Privacy & Security",
+        "settings-privacy",
+        badgeOf(page, "Trusted sites"),
+      ],
       ["Meru Pro", "settings-meru-pro"],
     ];
 
