@@ -146,6 +146,7 @@ export const wireGmail = ({
           USER_STYLES_MAX_BYTES
         ),
       log: console.error,
+      allowed: () => entitlement.can("userStyles"),
     }),
   });
   const { catchUp } = gmailPage;

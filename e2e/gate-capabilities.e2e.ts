@@ -479,6 +479,38 @@ test("the free version plays Linen at its volume for the system's sound, preview
   await expect(page.getByRole("button", { name: "Play sound" })).toBeDisabled();
 });
 
+const USER_STYLES = "body { outline: 3px solid rgb(1, 2, 3) !important; }";
+
+const outline = (page: Page) =>
+  page.evaluate(() => getComputedStyle(document.body).outlineColor);
+
+test("the free version loads no user styles into Gmail's page and leaves the file as it is, and a license loads them at the next load", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const file = path.join(userDataDir, "gmail-user-styles.css");
+
+  await seedOneProfile(userDataDir, standIn);
+  await writeFile(file, USER_STYLES);
+  standIn.setFeed(ANY_SESSION, listing("1"));
+
+  const { app, gmail } = await launchFree(launchApp, userDataDir, standIn);
+
+  // The page has shaken hands with main, which sends the styles on that.
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
+  expect(await outline(gmail)).not.toBe("rgb(1, 2, 3)");
+  await expect(readFile(file, "utf-8")).resolves.toBe(USER_STYLES);
+
+  const page = await openSettings(app);
+
+  await activate(page);
+  // A load before main holds the license would rightly get none.
+  await expect.poll(() => snapshot(app)).toMatchObject({ status: "licensed" });
+  await gmail.reload();
+  await expect.poll(() => outline(gmail)).toBe("rgb(1, 2, 3)");
+});
+
 /** The labels of the application menu's items that run a saved search, in order. */
 const menuSearches = (app: ElectronApplication) =>
   app.evaluate(({ Menu }) => {

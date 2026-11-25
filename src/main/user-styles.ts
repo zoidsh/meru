@@ -9,6 +9,8 @@ export interface UserStylesDeps {
   /** Reads the file, at most `USER_STYLES_MAX_BYTES` of it. */
   read: () => Promise<CappedRead>;
   log: (message: string) => void;
+  /** Whether the run may apply them: `can("userStyles")`. */
+  allowed?: () => boolean;
 }
 
 const codeOf = (error: unknown) =>
@@ -17,11 +19,16 @@ const codeOf = (error: unknown) =>
 /**
  * The person's own CSS for Gmail's page, as the file holds it now: empty
  * when there is none, it is too large or it cannot be read. Only the size or
- * the error's code is logged, never the file's text or its path.
+ * the error's code is logged, never the file's text or its path. Empty too,
+ * with the file not even read, while the run may not apply them.
  */
 export const createUserStyles =
-  ({ read, log }: UserStylesDeps) =>
+  ({ read, log, allowed = () => true }: UserStylesDeps) =>
   async (): Promise<string> => {
+    if (!allowed()) {
+      return "";
+    }
+
     let result: CappedRead;
 
     try {

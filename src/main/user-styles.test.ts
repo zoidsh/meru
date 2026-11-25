@@ -85,6 +85,31 @@ describe(createUserStyles, () => {
     ]);
   });
 
+  it("gives nothing while the run may not apply them, reading no file, and the file's text again once it may", async () => {
+    const file = await fileWith("a { color: red }");
+    let allowed = false;
+    const reads: string[] = [];
+    const read = createUserStyles({
+      read: () => {
+        reads.push(file);
+
+        return readTextUpTo(file, USER_STYLES_MAX_BYTES);
+      },
+      log: () => {},
+      allowed: () => allowed,
+    });
+
+    const free = await read();
+
+    allowed = true;
+
+    expect([free, reads.length, await read()]).toStrictEqual([
+      "",
+      0,
+      "a { color: red }",
+    ]);
+  });
+
   it("gives nothing for what cannot be read, logging the error's code and not the path", async () => {
     const folder = await fileWith();
     const { read, logs } = stylesOf(path.dirname(folder));
