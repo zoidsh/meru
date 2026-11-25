@@ -1,6 +1,7 @@
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { expect, findPage, test, writeState } from "./lib/app.ts";
+import { pollAll } from "./lib/settings.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import { signIn } from "./lib/stand-in.ts";
 
@@ -101,8 +102,11 @@ test("gives each profile its own count", async ({
   await expect(profileTab(shell, "Home")).toHaveAccessibleName(
     "Home, 2 unread messages"
   );
-  // Its Gmail tab loading for the first time polls it.
+  // Work's Gmail page loaded at launch, so selecting it polls nothing, and
+  // the poll its loading asked for may have read the feed before the
+  // sign-in above: until waking, the next would be minutes away.
   await profileTab(shell, "Work").click();
+  await pollAll(app);
 
   await expect(profileTab(shell, "Work")).toHaveAccessibleName(
     "Work, 7 unread messages"
