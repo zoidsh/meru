@@ -6,9 +6,10 @@ import type {
 
 /**
  * A system whose default browser is Meru while `isDefault` is, answering
- * each alert with `answer` and keeping what it was asked.
+ * each alert with `answer` and keeping what it was asked; with
+ * `withSettings`, one place to choose a browser, as macOS has.
  */
-export const fakeDefaultBrowser = () => {
+export const fakeDefaultBrowser = ({ withSettings = true } = {}) => {
   const fake = {
     isDefault: false,
     answer: "cancel" as DefaultBrowserChoice,
@@ -22,11 +23,15 @@ export const fakeDefaultBrowser = () => {
 
       return Promise.resolve(fake.answer);
     },
-    openSettings: () => {
-      fake.settingsOpened += 1;
+    ...(withSettings
+      ? {
+          openSettings: () => {
+            fake.settingsOpened += 1;
 
-      return Promise.resolve();
-    },
+            return Promise.resolve();
+          },
+        }
+      : {}),
   };
 
   return { fake, defaultBrowser };

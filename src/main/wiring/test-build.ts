@@ -21,7 +21,6 @@ import {
 import {
   createCapturedDefaultBrowser,
   createDefaultBrowser,
-  createNeverDefaultBrowser,
 } from "#platform/default-browser.ts";
 import { createCapturedDock, createDock } from "#platform/dock.ts";
 import {
@@ -230,12 +229,12 @@ export const linkPrompt = () =>
  */
 export const systemDefaultBrowser = (platform: Platform) => {
   if (MERU_E2E_BUILD) {
-    return createCapturedDefaultBrowser();
+    return createCapturedDefaultBrowser(platform);
   }
 
   return isReleaseAppId(MERU_APP_ID)
     ? createDefaultBrowser(platform)
-    : createNeverDefaultBrowser();
+    : undefined;
 };
 
 /** The suite's build records the Dock's and taskbar's progress and bounce. */

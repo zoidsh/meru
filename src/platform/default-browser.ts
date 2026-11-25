@@ -19,8 +19,8 @@ export interface DefaultBrowser {
   isMeru: () => boolean;
   /** The system's alert, attached to no window, as the link prompt's. */
   alert: (alert: DefaultBrowserAlert) => Promise<DefaultBrowserChoice>;
-  /** Where the default browser is chosen; macOS alone has one such place. */
-  openSettings: () => Promise<void>;
+  /** Where the default browser is chosen, on macOS, the one system with one such place. */
+  openSettings?: () => Promise<void>;
 }
 
 // Desktop & Dock holds Default web browser from macOS 13, Meru's oldest.
@@ -54,22 +54,9 @@ const showAlert = async ({
 export const createDefaultBrowser = (platform: Platform): DefaultBrowser => ({
   isMeru: () => platform !== "win32" && app.isDefaultProtocolClient("https"),
   alert: showAlert,
-  openSettings: () =>
-    platform === "darwin"
-      ? shell.openExternal(MACOS_SETTINGS_URL)
-      : Promise.reject(new Error(`No default browser settings on ${platform}`)),
-});
-
-/**
- * A build that claims no link scheme, which the system never makes its
- * default browser.
- */
-export const createNeverDefaultBrowser = (): DefaultBrowser => ({
-  isMeru: () => false,
-  alert: () =>
-    Promise.reject(new Error("Meru Dev is never the default browser")),
-  openSettings: () =>
-    Promise.reject(new Error("Meru Dev is never the default browser")),
+  ...(platform === "darwin"
+    ? { openSettings: () => shell.openExternal(MACOS_SETTINGS_URL) }
+    : {}),
 });
 
 /** What the end-to-end build's stand-in was asked, and how it answers. */
@@ -84,9 +71,11 @@ export interface CapturedDefaultBrowser {
  * The end-to-end build's, which never shows an alert or a settings pane on
  * the desktop the suite shares: a test sets `isMeru` and `answer` on
  * `meruTestDefaultBrowser`, which keeps each alert asked and counts each
- * opening of the settings.
+ * opening of the settings, offered on macOS alone as the real one's.
  */
-export const createCapturedDefaultBrowser = (): DefaultBrowser => {
+export const createCapturedDefaultBrowser = (
+  platform: Platform
+): DefaultBrowser => {
   const captured: CapturedDefaultBrowser = {
     isMeru: false,
     answer: "cancel",
@@ -103,10 +92,14 @@ export const createCapturedDefaultBrowser = (): DefaultBrowser => {
 
       return Promise.resolve(captured.answer);
     },
-    openSettings: () => {
-      captured.settingsOpened += 1;
+    ...(platform === "darwin"
+      ? {
+          openSettings: () => {
+            captured.settingsOpened += 1;
 
-      return Promise.resolve();
-    },
+            return Promise.resolve();
+          },
+        }
+      : {}),
   };
 };

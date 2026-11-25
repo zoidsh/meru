@@ -26,7 +26,6 @@ export const wireLinks = ({
 }) => {
   const trustedSites = createTrustedSites(settings);
   const defaultBrowser = createDefaultBrowserGuard({
-    platform,
     defaultBrowser: systemDefaultBrowser(platform),
     clipboard,
     log: console.error,

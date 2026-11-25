@@ -1,20 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import type { Platform } from "#core/platform.ts";
 import { fakeDefaultBrowser } from "#platform/default-browser.fake.ts";
 
 import { createDefaultBrowserGuard } from "./default-browser-guard.ts";
 
 const LINK = "https://example.org/";
 
-const setup = (platform: Platform = "darwin") => {
-  const { fake, defaultBrowser } = fakeDefaultBrowser();
+const setup = ({
+  withSettings = true,
+  claimsLinks = true,
+}: { withSettings?: boolean; claimsLinks?: boolean } = {}) => {
+  const { fake, defaultBrowser } = fakeDefaultBrowser({ withSettings });
   const opened: string[] = [];
   const copied: string[] = [];
   const logged: string[] = [];
   const guard = createDefaultBrowserGuard({
-    platform,
-    defaultBrowser,
+    defaultBrowser: claimsLinks ? defaultBrowser : undefined,
     clipboard: {
       writeText: (text) => {
         copied.push(text);
@@ -56,8 +57,8 @@ describe(createDefaultBrowserGuard, () => {
     expect([opened, copied, fake.asked.length]).toStrictEqual([[], [LINK], 1]);
   });
 
-  it("on macOS says why and offers System Settings first, then Copy Link and Cancel", async () => {
-    const { fake, browser } = setup("darwin");
+  it("with the system's one place to choose a browser, as macOS has, says why and offers System Settings first, then Copy Link and Cancel", async () => {
+    const { fake, browser } = setup();
 
     fake.isDefault = true;
     await browser.open(LINK);
@@ -77,8 +78,8 @@ describe(createDefaultBrowserGuard, () => {
     expect(fake.settingsOpened).toBe(0);
   });
 
-  it("on Linux, which has no one place to choose a browser, offers Copy Link and OK alone", async () => {
-    const { fake, browser } = setup("linux");
+  it("with no one place to choose a browser, as on Linux, offers Copy Link and OK alone", async () => {
+    const { fake, browser } = setup({ withSettings: false });
 
     fake.isDefault = true;
     await browser.open(LINK);
@@ -109,5 +110,14 @@ describe(createDefaultBrowserGuard, () => {
       [],
       ["The default browser alert's settings failed: refused"],
     ]);
+  });
+
+  it("in a build that claims no link scheme opens every link, asking the system nothing", async () => {
+    const { fake, browser, opened } = setup({ claimsLinks: false });
+
+    fake.isDefault = true;
+    await browser.open(LINK);
+
+    expect([opened, fake.asked]).toStrictEqual([[LINK], []]);
   });
 });

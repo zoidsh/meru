@@ -40,7 +40,6 @@ const setup = (initial?: Settings) => {
     settings,
     trustedSites,
     defaultBrowser: createDefaultBrowserGuard({
-      platform: "darwin",
       defaultBrowser,
       clipboard,
       log: () => false,

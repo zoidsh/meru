@@ -1,6 +1,5 @@
 import { t } from "@lingui/core/macro";
 
-import type { Platform } from "#core/platform.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type {
   DefaultBrowser,
@@ -20,15 +19,15 @@ const copyButton = () => ({
   }),
 });
 
-const alertFor = (platform: Platform): DefaultBrowserAlert => {
+/** With the system's one place to choose a browser, as macOS has, or none, as Linux. */
+const alertFor = (withSettings: boolean): DefaultBrowserAlert => {
   const message = t({
     message: "Meru is your default browser",
     comment:
       "Title of the alert Meru shows in place of opening a link in the default browser, since Meru itself is the system's default browser",
   });
 
-  // Only macOS has one place where the default browser is chosen.
-  return platform === "darwin"
+  return withSettings
     ? {
         message,
         detail: t({
@@ -83,32 +82,34 @@ const alertFor = (platform: Platform): DefaultBrowserAlert => {
  * Stops a link leaving for the default browser while Meru is it, which
  * would only hand the link back to Meru: v3 found that presents as a hang.
  * The alert says so in its place and offers the system's settings, where
- * there is one place for them, or a copy of the link.
+ * there is one place for them, or a copy of the link. A build that claims no
+ * link scheme has no `defaultBrowser` and holds nothing.
  */
 export const createDefaultBrowserGuard = ({
-  platform,
   defaultBrowser,
   clipboard,
   log,
 }: {
-  platform: Platform;
-  defaultBrowser: DefaultBrowser;
+  defaultBrowser: DefaultBrowser | undefined;
   clipboard: Clipboard;
   log: (message: string) => void;
 }) => {
   /** Whether the link stays, the alert shown and answered. */
   const holds = async (url: string) => {
-    if (!defaultBrowser.isMeru()) {
+    if (!defaultBrowser?.isMeru()) {
       return false;
     }
 
-    const choice = await defaultBrowser.alert(alertFor(platform));
+    const { openSettings } = defaultBrowser;
+    const choice = await defaultBrowser.alert(
+      alertFor(openSettings !== undefined)
+    );
 
     try {
       if (choice === "copy") {
         await clipboard.writeText(url);
       } else if (choice === "settings") {
-        await defaultBrowser.openSettings();
+        await openSettings?.();
       }
     } catch (error) {
       log(`The default browser alert's ${choice} failed: ${describe(error)}`);
