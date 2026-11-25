@@ -90,7 +90,7 @@ msgstr "{name} · asleep · sign in required"
 msgid "{name} ({count})"
 msgstr "{name} ({count})"
 
-#. Heading shown in place of a tab's page that could not load; {name} is the app, such as Gmail or Calendar
+#. Heading shown in place of a tab's page that could not load; {name} is the Google app, such as Gmail or Calendar
 #: src/shell/tab-problem.tsx
 msgid "{name} couldn’t load"
 msgstr "{name} couldn’t load"
@@ -105,12 +105,12 @@ msgstr "{name} is now {place} of {count} in the title bar."
 msgid "{name} is signed out."
 msgstr "{name} is signed out."
 
-#. Explanation under the offline heading in place of a tab's page; {name} is the app, such as Gmail or Calendar
+#. Explanation under the offline heading in place of a tab's page; {name} is the Google app, such as Gmail or Calendar
 #: src/shell/tab-problem.tsx
 msgid "{name} loads by itself when you’re back online."
 msgstr "{name} loads by itself when you’re back online."
 
-#. Heading shown in place of a tab's page that crashed; {name} is the app, such as Gmail or Calendar
+#. Heading shown in place of a tab's page that crashed; {name} is the Google app, such as Gmail or Calendar
 #: src/shell/tab-problem.tsx
 msgid "{name} stopped working"
 msgstr "{name} stopped working"
@@ -130,7 +130,7 @@ msgstr "{name}, asleep, sign in required"
 msgid "{name}, sign in required"
 msgstr "{name}, sign in required"
 
-#. Description under Sign in required in the page area of a profile with no app open; {name} is the profile's name
+#. Description under Sign in required in the page area of a profile with no Google app open; {name} is the profile's name
 #: src/shell/nothing-open.tsx
 msgid "{name}'s Google account is signed out, so its mail is not checked."
 msgstr "{name}'s Google account is signed out, so its mail is not checked."
@@ -185,7 +185,7 @@ msgstr "{title} · in its own window"
 msgid "{title} · sign in required"
 msgstr "{title} · sign in required"
 
-#. Heading in place of the selected tab's page after it was put to sleep; {title} is the tab's title or else its app's name
+#. Heading in place of the selected tab's page after it was put to sleep; {title} is the tab's title or else its Google app's name
 #: src/shell/sleeping-tab.tsx
 msgid "{title} is sleeping"
 msgstr "{title} is sleeping"
@@ -290,16 +290,6 @@ msgstr "Amber"
 msgid "and {more} more"
 msgstr "and {more} more"
 
-#. Heading of the group of Google's apps in the New tab launcher
-#: src/shell/open-app.tsx
-msgid "Apps"
-msgstr "Apps"
-
-#. Accessible name of the list under the New tab launcher's search field, read by screen readers
-#: src/shell/open-app.tsx
-msgid "Apps and bookmarks"
-msgstr "Apps and bookmarks"
-
 #. Button on a new email notification that archives the email. Gmail's own word for the action
 #: src/main/notifications.ts
 msgid "Archive"
@@ -343,12 +333,12 @@ msgstr "At least one profile has to stay on."
 msgid "Back"
 msgstr "Back"
 
-#. Under the Open in split heading: the app picked opens in a new pane under the focused one
+#. Under the Open in split heading: the Google app or bookmark picked opens in a new pane under the focused one
 #: src/shell/open-app.tsx
 msgid "Below the focused pane"
 msgstr "Below the focused pane"
 
-#. Under the Open in split heading: the app picked opens in a new pane to the right of the focused one
+#. Under the Open in split heading: the Google app or bookmark picked opens in a new pane to the right of the focused one
 #: src/shell/open-app.tsx
 msgid "Beside the focused pane"
 msgstr "Beside the focused pane"
@@ -722,7 +712,7 @@ msgstr "Drag to reorder."
 msgid "Duet"
 msgstr "Duet"
 
-#. Item of a tab's context menu that opens another tab of the same app at the same page
+#. Item of a tab's context menu that opens another tab of the same Google app at the same page
 #: src/main/tab-menu.ts
 msgid "Duplicate"
 msgstr "Duplicate"
@@ -817,6 +807,16 @@ msgstr "Gmail page"
 #: src/main/commands.ts
 msgid "Gmail Settings"
 msgstr "Gmail Settings"
+
+#. Heading of the group of Google's apps in the New tab launcher
+#: src/shell/open-app.tsx
+msgid "Google apps"
+msgstr "Google apps"
+
+#. Accessible name of the list under the New tab launcher's search field, read by screen readers
+#: src/shell/open-app.tsx
+msgid "Google apps and bookmarks"
+msgstr "Google apps and bookmarks"
 
 #. Name of a profile's color
 #: src/settings/profile-page.tsx
@@ -1066,7 +1066,7 @@ msgstr "New message"
 msgid "New tab"
 msgstr "New tab"
 
-#. Name of the button, in the sidebar, the title bar or the page area of a profile with no app open, that opens the launcher listing Google's apps and the profile's bookmarks, to open one as a tab; also the tooltip of the first two
+#. Name of the button, in the sidebar, the title bar or the page area of a profile with no Google app open, that opens the launcher listing Google's apps and the profile's bookmarks, to open one as a tab; also the tooltip of the first two
 #: src/shell/open-app.tsx
 msgctxt "button"
 msgid "New tab"
@@ -1087,11 +1087,6 @@ msgstr "Newest message first"
 msgid "Next match"
 msgstr "Next match"
 
-#. Heading in the page area of a profile with no app open, such as after its last tab was closed
-#: src/shell/nothing-open.tsx
-msgid "No apps open"
-msgstr "No apps open"
-
 #. Muted line in the New tab launcher's Bookmarks group while the profile has no bookmarks; not something to choose
 #: src/shell/open-app.tsx
 msgid "No bookmarks yet"
@@ -1101,6 +1096,11 @@ msgstr "No bookmarks yet"
 #: src/shell/downloads.tsx
 msgid "No downloads yet"
 msgstr "No downloads yet"
+
+#. Heading in the page area of a profile with no Google app open, such as after its last tab was closed
+#: src/shell/nothing-open.tsx
+msgid "No Google apps open"
+msgstr "No Google apps open"
 
 #. Heading of the unified inbox before any profile's mail has been read, as when none is signed in or Meru is offline
 #: src/shell/inbox.tsx
@@ -1112,7 +1112,7 @@ msgstr "No mail to show yet"
 msgid "No results"
 msgstr "No results"
 
-#. Said in the New tab launcher when no app or bookmark matches what was typed
+#. Said in the New tab launcher when no Google app or bookmark matches what was typed
 #: src/shell/open-app.tsx
 msgid "No results."
 msgstr "No results."
@@ -1204,25 +1204,25 @@ msgstr "Only important mail"
 msgid "Only notifies you about email Gmail marks as important."
 msgstr "Only notifies you about email Gmail marks as important."
 
-#. Placeholder of the search field of the New tab launcher, which filters Google's apps and the profile's bookmarks
-#: src/shell/open-app.tsx
-msgid "Open app or bookmark"
-msgstr "Open app or bookmark"
-
 #. Checkbox menu item, in the Tabs menu and a pinned tab's context menu: whether the tab loads when Meru starts rather than when first selected
 #: src/main/menu-labels.ts
 msgid "Open at Launch"
 msgstr "Open at Launch"
 
-#. Description under No apps open when there are several profiles; {name} is the selected profile's name
+#. Description under No Google apps open when there are several profiles; {name} is the selected profile's name
 #: src/shell/nothing-open.tsx
 msgid "Open Gmail, Calendar or another Google app in {name}."
 msgstr "Open Gmail, Calendar or another Google app in {name}."
 
-#. Description under No apps open when there is only one profile
+#. Description under No Google apps open when there is only one profile
 #: src/shell/nothing-open.tsx
 msgid "Open Gmail, Calendar or another Google app in this profile."
 msgstr "Open Gmail, Calendar or another Google app in this profile."
+
+#. Placeholder of the search field of the New tab launcher, which filters Google's apps and the profile's bookmarks
+#: src/shell/open-app.tsx
+msgid "Open Google app or bookmark"
+msgstr "Open Google app or bookmark"
 
 #. Item of a tab's context menu that opens its page in the system's web browser
 #: src/main/tab-menu.ts
@@ -1521,7 +1521,7 @@ msgstr "Select Next Profile"
 msgid "Select Next Tab"
 msgstr "Select Next Tab"
 
-#. Command that selects the selected profile's pinned tab at this place in the sidebar's pinned area, counting from 1; the Tabs menu shows the tab's app instead
+#. Command that selects the selected profile's pinned tab at this place in the sidebar's pinned area, counting from 1; the Tabs menu shows the tab's Google app instead
 #: src/main/commands.ts
 msgid "Select Pinned Tab {position}"
 msgstr "Select Pinned Tab {position}"
@@ -1705,7 +1705,7 @@ msgstr "Sidebar"
 msgid "Sign in"
 msgstr "Sign in"
 
-#. Heading in the page area of a profile with no app open whose Google account is signed out
+#. Heading in the page area of a profile with no Google app open whose Google account is signed out
 #: src/shell/nothing-open.tsx
 msgid "Sign in required"
 msgstr "Sign in required"
@@ -1754,12 +1754,12 @@ msgstr "Sleep Tab"
 msgid "Sound"
 msgstr "Sound"
 
-#. Menu item, in the Tabs menu and a tab's context menu, that lists apps and bookmarks to open in a new pane below the tab's
+#. Menu item, in the Tabs menu and a tab's context menu, that lists Google apps and bookmarks to open in a new pane below the tab's
 #: src/main/menu-labels.ts
 msgid "Split Down"
 msgstr "Split Down"
 
-#. Menu item, in the Tabs menu and a tab's context menu, that lists apps and bookmarks to open in a new pane to the right of the tab's
+#. Menu item, in the Tabs menu and a tab's context menu, that lists Google apps and bookmarks to open in a new pane to the right of the tab's
 #: src/main/menu-labels.ts
 msgid "Split Right"
 msgstr "Split Right"

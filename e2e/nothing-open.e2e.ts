@@ -9,7 +9,7 @@ import {
 } from "./lib/app.ts";
 import { signIn } from "./lib/stand-in.ts";
 
-test("a profile with no app open says Sign in required while its account is signed out, whose Sign in opens Gmail, and No apps open, naming it, once signed in", async ({
+test("a profile with no Google app open says Sign in required while its account is signed out, whose Sign in opens Gmail, and No Google apps open, naming it, once signed in", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -27,7 +27,9 @@ test("a profile with no app open says Sign in required while its account is sign
   const signInRequired = shell.getByRole("region", {
     name: "Sign in required",
   });
-  const nothingOpen = shell.getByRole("region", { name: "No apps open" });
+  const nothingOpen = shell.getByRole("region", {
+    name: "No Google apps open",
+  });
 
   await expect(signInRequired).toBeVisible();
   await expect(

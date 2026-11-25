@@ -40,18 +40,19 @@ export const NothingOpen = () => {
     description = t({
       message: `${name}'s Google account is signed out, so its mail is not checked.`,
       comment:
-        "Description under Sign in required in the page area of a profile with no app open; {name} is the profile's name",
+        "Description under Sign in required in the page area of a profile with no Google app open; {name} is the profile's name",
     });
   } else if (profiles.profiles.length > 1) {
     description = t({
       message: `Open Gmail, Calendar or another Google app in ${name}.`,
       comment:
-        "Description under No apps open when there are several profiles; {name} is the selected profile's name",
+        "Description under No Google apps open when there are several profiles; {name} is the selected profile's name",
     });
   } else {
     description = t({
       message: "Open Gmail, Calendar or another Google app in this profile.",
-      comment: "Description under No apps open when there is only one profile",
+      comment:
+        "Description under No Google apps open when there is only one profile",
     });
   }
 
@@ -69,12 +70,12 @@ export const NothingOpen = () => {
           <EmptyTitle>
             <h1 id={headingId}>
               {signedOut ? (
-                <Trans comment="Heading in the page area of a profile with no app open whose Google account is signed out">
+                <Trans comment="Heading in the page area of a profile with no Google app open whose Google account is signed out">
                   Sign in required
                 </Trans>
               ) : (
-                <Trans comment="Heading in the page area of a profile with no app open, such as after its last tab was closed">
-                  No apps open
+                <Trans comment="Heading in the page area of a profile with no Google app open, such as after its last tab was closed">
+                  No Google apps open
                 </Trans>
               )}
             </h1>

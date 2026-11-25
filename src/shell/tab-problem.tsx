@@ -39,7 +39,7 @@ export const TabProblem = ({
     heading = t({
       message: `${name} stopped working`,
       comment:
-        "Heading shown in place of a tab's page that crashed; {name} is the app, such as Gmail or Calendar",
+        "Heading shown in place of a tab's page that crashed; {name} is the Google app, such as Gmail or Calendar",
     });
   } else if (status?.reason === OFFLINE) {
     heading = t({
@@ -51,7 +51,7 @@ export const TabProblem = ({
     heading = t({
       message: `${name} couldn’t load`,
       comment:
-        "Heading shown in place of a tab's page that could not load; {name} is the app, such as Gmail or Calendar",
+        "Heading shown in place of a tab's page that could not load; {name} is the Google app, such as Gmail or Calendar",
     });
   }
 
@@ -97,7 +97,7 @@ const ProblemPanel = ({
           </h1>
           <p className="max-w-sm text-sm text-muted-foreground">
             {status.reason === OFFLINE ? (
-              <Trans comment="Explanation under the offline heading in place of a tab's page; {name} is the app, such as Gmail or Calendar">
+              <Trans comment="Explanation under the offline heading in place of a tab's page; {name} is the Google app, such as Gmail or Calendar">
                 {name} loads by itself when you’re back online.
               </Trans>
             ) : (

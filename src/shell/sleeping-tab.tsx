@@ -52,7 +52,7 @@ export const SleepingTab = ({
               {t({
                 message: `${title} is sleeping`,
                 comment:
-                  "Heading in place of the selected tab's page after it was put to sleep; {title} is the tab's title or else its app's name",
+                  "Heading in place of the selected tab's page after it was put to sleep; {title} is the tab's title or else its Google app's name",
               })}
             </h1>
           </EmptyTitle>

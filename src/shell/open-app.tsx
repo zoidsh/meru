@@ -115,7 +115,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
         value={query}
         onValueChange={setQuery}
         placeholder={t({
-          message: "Open app or bookmark",
+          message: "Open Google app or bookmark",
           comment:
             "Placeholder of the search field of the New tab launcher, which filters Google's apps and the profile's bookmarks",
         })}
@@ -127,7 +127,7 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
       <CommandList
         className="max-h-120 min-h-0"
         label={t({
-          message: "Apps and bookmarks",
+          message: "Google apps and bookmarks",
           comment:
             "Accessible name of the list under the New tab launcher's search field, read by screen readers",
         })}
@@ -138,14 +138,14 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
         })}
       >
         <CommandEmpty>
-          <Trans comment="Said in the New tab launcher when no app or bookmark matches what was typed">
+          <Trans comment="Said in the New tab launcher when no Google app or bookmark matches what was typed">
             No results.
           </Trans>
         </CommandEmpty>
         {appsShown && (
           <CommandGroup
             heading={t({
-              message: "Apps",
+              message: "Google apps",
               comment:
                 "Heading of the group of Google's apps in the New tab launcher",
             })}
@@ -234,11 +234,11 @@ export const OpenAppOverlay = ({ apps, bookmarks, split }: Launcher) => {
         }
         description={
           split === "row" ? (
-            <Trans comment="Under the Open in split heading: the app picked opens in a new pane to the right of the focused one">
+            <Trans comment="Under the Open in split heading: the Google app or bookmark picked opens in a new pane to the right of the focused one">
               Beside the focused pane
             </Trans>
           ) : (
-            <Trans comment="Under the Open in split heading: the app picked opens in a new pane under the focused one">
+            <Trans comment="Under the Open in split heading: the Google app or bookmark picked opens in a new pane under the focused one">
               Below the focused pane
             </Trans>
           )
@@ -266,7 +266,7 @@ const useOpenAppButton = () => {
     message: "New tab",
     context: "button",
     comment:
-      "Name of the button, in the sidebar, the title bar or the page area of a profile with no app open, that opens the launcher listing Google's apps and the profile's bookmarks, to open one as a tab; also the tooltip of the first two",
+      "Name of the button, in the sidebar, the title bar or the page area of a profile with no Google app open, that opens the launcher listing Google's apps and the profile's bookmarks, to open one as a tab; also the tooltip of the first two",
   });
   const shortcut = useShellState("shortcuts")?.["app.open"];
 

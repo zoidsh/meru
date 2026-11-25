@@ -910,7 +910,7 @@ export const COMMANDS: readonly Command[] = [
         t({
           message: `Select Pinned Tab ${position}`,
           comment:
-            "Command that selects the selected profile's pinned tab at this place in the sidebar's pinned area, counting from 1; the Tabs menu shows the tab's app instead",
+            "Command that selects the selected profile's pinned tab at this place in the sidebar's pinned area, counting from 1; the Tabs menu shows the tab's Google app instead",
         }),
       // The app's name rather than the tab's title, which changes as its
       // page does and would set the menu again each time.

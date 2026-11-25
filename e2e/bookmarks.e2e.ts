@@ -335,7 +335,7 @@ const launcher = (overlay: Page, name = "New tab") => {
     card,
     field: card.getByRole("combobox"),
     options: card.getByRole("option"),
-    apps: card.getByRole("group", { name: "Apps" }),
+    apps: card.getByRole("group", { name: "Google apps" }),
     bookmarks: card.getByRole("group", { name: "Bookmarks" }),
     selected: card.getByRole("option", { selected: true }),
   };
@@ -357,7 +357,10 @@ test("New tab lists the apps, then the profile's bookmarks; typing filters both,
   await findPage(app, standIn.url);
   await clickMenuItem(app, "app.open");
   await expect(field).toBeFocused();
-  await expect(field).toHaveAttribute("placeholder", "Open app or bookmark");
+  await expect(field).toHaveAttribute(
+    "placeholder",
+    "Open Google app or bookmark"
+  );
   await expect(card.getByRole("separator")).toHaveCount(1);
   await expect(apps.getByRole("option")).toHaveText(APP_NAMES);
   await expect(bookmarks.getByRole("option")).toHaveText([
@@ -391,7 +394,7 @@ test("New tab lists the apps, then the profile's bookmarks; typing filters both,
   await field.fill("WEEK");
   await expect(apps).toHaveCount(0);
   await expect(card.getByRole("separator")).toHaveCount(0);
-  await expect(card.getByText("Apps", { exact: true })).toHaveCount(0);
+  await expect(card.getByText("Google apps", { exact: true })).toHaveCount(0);
   await expect(options).toHaveText([/^Week/u]);
 
   await field.fill("zz");
@@ -621,7 +624,7 @@ test("New tab with no bookmarks says so in its Bookmarks group, a line that is n
   await findPage(app, standIn.calendarUrl);
   await clickMenuItem(app, "app.open");
   await expect(field).toBeFocused();
-  await expect(card.getByText("Apps", { exact: true })).toBeVisible();
+  await expect(card.getByText("Google apps", { exact: true })).toBeVisible();
   await expect(card.getByText("Bookmarks", { exact: true })).toBeVisible();
   await expect(none).toBeVisible();
   await expect(bookmarks.getByText(/^Bookmark a page/u)).toHaveCount(0);

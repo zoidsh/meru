@@ -45,7 +45,7 @@ const pressOpenApp = (app: ElectronApplication, url: string) =>
   );
 
 const nothingOpen = (shell: Page) =>
-  shell.getByRole("region", { name: "No apps open" });
+  shell.getByRole("region", { name: "No Google apps open" });
 
 const options = (overlay: Page) => overlay.getByRole("option");
 
@@ -73,7 +73,7 @@ test("Cmd or Ctrl+T opens New tab over the page, listing every app but the profi
   await expect(field).toBeFocused();
   await expect.poll(overlayHasFocus).toBeTruthy();
   await expect(
-    overlay.getByRole("listbox", { name: "Apps and bookmarks" })
+    overlay.getByRole("listbox", { name: "Google apps and bookmarks" })
   ).toBeVisible();
   await expect(options(overlay)).toHaveText([
     "Calendar",
@@ -272,7 +272,7 @@ test("New tab is first in the titlebar's right-hand group while the sidebar is h
   await expect(titlebarButton).toBeVisible();
 });
 
-test("Gmail, unpinned, closes like any tab, leaving No apps open, focus in the shell and Close Tab off, and New tab there lists it to open again; a relaunch keeps it all", async ({
+test("Gmail, unpinned, closes like any tab, leaving No Google apps open, focus in the shell and Close Tab off, and New tab there lists it to open again; a relaunch keeps it all", async ({
   launchApp,
   standIn,
   userDataDir,

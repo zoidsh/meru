@@ -393,7 +393,7 @@ const nothingOpen = (id: string, name: string) => ({
 });
 
 for (const { signedIn, surface, heading } of [
-  { signedIn: true, surface: "nothing-open", heading: "No apps open" },
+  { signedIn: true, surface: "nothing-open", heading: "No Google apps open" },
   { signedIn: false, surface: "sign-in-required", heading: "Sign in required" },
 ]) {
   test(`the page area of a profile with no app open, ${signedIn ? "signed in" : "signed out"}, with one profile and two`, async ({

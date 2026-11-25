@@ -34,13 +34,13 @@ export const MENU_LABELS = {
     t({
       message: "Split Right",
       comment:
-        "Menu item, in the Tabs menu and a tab's context menu, that lists apps and bookmarks to open in a new pane to the right of the tab's",
+        "Menu item, in the Tabs menu and a tab's context menu, that lists Google apps and bookmarks to open in a new pane to the right of the tab's",
     }),
   splitDown: () =>
     t({
       message: "Split Down",
       comment:
-        "Menu item, in the Tabs menu and a tab's context menu, that lists apps and bookmarks to open in a new pane below the tab's",
+        "Menu item, in the Tabs menu and a tab's context menu, that lists Google apps and bookmarks to open in a new pane below the tab's",
     }),
   maximizePane: () =>
     t({

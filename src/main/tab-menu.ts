@@ -99,7 +99,7 @@ const LABELS: Record<TabMenuItemId, () => string> = {
     t({
       message: "Duplicate",
       comment:
-        "Item of a tab's context menu that opens another tab of the same app at the same page",
+        "Item of a tab's context menu that opens another tab of the same Google app at the same page",
     }),
   copyUrl: () =>
     t({
