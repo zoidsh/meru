@@ -209,7 +209,15 @@ export const wireShellContract = ({
           inbox.shellSlice(),
           {
             sidebar: { state: sidebar.current() },
-            appearance: { tint: settings.get("profileTint") },
+            appearance: {
+              tint: settings.get("profileTint"),
+              buttons: {
+                newTab: settings.get("titlebarNewTab"),
+                unifiedInbox: settings.get("titlebarUnifiedInbox"),
+                downloads: settings.get("titlebarDownloads"),
+                doNotDisturb: settings.get("titlebarDoNotDisturb"),
+              },
+            },
             shortcuts,
             ariaShortcuts,
             navigation: views.navigation(),
@@ -255,7 +263,15 @@ export const wireShellContract = ({
         inbox.onChange(listener);
         downloads.onChange(listener);
         sidebar.onChange(listener);
-        settings.onChange("profileTint", listener);
+        for (const key of [
+          "profileTint",
+          "titlebarNewTab",
+          "titlebarUnifiedInbox",
+          "titlebarDownloads",
+          "titlebarDoNotDisturb",
+        ] as const) {
+          settings.onChange(key, listener);
+        }
       },
     },
     log: console.error,

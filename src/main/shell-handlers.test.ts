@@ -451,7 +451,15 @@ const CLOSED_INBOX = { open: false, profiles: [], rows: [], notice: null };
 
 const CHROME = {
   sidebar: { state: "hidden" },
-  appearance: { tint: true },
+  appearance: {
+    tint: true,
+    buttons: {
+      newTab: true,
+      unifiedInbox: true,
+      downloads: true,
+      doNotDisturb: true,
+    },
+  },
   shortcuts: {},
   ariaShortcuts: {},
   navigation: null,

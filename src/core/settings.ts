@@ -141,6 +141,36 @@ export const SETTINGS = {
     default: true,
   }),
   /**
+   * Whether the titlebar shows New tab, which it does only while the sidebar
+   * is hidden. Hidden, its command, menu item and shortcut still work.
+   */
+  titlebarNewTab: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /**
+   * Whether the titlebar shows Unified inbox, which it does only with two or
+   * more profiles.
+   */
+  titlebarUnifiedInbox: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /** Whether the titlebar shows Downloads and the progress it draws. */
+  titlebarDownloads: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /**
+   * Whether the titlebar shows Do Not Disturb's moon while it is off; while
+   * it holds the moon shows whatever this says, so nothing silences
+   * notifications unseen. It never changes Do Not Disturb itself.
+   */
+  titlebarDoNotDisturb: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /**
    * The tray or menu bar icon. Off on macOS, where the Dock already shows the
    * count and reaches the window, as in v3.
    */

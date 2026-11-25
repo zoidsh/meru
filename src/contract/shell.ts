@@ -424,6 +424,17 @@ export const SHELL_STATE = {
   appearance: z.object({
     /** Whether the shell mixes the profile's colour into its greys. */
     tint: z.boolean(),
+    /**
+     * Whether each titlebar button may show; one that may still shows only
+     * where it otherwise would.
+     */
+    buttons: z.object({
+      newTab: z.boolean(),
+      unifiedInbox: z.boolean(),
+      downloads: z.boolean(),
+      /** Hidden only while Do Not Disturb is off. */
+      doNotDisturb: z.boolean(),
+    }),
   }),
   /**
    * Each command's shortcut on this platform as a person reads it, such as

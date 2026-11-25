@@ -2,8 +2,17 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { SHELL_GREY } from "#core/shell-grey.ts";
 
-import { SHELL_URL, expect, findPage, test, writeSettings } from "./lib/app.ts";
-import { openSettings } from "./lib/settings.ts";
+import {
+  SHELL_URL,
+  clickMenuItem,
+  expect,
+  findOverlayDocument,
+  findPage,
+  readState,
+  test,
+  writeSettings,
+} from "./lib/app.ts";
+import { openSettings, seedProfiles } from "./lib/settings.ts";
 
 const setSetting = (app: ElectronApplication, key: string, value: unknown) =>
   app.evaluate(
@@ -74,6 +83,88 @@ test("Tint with profile color off leaves the title bar the plain shell grey, and
 
   await setSetting(app, "profileTint", true);
   await expect.poll(leansBlue).toBeTruthy();
+});
+
+test("each title bar button switch hides and returns its button, its command still working", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+  const app = await launchApp();
+  const shell = await findPage(app, SHELL_URL);
+  const overlay = await findOverlayDocument(app);
+  const titlebar = shell.getByRole("banner", { name: "Title bar" });
+
+  // New tab shows only while the sidebar is hidden, as it is for one tab.
+  await expect(shell.getByRole("tablist", { name: "Tabs" })).toHaveCount(0);
+
+  for (const [key, name, command] of [
+    ["titlebarNewTab", "New tab", "app.open"],
+    ["titlebarUnifiedInbox", "Unified inbox", "inbox.toggle"],
+    ["titlebarDownloads", "Downloads", "downloads.toggle"],
+  ] as const) {
+    const button = titlebar.getByRole("button", { name, exact: true });
+
+    // oxlint-disable-next-line no-await-in-loop -- one button after another
+    await expect(button).toBeVisible();
+    // oxlint-disable-next-line no-await-in-loop -- one button after another
+    await setSetting(app, key, false);
+    // oxlint-disable-next-line no-await-in-loop -- one button after another
+    await expect(button).toHaveCount(0);
+
+    // oxlint-disable-next-line no-await-in-loop -- one button after another
+    await clickMenuItem(app, command);
+    // oxlint-disable-next-line no-await-in-loop -- one button after another
+    await expect(overlay.getByRole("dialog")).toBeVisible();
+    // oxlint-disable-next-line no-await-in-loop -- one button after another
+    await clickMenuItem(app, command);
+    // oxlint-disable-next-line no-await-in-loop -- one button after another
+    await expect(overlay.getByRole("dialog")).toHaveCount(0);
+
+    // oxlint-disable-next-line no-await-in-loop -- one button after another
+    await setSetting(app, key, true);
+    // oxlint-disable-next-line no-await-in-loop -- one button after another
+    await expect(button).toBeVisible();
+  }
+});
+
+test("the Do Not Disturb switch hides the moon only while Do Not Disturb is off, and never changes Do Not Disturb", async ({
+  app,
+  userDataDir,
+}) => {
+  const shell = await findPage(app, SHELL_URL);
+  const settings = await openSettings(app);
+  const row = settings.getByRole("switch", { name: "Do Not Disturb" });
+  const moon = shell
+    .getByRole("banner", { name: "Title bar" })
+    .getByRole("button", { name: /^Do Not Disturb/u });
+  const stored = async () => {
+    const { doNotDisturb } = await readState<{ doNotDisturb?: unknown }>(
+      userDataDir
+    );
+
+    return doNotDisturb;
+  };
+
+  await expect(moon).toBeVisible();
+  await setSetting(app, "titlebarDoNotDisturb", false);
+  await expect(moon).toHaveCount(0);
+  expect(await stored()).toBeUndefined();
+
+  await row.click();
+  await expect(moon).toBeVisible();
+  await expect.poll(stored).toStrictEqual({ until: null });
+
+  await setSetting(app, "titlebarDoNotDisturb", true);
+  await setSetting(app, "titlebarDoNotDisturb", false);
+  await expect(moon).toBeVisible();
+  expect(await stored()).toStrictEqual({ until: null });
+
+  await row.click();
+  await expect(moon).toHaveCount(0);
+  await expect.poll(stored).toBeUndefined();
 });
 
 test.describe("Theme", () => {

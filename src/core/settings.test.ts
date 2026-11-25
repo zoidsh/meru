@@ -99,6 +99,28 @@ describe(readSetting, () => {
     ]);
   });
 
+  it("shows every titlebar button by default, and hides one the file turns off", () => {
+    const keys = [
+      "titlebarNewTab",
+      "titlebarUnifiedInbox",
+      "titlebarDownloads",
+      "titlebarDoNotDisturb",
+    ] as const;
+    const off = read({ version: 1, titlebarDownloads: false });
+
+    expect(
+      keys.map((key) => [
+        readSetting(read({ version: 1 }), key, "win32"),
+        readSetting(off, key, "win32"),
+      ])
+    ).toStrictEqual([
+      [true, true],
+      [true, true],
+      [true, false],
+      [true, true],
+    ]);
+  });
+
   it("shows notifications with the sender, subject and summary by default", () => {
     for (const key of [
       "notifications",

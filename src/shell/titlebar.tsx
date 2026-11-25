@@ -19,6 +19,7 @@ import type { CSSProperties, KeyboardEvent } from "react";
 import type { ShellCalls, ShellState } from "#contract/shell.ts";
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
+import { titlebarButtonsShown } from "#core/titlebar-buttons.ts";
 import { titlebarStart } from "#core/titlebar.ts";
 import { Button } from "#ui/button.tsx";
 
@@ -619,6 +620,49 @@ const DoNotDisturbButton = () => {
   );
 };
 
+/** Before the first snapshot, as the defaults have them. */
+const ALL_SHOWN = {
+  newTab: true,
+  unifiedInbox: true,
+  downloads: true,
+  doNotDisturb: true,
+};
+
+/**
+ * The titlebar's right-hand buttons, each of which Settings may hide, its
+ * command still working.
+ */
+const TitlebarButtons = ({ sidebarShown }: { sidebarShown: boolean }) => {
+  const profiles = useShellState("profiles");
+  const inbox = useShellState("inbox");
+  const shortcuts = useShellState("shortcuts");
+  const downloads = useShellState("downloads");
+  const profileCount = profiles?.profiles.length ?? 0;
+  const shown = titlebarButtonsShown(
+    useShellState("appearance")?.buttons ?? ALL_SHOWN,
+    {
+      sidebarShown,
+      profileCount,
+      doNotDisturbOn: useShellState("doNotDisturb")?.on ?? false,
+    }
+  );
+
+  return (
+    <div className="flex items-center gap-1">
+      {shown.newTab && <OpenAppTitlebarButton />}
+      {shown.unifiedInbox && (
+        <InboxButton
+          open={inbox?.open ?? false}
+          profileCount={profileCount}
+          shortcut={shortcuts?.["inbox.toggle"]}
+        />
+      )}
+      {shown.downloads && <DownloadsButton downloads={downloads} />}
+      {shown.doNotDisturb && <DoNotDisturbButton />}
+    </div>
+  );
+};
+
 /**
  * The row across the top: the sidebar toggle and the page's navigation, the
  * profiles, a gap that drags the window, then New tab while the sidebar is
@@ -637,9 +681,7 @@ export const Titlebar = ({
 }) => {
   const { t } = useLingui();
   const profiles = useShellState("profiles");
-  const inbox = useShellState("inbox");
   const shortcuts = useShellState("shortcuts");
-  const downloads = useShellState("downloads");
   const profileCount = profiles?.profiles.length ?? 0;
 
   return (
@@ -682,16 +724,7 @@ export const Titlebar = ({
       )}
       {/* Keeps part of the title bar for dragging the window, however many profiles there are. */}
       <div aria-hidden className="h-full min-w-16 flex-1" />
-      <div className="flex items-center gap-1">
-        {!sidebarShown && <OpenAppTitlebarButton />}
-        <InboxButton
-          open={inbox?.open ?? false}
-          profileCount={profileCount}
-          shortcut={shortcuts?.["inbox.toggle"]}
-        />
-        <DownloadsButton downloads={downloads} />
-        <DoNotDisturbButton />
-      </div>
+      <TitlebarButtons sidebarShown={sidebarShown} />
     </header>
   );
 };
