@@ -112,6 +112,20 @@ describe(createDefaultBrowserGuard, () => {
     ]);
   });
 
+  it("asks about the link's own scheme, holding an https link while Meru takes https and opening an http one the system sends elsewhere", async () => {
+    const { fake, browser, opened } = setup();
+
+    fake.isDefault = true;
+    fake.onlyFor = "https";
+    await browser.open("http://example.org/");
+    await browser.open(LINK);
+
+    expect([opened, fake.asked.length]).toStrictEqual([
+      ["http://example.org/"],
+      1,
+    ]);
+  });
+
   it("in a build that claims no link scheme opens every link, asking the system nothing", async () => {
     const { fake, browser, opened } = setup({ claimsLinks: false });
 

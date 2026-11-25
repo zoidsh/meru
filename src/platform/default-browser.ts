@@ -14,9 +14,12 @@ export interface DefaultBrowserAlert {
   buttons: readonly { choice: DefaultBrowserChoice; label: string }[];
 }
 
+export type WebScheme = "http" | "https";
+
 /** Whether the system sends web links to Meru itself, and where that is changed. */
 export interface DefaultBrowser {
-  isMeru: () => boolean;
+  /** Whether the system hands links of the scheme to Meru. */
+  isMeru: (scheme: WebScheme) => boolean;
   /** The system's alert, attached to no window, as the link prompt's. */
   alert: (alert: DefaultBrowserAlert) => Promise<DefaultBrowserChoice>;
   /** Where the default browser is chosen, on macOS, the one system with one such place. */
@@ -52,7 +55,8 @@ const showAlert = async ({
  * link is about to leave.
  */
 export const createDefaultBrowser = (platform: Platform): DefaultBrowser => ({
-  isMeru: () => platform !== "win32" && app.isDefaultProtocolClient("https"),
+  isMeru: (scheme) =>
+    platform !== "win32" && app.isDefaultProtocolClient(scheme),
   alert: showAlert,
   ...(platform === "darwin"
     ? { openSettings: () => shell.openExternal(MACOS_SETTINGS_URL) }
@@ -61,6 +65,7 @@ export const createDefaultBrowser = (platform: Platform): DefaultBrowser => ({
 
 /** What the end-to-end build's stand-in was asked, and how it answers. */
 export interface CapturedDefaultBrowser {
+  /** For either scheme. */
   isMeru: boolean;
   answer: DefaultBrowserChoice;
   asked: DefaultBrowserAlert[];

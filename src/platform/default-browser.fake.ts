@@ -2,6 +2,7 @@ import type {
   DefaultBrowser,
   DefaultBrowserAlert,
   DefaultBrowserChoice,
+  WebScheme,
 } from "./default-browser.ts";
 
 /**
@@ -12,12 +13,14 @@ import type {
 export const fakeDefaultBrowser = ({ withSettings = true } = {}) => {
   const fake = {
     isDefault: false,
+    /** The one scheme Meru is the default for, else both. */
+    onlyFor: undefined as WebScheme | undefined,
     answer: "cancel" as DefaultBrowserChoice,
     asked: [] as DefaultBrowserAlert[],
     settingsOpened: 0,
   };
   const defaultBrowser: DefaultBrowser = {
-    isMeru: () => fake.isDefault,
+    isMeru: (scheme) => fake.isDefault && (fake.onlyFor ?? scheme) === scheme,
     alert: (alert) => {
       fake.asked.push(alert);
 

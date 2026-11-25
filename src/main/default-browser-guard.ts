@@ -4,8 +4,23 @@ import type { Clipboard } from "#platform/clipboard.ts";
 import type {
   DefaultBrowser,
   DefaultBrowserAlert,
+  WebScheme,
 } from "#platform/default-browser.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
+
+/**
+ * The link's own scheme, since the system can hand `http` and `https` to
+ * different browsers; none for any other, which never reaches a browser.
+ */
+const webScheme = (url: string): WebScheme | undefined => {
+  const protocol = URL.parse(url)?.protocol;
+
+  if (protocol === "http:") {
+    return "http";
+  }
+
+  return protocol === "https:" ? "https" : undefined;
+};
 
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -96,7 +111,9 @@ export const createDefaultBrowserGuard = ({
 }) => {
   /** Whether the link stays, the alert shown and answered. */
   const holds = async (url: string) => {
-    if (!defaultBrowser?.isMeru()) {
+    const scheme = webScheme(url);
+
+    if (!scheme || !defaultBrowser?.isMeru(scheme)) {
       return false;
     }
 
