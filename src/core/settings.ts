@@ -56,6 +56,12 @@ export const VERIFICATION_CODE_COPY_MODES = [
 export type VerificationCodeCopyMode =
   (typeof VERIFICATION_CODE_COPY_MODES)[number];
 
+/**
+ * An absolute path on macOS, Linux or Windows (a drive or a network share),
+ * read without `node:path`, which core does without.
+ */
+const ABSOLUTE_PATH = /^(?:\/|[A-Za-z]:[\\/]|\\\\)/u;
+
 /** Every setting, declared once. */
 export const SETTINGS = {
   /** A notification for mail that arrives. */
@@ -137,10 +143,11 @@ export const SETTINGS = {
   }),
   /**
    * The folder downloads are saved to, as the folder picker gave it; `null`
-   * for the system's Downloads folder. Only Change… writes it.
+   * for the system's Downloads folder. Only Change… writes it; a relative
+   * path, which only a hand edit makes, reads as none chosen.
    */
   downloadsFolder: setting<string | null>({
-    schema: z.nullable(z.string().check(z.minLength(1))),
+    schema: z.nullable(z.string().check(z.regex(ABSOLUTE_PATH))),
     default: null,
   }),
   /** Each download opens the system's save dialog, at the folder above. */

@@ -196,6 +196,40 @@ describe(readSetting, () => {
     expect(readSetting(settings, "unreadBadge", "darwin")).toBeTruthy();
   });
 
+  it("reads a downloads folder that is not an absolute path as none chosen, and keeps it in the file", () => {
+    const folders = [
+      "/Users/example/Mail",
+      String.raw`C:\Users\example\Mail`,
+      "D:/Mail",
+      String.raw`\\server\share\Mail`,
+      "Mail",
+      "./Mail",
+      "",
+    ];
+
+    expect(
+      folders.map((downloadsFolder) =>
+        readSetting(
+          read({ version: 1, downloadsFolder }),
+          "downloadsFolder",
+          "darwin"
+        )
+      )
+    ).toStrictEqual([
+      "/Users/example/Mail",
+      String.raw`C:\Users\example\Mail`,
+      "D:/Mail",
+      String.raw`\\server\share\Mail`,
+      null,
+      null,
+      null,
+    ]);
+    expect(read({ version: 1, downloadsFolder: "Mail" })).toStrictEqual({
+      version: 1,
+      downloadsFolder: "Mail",
+    });
+  });
+
   it("ignores a profile's override", () => {
     const settings = read({
       version: 1,
