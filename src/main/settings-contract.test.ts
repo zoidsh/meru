@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { GMAIL_PAGE_KEYS, MENU_BAR_PAGE_KEYS } from "#contract/settings.ts";
+import {
+  APPEARANCE_PAGE_KEYS,
+  GMAIL_PAGE_KEYS,
+  MENU_BAR_PAGE_KEYS,
+} from "#contract/settings.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import type { FeedOutcome } from "#core/feed.ts";
@@ -530,6 +534,46 @@ describe("the Settings window's Gmail page", () => {
       },
       false,
       "immediately",
+    ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Appearance page", () => {
+  it("sends each of the page's settings, the default where none is stored", () => {
+    const app = setup(stateOf("Work"), { version: 1, theme: "light" });
+
+    expect(
+      Object.fromEntries(
+        APPEARANCE_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
+      )
+    ).toStrictEqual({
+      theme: "light",
+      profileTint: true,
+      titlebarNewTab: true,
+      titlebarUnifiedInbox: true,
+      titlebarDownloads: true,
+      titlebarDoNotDisturb: true,
+    });
+    app.dispose();
+  });
+
+  it("writes each one, and hiding the Do Not Disturb button leaves Do Not Disturb as it was", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.setDoNotDisturb({ on: true });
+    await app.handlers.update({ key: "theme", value: "dark" });
+    await app.handlers.update({ key: "profileTint", value: false });
+    await app.handlers.update({ key: "titlebarDoNotDisturb", value: false });
+
+    expect([app.saved.at(-1), app.read().doNotDisturb.on]).toStrictEqual([
+      {
+        version: 1,
+        theme: "dark",
+        profileTint: false,
+        titlebarDoNotDisturb: false,
+      },
+      true,
     ]);
     app.dispose();
   });

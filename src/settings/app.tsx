@@ -5,6 +5,7 @@ import {
   ChevronRightIcon,
   DockIcon,
   MailIcon,
+  PaletteIcon,
   UsersIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -15,6 +16,7 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import type { SettingsSection } from "#core/settings-pages.ts";
 import { Button } from "#ui/button.tsx";
 
+import { AppearancePage } from "./appearance-page.tsx";
 import { GmailPage } from "./gmail-page.tsx";
 import { MenuBarPage, onMacOS } from "./menu-bar-page.tsx";
 import { NotificationsPage } from "./notifications-page.tsx";
@@ -25,6 +27,7 @@ import { settingsCalls, useSettingsState } from "./sync.ts";
 
 /** The sections whose page needs nothing from the window. */
 const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
+  appearance: AppearancePage,
   "menu-bar": MenuBarPage,
   notifications: NotificationsPage,
   gmail: GmailPage,
@@ -40,7 +43,10 @@ interface Section {
 
 /** The sections built so far, in the nav's groups. */
 const SECTION_GROUPS: readonly (readonly Section[])[] = [
-  [{ id: "menu-bar", icon: DockIcon }],
+  [
+    { id: "appearance", icon: PaletteIcon },
+    { id: "menu-bar", icon: DockIcon },
+  ],
   [{ id: "profiles", icon: UsersIcon }],
   [
     { id: "notifications", icon: BellIcon },
@@ -53,6 +59,11 @@ const useSectionTitles = (): Record<SettingsSection, string> => {
   const { t } = useLingui();
 
   return {
+    appearance: t({
+      message: "Appearance",
+      comment:
+        "Name of the Settings section for the theme, the profile tint and the title bar's buttons, in its list and as its title",
+    }),
     // Named after the platform's own places.
     "menu-bar": onMacOS()
       ? t({

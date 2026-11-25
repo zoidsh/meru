@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { SHELL_GREY } from "#core/shell-grey.ts";
@@ -12,7 +15,26 @@ import {
   test,
   writeSettings,
 } from "./lib/app.ts";
-import { openSettings, seedProfiles } from "./lib/settings.ts";
+import {
+  openSection,
+  openSettings,
+  seedProfiles,
+  switchNamed,
+} from "./lib/settings.ts";
+import {
+  THEMES,
+  emulateTheme,
+  onlyWithShots,
+  shootWindow,
+  shotPath,
+} from "./lib/shots.ts";
+import type { Theme } from "./lib/shots.ts";
+
+/** `settings.json` as the app wrote it. */
+const readSettings = async (userDataDir: string) =>
+  JSON.parse(
+    await readFile(path.join(userDataDir, "settings.json"), "utf-8")
+  ) as Record<string, unknown>;
 
 const setSetting = (app: ElectronApplication, key: string, value: unknown) =>
   app.evaluate(
@@ -216,5 +238,215 @@ test.describe("Theme", () => {
         return source;
       })
       .toBe("system");
+  });
+});
+
+const openAppearance = async (app: ElectronApplication) => {
+  const page = await openSettings(app);
+
+  await openSection(page, "Appearance");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Appearance"
+  );
+
+  return page;
+};
+
+const themeMenu = (page: Page) => page.getByRole("combobox", { name: "Theme" });
+
+const BUTTONS = [
+  "New tab",
+  "Unified inbox",
+  "Downloads",
+  "Do Not Disturb",
+] as const;
+
+test.describe("the Appearance page", () => {
+  test("is first in the sidebar, Menu Bar & Dock after it, with no scopes and no Saved searches row", async ({
+    app,
+  }) => {
+    const page = await openAppearance(app);
+    const sections = page.getByRole("navigation", {
+      name: "Settings sections",
+    });
+
+    await expect(sections.getByRole("button").nth(0)).toHaveText("Appearance");
+    await expect(sections.getByRole("button").nth(1)).toHaveText(
+      process.platform === "darwin" ? "Menu Bar & Dock" : "Tray & Taskbar"
+    );
+    await expect(page.getByRole("tablist")).toHaveCount(0);
+    await expect(
+      page.getByRole("group", { name: "Title bar buttons" })
+    ).toBeVisible();
+    await expect(switchNamed(page, "Saved searches")).toHaveCount(0);
+  });
+
+  test("Theme changes the Settings window and the main window", async ({
+    app,
+  }) => {
+    const page = await openAppearance(app);
+
+    await expect(themeMenu(page)).toContainText("System");
+    await themeMenu(page).click();
+    await page.getByRole("option", { name: "Dark" }).click();
+
+    await expect(themeMenu(page)).toContainText("Dark");
+    await expect
+      .poll(() => readTheme(app))
+      .toStrictEqual({
+        source: "dark",
+        dark: true,
+        windows: [SHELL_GREY.dark, SHELL_GREY.dark],
+      });
+
+    await themeMenu(page).click();
+    await page.getByRole("option", { name: "System" }).click();
+    await expect
+      .poll(async () => {
+        const { source } = await readTheme(app);
+
+        return source;
+      })
+      .toBe("system");
+  });
+
+  test("Tint with profile color turns the tint off and on in the main window", async ({
+    app,
+  }) => {
+    const shell = await findPage(app, SHELL_URL);
+    const page = await openAppearance(app);
+    const tint = switchNamed(page, "Tint with profile color");
+
+    await expect(tint).toBeChecked();
+    await tint.click();
+    await expect.poll(() => titlebarRgb(shell)).toStrictEqual([235, 235, 235]);
+
+    await tint.click();
+    await expect
+      .poll(async () => {
+        const [red = 0, , blue = 0] = await titlebarRgb(shell);
+
+        return blue > red;
+      })
+      .toBeTruthy();
+  });
+
+  test("each title bar switch hides its button, and the page's values survive a relaunch", async ({
+    launchApp,
+    standIn,
+    userDataDir,
+  }) => {
+    await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+    const app = await launchApp();
+    const shell = await findPage(app, SHELL_URL);
+    const titlebar = shell.getByRole("banner", { name: "Title bar" });
+    const page = await openAppearance(app);
+
+    for (const name of BUTTONS) {
+      const button = titlebar.getByRole("button", { name, exact: true });
+
+      // oxlint-disable-next-line no-await-in-loop -- one switch after another
+      await expect(button).toBeVisible();
+      // oxlint-disable-next-line no-await-in-loop -- one switch after another
+      await switchNamed(page, name).click();
+      // oxlint-disable-next-line no-await-in-loop -- one switch after another
+      await expect(button).toHaveCount(0);
+    }
+
+    await themeMenu(page).click();
+    await page.getByRole("option", { name: "Light" }).click();
+    await switchNamed(page, "Tint with profile color").click();
+    await expect
+      .poll(async () => {
+        const { theme, profileTint, titlebarDoNotDisturb } =
+          await readSettings(userDataDir);
+
+        return [theme, profileTint, titlebarDoNotDisturb];
+      })
+      .toStrictEqual(["light", false, false]);
+
+    await app.close();
+
+    const again = await launchApp();
+    const reopened = await openAppearance(again);
+
+    await expect(themeMenu(reopened)).toContainText("Light");
+    await expect(
+      switchNamed(reopened, "Tint with profile color")
+    ).not.toBeChecked();
+
+    for (const name of BUTTONS) {
+      // oxlint-disable-next-line no-await-in-loop -- one switch after another
+      await expect(switchNamed(reopened, name)).not.toBeChecked();
+    }
+
+    const shellAgain = await findPage(again, SHELL_URL);
+
+    await expect(
+      shellAgain
+        .getByRole("banner", { name: "Title bar" })
+        .getByRole("button", { name: "Downloads" })
+    ).toHaveCount(0);
+  });
+});
+
+test.describe("shots", () => {
+  test.beforeEach(onlyWithShots);
+
+  test("the page top and bottom, the main window with the tint off and the title bar with every button hidden, light and dark", async ({
+    launchApp,
+    standIn,
+    userDataDir,
+  }) => {
+    await seedProfiles(userDataDir, standIn, ["Home", "Work"]);
+
+    const app = await launchApp();
+    const shell = await findPage(app, SHELL_URL);
+    const titlebar = shell.getByRole("banner", { name: "Title bar" });
+    const page = await openAppearance(app);
+    const each = async (shoot: (scheme: Theme) => Promise<unknown>) => {
+      for (const scheme of THEMES) {
+        // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+        await emulateTheme(app, scheme);
+        // oxlint-disable-next-line no-await-in-loop -- one after another
+        await shoot(scheme);
+      }
+    };
+
+    await each((scheme) =>
+      page.screenshot({ path: shotPath("settings-appearance", scheme) })
+    );
+    await switchNamed(page, "Do Not Disturb").scrollIntoViewIfNeeded();
+    await each((scheme) =>
+      page.screenshot({ path: shotPath("settings-appearance-bottom", scheme) })
+    );
+
+    await switchNamed(page, "Tint with profile color").click();
+    // A plain grey, whichever scheme the last shot left.
+    await expect
+      .poll(async () => {
+        const [red, green, blue] = await titlebarRgb(shell);
+
+        return red === green && green === blue;
+      })
+      .toBeTruthy();
+    await each((scheme) =>
+      shootWindow(app, shell, shotPath("appearance-tint-off", scheme))
+    );
+
+    for (const name of BUTTONS) {
+      // oxlint-disable-next-line no-await-in-loop -- one switch after another
+      await switchNamed(page, name).click();
+    }
+
+    await expect(
+      titlebar.getByRole("button", { name: "Downloads" })
+    ).toHaveCount(0);
+    await each((scheme) =>
+      titlebar.screenshot({
+        path: shotPath("appearance-titlebar-buttons-hidden", scheme),
+      })
+    );
   });
 });

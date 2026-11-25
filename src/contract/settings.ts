@@ -34,6 +34,16 @@ export const GMAIL_PAGE_KEYS = [
   "verificationCodeTrash",
 ] as const;
 
+/** The Appearance page's settings, in its order; the app holds them, never a profile. */
+export const APPEARANCE_PAGE_KEYS = [
+  "theme",
+  "profileTint",
+  "titlebarNewTab",
+  "titlebarUnifiedInbox",
+  "titlebarDownloads",
+  "titlebarDoNotDisturb",
+] as const;
+
 /**
  * The Menu Bar & Dock page's settings, in its order on macOS; the app holds
  * them, never a profile. `dockIcon` and `trayUnreadCount` are read on macOS
@@ -62,6 +72,7 @@ export const PAGE_OVERRIDABLE_KEYS = OVERRIDABLE_SETTING_KEYS.filter(
 const APP_ONLY_PAGE_KEYS = [
   "notificationSoundVolume",
   ...GMAIL_PAGE_KEYS,
+  ...APPEARANCE_PAGE_KEYS,
   ...MENU_BAR_PAGE_KEYS,
 ] as const;
 

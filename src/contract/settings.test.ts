@@ -54,6 +54,22 @@ describe("the settings contract", () => {
     ]).toStrictEqual([true, true, true, true, true, false, false, false]);
   });
 
+  it("takes the Appearance page's settings, checked by each one's schema", () => {
+    const update = accepts(SETTINGS_CALLS.update.request);
+
+    expect([
+      update({ key: "theme", value: "dark" }),
+      update({ key: "profileTint", value: false }),
+      update({ key: "titlebarNewTab", value: false }),
+      update({ key: "titlebarUnifiedInbox", value: true }),
+      update({ key: "titlebarDownloads", value: false }),
+      update({ key: "titlebarDoNotDisturb", value: true }),
+      update({ key: "theme", value: "sepia" }),
+      update({ key: "profileTint", value: "on" }),
+      update({ key: "titlebarDownloads", value: 1 }),
+    ]).toStrictEqual([true, true, true, true, true, true, false, false, false]);
+  });
+
   it("refuses a value of the wrong kind, a setting off the page and anything malformed", () => {
     const update = accepts(SETTINGS_CALLS.update.request);
 
@@ -331,6 +347,12 @@ describe("the settings contract", () => {
       verificationCodeCopyMode: "notificationClick",
       verificationCodeMarkRead: false,
       verificationCodeTrash: false,
+      theme: "dark",
+      profileTint: false,
+      titlebarNewTab: true,
+      titlebarUnifiedInbox: false,
+      titlebarDownloads: true,
+      titlebarDoNotDisturb: false,
       dockIcon: false,
       tray: true,
       trayUnreadCount: true,

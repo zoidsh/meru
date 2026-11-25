@@ -48,7 +48,7 @@ test("is named after the platform's places in the sidebar and the title", async 
   const page = await openSettings(app);
   const sections = page.getByRole("navigation", { name: "Settings sections" });
 
-  await expect(sections.getByRole("button").first()).toHaveText(SECTION);
+  await expect(sections.getByRole("button").nth(1)).toHaveText(SECTION);
   await openPage(page);
   await expect(page.getByRole("tablist")).toHaveCount(0);
 });

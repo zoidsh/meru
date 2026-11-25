@@ -260,6 +260,11 @@ msgstr "Add saved search"
 msgid "Add search"
 msgstr "Add search"
 
+#. Description of the Tint with profile color switch in Settings
+#: src/settings/appearance-page.tsx
+msgid "Adds a touch of the profile color to the title bar and sidebar."
+msgstr "Adds a touch of the profile color to the title bar and sidebar."
+
 #. A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the value under All profiles; {days} is when, such as every day or weekdays
 #: src/settings/scope.ts
 msgid "all day {days}"
@@ -289,6 +294,11 @@ msgstr "Amber"
 #: src/settings/row-scope.tsx
 msgid "and {more} more"
 msgstr "and {more} more"
+
+#. Name of the Settings section for the theme, the profile tint and the title bar's buttons, in its list and as its title
+#: src/settings/app.tsx
+msgid "Appearance"
+msgstr "Appearance"
 
 #. Button on a new email notification that archives the email. Gmail's own word for the action
 #: src/main/notifications.ts
@@ -593,6 +603,8 @@ msgid "Cyan"
 msgstr "Cyan"
 
 #. Choice of the Icon color menu in Settings: a dark tray icon
+#. Choice of the Theme menu in Settings: Meru is always dark
+#: src/settings/appearance-page.tsx
 #: src/settings/menu-bar-page.tsx
 msgid "Dark"
 msgstr "Dark"
@@ -656,9 +668,11 @@ msgstr "Disabled"
 #. Accessible name of the moon button in the title bar that holds new mail notifications, read by screen readers with whether it is pressed
 #. Command that turns Do Not Disturb on until turned off, or off, checked while it holds new mail notifications
 #. Label of the switch in Settings that holds every notification until turned off
+#. Label of the switch in Settings that shows the Do Not Disturb button, a moon, in the title bar; Do Not Disturb is the feature's name
 #. Submenu of the app menu with how long to hold new mail notifications for, or to stop
 #: src/main/application-menu.ts
 #: src/main/commands.ts
+#: src/settings/appearance-page.tsx
 #: src/settings/notifications-page.tsx
 #: src/shell/titlebar.tsx
 msgid "Do Not Disturb"
@@ -710,9 +724,11 @@ msgid "Downloading"
 msgstr "Downloading"
 
 #. Accessible name and tooltip of the Downloads button in the title bar, pressed while the list of downloaded files shows
+#. Label of the switch in Settings that shows the Downloads button in the title bar
 #. Menu item in the View menu, checked while the list of downloaded files is open over the page
 #. Title of the overlay over the page that lists the files downloaded in every profile
 #: src/main/commands.ts
+#: src/settings/appearance-page.tsx
 #: src/shell/downloads.tsx
 msgid "Downloads"
 msgstr "Downloads"
@@ -812,6 +828,11 @@ msgstr "From"
 #: src/settings/app.tsx
 msgid "Gmail"
 msgstr "Gmail"
+
+#. Description of the Theme menu in Settings; Meru's theme does not change Gmail's, which is set in Gmail's own settings
+#: src/settings/appearance-page.tsx
+msgid "Gmail has its own theme, which you set in Gmail."
+msgstr "Gmail has its own theme, which you set in Gmail."
 
 #. Title of the group of Settings that hide or change parts of the Gmail page
 #: src/settings/gmail-page.tsx
@@ -954,6 +975,8 @@ msgid "Left pane {percent}"
 msgstr "Left pane {percent}"
 
 #. Choice of the Icon color menu in Settings: a light tray icon
+#. Choice of the Theme menu in Settings: Meru is always light
+#: src/settings/appearance-page.tsx
 #: src/settings/menu-bar-page.tsx
 msgid "Light"
 msgstr "Light"
@@ -1111,7 +1134,9 @@ msgstr "New mail"
 msgid "New message"
 msgstr "New message"
 
+#. Label of the switch in Settings that shows the New tab button in the title bar; New tab is the button's name
 #. Name of the launcher over the page that lists Google's apps and the profile's bookmarks, to open one as a tab
+#: src/settings/appearance-page.tsx
 #: src/shell/open-app.tsx
 msgid "New tab"
 msgstr "New tab"
@@ -1726,6 +1751,16 @@ msgstr "Shows how many unread emails you have on the app icon."
 msgid "Shows how many unread emails you have on the Dock icon."
 msgstr "Shows how many unread emails you have on the Dock icon."
 
+#. Description of the New tab switch in Settings; the button is in the title bar only while the sidebar is hidden
+#: src/settings/appearance-page.tsx
+msgid "Shows only when the sidebar is hidden."
+msgstr "Shows only when the sidebar is hidden."
+
+#. Description of the Unified inbox switch in Settings; the button is in the title bar only with two or more profiles
+#: src/settings/appearance-page.tsx
+msgid "Shows only when you have two or more profiles."
+msgstr "Shows only when you have two or more profiles."
+
 #. Description of the Newest message first switch in Settings; only what Meru shows changes, not the order in Gmail
 #: src/settings/gmail-page.tsx
 msgid "Shows the newest message at the top of a conversation."
@@ -1843,6 +1878,8 @@ msgstr "Stopped working"
 
 #. Choice of the Icon color menu in Settings: the tray icon follows the system's light or dark mode
 #. Choice of the Sound menu in Settings: the system's own notification sound
+#. Choice of the Theme menu in Settings: Meru is light or dark as the system is
+#: src/settings/appearance-page.tsx
 #: src/settings/menu-bar-page.tsx
 #: src/settings/notifications-page.tsx
 msgid "System"
@@ -1874,6 +1911,11 @@ msgstr "Test notification"
 #: src/main/shell-recovery.ts
 msgid "The window stopped drawing several times in a row, so {productName} will quit. Open it again to carry on."
 msgstr "The window stopped drawing several times in a row, so {productName} will quit. Open it again to carry on."
+
+#. Label of the menu in Settings choosing whether Meru is light, dark or as the system is
+#: src/settings/appearance-page.tsx
+msgid "Theme"
+msgstr "Theme"
 
 #. Line under the Settings scope switcher while All profiles is chosen
 #: src/settings/scope-tabs.tsx
@@ -1915,6 +1957,11 @@ msgstr "This search can't be saved."
 msgid "Tim from Meru"
 msgstr "Tim from Meru"
 
+#. Label of the switch in Settings that mixes the selected profile's color into the title bar and the sidebar
+#: src/settings/appearance-page.tsx
+msgid "Tint with profile color"
+msgstr "Tint with profile color"
+
 #. Accessible name of the strip across the top of the Settings window, read by screen readers
 #. Accessible name of the strip across the top of the window, read by screen readers
 #. Accessible name of the strip across the top of the window, read by screen readers
@@ -1923,6 +1970,11 @@ msgstr "Tim from Meru"
 #: src/shell/titlebar.tsx
 msgid "Title bar"
 msgstr "Title bar"
+
+#. Heading of the group of Settings with a switch for each button at the right of the title bar
+#: src/settings/appearance-page.tsx
+msgid "Title bar buttons"
+msgstr "Title bar buttons"
 
 #. Between the start and end times of a window of quiet hours in Settings, as in 22:00 to 07:00
 #: src/settings/quiet-hours-field.tsx
@@ -2001,7 +2053,9 @@ msgid "Undo"
 msgstr "Undo"
 
 #. Accessible name and tooltip of the inbox button in the title bar, pressed while the list of every profile's unread mail shows
+#. Label of the switch in Settings that shows the Unified inbox button in the title bar; Unified inbox is the feature's name
 #. Title of the overlay over the page that lists every profile's unread mail
+#: src/settings/appearance-page.tsx
 #: src/shell/inbox.tsx
 msgid "Unified inbox"
 msgstr "Unified inbox"
@@ -2109,6 +2163,11 @@ msgstr "weekends"
 #: src/settings/notifications-page.tsx
 msgid "What notifications show"
 msgstr "What notifications show"
+
+#. Description of the Do Not Disturb switch in Settings; turned off, the moon button still shows in the title bar while Do Not Disturb is on
+#: src/settings/appearance-page.tsx
+msgid "When hidden, it still shows while Do Not Disturb is on."
+msgstr "When hidden, it still shows while Do Not Disturb is on."
 
 #. Choice of the Copy code menu in Settings: the code is copied when the Copy button on its notification is clicked
 #: src/settings/gmail-page.tsx

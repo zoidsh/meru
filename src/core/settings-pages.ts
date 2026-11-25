@@ -1,5 +1,6 @@
 /** The Settings window's sections built so far, in the nav's order. */
 export const SETTINGS_SECTIONS = [
+  "appearance",
   "menu-bar",
   "profiles",
   "notifications",
