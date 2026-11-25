@@ -1282,7 +1282,7 @@ msgstr "Meru couldn't save your license. Check that your disk isn't full, then t
 msgid "Meru holds notifications until quiet hours end."
 msgstr "Meru holds notifications until quiet hours end."
 
-#. On the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed
+#. On the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed, beside the Try again button
 #: src/settings/pro-page.tsx
 msgid "Meru is checking your license."
 msgstr "Meru is checking your license."

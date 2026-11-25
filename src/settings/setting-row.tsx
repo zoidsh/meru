@@ -32,6 +32,7 @@ export const SettingRow = ({
   error,
   scope = NO_SCOPE,
   disabled = false,
+  center = false,
   children,
 }: {
   label: string;
@@ -45,6 +46,11 @@ export const SettingRow = ({
   error?: string | undefined;
   scope?: RowScope;
   disabled?: boolean;
+  /**
+   * Centers the label on the controls while it stands alone, for controls
+   * taller than its line; for a row with no scope, whose line it would drop.
+   */
+  center?: boolean;
   children: (ids: { label: string; description: string }) => ReactNode;
 }) => {
   const labelId = useId();
@@ -61,6 +67,8 @@ export const SettingRow = ({
     .filter(Boolean)
     .join(" ");
   const dims = paused !== undefined;
+  // Nothing under the label, so no line describes the control.
+  const centered = center && describedBy === "";
 
   return (
     <Field
@@ -70,23 +78,33 @@ export const SettingRow = ({
       data-invalid={error ? true : undefined}
     >
       {scope.bar && <OverrideBar color={scope.bar} />}
-      <FieldContent>
-        <FieldLabel id={labelId} className={cn(dims && "opacity-50")}>
-          {label}
-        </FieldLabel>
-        {description && (
-          <FieldDescription
-            id={descriptionId}
-            className={cn(dims && "opacity-50")}
-          >
-            {description}
-          </FieldDescription>
-        )}
-        {notice && <FieldDescription id={noticeId}>{notice}</FieldDescription>}
-        {paused && <FieldDescription id={pausedId}>{paused}</FieldDescription>}
-        {error && <FieldError id={errorId}>{error}</FieldError>}
-        {scope.line}
-      </FieldContent>
+      {/* A label alone is the field's own child, which Field centers on the
+          controls; content under it aligns the row to its top. */}
+      {centered ? (
+        <FieldLabel id={labelId}>{label}</FieldLabel>
+      ) : (
+        <FieldContent>
+          <FieldLabel id={labelId} className={cn(dims && "opacity-50")}>
+            {label}
+          </FieldLabel>
+          {description && (
+            <FieldDescription
+              id={descriptionId}
+              className={cn(dims && "opacity-50")}
+            >
+              {description}
+            </FieldDescription>
+          )}
+          {notice && (
+            <FieldDescription id={noticeId}>{notice}</FieldDescription>
+          )}
+          {paused && (
+            <FieldDescription id={pausedId}>{paused}</FieldDescription>
+          )}
+          {error && <FieldError id={errorId}>{error}</FieldError>}
+          {scope.line}
+        </FieldContent>
+      )}
       <div className="flex flex-col items-end gap-1.5">
         <div className={cn("flex items-center gap-2", dims && "opacity-50")}>
           {children({ label: labelId, description: describedBy })}

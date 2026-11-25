@@ -64,6 +64,8 @@ export const LicenseDialog = ({
     setRunning(false);
 
     if (result?.ok) {
+      // The key is the person's; nothing of it stays behind in the page.
+      setKey("");
       setOpen(false);
 
       return;

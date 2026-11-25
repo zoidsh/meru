@@ -202,8 +202,9 @@ test("enters a key in the dialog, says why one is refused in main's words, and o
   await expect(changeKey(page)).toBeFocused();
 });
 
-test("names the device only once licensed, sends a name when saved, and gives the generated one back for an empty name", async ({
+test("names the device only once licensed, sends a name when saved, gives the generated one back for an empty name, and says why a rename is refused", async ({
   app,
+  userDataDir,
 }) => {
   const page = await openPro(app);
 
@@ -238,6 +239,22 @@ test("names the device only once licensed, sends a name when saved, and gives th
   await expect(saveName(page)).toBeEnabled();
   await saveName(page).click();
   await expect(deviceName(page)).toHaveValue(generated);
+
+  // The server no longer knows the license, as after a refund, so it refuses
+  // the rename; the name typed stays to try again.
+  await writeStub(userDataDir, {});
+  await deviceName(page).fill("Office");
+  await saveName(page).click();
+
+  const refused =
+    "This license key can't be used anymore. Contact support if you need help.";
+
+  await expect(main(page).getByRole("alert")).toHaveText(refused);
+  await expect(deviceName(page)).toHaveAttribute("aria-invalid", "true");
+  await expect(deviceName(page)).toHaveAccessibleDescription(
+    `This is how this computer shows up on your license. ${refused}`
+  );
+  await expect(deviceName(page)).toHaveValue("Office");
 });
 
 test("while an activation is out the dialog stays open and nothing else sends, even from a Settings window opened again", async ({
@@ -291,8 +308,13 @@ test("a key carried over and not yet confirmed shows as Pro with its key, and wi
 
   const retry = page.getByRole("button", { name: "Try again" });
 
+  await holdServer(app, true);
   await retry.click();
+  await expect(retry).toBeDisabled();
+  await expect(changeKey(page)).toBeDisabled();
+  await holdServer(app, false);
   await expect(retry).toBeEnabled();
+  await expect(changeKey(page)).toBeEnabled();
   await expectStatus(
     page,
     "Meru couldn't confirm your license",
@@ -404,6 +426,9 @@ test("with no trial or key and no answer, reads as the free version; a key carri
 
   await expectStatus(page, "Meru Pro", "Meru is checking your license.");
   await expect(page.getByRole("button", { name: "Upgrade" })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Try again" })
+  ).toHaveAccessibleDescription("Meru is checking your license.");
   await expect(main(page).getByText(MASKED, { exact: true })).toBeVisible();
 });
 

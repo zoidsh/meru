@@ -19,7 +19,7 @@ import { settingsCalls, useSettingsState } from "./sync.ts";
 /** How long Copy shows that it copied. */
 const COPIED_FOR = 2000;
 
-type Action = "upgrade" | "retry" | "licensed" | undefined;
+type Action = "upgrade" | "retry" | "licensed";
 
 /** The status row: what the install has, in a line and a sentence, and what to do. */
 const useStatus = (
@@ -98,9 +98,9 @@ const useStatus = (
         description: t({
           message: "Meru is checking your license.",
           comment:
-            "On the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed",
+            "On the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed, beside the Try again button",
         }),
-        action: undefined,
+        action: "retry",
       };
     }
     case "trialEnded": {
@@ -479,7 +479,7 @@ const Page = ({
       break;
     }
     default: {
-      control = () => null;
+      control = action satisfies never;
     }
   }
 
@@ -503,6 +503,7 @@ const Page = ({
           {[
             <SettingRow
               key="licenseKey"
+              center
               label={t({
                 message: "License key",
                 comment:
