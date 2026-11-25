@@ -6,7 +6,10 @@ export type ServerAnswer = { token: string } | { error: ServerRefusal };
 /**
  * The entitlement API. Every answer that carries a token is signed by the
  * server. A call may reject, as a request over the network does; the service
- * reads that as no answer, so an adapter need not catch.
+ * reads that as no answer, so an adapter need not catch. A thrown error's
+ * message never carries the license key, a token or the device id, so a
+ * request puts none of them in its URL: the service logs the error's name
+ * and message.
  */
 export interface EntitlementServer {
   /** A trial sends the device's id alone; a license, its key too. */

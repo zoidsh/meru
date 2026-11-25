@@ -77,7 +77,7 @@ export const entitlementErrorMessage = (error: EntitlementError) => {
       return t`This isn't a valid license key. Check it and try again.`;
     }
     case "noLicense": {
-      // The name and the copy are shown only with a license, so no one reads this.
+      // Answered only to a call that needs a stored key, where no page offers one.
       return "";
     }
     case "noDeviceId": {
@@ -536,8 +536,8 @@ export const createEntitlement = ({
       return { ok: true };
     },
     /**
-     * Records that the person chose the free version after a trial, so the
-     * launch stops asking until a license or a trial lapses again.
+     * Records that the person chose the free version after a trial, while
+     * `trialChoicePending` holds; a later license or trial clears it.
      */
     continueFree: async (): Promise<EntitlementResult> => {
       await writes.acquire();

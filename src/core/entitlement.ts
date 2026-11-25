@@ -132,8 +132,8 @@ export interface EntitlementView {
   /** When the server last confirmed this install: the token's issue. */
   lastConfirmed: number | null;
   /**
-   * The trial ended and the person has not yet chosen between upgrading, a
-   * key and the free version, so the launch asks before anything else.
+   * The trial ended and the store holds no choice of the free version
+   * since.
    */
   trialChoicePending: boolean;
 }

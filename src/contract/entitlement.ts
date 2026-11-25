@@ -33,7 +33,7 @@ export const ENTITLEMENT_CALLS = {
   },
   /**
    * Names this device on its license; an empty name gives it back the
-   * server's. For the licensed state only, where the name is shown.
+   * server's. With no license key stored it answers `noLicense`.
    */
   setDeviceName: {
     request: z.object({ name: z.string() }),
@@ -45,14 +45,17 @@ export const ENTITLEMENT_CALLS = {
     response: z.undefined(),
   },
   /**
-   * Puts the whole license key on the clipboard from main, for the masked
-   * key's Copy button. For the licensed state only.
+   * Puts the whole license key on the clipboard from main, so no page holds
+   * it. With no license key stored it answers `noLicense`.
    */
   copyLicenseKey: {
     request: z.undefined(),
     response: result,
   },
-  /** The ended trial's Continue with Free Version: the screen does not show again. */
+  /**
+   * Records that the person chose the free version after a trial, which
+   * clears `trialChoicePending`; with no choice pending it records nothing.
+   */
   continueFree: {
     request: z.undefined(),
     response: result,
@@ -92,10 +95,9 @@ export const ENTITLEMENT_STATE = {
     /** The server took away what this run grants; it applies at the next launch. */
     downgradePending: z.boolean(),
     /**
-     * The trial ended and the person has not yet chosen: the launch stops
-     * before the profiles and asks Upgrade, Enter License Key… or Continue
-     * with Free Version. A license or a trial clears the choice, so a later
-     * lapse asks again.
+     * The trial ended and the person has not chosen the free version since.
+     * A later license or trial clears that choice, so a later lapse reads
+     * pending again.
      */
     trialChoicePending: z.boolean(),
   }),
