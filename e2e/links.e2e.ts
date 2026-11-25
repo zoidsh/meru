@@ -4,14 +4,18 @@ import path from "node:path";
 import type { ElectronApplication } from "@playwright/test";
 
 import {
+  SHELL_URL,
+  chooseContextMenuItem,
   expect,
   findPage,
+  openContextMenu,
   readOpenedExternally,
   stubSystemBrowser,
   test,
   writeSettings,
+  writeState,
 } from "./lib/app.ts";
-import { ELSEWHERE_URL } from "./lib/stand-in.ts";
+import { CALENDAR_TITLE, ELSEWHERE_URL } from "./lib/stand-in.ts";
 
 interface Captured {
   asked: { message: string; detail: string; trustLabel: string }[];
@@ -151,4 +155,122 @@ test("opens without asking for a site trusted in settings.json, and for every si
     .poll(() => readOpenedExternally(unasking))
     .toStrictEqual([ELSEWHERE_URL]);
   expect(await readAsked(unasking)).toStrictEqual([]);
+});
+
+interface CapturedDefaultBrowser {
+  isMeru: boolean;
+  answer: "settings" | "copy" | "cancel";
+  asked: { message: string; detail: string; buttons: { label: string }[] }[];
+  settingsOpened: number;
+}
+
+/**
+ * Makes the suite's system say Meru is its default browser, answering its
+ * alert so, once main has made its stand-in.
+ */
+const makeMeruDefault = async (
+  app: ElectronApplication,
+  answer: CapturedDefaultBrowser["answer"]
+) => {
+  await expect
+    .poll(() =>
+      app.evaluate((_electron, next) => {
+        const captured = Reflect.get(globalThis, "meruTestDefaultBrowser") as
+          | CapturedDefaultBrowser
+          | undefined;
+
+        if (captured) {
+          captured.isMeru = true;
+          captured.answer = next;
+        }
+
+        return captured !== undefined;
+      }, answer)
+    )
+    .toBe(true);
+};
+
+const readDefaultBrowser = (app: ElectronApplication) =>
+  app.evaluate(
+    () =>
+      Reflect.get(
+        globalThis,
+        "meruTestDefaultBrowser"
+      ) as CapturedDefaultBrowser
+  );
+
+test("while Meru is the default browser a page's link shows the alert in place of asking, opens nothing, and opens the system's settings from it", async ({
+  app,
+  standIn,
+}) => {
+  await stubSystemBrowser(app);
+  await makeMeruDefault(app, "settings");
+  await clickAnotherSite(app, standIn.url);
+
+  await expect
+    .poll(async () => {
+      const { settingsOpened } = await readDefaultBrowser(app);
+
+      return settingsOpened;
+    })
+    .toBe(1);
+
+  const { asked } = await readDefaultBrowser(app);
+
+  expect(asked).toHaveLength(1);
+  expect(asked[0]?.message).toBe("Meru is your default browser");
+  expect(asked[0]?.buttons.map(({ label }) => label)).toStrictEqual(
+    process.platform === "darwin"
+      ? ["Open System Settings", "Copy Link", "Cancel"]
+      : ["Copy Link", "OK"]
+  );
+  expect(await readAsked(app)).toStrictEqual([]);
+  expect(await readOpenedExternally(app)).toStrictEqual([]);
+});
+
+test("while Meru is the default browser a tab's Open in Default Browser shows the alert too, and copies the link from it", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: CALENDAR_TITLE,
+          },
+        ],
+        selectedTabId: "c",
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, SHELL_URL);
+
+  await findPage(app, standIn.calendarUrl);
+  await stubSystemBrowser(app);
+  await makeMeruDefault(app, "copy");
+  await openContextMenu(app, () =>
+    shell
+      .getByRole("tablist", { name: "Tabs" })
+      .getByRole("tab", { name: CALENDAR_TITLE, exact: true })
+      .click({ button: "right" })
+  );
+  await chooseContextMenuItem(app, "Open in Default Browser");
+
+  await expect.poll(() => readCopied(app)).toStrictEqual([standIn.calendarUrl]);
+
+  const { asked } = await readDefaultBrowser(app);
+
+  expect(asked).toHaveLength(1);
+  expect(await readOpenedExternally(app)).toStrictEqual([]);
 });

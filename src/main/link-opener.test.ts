@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { Settings } from "#core/settings.ts";
+import { fakeDefaultBrowser } from "#platform/default-browser.fake.ts";
 import type { LinkAnswer, LinkQuestion } from "#platform/link-prompt.ts";
 
+import { createDefaultBrowserGuard } from "./default-browser-guard.ts";
 import { createLinkOpener } from "./link-opener.ts";
 import { createSettingsStore } from "./settings.ts";
 import { createTrustedSites } from "./trusted-sites.ts";
@@ -26,9 +28,23 @@ const setup = (initial?: Settings) => {
     log: () => false,
   });
   const trustedSites = createTrustedSites(settings);
+  const { fake: system, defaultBrowser } = fakeDefaultBrowser();
+  const clipboard = {
+    writeText: (text: string) => {
+      copied.push(text);
+
+      return Promise.resolve();
+    },
+  };
   const opener = createLinkOpener({
     settings,
     trustedSites,
+    defaultBrowser: createDefaultBrowserGuard({
+      platform: "darwin",
+      defaultBrowser,
+      clipboard,
+      log: () => false,
+    }),
     prompt: {
       ask: (question) => {
         asked.push(question);
@@ -43,18 +59,13 @@ const setup = (initial?: Settings) => {
         return Promise.resolve();
       },
     },
-    clipboard: {
-      writeText: (text) => {
-        copied.push(text);
-
-        return Promise.resolve();
-      },
-    },
+    clipboard,
     log: () => false,
   });
 
   return {
     opener,
+    system,
     trustedSites,
     asked,
     opened,
@@ -189,6 +200,55 @@ describe(createLinkOpener, () => {
     expect(saved.at(-1)?.trustedSites).toStrictEqual([
       "https://example.net",
       "https://example.org",
+    ]);
+  });
+
+  it("while Meru is the default browser shows the guard's alert in place of asking, and opens nothing, trusted or not", async () => {
+    const { opener, system, asked, opened, copied } = setup({
+      version: 1,
+      trustedSites: ["https://example.net"],
+    });
+
+    system.isDefault = true;
+    await opener.open(LINK);
+    await opener.open("https://example.net/");
+
+    expect([system.asked.length, asked, opened, copied]).toStrictEqual([
+      2,
+      [],
+      [],
+      [],
+    ]);
+  });
+
+  it("while Meru is the default browser copies the link on the alert's Copy Link and opens the system's settings on its other button", async () => {
+    const { opener, system, opened, copied } = setup();
+
+    system.isDefault = true;
+    system.answer = "copy";
+    await opener.open(LINK);
+    system.answer = "settings";
+    await opener.open(LINK);
+
+    expect([copied, system.settingsOpened, opened]).toStrictEqual([
+      [LINK],
+      1,
+      [],
+    ]);
+  });
+
+  it("asks again once Meru is no longer the default browser", async () => {
+    const { opener, system, asked, opened } = setup();
+
+    system.isDefault = true;
+    await opener.open(LINK);
+    system.isDefault = false;
+    await opener.open(LINK);
+
+    expect([system.asked.length, asked.length, opened]).toStrictEqual([
+      1,
+      1,
+      [LINK],
     ]);
   });
 });

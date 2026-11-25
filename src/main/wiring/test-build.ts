@@ -7,6 +7,7 @@ import { APPS, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
 import { KEEP_ALIVE_TIMING, KEEP_ALIVE_URL } from "#core/keep-alive.ts";
 import type { KeepAliveTiming } from "#core/keep-alive.ts";
+import type { Platform } from "#core/platform.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { createBadge, createCapturedBadge } from "#platform/badge.ts";
 import {
@@ -17,6 +18,11 @@ import {
   createCapturedContextMenus,
   createContextMenus,
 } from "#platform/context-menu.ts";
+import {
+  createCapturedDefaultBrowser,
+  createDefaultBrowser,
+  createNeverDefaultBrowser,
+} from "#platform/default-browser.ts";
 import { createCapturedDock, createDock } from "#platform/dock.ts";
 import {
   createCapturedDownloadFiles,
@@ -215,6 +221,22 @@ export const downloadFiles = () =>
  */
 export const linkPrompt = () =>
   MERU_E2E_BUILD ? createCapturedLinkPrompt() : createLinkPrompt();
+
+/**
+ * Whether the system's default browser is Meru: asked of the system by the
+ * installed Meru alone, since every other build claims no link scheme, and
+ * stood in for by the suite's, which never shows its alert or the system's
+ * settings.
+ */
+export const systemDefaultBrowser = (platform: Platform) => {
+  if (MERU_E2E_BUILD) {
+    return createCapturedDefaultBrowser();
+  }
+
+  return isReleaseAppId(MERU_APP_ID)
+    ? createDefaultBrowser(platform)
+    : createNeverDefaultBrowser();
+};
 
 /** The suite's build records the Dock's and taskbar's progress and bounce. */
 export const downloadSignals = (

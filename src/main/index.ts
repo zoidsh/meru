@@ -307,7 +307,6 @@ const start = async () => {
     power,
   } = wireMailFeed({ apps, sessions, profiles, doNotDisturb });
 
-  const systemBrowser = createSystemBrowser();
   const contentBlocker = wireContentBlocker({ settings, signInOrigins });
   // macOS checks spelling with its own, whatever a session is given.
   const spellcheck = isMacOS
@@ -317,8 +316,14 @@ const start = async () => {
         settings,
         log: console.error,
       });
-  // A page's links leave through it; Meru's own, as Open in Browser, do not.
-  const { linkOpener } = wireLinks({ settings, systemBrowser, clipboard });
+  // A page's links leave through the opener; Meru's own, as Open in Browser,
+  // through `systemBrowser`, which asks nothing.
+  const { linkOpener, ownLinks: systemBrowser } = wireLinks({
+    platform,
+    settings,
+    systemBrowser: createSystemBrowser(),
+    clipboard,
+  });
   const preloads = new Map([
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
   ]);

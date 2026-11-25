@@ -436,8 +436,10 @@ msgstr "Cached images and files"
 
 #. Button in Settings that closes the fields of a new saved search without adding it
 #. Button in the Delete browsing data dialog in Settings that closes it, deleting nothing
+#. Button in the alert saying Meru is the default browser, which opens nothing
 #. Button in the dialog that asks before a link opens in the default browser, which opens nothing
 #. Button in the dialog that confirms removing a profile, which keeps it
+#: src/main/default-browser-guard.ts
 #: src/main/link-opener.ts
 #: src/main/profile-copy.ts
 #: src/settings/delete-browsing-data.tsx
@@ -594,7 +596,9 @@ msgstr "Copy"
 msgid "Copy code"
 msgstr "Copy code"
 
+#. Button in the alert saying Meru is the default browser, which copies the link that could not open
 #. Button in the dialog that asks before a link opens in the default browser, which copies it and opens nothing
+#: src/main/default-browser-guard.ts
 #: src/main/link-opener.ts
 msgid "Copy Link"
 msgstr "Copy Link"
@@ -1041,6 +1045,16 @@ msgstr "Lime"
 msgid "Linen"
 msgstr "Linen"
 
+#. Detail of the alert saying Meru is the default browser, on macOS; System Settings is macOS's app of that name
+#: src/main/default-browser-guard.ts
+msgid "Links can't leave Meru while it's your default browser. Choose another default browser in System Settings to open them."
+msgstr "Links can't leave Meru while it's your default browser. Choose another default browser in System Settings to open them."
+
+#. Detail of the alert saying Meru is the default browser, on Linux
+#: src/main/default-browser-guard.ts
+msgid "Links can't leave Meru while it's your default browser. Choose another default browser in your system settings to open them."
+msgstr "Links can't leave Meru while it's your default browser. Choose another default browser in your system settings to open them."
+
 #. Said by screen readers after a tab's title while its page loads
 #: src/shell/tab-strip.tsx
 msgid "Loading"
@@ -1113,6 +1127,11 @@ msgstr "Meru couldn't save your license. Check that your disk isn't full, then t
 #: src/settings/quiet-hours-field.tsx
 msgid "Meru holds notifications until quiet hours end."
 msgstr "Meru holds notifications until quiet hours end."
+
+#. Title of the alert Meru shows in place of opening a link in the default browser, since Meru itself is the system's default browser
+#: src/main/default-browser-guard.ts
+msgid "Meru is your default browser"
+msgstr "Meru is your default browser"
 
 #. Description of the Show in system tray switch in Settings on Windows and Linux
 #: src/settings/menu-bar-page.tsx
@@ -1298,6 +1317,11 @@ msgstr "Notifications"
 msgid "Off"
 msgstr "Off"
 
+#. Button in the alert saying Meru is the default browser, on Linux, which closes it and opens nothing
+#: src/main/default-browser-guard.ts
+msgid "OK"
+msgstr "OK"
+
 #. A switch's value under All profiles in the Settings caption under a profile's own value: For all profiles, it's On.
 #: src/settings/scope.ts
 msgid "On"
@@ -1382,6 +1406,11 @@ msgstr "Open in the background"
 #: src/main/link-opener.ts
 msgid "Open Link"
 msgstr "Open Link"
+
+#. Button in the alert saying Meru is the default browser, on macOS, which opens where macOS's default browser is chosen
+#: src/main/default-browser-guard.ts
+msgid "Open System Settings"
+msgstr "Open System Settings"
 
 #. Description of the Saved searches card on a profile's page in Settings; Saved Searches and Mail name the menus as the app's menu bar shows them
 #: src/settings/saved-searches-card.tsx
