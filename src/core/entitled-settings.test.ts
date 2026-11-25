@@ -45,6 +45,14 @@ describe(entitledSetting, () => {
     ]).toStrictEqual([false, "immediately", true, true]);
   });
 
+  it("plays Linen without Meru Pro whatever sound was chosen, the system's included, and nothing for none", () => {
+    expect(
+      (["system", "duet", "linen", "none"] as const).map((sound) =>
+        entitledSetting("notificationSound", sound, free)
+      )
+    ).toStrictEqual(["linen", "linen", "linen", "none"]);
+  });
+
   it("asks only the capability the setting needs", () => {
     const asked: Capability[] = [];
 

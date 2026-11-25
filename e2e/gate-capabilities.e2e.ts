@@ -409,3 +409,66 @@ test("the free version finds no verification code, so its mail is notified as an
   await retitle(gmail, "Inbox (3)");
   await expect.poll(() => copied(app)).toStrictEqual([CODE]);
 });
+
+/** Each sound the suite's build captured in place of playing it, never heard. */
+const sounds = (app: ElectronApplication) =>
+  app.evaluate(() => [
+    ...(Reflect.get(globalThis, "meruTestSounds") as unknown[]),
+  ]);
+
+/** Each notification captured, as its title and whether it was silent. */
+const silences = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as {
+        title: string;
+        silent?: boolean;
+      }[]
+    ).map(({ title, silent }) => ({ title, silent }))
+  );
+
+test("the free version plays Linen at its volume for the system's sound, previews only Linen, and shows Sound as a Pro row", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedOneProfile(userDataDir, standIn);
+  await writeSettings(userDataDir, {
+    notificationSound: "system",
+    notificationSoundVolume: 0.4,
+  });
+  standIn.setFeed(ANY_SESSION, listing("1"));
+
+  const settingsBefore = await readStored(userDataDir, SETTINGS_FILE);
+  const { app, gmail } = await launchFree(launchApp, userDataDir, standIn);
+
+  await arrive(app, gmail, standIn);
+  await expect
+    .poll(() => silences(app))
+    .toStrictEqual([{ title: "Sender 2", silent: true }]);
+  expect(await sounds(app)).toStrictEqual([{ sound: "linen", volume: 0.4 }]);
+
+  const page = await openSettings(app);
+  const sound = page.getByRole("combobox", { name: "Sound" });
+
+  await expect(sound).toBeDisabled();
+  await expect(sound).toContainText("Linen");
+  await expect(badgeOf(page, "Sound")).toBeVisible();
+  await expect(badgeOf(page, "Volume")).toHaveCount(0);
+  await page.getByRole("button", { name: "Play sound" }).click();
+  await expect
+    .poll(() => sounds(app))
+    .toStrictEqual([
+      { sound: "linen", volume: 0.4 },
+      { sound: "linen", volume: 0.4 },
+    ]);
+  await expect(readStored(userDataDir, SETTINGS_FILE)).resolves.toBe(
+    settingsBefore
+  );
+
+  await activate(page);
+  await openSection(page, "Notifications");
+  await expect(sound).toBeEnabled();
+  await expect(sound).toContainText("System");
+  await expect(page.getByRole("button", { name: "Play sound" })).toBeDisabled();
+});

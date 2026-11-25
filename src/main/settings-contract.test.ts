@@ -117,6 +117,7 @@ const setup = (
     platform: "darwin",
     log: () => false,
     profileValues: multipleProfiles,
+    can: entitlement.can,
   });
   const profiles = createProfiles({
     initial: state,
@@ -127,6 +128,7 @@ const setup = (
     now: Date.now,
     log: () => false,
     multipleProfiles,
+    can: entitlement.can,
   });
 
   // As the composition root does, before any window hears of the change.
@@ -375,6 +377,18 @@ describe(settingsHandlers, () => {
     await app.handlers.previewSound({ sound: "knock" });
 
     expect(app.played).toStrictEqual([{ sound: "knock", volume: 0.4 }]);
+    app.dispose();
+  });
+
+  it("previews only Linen on the free version, which plays no other sound", async () => {
+    const app = setup(stateOf("Work"), undefined, "darwin", ["en"], true);
+
+    await expect(app.handlers.previewSound({ sound: "knock" })).rejects.toThrow(
+      "needs Meru Pro"
+    );
+    await app.handlers.previewSound({ sound: "linen" });
+
+    expect(app.played).toStrictEqual([{ sound: "linen", volume: 1 }]);
     app.dispose();
   });
 

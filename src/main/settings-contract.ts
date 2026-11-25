@@ -13,6 +13,7 @@ import type {
   SettingsState,
 } from "#contract/settings.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
+import { FREE_SOUND } from "#core/entitled-settings.ts";
 import { CAPABILITIES } from "#core/entitlement.ts";
 import { UNTIL_OFF } from "#core/notification-gate.ts";
 import {
@@ -228,6 +229,10 @@ export const settingsHandlers = ({
     // Asked for, so no gate of a notification's holds it.
     previewSound: ({ sound: name }) =>
       Promise.try(() => {
+        if (name !== FREE_SOUND && !entitlement.can("notificationSound")) {
+          throw new Error(`The sound ${name} needs Meru Pro`);
+        }
+
         sound.play({
           sound: name,
           volume: settings.get("notificationSoundVolume"),

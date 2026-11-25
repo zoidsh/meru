@@ -922,6 +922,23 @@ const silences = (shown: Shown[]) =>
   shown.map((notification) => notification.silent);
 
 describe("sounds", () => {
+  it.each([
+    ["system", [{ sound: "linen", volume: 0.5 }]],
+    ["duet", [{ sound: "linen", volume: 0.5 }]],
+    ["none", []],
+  ] as const)(
+    "on the free version, with %s chosen, plays Linen at its volume or nothing, never the system's sound",
+    async (chosen, played) => {
+      const app = setup({ free: true });
+
+      app.set("notificationSound", chosen);
+      app.set("notificationSoundVolume", 0.5);
+      await arrive(app, entry("1"));
+
+      expect([app.played, silences(app.shown)]).toStrictEqual([played, [true]]);
+    }
+  );
+
   it("plays the chosen sound at the chosen volume once for a poll of several, each notification silent", async () => {
     const app = setup();
 

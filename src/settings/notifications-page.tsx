@@ -315,6 +315,8 @@ export const NotificationsPage = () => {
                 label={soundLabel}
                 paused={paused}
                 scope={rowScope("notificationSound", soundLabel)}
+                pro={needsPro("notificationSound")}
+                disabled={needsPro("notificationSound")}
               >
                 {(ids) => (
                   <>
@@ -341,6 +343,7 @@ export const NotificationsPage = () => {
                         label: soundNames[sound],
                       }))}
                       value={values.notificationSound}
+                      disabled={needsPro("notificationSound")}
                       onValueChange={(value) => {
                         if (value !== null) {
                           write("notificationSound", value);

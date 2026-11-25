@@ -1,5 +1,9 @@
 import type { Capability } from "./entitlement.ts";
 import type { SettingKey, SettingValue } from "./settings.ts";
+import type { NotificationSound } from "./sounds.ts";
+
+/** The one sound the free version plays. */
+export const FREE_SOUND: NotificationSound = "linen";
 
 interface GatedSetting<Key extends SettingKey> {
   capability: Capability;
@@ -30,6 +34,12 @@ export const GATED_SETTINGS: {
   verificationCodeCopyMode: { capability: "verificationCodes" },
   verificationCodeMarkRead: { capability: "verificationCodes" },
   verificationCodeTrash: { capability: "verificationCodes" },
+  // Linen at its volume, or nothing for a person who chose none: never the
+  // system's sound, nor silence for a choice the run does not offer.
+  notificationSound: {
+    capability: "notificationSound",
+    free: (stored) => (stored === "none" ? "none" : FREE_SOUND),
+  },
 };
 
 /** The capability the setting needs, if any. */
