@@ -49,6 +49,7 @@ import {
 } from "#platform/tray.ts";
 
 import type { Entitlement } from "../entitlement.ts";
+import { restorePerformanceGlobal } from "../performance-global.ts";
 import type { SettingsStore } from "../settings.ts";
 import { createSoundOutput } from "../sounds.ts";
 import type { SoundOutput } from "../sounds.ts";
@@ -100,6 +101,9 @@ export const testBuildSetup = () => {
   // is refused and said, so no test loads a real Google page.
   if (MERU_E2E_BUILD) {
     keepToLoopback();
+    // Playwright evaluates in main through the inspector, which a release
+    // never opens.
+    restorePerformanceGlobal(globalThis);
   }
   const signInOrigins = standIns?.signIn ? [standIns.signIn] : SIGN_IN_ORIGINS;
   // The sign-in stand-in's rotation page sets the cookie as Google's does.
