@@ -730,7 +730,8 @@ describe(createShellSource, () => {
 
   const sourceSetup = () => {
     const launched: unknown[] = [];
-    const launchListeners = new Set<() => void>();
+    // One source of changes behind both, as the entitlement is.
+    const changes = new Set<() => void>();
     let launchState = { language: "en", pro: PRO };
     const source = createShellSource({
       handlers: {
@@ -750,10 +751,10 @@ describe(createShellSource, () => {
       state: {
         read: () => launchState,
         onChange: (listener) => {
-          launchListeners.add(listener);
+          changes.add(listener);
 
           return () => {
-            launchListeners.delete(listener);
+            changes.delete(listener);
           };
         },
       },
@@ -768,11 +769,11 @@ describe(createShellSource, () => {
       source,
       launched,
       told: () => told,
-      launchListening: () => launchListeners.size,
+      changes,
       moveLaunch: (pro: ShellState["pro"]) => {
         launchState = { ...launchState, pro };
 
-        for (const listener of launchListeners) {
+        for (const listener of changes) {
           listener();
         }
       },
@@ -799,9 +800,8 @@ describe(createShellSource, () => {
   });
 
   it("answers from the app's once started, telling the change, and only once", async () => {
-    const { source, told, launchListening, moveLaunch } = sourceSetup();
+    const { source, told, changes, moveLaunch } = sourceSetup();
     const appCalls: unknown[] = [];
-    const appListeners: (() => void)[] = [];
     const appState = { language: "de", pro: { ...PRO, trialChoice: false } };
     const app = {
       handlers: {
@@ -814,7 +814,7 @@ describe(createShellSource, () => {
       state: {
         read: () => appState as unknown as ShellState,
         onChange: (listener: () => void) => {
-          appListeners.push(listener);
+          changes.add(listener);
         },
       },
     };
@@ -828,15 +828,10 @@ describe(createShellSource, () => {
       appState,
     ]);
 
-    // The launch's listeners end with the wait; the app's tell.
-    expect(launchListening()).toBe(0);
+    // A change both sources hear is told once, by the app's.
     moveLaunch(PRO);
 
-    for (const listener of appListeners) {
-      listener();
-    }
-
-    expect(told()).toBe(2);
+    expect([told(), changes.size]).toStrictEqual([2, 1]);
     expect(() => {
       source.start(app);
     }).toThrow("started already");

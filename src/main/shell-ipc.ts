@@ -90,7 +90,12 @@ export const createShellSource = (launch: {
     ])
   ) as ShellHandlers;
 
-  const stopLaunch = launch.state.onChange(notify);
+  // Its own wrapper, so a change it tells after the handover tells nothing.
+  const stopLaunch = launch.state.onChange(() => {
+    if (!app) {
+      notify();
+    }
+  });
 
   return {
     handlers,
