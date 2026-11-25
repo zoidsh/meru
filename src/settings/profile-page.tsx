@@ -9,7 +9,6 @@ import { PROFILE_COLOR_NAMES, paletteColor } from "#core/profile-color.ts";
 import type { ProfileColorName } from "#core/profile-color.ts";
 import { PROFILE_NAME_MAX_LENGTH } from "#core/state.ts";
 import { Button } from "#ui/button.tsx";
-import { Card, CardContent } from "#ui/card.tsx";
 import {
   Field,
   FieldContent,
@@ -32,6 +31,7 @@ import { Switch } from "#ui/switch.tsx";
 import { DeleteBrowsingData } from "./delete-browsing-data.tsx";
 import { SavedSearchesCard } from "./saved-searches-card.tsx";
 import { ProfileDot } from "./scope-tabs.tsx";
+import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { AccountLine, accountShown } from "./signed-in.tsx";
 import { settingsCalls } from "./sync.ts";
 
@@ -353,8 +353,8 @@ export const ProfilePage = ({
       ) : (
         accountShown(profile) && <AccountLine profile={profile} />
       )}
-      <Card>
-        <CardContent>
+      <SettingGroups>
+        <SettingGroup>
           <FieldGroup>
             {many && (
               <>
@@ -513,11 +513,9 @@ export const ProfilePage = ({
               </>
             )}
           </FieldGroup>
-        </CardContent>
-      </Card>
-      <SavedSearchesCard profile={profile} />
-      <Card>
-        <CardContent>
+        </SettingGroup>
+        <SavedSearchesCard profile={profile} />
+        <SettingGroup>
           <FieldGroup>
             <Row
               label={t({
@@ -580,8 +578,8 @@ export const ProfilePage = ({
               )}
             </Row>
           </FieldGroup>
-        </CardContent>
-      </Card>
+        </SettingGroup>
+      </SettingGroups>
     </>
   );
 };

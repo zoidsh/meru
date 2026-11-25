@@ -4,13 +4,6 @@ import type { GMAIL_PAGE_KEYS, SettingChange } from "#contract/settings.ts";
 import { VERIFICATION_CODE_COPY_MODES } from "#core/settings.ts";
 import type { VerificationCodeCopyMode } from "#core/settings.ts";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "#ui/card.tsx";
-import {
   Select,
   SelectContent,
   SelectGroup,
@@ -20,6 +13,7 @@ import {
 } from "#ui/select.tsx";
 import { Switch } from "#ui/switch.tsx";
 
+import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
 
@@ -96,252 +90,235 @@ export const GmailPage = () => {
   };
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t({
-              message: "Gmail page",
-              comment:
-                "Title of the group of Settings that hide or change parts of the Gmail page",
-            })}
-          </CardTitle>
-          <CardDescription>
-            {t({
-              message:
-                "These change how Gmail looks in Meru. Your Gmail settings stay the same.",
-              comment:
-                "Description of the Gmail page group in Settings: these settings change only what Meru shows, never the person's settings in Gmail",
-            })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Rows>
-            {[
-              switchRow(
-                "hideGmailLogo",
-                t({
-                  message: "Hide Gmail logo",
-                  comment:
-                    "Label of the switch in Settings that hides the Gmail logo at the top left of the Gmail page",
-                }),
-                undefined
-              ),
-              switchRow(
-                "hidePromoBanner",
-                t({
-                  message: "Hide promotions",
-                  comment:
-                    "Label of the switch in Settings that hides the promotional banners Google shows above the inbox, such as offers to upgrade to Google Workspace",
-                }),
-                t({
-                  message: "Hides offers from Google above your inbox.",
-                  comment:
-                    "Description of the Hide promotions switch in Settings",
-                })
-              ),
-              switchRow(
-                "hideUpgradeButton",
-                t({
-                  message: "Hide Upgrade button",
-                  comment:
-                    "Label of the switch in Settings that hides the Upgrade button Gmail shows at the top of its page; Upgrade is the label of Gmail's button, written as Gmail writes it, not Meru Pro's",
-                }),
-                undefined
-              ),
-              switchRow(
-                "hideInboxFooter",
-                t({
-                  message: "Hide inbox footer",
-                  comment:
-                    "Label of the switch in Settings that hides the footer Gmail shows under the inbox",
-                }),
-                t({
-                  message:
-                    "Hides the storage and account details below your inbox.",
-                  comment:
-                    "Description of the Hide inbox footer switch in Settings: Gmail's footer shows the storage used, policies and account activity",
-                })
-              ),
-              switchRow(
-                "extendDarkTheme",
-                t({
-                  message: "Dark theme for all of Gmail",
-                  comment:
-                    "Label of the switch in Settings that darkens the parts of Gmail its own dark theme leaves white",
-                }),
-                t({
-                  message:
-                    "Darkens the parts of Gmail that stay white in its dark theme. This only works when Gmail itself is set to Dark.",
-                  comment:
-                    "Description of the Dark theme for all of Gmail switch in Settings; Dark is the name of the theme chosen in Gmail's own settings, as Gmail writes it",
-                })
-              ),
-            ]}
-          </Rows>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t({
-              message: "Conversations",
-              comment:
-                "Title of the group of Settings for how Gmail shows an open conversation",
-            })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Rows>
-            {[
-              switchRow(
-                "reverseConversation",
-                t({
-                  message: "Newest message first",
-                  comment:
-                    "Label of the switch in Settings that shows an open Gmail conversation with its latest message at the top",
-                }),
-                t({
-                  message:
-                    "Shows the newest message at the top of a conversation.",
-                  comment:
-                    "Description of the Newest message first switch in Settings; only what Meru shows changes, not the order in Gmail",
-                })
-              ),
-              switchRow(
-                "moveAttachmentsToTop",
-                t({
-                  message: "Show attachments first",
-                  comment:
-                    "Label of the switch in Settings that shows each Gmail message's attachments above its text",
-                }),
-                t({
-                  message:
-                    "Shows attachments above the message instead of below it.",
-                  comment:
-                    "Description of the Show attachments first switch in Settings",
-                })
-              ),
-              switchRow(
-                "showTrimmedContent",
-                t({
-                  message: "Show trimmed content",
-                  comment:
-                    "Label of the switch in Settings that shows the quoted text Gmail trims; trimmed content is Gmail's own name for it",
-                }),
-                t({
-                  message:
-                    "Shows the quoted text that Gmail hides behind the ••• button.",
-                  comment:
-                    "Description of the Show trimmed content switch in Settings; ••• is the label of Gmail's button that shows trimmed content, kept as is",
-                })
-              ),
-            ]}
-          </Rows>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t({
-              message: "Verification codes",
-              comment:
-                "Title of the group of Settings for one-time codes found in new mail",
-            })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Rows>
-            {[
-              switchRow(
-                "verificationCodes",
-                t({
-                  message: "Find verification codes",
-                  comment:
-                    "Label of the switch in Settings that looks for a verification code in each new email",
-                }),
-                t({
-                  message:
-                    "Shows a notification with the code, even during quiet hours or Do Not Disturb.",
-                  comment:
-                    "Description of the Find verification codes switch in Settings; quiet hours and Do Not Disturb are the Notifications page's settings of those names",
-                })
-              ),
-              <SettingRow
-                key="verificationCodeCopyMode"
-                label={t({
-                  message: "Copy code",
-                  comment:
-                    "Label of the menu in Settings choosing when a verification code is copied",
-                })}
-                description={codesOff ? codesOffReason : undefined}
-                disabled={codesOff}
-              >
-                {(ids) => (
-                  <Select
-                    items={VERIFICATION_CODE_COPY_MODES.map((mode) => ({
-                      value: mode,
-                      label: copyModes[mode],
-                    }))}
-                    value={settings.verificationCodeCopyMode}
-                    disabled={codesOff}
-                    onValueChange={(mode) => {
-                      if (mode !== null) {
-                        write({ key: "verificationCodeCopyMode", value: mode });
-                      }
-                    }}
+    <SettingGroups>
+      <SettingGroup
+        title={t({
+          message: "Gmail page",
+          comment:
+            "Title of the group of Settings that hide or change parts of the Gmail page",
+        })}
+        description={t({
+          message:
+            "These change how Gmail looks in Meru. Your Gmail settings stay the same.",
+          comment:
+            "Description of the Gmail page group in Settings: these settings change only what Meru shows, never the person's settings in Gmail",
+        })}
+      >
+        <Rows>
+          {[
+            switchRow(
+              "hideGmailLogo",
+              t({
+                message: "Hide Gmail logo",
+                comment:
+                  "Label of the switch in Settings that hides the Gmail logo at the top left of the Gmail page",
+              }),
+              undefined
+            ),
+            switchRow(
+              "hidePromoBanner",
+              t({
+                message: "Hide promotions",
+                comment:
+                  "Label of the switch in Settings that hides the promotional banners Google shows above the inbox, such as offers to upgrade to Google Workspace",
+              }),
+              t({
+                message: "Hides offers from Google above your inbox.",
+                comment:
+                  "Description of the Hide promotions switch in Settings",
+              })
+            ),
+            switchRow(
+              "hideUpgradeButton",
+              t({
+                message: "Hide Upgrade button",
+                comment:
+                  "Label of the switch in Settings that hides the Upgrade button Gmail shows at the top of its page; Upgrade is the label of Gmail's button, written as Gmail writes it, not Meru Pro's",
+              }),
+              undefined
+            ),
+            switchRow(
+              "hideInboxFooter",
+              t({
+                message: "Hide inbox footer",
+                comment:
+                  "Label of the switch in Settings that hides the footer Gmail shows under the inbox",
+              }),
+              t({
+                message:
+                  "Hides the storage and account details below your inbox.",
+                comment:
+                  "Description of the Hide inbox footer switch in Settings: Gmail's footer shows the storage used, policies and account activity",
+              })
+            ),
+            switchRow(
+              "extendDarkTheme",
+              t({
+                message: "Dark theme for all of Gmail",
+                comment:
+                  "Label of the switch in Settings that darkens the parts of Gmail its own dark theme leaves white",
+              }),
+              t({
+                message:
+                  "Darkens the parts of Gmail that stay white in its dark theme. This only works when Gmail itself is set to Dark.",
+                comment:
+                  "Description of the Dark theme for all of Gmail switch in Settings; Dark is the name of the theme chosen in Gmail's own settings, as Gmail writes it",
+              })
+            ),
+          ]}
+        </Rows>
+      </SettingGroup>
+      <SettingGroup
+        title={t({
+          message: "Conversations",
+          comment:
+            "Title of the group of Settings for how Gmail shows an open conversation",
+        })}
+      >
+        <Rows>
+          {[
+            switchRow(
+              "reverseConversation",
+              t({
+                message: "Newest message first",
+                comment:
+                  "Label of the switch in Settings that shows an open Gmail conversation with its latest message at the top",
+              }),
+              t({
+                message:
+                  "Shows the newest message at the top of a conversation.",
+                comment:
+                  "Description of the Newest message first switch in Settings; only what Meru shows changes, not the order in Gmail",
+              })
+            ),
+            switchRow(
+              "moveAttachmentsToTop",
+              t({
+                message: "Show attachments first",
+                comment:
+                  "Label of the switch in Settings that shows each Gmail message's attachments above its text",
+              }),
+              t({
+                message:
+                  "Shows attachments above the message instead of below it.",
+                comment:
+                  "Description of the Show attachments first switch in Settings",
+              })
+            ),
+            switchRow(
+              "showTrimmedContent",
+              t({
+                message: "Show trimmed content",
+                comment:
+                  "Label of the switch in Settings that shows the quoted text Gmail trims; trimmed content is Gmail's own name for it",
+              }),
+              t({
+                message:
+                  "Shows the quoted text that Gmail hides behind the ••• button.",
+                comment:
+                  "Description of the Show trimmed content switch in Settings; ••• is the label of Gmail's button that shows trimmed content, kept as is",
+              })
+            ),
+          ]}
+        </Rows>
+      </SettingGroup>
+      <SettingGroup
+        title={t({
+          message: "Verification codes",
+          comment:
+            "Title of the group of Settings for one-time codes found in new mail",
+        })}
+      >
+        <Rows>
+          {[
+            switchRow(
+              "verificationCodes",
+              t({
+                message: "Find verification codes",
+                comment:
+                  "Label of the switch in Settings that looks for a verification code in each new email",
+              }),
+              t({
+                message:
+                  "Shows a notification with the code, even during quiet hours or Do Not Disturb.",
+                comment:
+                  "Description of the Find verification codes switch in Settings; quiet hours and Do Not Disturb are the Notifications page's settings of those names",
+              })
+            ),
+            <SettingRow
+              key="verificationCodeCopyMode"
+              label={t({
+                message: "Copy code",
+                comment:
+                  "Label of the menu in Settings choosing when a verification code is copied",
+              })}
+              description={codesOff ? codesOffReason : undefined}
+              disabled={codesOff}
+            >
+              {(ids) => (
+                <Select
+                  items={VERIFICATION_CODE_COPY_MODES.map((mode) => ({
+                    value: mode,
+                    label: copyModes[mode],
+                  }))}
+                  value={settings.verificationCodeCopyMode}
+                  disabled={codesOff}
+                  onValueChange={(mode) => {
+                    if (mode !== null) {
+                      write({ key: "verificationCodeCopyMode", value: mode });
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    aria-labelledby={ids.label}
+                    aria-describedby={ids.description || undefined}
                   >
-                    <SelectTrigger
-                      aria-labelledby={ids.label}
-                      aria-describedby={ids.description || undefined}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent alignItemWithTrigger={false}>
-                      <SelectGroup>
-                        {VERIFICATION_CODE_COPY_MODES.map((mode) => (
-                          <SelectItem key={mode} value={mode}>
-                            {copyModes[mode]}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
-              </SettingRow>,
-              switchRow(
-                "verificationCodeMarkRead",
-                t({
-                  message: "Mark as read after copying",
-                  comment:
-                    "Label of the switch in Settings that marks the email with a verification code read once the code is copied",
-                }),
-                t({
-                  message: "Marks the email as read after you copy its code.",
-                  comment:
-                    "Description of the Mark as read after copying switch in Settings",
-                }),
-                true
-              ),
-              switchRow(
-                "verificationCodeTrash",
-                t({
-                  message: "Move to Trash after copying",
-                  comment:
-                    "Label of the switch in Settings that moves the email with a verification code to Trash once the code is copied; Trash is Gmail's folder of that name",
-                }),
-                t({
-                  message:
-                    "Moves the email to the Trash after you copy its code. Meru can occasionally mistake a regular email for one with a code.",
-                  comment:
-                    "Description of the Move to Trash after copying switch in Settings; Trash is Gmail's folder of that name, and the second sentence warns that a code found by mistake can move a real email",
-                }),
-                true
-              ),
-            ]}
-          </Rows>
-        </CardContent>
-      </Card>
-    </>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    <SelectGroup>
+                      {VERIFICATION_CODE_COPY_MODES.map((mode) => (
+                        <SelectItem key={mode} value={mode}>
+                          {copyModes[mode]}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            </SettingRow>,
+            switchRow(
+              "verificationCodeMarkRead",
+              t({
+                message: "Mark as read after copying",
+                comment:
+                  "Label of the switch in Settings that marks the email with a verification code read once the code is copied",
+              }),
+              t({
+                message: "Marks the email as read after you copy its code.",
+                comment:
+                  "Description of the Mark as read after copying switch in Settings",
+              }),
+              true
+            ),
+            switchRow(
+              "verificationCodeTrash",
+              t({
+                message: "Move to Trash after copying",
+                comment:
+                  "Label of the switch in Settings that moves the email with a verification code to Trash once the code is copied; Trash is Gmail's folder of that name",
+              }),
+              t({
+                message:
+                  "Moves the email to the Trash after you copy its code. Meru can occasionally mistake a regular email for one with a code.",
+                comment:
+                  "Description of the Move to Trash after copying switch in Settings; Trash is Gmail's folder of that name, and the second sentence warns that a code found by mistake can move a real email",
+              }),
+              true
+            ),
+          ]}
+        </Rows>
+      </SettingGroup>
+    </SettingGroups>
   );
 };

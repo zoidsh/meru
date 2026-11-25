@@ -175,6 +175,25 @@ test("the Settings page loads and opens a menu under the strict policy with no c
   expect(errors).toStrictEqual([]);
 });
 
+test("each titled card is a group its heading names, holding its rows", async ({
+  app,
+}) => {
+  const page = await openSettings(app);
+
+  for (const [group, label] of [
+    ["New mail", "Allow notifications"],
+    ["What notifications show", "Show preview"],
+    ["Unread mail", "Show unread count"],
+  ] as const) {
+    // oxlint-disable-next-line no-await-in-loop -- one group after another
+    await expect(
+      page
+        .getByRole("group", { name: group })
+        .getByRole("switch", { name: label })
+    ).toBeVisible();
+  }
+});
+
 test("a switch writes the app value, which a restart keeps", async ({
   launchApp,
   userDataDir,

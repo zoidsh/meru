@@ -336,7 +336,10 @@ test.describe("shots", () => {
 
     const app = await launchApp();
     const page = await openHome(app);
-    const card = page.getByText("Saved searches", { exact: true });
+    const card = page.getByRole("group", {
+      name: "Saved searches",
+      exact: true,
+    });
     const shoot = async (surface: string, shown = card) => {
       await shown.scrollIntoViewIfNeeded();
 

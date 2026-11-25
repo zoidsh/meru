@@ -71,6 +71,33 @@ test("opens from the sidebar and by search, and Back returns to the page before"
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Gmail");
 });
 
+test("each card is a group its heading names, holding its rows", async ({
+  app,
+}) => {
+  const page = await openSettings(app);
+
+  await openGmail(page);
+
+  for (const [group, label] of [
+    ["Gmail page", "Hide Gmail logo"],
+    ["Conversations", "Show trimmed content"],
+    ["Verification codes", "Move to Trash after copying"],
+  ] as const) {
+    // oxlint-disable-next-line no-await-in-loop -- one group after another
+    await expect(
+      page
+        .getByRole("group", { name: group })
+        .getByRole("switch", { name: label })
+    ).toBeVisible();
+  }
+
+  await expect(
+    page.getByRole("group", { name: "Gmail page" })
+  ).toHaveAccessibleDescription(
+    "These change how Gmail looks in Meru. Your Gmail settings stay the same."
+  );
+});
+
 test("each switch shows the stored value and writes the one it is turned to", async ({
   launchApp,
   userDataDir,

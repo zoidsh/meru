@@ -13,13 +13,6 @@ import {
 import type { SavedSearchRefusal } from "#core/saved-searches.ts";
 import { Button } from "#ui/button.tsx";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "#ui/card.tsx";
-import {
   Field,
   FieldContent,
   FieldDescription,
@@ -31,6 +24,7 @@ import {
 } from "#ui/field.tsx";
 import { Input } from "#ui/input.tsx";
 
+import { SettingGroup } from "./setting-group.tsx";
 import { settingsCalls } from "./sync.ts";
 
 type ListedProfile = SettingsState["profiles"][number];
@@ -466,24 +460,19 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {t({
-            message: "Saved searches",
-            comment:
-              "Title of the card on a profile's page in Settings that lists its saved Gmail searches",
-          })}
-        </CardTitle>
-        <CardDescription>
-          {t({
-            message: "Open these from Saved Searches in the Mail menu.",
-            comment:
-              "Description of the Saved searches card on a profile's page in Settings; Saved Searches and Mail name the menus as the app's menu bar shows them",
-          })}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+    <SettingGroup
+      title={t({
+        message: "Saved searches",
+        comment:
+          "Title of the card on a profile's page in Settings that lists its saved Gmail searches",
+      })}
+      description={t({
+        message: "Open these from Saved Searches in the Mail menu.",
+        comment:
+          "Description of the Saved searches card on a profile's page in Settings; Saved Searches and Mail name the menus as the app's menu bar shows them",
+      })}
+    >
+      <div className="flex flex-col gap-4">
         {searches.length > 0 ? (
           <FieldGroup>
             {/* Flat and keyed, so a row keeps its element, and focus, as one before it goes. */}
@@ -550,7 +539,7 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </SettingGroup>
   );
 };

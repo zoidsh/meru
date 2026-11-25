@@ -11,7 +11,6 @@ import type {
 import { NOTIFICATION_SOUNDS, isNotificationSound } from "#core/sounds.ts";
 import type { NotificationSound, SoundChoice } from "#core/sounds.ts";
 import { Button } from "#ui/button.tsx";
-import { Card, CardContent, CardHeader, CardTitle } from "#ui/card.tsx";
 import {
   Select,
   SelectContent,
@@ -36,6 +35,7 @@ import {
   shownScope,
 } from "./scope.ts";
 import type { Scope } from "./scope.ts";
+import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
 import { VolumeSlider } from "./volume-slider.tsx";
@@ -237,9 +237,9 @@ export const NotificationsPage = () => {
 
   const cards = (
     <>
-      {!profile && (
-        <Card>
-          <CardContent>
+      <SettingGroups>
+        {!profile && (
+          <SettingGroup>
             <Rows>
               {[
                 <SettingRow
@@ -266,20 +266,15 @@ export const NotificationsPage = () => {
                 </SettingRow>,
               ]}
             </Rows>
-          </CardContent>
-        </Card>
-      )}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t({
-              message: "New mail",
-              comment:
-                "Title of the group of Settings for how new mail is announced",
-            })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </SettingGroup>
+        )}
+        <SettingGroup
+          title={t({
+            message: "New mail",
+            comment:
+              "Title of the group of Settings for how new mail is announced",
+          })}
+        >
           <Rows>
             {[
               switchRow(
@@ -472,19 +467,14 @@ export const NotificationsPage = () => {
               </SettingRow>,
             ]}
           </Rows>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t({
-              message: "What notifications show",
-              comment:
-                "Title of the group of Settings for what a new mail notification says",
-            })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        </SettingGroup>
+        <SettingGroup
+          title={t({
+            message: "What notifications show",
+            comment:
+              "Title of the group of Settings for what a new mail notification says",
+          })}
+        >
           <Rows>
             {[
               switchRow(
@@ -513,19 +503,14 @@ export const NotificationsPage = () => {
               ),
             ]}
           </Rows>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t({
-              message: "Unread mail",
-              comment:
-                "Title of the group of Settings for how unread mail is counted and listed",
-            })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        </SettingGroup>
+        <SettingGroup
+          title={t({
+            message: "Unread mail",
+            comment:
+              "Title of the group of Settings for how unread mail is counted and listed",
+          })}
+        >
           <Rows>
             {[
               switchRow(
@@ -551,8 +536,8 @@ export const NotificationsPage = () => {
               ),
             ]}
           </Rows>
-        </CardContent>
-      </Card>
+        </SettingGroup>
+      </SettingGroups>
       {profile && (
         <p className="px-1 text-sm text-muted-foreground">
           {t({
