@@ -414,23 +414,45 @@ describe("one profile alone, on the free version", () => {
       throw new Error("No Calendar app");
     }
 
+    const bounds = { x: 0, y: 0, width: 800, height: 600 };
+
     await profiles.rename("a", "Mine");
     await profiles.openTab("a", calendar, calendar.home, "tab");
-    await profiles.setOwnWindowBounds(
-      { profileId: "a", tabId: "tab" },
-      { x: 0, y: 0, width: 800, height: 600 }
-    );
+    await profiles.setOwnWindowBounds({ profileId: "a", tabId: "tab" }, bounds);
     await profiles.setTabbedInbox("a", true);
     await profiles.switchDoNotDisturb(null);
     await profiles.change((state) => ({ ...state, downloads: [] }));
 
-    expect(saved.length).toBeGreaterThanOrEqual(5);
+    const [first, second] = two.profiles;
 
-    for (const state of saved) {
-      expect(state.selectedProfileId).toBe("b");
-      expect(state.profiles[1]).toStrictEqual(two.profiles[1]);
-    }
-
+    expect(
+      saved.map(({ selectedProfileId }) => selectedProfileId)
+    ).toStrictEqual(["b", "b", "b", "b", "b", "b"]);
+    expect(saved.at(-1)).toStrictEqual({
+      ...two,
+      profiles: [
+        {
+          ...first,
+          name: "Mine",
+          tabs: [
+            ...(first?.tabs ?? []),
+            {
+              id: "tab",
+              app: "calendar",
+              url: calendar.home,
+              title: "",
+              windowBounds: bounds,
+            },
+          ],
+          selectedTabId: "tab",
+          tabbedInbox: true,
+        },
+        second,
+      ],
+      selectedProfileId: "b",
+      doNotDisturb: { until: null },
+      downloads: [],
+    });
     expect(profiles.get().profiles).toHaveLength(1);
   });
 

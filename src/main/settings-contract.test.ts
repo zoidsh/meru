@@ -10,7 +10,8 @@ import {
 } from "#contract/settings.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
-import { MERU_PRO_URL } from "#core/entitlement.ts";
+import { withToken } from "#core/entitlement-file.ts";
+import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
 import type { FeedOutcome } from "#core/feed.ts";
 import type { Platform } from "#core/platform.ts";
 import type { Settings } from "#core/settings.ts";
@@ -22,6 +23,7 @@ import { createDoNotDisturb } from "./do-not-disturb.ts";
 import {
   DEV_PUBLIC_KEY,
   createStubEntitlementServer,
+  signDevToken,
 } from "./entitlement-stub.ts";
 import { publicKeyFromRaw } from "./entitlement-token.ts";
 import { createEntitlement, entitlementErrorMessage } from "./entitlement.ts";
@@ -48,16 +50,63 @@ const stateOf = (...names: string[]): State => ({
   selectedProfileId: names[0]?.toLowerCase() ?? "",
 });
 
+/** A trial of this device's, from now, as a first launch is given one. */
+const trialFile = () => {
+  const now = Date.now();
+  const ends = now + 14 * DAY;
+
+  return withToken(
+    { version: 1 },
+    signDevToken({
+      v: 1,
+      tier: "trial",
+      deviceId: "device",
+      issuedAt: now,
+      expiresAt: ends,
+      trialEndsAt: ends,
+    }),
+    { tier: "trial" }
+  );
+};
+
 const setup = (
   state: State,
   initial?: Settings,
   platform: Platform = "darwin",
   languages: readonly [string, ...string[]] = ["en"],
-  /** Whether the profiles and settings use the first profile alone, as on the free version. */
+  /** Whether it runs as the free version, with no trial or license, else in a trial. */
   free = false
 ) => {
   const saved: unknown[] = [];
   const announced: string[] = [];
+  // The development stand-in answers; while held, no call is answered
+  // until the test lets them through.
+  const { server, hold, release } = holdEntitlementServer(
+    createStubEntitlementServer({
+      file: fakeTextFile("/entitlement-stub.json", new Map()),
+      now: Date.now,
+      offline: () => false,
+    })
+  );
+  const copied: string[] = [];
+  const opened: string[] = [];
+  const entitlement = createEntitlement({
+    initial: free ? { version: 1 } : trialFile(),
+    save: () => Promise.resolve(),
+    server,
+    publicKey: publicKeyFromRaw(DEV_PUBLIC_KEY),
+    deviceId: "device",
+    clipboard: {
+      writeText: (text) => {
+        copied.push(text);
+
+        return Promise.resolve();
+      },
+    },
+    now: Date.now,
+    log: () => false,
+  });
+  const multipleProfiles = () => entitlement.can("profiles");
   const settings = createSettingsStore({
     initial: initial ?? { version: 1 },
     save: (next) => {
@@ -67,7 +116,7 @@ const setup = (
     },
     platform: "darwin",
     log: () => false,
-    profileValues: () => !free,
+    profileValues: multipleProfiles,
   });
   const profiles = createProfiles({
     initial: state,
@@ -77,7 +126,13 @@ const setup = (
     clearSession: () => Promise.resolve(),
     now: Date.now,
     log: () => false,
-    multipleProfiles: () => !free,
+    multipleProfiles,
+  });
+
+  // As the composition root does, before any window hears of the change.
+  entitlement.onChange(() => {
+    settings.recheck();
+    profiles.recheck();
   });
   const doNotDisturb = createDoNotDisturb({
     profiles,
@@ -161,33 +216,6 @@ const setup = (
     },
     language,
     spellcheck,
-  });
-  // The development stand-in answers; while held, no call is answered
-  // until the test lets them through.
-  const { server, hold, release } = holdEntitlementServer(
-    createStubEntitlementServer({
-      file: fakeTextFile("/entitlement-stub.json", new Map()),
-      now: Date.now,
-      offline: () => false,
-    })
-  );
-  const copied: string[] = [];
-  const opened: string[] = [];
-  const entitlement = createEntitlement({
-    initial: { version: 1 },
-    save: () => Promise.resolve(),
-    server,
-    publicKey: publicKeyFromRaw(DEV_PUBLIC_KEY),
-    deviceId: "device",
-    clipboard: {
-      writeText: (text) => {
-        copied.push(text);
-
-        return Promise.resolve();
-      },
-    },
-    now: Date.now,
-    log: () => false,
   });
   const deps = {
     settings,
@@ -1129,7 +1157,24 @@ describe(readSettingsState, () => {
 
     await deps.entitlement.activate("MERU-TEST-AAAA-BBBB-CCCC-7Q2K");
 
-    expect(read().proRequired).toStrictEqual([]);
+    const licensed = read();
+
+    expect([
+      licensed.proRequired,
+      licensed.profiles.map(({ id, overrides }) => [id, overrides]),
+      licensed.lockedProfiles,
+    ]).toStrictEqual([
+      [],
+      [
+        ["personal", { notificationSender: false }],
+        ["work", {}],
+        ["home", {}],
+      ],
+      [],
+    ]);
+    await expect(
+      handlers.openPage({ section: "profiles", profileId: "work" })
+    ).resolves.toBeUndefined();
   });
 
   it("sends a lone profile no own value of a key off the page or one that does not parse", () => {
@@ -1678,7 +1723,7 @@ describe("the Settings window's Meru Pro page", () => {
   const KEY = "MERU-TEST-AAAA-BBBB-CCCC-7Q2K";
 
   it("sends the entitlement with the key masked, and the whole key never", async () => {
-    const app = setup(stateOf("Work"));
+    const app = setup(stateOf("Work"), undefined, "darwin", ["en"], true);
     const before = app.read();
 
     await expect(
@@ -1708,7 +1753,7 @@ describe("the Settings window's Meru Pro page", () => {
   });
 
   it("answers a refused or malformed key with main's own wording", async () => {
-    const app = setup(stateOf("Work"));
+    const app = setup(stateOf("Work"), undefined, "darwin", ["en"], true);
     const answers = [];
 
     for (const licenseKey of [
