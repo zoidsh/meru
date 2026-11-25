@@ -49,10 +49,6 @@ export const captureSounds = () => {
   };
 };
 
-/**
- * Sets a setting, or a profile's own value of one, as a settings page would,
- * under `meruTestSettings`.
- */
 /** What the entitlement answers, on the main process's global under `meruTestEntitlement`. */
 export const exposeTestEntitlement = (entitlement: Entitlement) => {
   Reflect.set(globalThis, "meruTestEntitlement", {
@@ -61,6 +57,11 @@ export const exposeTestEntitlement = (entitlement: Entitlement) => {
     activate: entitlement.activate,
   });
 };
+
+/**
+ * Sets a setting, or a profile's own value of one, as a settings page would,
+ * under `meruTestSettings`.
+ */
 
 export const exposeTestSettings = (settings: SettingsStore) => {
   Reflect.set(globalThis, "meruTestSettings", {
