@@ -156,7 +156,7 @@ export const GeneralPage = () => {
                   ? undefined
                   : t({
                       message:
-                        "This folder isn't available, so downloads are saved to Downloads until it's back.",
+                        "This folder isn't available. Downloads go to Downloads until it's back.",
                       comment:
                         "Description of the Save downloads to row in Settings while the chosen folder is missing or cannot be written; Downloads is the system's Downloads folder",
                     })

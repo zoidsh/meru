@@ -1618,8 +1618,8 @@ msgstr "Saved Searches"
 
 #. Short notice at the foot of the window when the folder chosen in Settings for downloads is missing or cannot be written, so a download went to the system's Downloads folder
 #: src/shell/toast.tsx
-msgid "Saved to Downloads, since your chosen folder isn't available"
-msgstr "Saved to Downloads, since your chosen folder isn't available"
+msgid "Saved to Downloads because your folder isn't available."
+msgstr "Saved to Downloads because your folder isn't available."
 
 #. Accessible name of the switcher atop a Settings page choosing whether it edits every profile's setting or one profile's own
 #: src/settings/scope-tabs.tsx
@@ -2040,8 +2040,8 @@ msgstr "This development build never opens at login."
 
 #. Description of the Save downloads to row in Settings while the chosen folder is missing or cannot be written; Downloads is the system's Downloads folder
 #: src/settings/general-page.tsx
-msgid "This folder isn't available, so downloads are saved to Downloads until it's back."
-msgstr "This folder isn't available, so downloads are saved to Downloads until it's back."
+msgid "This folder isn't available. Downloads go to Downloads until it's back."
+msgstr "This folder isn't available. Downloads go to Downloads until it's back."
 
 #. Start of the stand-in email's text in the test notification Settings shows
 #: src/main/notifications.ts

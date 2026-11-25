@@ -169,7 +169,7 @@ test("with the chosen folder gone, a download is saved to the system's Downloads
   const gmail = await downloadsPage(app, standIn);
   const toast = overlay
     .getByRole("region", { name: "Notifications" })
-    .getByText("Saved to Downloads, since your chosen folder isn't available", {
+    .getByText("Saved to Downloads because your folder isn't available.", {
       exact: true,
     });
 
@@ -485,7 +485,7 @@ test.describe("the General page", () => {
 
     await expect(pageLine(page, gone)).toBeVisible();
     await expect(changeFolder(page)).toHaveAccessibleDescription(
-      `${gone} This folder isn't available, so downloads are saved to Downloads until it's back.`
+      `${gone} This folder isn't available. Downloads go to Downloads until it's back.`
     );
   });
 });
