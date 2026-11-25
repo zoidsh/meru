@@ -316,6 +316,11 @@ msgstr "Archive"
 msgid "As soon as it arrives"
 msgstr "As soon as it arrives"
 
+#. Label of the switch in Settings that has each download open the system's save dialog
+#: src/settings/general-page.tsx
+msgid "Ask where to save each file"
+msgstr "Ask where to save each file"
+
 #. Badge on a sleeping profile's row in Settings' list of profiles
 #. Said by screen readers after a sidebar row's title while its tab sleeps: put to sleep, or not opened yet since Meru started
 #: src/settings/profiles-page.tsx
@@ -437,6 +442,16 @@ msgstr "Cancel download"
 #: src/shell/downloads.tsx
 msgid "Canceled · {when}"
 msgstr "Canceled · {when}"
+
+#. Accessible name of the Change… button in Settings that opens the system's folder picker for where downloads are saved
+#: src/settings/general-page.tsx
+msgid "Change where downloads are saved"
+msgstr "Change where downloads are saved"
+
+#. Button in Settings beside the downloads folder that opens the system's folder picker
+#: src/settings/general-page.tsx
+msgid "Change…"
+msgstr "Change…"
 
 #. Line under the Settings scope switcher while one profile's scope is chosen; {chosenName} is the profile's name
 #: src/settings/scope-tabs.tsx
@@ -724,11 +739,13 @@ msgid "Downloading"
 msgstr "Downloading"
 
 #. Accessible name and tooltip of the Downloads button in the title bar, pressed while the list of downloaded files shows
+#. Heading of the group of Settings about where downloads are saved and what happens when one finishes
 #. Label of the switch in Settings that shows the Downloads button in the title bar
 #. Menu item in the View menu, checked while the list of downloaded files is open over the page
 #. Title of the overlay over the page that lists the files downloaded in every profile
 #: src/main/commands.ts
 #: src/settings/appearance-page.tsx
+#: src/settings/general-page.tsx
 #: src/shell/downloads.tsx
 msgid "Downloads"
 msgstr "Downloads"
@@ -823,6 +840,11 @@ msgstr "Forward"
 #: src/settings/quiet-hours-field.tsx
 msgid "From"
 msgstr "From"
+
+#. Name of the Settings section for how Meru starts and where downloads are saved, in its list and as its title
+#: src/settings/app.tsx
+msgid "General"
+msgstr "General"
 
 #. Name of the Settings section for Gmail's page, its conversations and verification codes, in its list and as its title; Gmail is the product's name
 #: src/settings/app.tsx
@@ -1279,6 +1301,11 @@ msgstr "Only notifies you about email Gmail marks as important."
 msgid "Open at Launch"
 msgstr "Open at Launch"
 
+#. Label of the switch in Settings that has the system open Meru when the person logs in to the computer
+#: src/settings/general-page.tsx
+msgid "Open at login"
+msgstr "Open at login"
+
 #. Description under No Google apps open when there are several profiles; {name} is the selected profile's name
 #: src/shell/nothing-open.tsx
 msgid "Open Gmail, Calendar or another Google app in {name}."
@@ -1303,6 +1330,11 @@ msgstr "Open in Default Browser"
 #: src/shell/open-app.tsx
 msgid "Open in split"
 msgstr "Open in split"
+
+#. Label of the switch in Settings that starts Meru without showing its window
+#: src/settings/general-page.tsx
+msgid "Open in the background"
+msgstr "Open in the background"
 
 #. Description of the Saved searches card on a profile's page in Settings; Saved Searches and Mail name the menus as the app's menu bar shows them
 #: src/settings/saved-searches-card.tsx
@@ -1539,6 +1571,11 @@ msgstr "Save"
 msgid "Save Current Search"
 msgstr "Save Current Search"
 
+#. Label of the row in Settings showing the folder downloads are saved to, with a button to change it
+#: src/settings/general-page.tsx
+msgid "Save downloads to"
+msgstr "Save downloads to"
+
 #. Title of the card on a profile's page in Settings that lists its saved Gmail searches
 #: src/settings/saved-searches-card.tsx
 msgid "Saved searches"
@@ -1668,6 +1705,21 @@ msgstr "Show All"
 #: src/settings/gmail-page.tsx
 msgid "Show attachments first"
 msgstr "Show attachments first"
+
+#. Label of the switch in Settings on Windows that shows each finished download in File Explorer; File Explorer is Windows's own name
+#: src/settings/general-page.tsx
+msgid "Show files in File Explorer when done"
+msgstr "Show files in File Explorer when done"
+
+#. Label of the switch in Settings on macOS that shows each finished download in Finder; Finder is macOS's own name
+#: src/settings/general-page.tsx
+msgid "Show files in Finder when done"
+msgstr "Show files in Finder when done"
+
+#. Label of the switch in Settings on Linux that shows each finished download in the desktop's file manager
+#: src/settings/general-page.tsx
+msgid "Show files in the file manager when done"
+msgstr "Show files in the file manager when done"
 
 #. Label of the switch in Settings on macOS that shows Meru's icon in the Dock
 #: src/settings/menu-bar-page.tsx
@@ -1869,6 +1921,16 @@ msgstr "Split this pane"
 msgid "Starting…"
 msgstr "Starting…"
 
+#. Description of the Open in the background switch in Settings
+#: src/settings/general-page.tsx
+msgid "Starts Meru without showing its window."
+msgstr "Starts Meru without showing its window."
+
+#. Heading of the group of Settings about how Meru starts: at login, and without showing its window
+#: src/settings/general-page.tsx
+msgid "Startup"
+msgstr "Startup"
+
 #. Accessible name and tooltip of the title bar button that stops the page loading, shown in place of Reload while it loads
 #. Menu item in the View menu that stops the selected tab's page loading
 #: src/main/commands.ts
@@ -1936,6 +1998,16 @@ msgstr "These change how Gmail looks in Meru. Your Gmail settings stay the same.
 #: src/main/store-file.ts
 msgid "This data was saved by a newer version. Open it with that version, or update to it."
 msgstr "This data was saved by a newer version. Open it with that version, or update to it."
+
+#. Description of the Open at login switch in Settings in a build that is not an installed release, where the switch changes nothing in the system
+#: src/settings/general-page.tsx
+msgid "This development build never opens at login."
+msgstr "This development build never opens at login."
+
+#. Description of the Save downloads to row in Settings while the chosen folder is missing or cannot be written; Downloads is the system's Downloads folder
+#: src/settings/general-page.tsx
+msgid "This folder isn't available, so downloads are saved to Downloads until it's back."
+msgstr "This folder isn't available, so downloads are saved to Downloads until it's back."
 
 #. Start of the stand-in email's text in the test notification Settings shows
 #: src/main/notifications.ts

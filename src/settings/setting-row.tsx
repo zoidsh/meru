@@ -26,13 +26,17 @@ const NO_SCOPE: RowScope = {};
 export const SettingRow = ({
   label,
   description,
+  notice,
   paused,
   scope = NO_SCOPE,
   disabled = false,
   children,
 }: {
   label: string;
-  description?: string | undefined;
+  /** A path or another value that may be long, broken anywhere to fit. */
+  description?: ReactNode;
+  /** A line under the description about the row's state, which never dims. */
+  notice?: string | undefined;
   /** The line saying Do Not Disturb outranks it, while it does. */
   paused?: string | undefined;
   scope?: RowScope;
@@ -41,8 +45,13 @@ export const SettingRow = ({
 }) => {
   const labelId = useId();
   const descriptionId = useId();
+  const noticeId = useId();
   const pausedId = useId();
-  const describedBy = [description && descriptionId, paused && pausedId]
+  const describedBy = [
+    description && descriptionId,
+    notice && noticeId,
+    paused && pausedId,
+  ]
     .filter(Boolean)
     .join(" ");
   const dims = paused !== undefined;
@@ -66,6 +75,7 @@ export const SettingRow = ({
             {description}
           </FieldDescription>
         )}
+        {notice && <FieldDescription id={noticeId}>{notice}</FieldDescription>}
         {paused && <FieldDescription id={pausedId}>{paused}</FieldDescription>}
         {scope.line}
       </FieldContent>

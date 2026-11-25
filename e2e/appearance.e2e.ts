@@ -317,7 +317,7 @@ const BUTTONS = [
 ] as const;
 
 test.describe("the Appearance page", () => {
-  test("is first in the sidebar, Menu Bar & Dock after it, with no scopes and no Saved searches row", async ({
+  test("is second in the sidebar, after General and before Menu Bar & Dock, with no scopes and no Saved searches row", async ({
     app,
   }) => {
     const page = await openAppearance(app);
@@ -325,8 +325,8 @@ test.describe("the Appearance page", () => {
       name: "Settings sections",
     });
 
-    await expect(sections.getByRole("button").nth(0)).toHaveText("Appearance");
-    await expect(sections.getByRole("button").nth(1)).toHaveText(
+    await expect(sections.getByRole("button").nth(1)).toHaveText("Appearance");
+    await expect(sections.getByRole("button").nth(2)).toHaveText(
       process.platform === "darwin" ? "Menu Bar & Dock" : "Tray & Taskbar"
     );
     await expect(page.getByRole("tablist")).toHaveCount(0);

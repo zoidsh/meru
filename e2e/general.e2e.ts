@@ -13,6 +13,13 @@ import {
   test,
   writeSettings,
 } from "./lib/app.ts";
+import {
+  openSection,
+  openSettings,
+  pageLine,
+  switchNamed,
+} from "./lib/settings.ts";
+import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import { DOWNLOAD_FILES, DOWNLOAD_LINKS } from "./lib/stand-in.ts";
 
@@ -246,4 +253,250 @@ test("Show files when done shows each finished download in its folder", async ({
   await expect
     .poll(() => shownInFolder(app))
     .toStrictEqual([path.join(systemFolder(userDataDir), REPORT)]);
+});
+
+/** `settings.json` as the app wrote it. */
+const readSettings = async (userDataDir: string) =>
+  JSON.parse(
+    await readFile(path.join(userDataDir, "settings.json"), "utf-8")
+  ) as Record<string, unknown>;
+
+const openGeneral = async (app: ElectronApplication) => {
+  const page = await openSettings(app);
+
+  await openSection(page, "General");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("General");
+
+  return page;
+};
+
+const FILE_MANAGER_SWITCH =
+  {
+    darwin: "Show files in Finder when done",
+    win32: "Show files in File Explorer when done",
+  }[process.platform as string] ?? "Show files in the file manager when done";
+
+/** Each value the test build's login item was asked to take, in order. */
+const loginItemCalls = (app: ElectronApplication) =>
+  app.evaluate(
+    () =>
+      (Reflect.get(globalThis, "meruTestLoginItem") as { calls: boolean[] })
+        .calls
+  );
+
+/** Sets what the test build's folder picker answers: a folder, or `null` to cancel. */
+const answerFolderPicker = (app: ElectronApplication, answer: string | null) =>
+  app.evaluate((_electron, folder) => {
+    (
+      Reflect.get(globalThis, "meruTestFolderPicker") as {
+        answer: string | null;
+      }
+    ).answer = folder;
+  }, answer);
+
+const folderPickerAsked = (app: ElectronApplication) =>
+  app.evaluate(
+    () =>
+      (Reflect.get(globalThis, "meruTestFolderPicker") as { asked: string[] })
+        .asked
+  );
+
+const changeFolder = (page: Page) =>
+  page.getByRole("button", {
+    name: "Change where downloads are saved",
+    exact: true,
+  });
+
+test.describe("the General page", () => {
+  test("is first in the sidebar and the page Settings opens on, with Startup and Downloads and no scopes", async ({
+    app,
+  }) => {
+    const page = await openSettings(app);
+    const sections = page.getByRole("navigation", {
+      name: "Settings sections",
+    });
+
+    await expect(sections.getByRole("button").nth(0)).toHaveText("General");
+    await openSection(page, "General");
+    await expect(page.getByRole("tablist")).toHaveCount(0);
+    await expect(page.getByRole("group", { name: "Startup" })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Downloads" })).toBeVisible();
+    await expect(switchNamed(page, "Open at login")).toHaveCount(
+      process.platform === "linux" ? 0 : 1
+    );
+  });
+
+  test("Open at login sets the login item, which a development build only pretends to, and never writes a setting", async ({
+    app,
+    userDataDir,
+  }) => {
+    test.skip(process.platform === "linux", "Linux has no login item, as v3");
+
+    const page = await openGeneral(app);
+    const login = switchNamed(page, "Open at login");
+
+    await expect(login).not.toBeChecked();
+    await expect(login).toHaveAccessibleDescription(
+      "This development build never opens at login."
+    );
+    await login.click();
+    await expect(login).toBeChecked();
+    await login.click();
+    await expect(login).not.toBeChecked();
+
+    expect(await loginItemCalls(app)).toStrictEqual([true, false]);
+    await expect
+      .poll(async () => {
+        try {
+          return await readSettings(userDataDir);
+        } catch {
+          return {};
+        }
+      })
+      .not.toHaveProperty("openAtLogin");
+  });
+
+  test("each switch writes its setting, and the values survive a relaunch, Open in the background then starting Meru hidden", async ({
+    launchApp,
+    userDataDir,
+  }) => {
+    const app = await launchApp();
+    const page = await openGeneral(app);
+
+    for (const name of [
+      "Open in the background",
+      "Ask where to save each file",
+      FILE_MANAGER_SWITCH,
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- one switch after another
+      await expect(switchNamed(page, name)).not.toBeChecked();
+      // oxlint-disable-next-line no-await-in-loop -- one switch after another
+      await switchNamed(page, name).click();
+    }
+
+    await expect
+      .poll(() => readSettings(userDataDir))
+      .toStrictEqual({
+        version: 1,
+        openInBackground: true,
+        downloadsSaveAs: true,
+        downloadsShowInFolder: true,
+      });
+
+    await app.close();
+
+    const again = await launchApp();
+
+    await findPage(again, SHELL_URL);
+    expect(await mainWindow(again)).toStrictEqual({
+      visible: false,
+      minimized: false,
+    });
+
+    const reopened = await openGeneral(again);
+
+    for (const name of [
+      "Open in the background",
+      "Ask where to save each file",
+      FILE_MANAGER_SWITCH,
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- one switch after another
+      await expect(switchNamed(reopened, name)).toBeChecked();
+    }
+  });
+
+  test("Change… picks the folder through the picker, opened where downloads go now, a cancel changes nothing, and a download lands there", async ({
+    launchApp,
+    standIn,
+    userDataDir,
+  }) => {
+    const chosen = path.join(canonical(userDataDir), "Chosen");
+
+    await mkdir(chosen);
+
+    const app = await launchApp();
+    const page = await openGeneral(app);
+
+    await changeFolder(page).click();
+    await expect.poll(() => folderPickerAsked(app)).toHaveLength(1);
+    await expect(pageLine(page, systemFolder(userDataDir))).toBeVisible();
+
+    await answerFolderPicker(app, chosen);
+    await changeFolder(page).click();
+    await expect(pageLine(page, chosen)).toBeVisible();
+
+    await answerFolderPicker(app, null);
+    await changeFolder(page).click();
+    await expect.poll(() => folderPickerAsked(app)).toHaveLength(3);
+    await expect(pageLine(page, chosen)).toBeVisible();
+
+    const asked = await folderPickerAsked(app);
+
+    expect(asked.map((folder) => canonical(folder))).toStrictEqual([
+      systemFolder(userDataDir),
+      systemFolder(userDataDir),
+      chosen,
+    ]);
+    expect(await readSettings(userDataDir)).toStrictEqual({
+      version: 1,
+      downloadsFolder: chosen,
+    });
+
+    const gmail = await downloadsPage(app, standIn);
+
+    await downloadReport(gmail);
+    await expect.poll(() => filesIn(chosen)).toStrictEqual([REPORT]);
+  });
+
+  test("says a chosen folder that is gone is not available, and shows it as chosen", async ({
+    launchApp,
+    userDataDir,
+  }) => {
+    const gone = path.join(canonical(userDataDir), "Gone");
+
+    await writeSettings(userDataDir, { downloadsFolder: gone });
+
+    const app = await launchApp();
+    const page = await openGeneral(app);
+
+    await expect(pageLine(page, gone)).toBeVisible();
+    await expect(changeFolder(page)).toHaveAccessibleDescription(
+      `${gone} This folder isn't available, so downloads are saved to Downloads until it's back.`
+    );
+  });
+});
+
+test.describe("shots", () => {
+  test.beforeEach(onlyWithShots);
+
+  test("the General page, light and dark, and with its folder gone", async ({
+    launchApp,
+    userDataDir,
+  }) => {
+    const app = await launchApp();
+    const page = await openGeneral(app);
+
+    for (const scheme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, scheme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({ path: shotPath("settings-general", scheme) });
+    }
+
+    await answerFolderPicker(
+      app,
+      path.join(canonical(userDataDir), "Projects", "Invoices")
+    );
+    await changeFolder(page).click();
+    await expect(page.getByText("Invoices")).toBeVisible();
+
+    for (const scheme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, scheme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({
+        path: shotPath("settings-general-folder-gone", scheme),
+      });
+    }
+  });
 });

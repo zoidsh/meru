@@ -6,6 +6,7 @@ import {
   DockIcon,
   MailIcon,
   PaletteIcon,
+  SettingsIcon,
   UsersIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -17,6 +18,7 @@ import type { SettingsSection } from "#core/settings-pages.ts";
 import { Button } from "#ui/button.tsx";
 
 import { AppearancePage } from "./appearance-page.tsx";
+import { GeneralPage } from "./general-page.tsx";
 import { GmailPage } from "./gmail-page.tsx";
 import { MenuBarPage, onMacOS } from "./menu-bar-page.tsx";
 import { NotificationsPage } from "./notifications-page.tsx";
@@ -27,6 +29,7 @@ import { settingsCalls, useSettingsState } from "./sync.ts";
 
 /** The sections whose page needs nothing from the window. */
 const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
+  general: GeneralPage,
   appearance: AppearancePage,
   "menu-bar": MenuBarPage,
   notifications: NotificationsPage,
@@ -44,6 +47,7 @@ interface Section {
 /** The sections built so far, in the nav's groups. */
 const SECTION_GROUPS: readonly (readonly Section[])[] = [
   [
+    { id: "general", icon: SettingsIcon },
     { id: "appearance", icon: PaletteIcon },
     { id: "menu-bar", icon: DockIcon },
   ],
@@ -59,6 +63,11 @@ const useSectionTitles = (): Record<SettingsSection, string> => {
   const { t } = useLingui();
 
   return {
+    general: t({
+      message: "General",
+      comment:
+        "Name of the Settings section for how Meru starts and where downloads are saved, in its list and as its title",
+    }),
     appearance: t({
       message: "Appearance",
       comment:

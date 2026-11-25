@@ -20,6 +20,7 @@ const connect = () => {
     "settings",
     "doNotDisturb",
     "profiles",
+    "general",
     "page",
   ]);
 
