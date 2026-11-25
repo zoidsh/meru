@@ -1,3 +1,4 @@
+import { entitledProfiles } from "./entitlement.ts";
 import type { Profile, State } from "./state.ts";
 
 /**
@@ -8,13 +9,14 @@ import type { Profile, State } from "./state.ts";
  * stored `asleep` or `disabled` kept as found.
  */
 export const entitledState = (stored: State, multiple: boolean): State => {
-  const [first, ...rest] = stored.profiles;
+  const profiles = entitledProfiles(stored.profiles, multiple);
+  const [first] = profiles;
 
-  if (multiple || !first || rest.length === 0) {
+  if (!first || profiles.length === stored.profiles.length) {
     return stored;
   }
 
-  return { ...stored, profiles: [first], selectedProfileId: first.id };
+  return { ...stored, profiles: [...profiles], selectedProfileId: first.id };
 };
 
 /** The stored profiles `entitledState` leaves out, in their stored order. */
