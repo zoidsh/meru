@@ -52,7 +52,9 @@ const setup = (
   state: State,
   initial?: Settings,
   platform: Platform = "darwin",
-  languages: readonly [string, ...string[]] = ["en"]
+  languages: readonly [string, ...string[]] = ["en"],
+  /** Whether the profiles and settings use the first profile alone, as on the free version. */
+  free = false
 ) => {
   const saved: unknown[] = [];
   const announced: string[] = [];
@@ -65,6 +67,7 @@ const setup = (
     },
     platform: "darwin",
     log: () => false,
+    profileValues: () => !free,
   });
   const profiles = createProfiles({
     initial: state,
@@ -74,6 +77,7 @@ const setup = (
     clearSession: () => Promise.resolve(),
     now: Date.now,
     log: () => false,
+    multipleProfiles: () => !free,
   });
   const doNotDisturb = createDoNotDisturb({
     profiles,
@@ -1084,7 +1088,50 @@ describe("the Settings window's Menu Bar & Dock page", () => {
   });
 });
 
+/** Three profiles on the free version, the first holding a value of its own. */
+const freeWithThree = () =>
+  setup(
+    stateOf("Personal", "Work", "Home"),
+    { version: 1, profiles: { personal: { notificationSender: false } } },
+    "darwin",
+    ["en"],
+    true
+  );
+
 describe(readSettingsState, () => {
+  it("lists the profiles the free version does not use apart, each in its own colour, and reads no profile's own values", () => {
+    const { read } = freeWithThree();
+    const { profiles, lockedProfiles } = read();
+
+    expect(profiles.map(({ id, overrides }) => [id, overrides])).toStrictEqual([
+      ["personal", {}],
+    ]);
+    expect(lockedProfiles).toStrictEqual([
+      { id: "work", name: "Work", color: expect.any(String) },
+      { id: "home", name: "Home", color: expect.any(String) },
+    ]);
+    expect(
+      new Set([profiles[0]?.color, ...lockedProfiles.map(({ color }) => color)])
+        .size
+    ).toBe(3);
+  });
+
+  it("refuses to add a profile or open one it does not use, and says what needs Meru Pro until a license", async () => {
+    const { read, handlers, deps } = freeWithThree();
+
+    expect(read().proRequired).toContain("profiles");
+    await expect(handlers.addProfile({})).rejects.toThrow(
+      "The profile was not added"
+    );
+    await expect(
+      handlers.openPage({ section: "profiles", profileId: "work" })
+    ).rejects.toThrow("No listed profile has the id work");
+
+    await deps.entitlement.activate("MERU-TEST-AAAA-BBBB-CCCC-7Q2K");
+
+    expect(read().proRequired).toStrictEqual([]);
+  });
+
   it("sends a lone profile no own value of a key off the page or one that does not parse", () => {
     const app = setup(stateOf("Work"), {
       version: 1,

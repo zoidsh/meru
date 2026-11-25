@@ -18,6 +18,7 @@ export const TOAST_MESSAGES = [
   "bookmarked",
   "bookmark-removed",
   "downloads-folder-missing",
+  "one-profile",
 ] as const;
 
 export type ToastMessage = (typeof TOAST_MESSAGES)[number];

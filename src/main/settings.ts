@@ -52,6 +52,12 @@ export interface SettingsStoreDeps {
   /** Picks the defaults that differ by platform. */
   platform: Platform;
   log: (message: string) => void;
+  /**
+   * Whether a profile's own values apply, the entitlement's
+   * `can("profiles")`, asked again at each `recheck`; while not, each reads
+   * as unset and stays stored. Always when absent.
+   */
+  profileValues?: () => boolean;
 }
 
 const overridable = new Set<SettingKey>(OVERRIDABLE_SETTING_KEYS);
@@ -73,14 +79,26 @@ export const createSettingsStore = ({
   save,
   platform,
   log,
+  profileValues = () => true,
 }: SettingsStoreDeps) => {
   const mutex = new Mutex();
   const listeners = new Map<SettingKey, Set<() => void>>();
   let settings = initial;
+  let applied = profileValues();
 
-  /** The app value, or the profile's where it holds one of its own. */
+  /** The app value, or the profile's where it holds one that applies. */
   const get = <Key extends SettingKey>(key: Key, profileId?: string) =>
-    readSetting(settings, key, platform, profileId);
+    readSetting(settings, key, platform, applied ? profileId : undefined);
+
+  const tell = (key: SettingKey) => {
+    for (const listener of listeners.get(key) ?? []) {
+      try {
+        listener();
+      } catch (error) {
+        log(`A listener of setting ${key} failed: ${describe(error)}`);
+      }
+    }
+  };
 
   /**
    * Whether the app's or any profile's value of the key differs between the
@@ -127,15 +145,7 @@ export const createSettingsStore = ({
       settings = next;
 
       for (const changedKey of changed) {
-        for (const listener of listeners.get(changedKey) ?? []) {
-          try {
-            listener();
-          } catch (error) {
-            log(
-              `A listener of setting ${changedKey} failed: ${describe(error)}`
-            );
-          }
-        }
+        tell(changedKey);
       }
     } finally {
       mutex.release();
@@ -167,9 +177,29 @@ export const createSettingsStore = ({
     /** Deletes every value of the profile's own, as it is removed. */
     removeProfile: (profileId: string) =>
       commit((current) => clearProfileOverrides(current, profileId)),
-    /** The ids holding a value of their own for the key, listed or not. */
+    /**
+     * The ids holding a value of their own for the key that applies, listed
+     * or not.
+     */
     overridingProfiles: (key: OverridableSettingKey) =>
-      overridingProfiles(settings, key),
+      applied ? overridingProfiles(settings, key) : [],
+    /**
+     * Asks `profileValues` again, for a change of the entitlement, and tells
+     * the listeners of every key a profile may hold when its answer changed.
+     */
+    recheck: () => {
+      const next = profileValues();
+
+      if (next === applied) {
+        return;
+      }
+
+      applied = next;
+
+      for (const key of OVERRIDABLE_SETTING_KEYS) {
+        tell(key);
+      }
+    },
     /** Called after each change of the key's app value or a profile's. */
     onChange: (key: SettingKey, listener: () => void) => {
       const forKey = listeners.get(key) ?? new Set();

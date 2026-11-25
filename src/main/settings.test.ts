@@ -273,6 +273,60 @@ describe(createSettingsStore, () => {
     ]);
     expect(heard).toStrictEqual(["notifications"]);
   });
+
+  it("reads every profile's own value as unset while they do not apply, keeps each stored through writes, and announces them once they do", async () => {
+    let apply = false;
+    const saved: unknown[] = [];
+    const settings = createSettingsStore({
+      initial: {
+        version: 1,
+        profiles: { a: { notifications: false }, b: { unreadBadge: false } },
+      },
+      save: (next) => {
+        saved.push(structuredClone(next));
+
+        return Promise.resolve();
+      },
+      platform: "darwin",
+      log: () => {},
+      profileValues: () => apply,
+    });
+    const heard: string[] = [];
+
+    settings.onChange("notifications", () => heard.push("notifications"));
+    settings.onChange("tray", () => heard.push("tray"));
+
+    const read = () => [
+      settings.get("notifications", "a"),
+      settings.get("unreadBadge", "b"),
+      settings.overridingProfiles("notifications"),
+    ];
+
+    expect(read()).toStrictEqual([true, true, []]);
+
+    await settings.update("tray", () => true);
+    await settings.setOverride("a", "notificationSender", false);
+
+    expect(saved.at(-1)).toStrictEqual({
+      version: 1,
+      tray: true,
+      profiles: {
+        a: { notifications: false, notificationSender: false },
+        b: { unreadBadge: false },
+      },
+    });
+
+    heard.length = 0;
+    settings.recheck();
+
+    expect(heard).toStrictEqual([]);
+
+    apply = true;
+    settings.recheck();
+
+    expect(heard).toStrictEqual(["notifications"]);
+    expect(read()).toStrictEqual([false, false, ["a"]]);
+  });
 });
 
 describe(followRemovedProfiles, () => {

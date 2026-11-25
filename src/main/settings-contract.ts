@@ -13,7 +13,7 @@ import type {
   SettingsState,
 } from "#contract/settings.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
-import { MERU_PRO_URL } from "#core/entitlement.ts";
+import { CAPABILITIES, MERU_PRO_URL } from "#core/entitlement.ts";
 import { UNTIL_OFF } from "#core/notification-gate.ts";
 import {
   isProfileColorName,
@@ -29,7 +29,7 @@ import {
   isAsleep,
   isDisabled,
 } from "#core/state.ts";
-import type { State } from "#core/state.ts";
+import type { Profile, State } from "#core/state.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
 
 import type { ContractHandlers } from "./contract-ipc.ts";
@@ -66,6 +66,8 @@ export interface SettingsContractDeps {
     | "setEnabled"
   > & {
     get: () => State;
+    /** The stored profiles this run does not use. */
+    locked: () => readonly Profile[];
   };
   mail: Pick<MailPoller, "mail" | "address">;
   /** Adds a profile and selects it, closing what stands over the new one. */
@@ -112,6 +114,7 @@ export interface SettingsContractDeps {
     | "retry"
     | "copyLicenseKey"
     | "continueFree"
+    | "can"
   >;
   licenseRequests: Pick<LicenseRequests, "run" | "busy">;
   /** Meru's own links' browser, which holds a link while Meru is the default. */
@@ -432,6 +435,7 @@ export const readSettingsState = ({
 >): SettingsState => {
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
+  const locked = profiles.locked();
   const overriding = new Map(
     PAGE_OVERRIDABLE_KEYS.map((key) => [key, settings.overridingProfiles(key)])
   );
@@ -467,6 +471,18 @@ export const readSettingsState = ({
         ).map((key) => [key, store.get(key, profile.id)])
       ) as PageOverrides,
     })),
+    lockedProfiles: locked.map((profile) => ({
+      id: profile.id,
+      name: profileDisplayName(profile),
+      // Their places follow the profiles in use, as in the stored row.
+      color: profileColor(
+        { profiles: [...state.profiles, ...locked] },
+        profile.id
+      ),
+    })),
+    proRequired: CAPABILITIES.filter(
+      (capability) => !entitlement.can(capability)
+    ),
     general: general.read(),
     trustedSites: trustedSites.list(),
     language: language.current(),

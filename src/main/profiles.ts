@@ -3,6 +3,11 @@ import { Mutex } from "es-toolkit";
 import type { App } from "#core/apps.ts";
 import { removeBookmark, toggleBookmark } from "#core/bookmarks.ts";
 import type { BookmarkedPage } from "#core/bookmarks.ts";
+import {
+  entitledState,
+  lockedProfiles,
+  storedAfter,
+} from "#core/entitled-profiles.ts";
 import type { PaneDirection, Split } from "#core/pane-tree.ts";
 import { firstUnusedColor } from "#core/profile-color.ts";
 import type { ProfileColorName } from "#core/profile-color.ts";
@@ -66,6 +71,12 @@ export interface ProfilesDeps {
   /** Milliseconds since the epoch, by which a write drops an ended Do Not Disturb. */
   now: () => number;
   log: (message: string) => void;
+  /**
+   * Whether this run may use more than one profile, the entitlement's
+   * `can("profiles")`, asked again at each `recheck`; every profile when
+   * absent.
+   */
+  multipleProfiles?: () => boolean;
 }
 
 const describe = (error: unknown) =>
@@ -84,22 +95,17 @@ export const createProfiles = ({
   clearSession,
   now,
   log,
+  multipleProfiles = () => true,
 }: ProfilesDeps) => {
   const mutex = new Mutex();
   const listeners = new Set<(state: State) => void>();
-  let state = initial;
+  let allowed = multipleProfiles();
+  // What the file holds, and what this run may use of it, which every reader
+  // and every change but the clears sees.
+  let stored = initial;
+  let state = entitledState(stored, allowed);
 
-  const commit = async (next: State | undefined) => {
-    if (!next) {
-      return false;
-    }
-
-    // Dropped with a write that happens anyway, never by one of its own.
-    const written = forgetEndedDoNotDisturb(next, now());
-
-    await save(written);
-    state = written;
-
+  const notify = () => {
     for (const listener of listeners) {
       try {
         listener(state);
@@ -107,6 +113,24 @@ export const createProfiles = ({
         log(`A profiles listener failed: ${describe(error)}`);
       }
     }
+  };
+
+  /** `next` is a change of `state` made in the same turn. */
+  const commit = async (next: State | undefined) => {
+    if (!next) {
+      return false;
+    }
+
+    // Dropped with a write that happens anyway, never by one of its own.
+    const written = forgetEndedDoNotDisturb(
+      storedAfter(stored, state, next),
+      now()
+    );
+
+    await save(written);
+    stored = written;
+    state = entitledState(stored, allowed);
+    notify();
 
     return true;
   };
@@ -143,7 +167,8 @@ export const createProfiles = ({
    * hand-edited file can; that one is only dropped from the list.
    */
   const settleClears = async (profileIds: readonly string[]) => {
-    const sorted = sortProfilesToClear(state);
+    // The stored state, so a profile this run does not use counts as listed.
+    const sorted = sortProfilesToClear(stored);
     const clear = sorted.clear.filter((id) => profileIds.includes(id));
     const stillListed = sorted.stillListed.filter((id) =>
       profileIds.includes(id)
@@ -180,6 +205,23 @@ export const createProfiles = ({
 
   return {
     get: () => state,
+    /** The stored profiles this run does not use, for Settings to list. */
+    locked: () => lockedProfiles(stored, allowed),
+    /**
+     * Asks `multipleProfiles` again, for a change of the entitlement, and
+     * tells every listener when its answer changed.
+     */
+    recheck: () => {
+      const next = multipleProfiles();
+
+      if (next === allowed) {
+        return;
+      }
+
+      allowed = next;
+      state = entitledState(stored, allowed);
+      notify();
+    },
     /** Settles once every change asked for so far is written, for a quit to wait on. */
     settled: () => exclusive(() => Promise.resolve()),
     onChange: (listener: (state: State) => void) => {
@@ -193,10 +235,15 @@ export const createProfiles = ({
       exclusive(() => commit(sleepProfile(state, profileId))),
     /**
      * Adds a profile, selected, with the first colour no profile has; gives
-     * its id, or nothing when it could not be saved.
+     * its id, or nothing when it could not be saved or this run may use one
+     * profile alone.
      */
     add: () =>
       exclusive(async () => {
+        if (!allowed) {
+          return;
+        }
+
         const profile = {
           ...newProfile(newId(), nextProfileName(state, profileName)),
           color: firstUnusedColor(state),
@@ -353,7 +400,7 @@ export const createProfiles = ({
      * profile a removal did not finish clearing.
      */
     finishClears: () =>
-      exclusive(() => settleClears(state.profilesToClear ?? [])),
+      exclusive(() => settleClears(stored.profilesToClear ?? [])),
   };
 };
 

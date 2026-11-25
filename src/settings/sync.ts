@@ -20,6 +20,8 @@ const connect = () => {
     "settings",
     "doNotDisturb",
     "profiles",
+    "lockedProfiles",
+    "proRequired",
     "general",
     "trustedSites",
     "page",

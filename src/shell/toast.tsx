@@ -65,6 +65,12 @@ export const Toast = ({
       comment:
         "Short notice at the foot of the window when the folder chosen in Settings for downloads is missing or cannot be written, so a download went to the system's Downloads folder",
     }),
+    "one-profile": t({
+      message:
+        "The free version uses one profile. Upgrade to Meru Pro to add more.",
+      comment:
+        "Short notice at the foot of the window when Gmail's Add another account is clicked on the free version, which adds no profile",
+    }),
   }[message];
 
   useEffect(() => {

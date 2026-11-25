@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { APPS } from "#core/apps.ts";
 import { decodeState, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
@@ -354,5 +355,119 @@ describe("Do Not Disturb in the profiles' state", () => {
     await profiles.select("a");
 
     expect(saved[0]?.doNotDisturb).toStrictEqual({ until: 3000 });
+  });
+});
+
+/** Profiles that may use the first profile alone until `license`. */
+const setupFree = (initial: State = two) => {
+  let multiple = false;
+  const saved: State[] = [];
+  const cleared: string[] = [];
+  const heard: State[] = [];
+  const profiles = createProfiles({
+    initial,
+    save: (state) => {
+      saved.push(state);
+
+      return Promise.resolve();
+    },
+    newId: () => "new",
+    profileName: (n) => `Profile ${n}`,
+    clearSession: (partition) => {
+      cleared.push(partition);
+
+      return Promise.resolve();
+    },
+    now: () => 0,
+    log: () => false,
+    multipleProfiles: () => multiple,
+  });
+
+  profiles.onChange((state) => heard.push(state));
+
+  return {
+    profiles,
+    saved,
+    cleared,
+    heard,
+    license: () => {
+      multiple = true;
+      profiles.recheck();
+    },
+  };
+};
+
+describe("one profile alone, on the free version", () => {
+  it("shows the first profile alone, selected, whichever is stored selected, and lists the other as locked", () => {
+    const { profiles } = setupFree();
+
+    expect(profiles.get().profiles.map(({ id }) => id)).toStrictEqual(["a"]);
+    expect(profiles.get().selectedProfileId).toBe("a");
+    expect(profiles.locked().map(({ id }) => id)).toStrictEqual(["b"]);
+  });
+
+  it("writes every change with the other profile and the stored selection as found", async () => {
+    const { profiles, saved } = setupFree();
+    const calendar = APPS.find((app) => app.id === "calendar");
+
+    if (!calendar) {
+      throw new Error("No Calendar app");
+    }
+
+    await profiles.rename("a", "Mine");
+    await profiles.openTab("a", calendar, calendar.home, "tab");
+    await profiles.setOwnWindowBounds(
+      { profileId: "a", tabId: "tab" },
+      { x: 0, y: 0, width: 800, height: 600 }
+    );
+    await profiles.setTabbedInbox("a", true);
+    await profiles.switchDoNotDisturb(null);
+    await profiles.change((state) => ({ ...state, downloads: [] }));
+
+    expect(saved.length).toBeGreaterThanOrEqual(5);
+
+    for (const state of saved) {
+      expect(state.selectedProfileId).toBe("b");
+      expect(state.profiles[1]).toStrictEqual(two.profiles[1]);
+    }
+
+    expect(profiles.get().profiles).toHaveLength(1);
+  });
+
+  it("adds no profile and writes nothing", async () => {
+    const { profiles, saved } = setupFree();
+
+    await expect(profiles.add()).resolves.toBeUndefined();
+    expect(saved).toStrictEqual([]);
+  });
+
+  it("brings the other profile back, selected as stored, once a license allows it, writing nothing", () => {
+    const { profiles, saved, heard, license } = setupFree();
+
+    license();
+
+    expect(heard.map((state) => state.selectedProfileId)).toStrictEqual(["b"]);
+    expect(profiles.get().profiles.map(({ id }) => id)).toStrictEqual([
+      "a",
+      "b",
+    ]);
+    expect(profiles.locked()).toStrictEqual([]);
+    expect(saved).toStrictEqual([]);
+  });
+
+  it("never clears a profile it does not use that the list to clear still names, and clears one removed", async () => {
+    const { profiles, cleared, saved } = setupFree({
+      ...two,
+      profilesToClear: ["b", "c"],
+    });
+
+    await profiles.finishClears();
+
+    expect(cleared).toStrictEqual(["persist:c"]);
+    expect(saved.at(-1)?.profilesToClear).toStrictEqual([]);
+    expect(saved.at(-1)?.profiles.map(({ id }) => id)).toStrictEqual([
+      "a",
+      "b",
+    ]);
   });
 });

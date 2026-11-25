@@ -1302,11 +1302,13 @@ msgstr "Meru keeps running in the tray when you close its window."
 msgid "Meru keeps trying by itself."
 msgstr "Meru keeps trying by itself."
 
+#. Badge beside a setting in Settings on the free version, which opens a popover saying the setting needs Meru Pro
 #. Name of the Settings section for the trial and the license, in its list and as its title; Meru Pro is the product's name
 #. Status on the Meru Pro page of Settings on the free version with no trial; Meru Pro is the product's name
 #. Status on the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed; Meru Pro is the product's name
 #. Status on the Meru Pro page of Settings with a license; Meru Pro is the product's name
 #: src/settings/app.tsx
+#: src/settings/pro-badge.tsx
 #: src/settings/pro-page.tsx
 msgid "Meru Pro"
 msgstr "Meru Pro"
@@ -1812,6 +1814,11 @@ msgctxt "inbox action"
 msgid "Report spam"
 msgstr "Report spam"
 
+#. Title of the popover a Meru Pro badge opens in Settings on the free version
+#: src/settings/pro-badge.tsx
+msgid "Requires Meru Pro"
+msgstr "Requires Meru Pro"
+
 #. Button under a Settings row in a profile's scope that drops the profile's own value so it follows All profiles again
 #: src/settings/row-scope.tsx
 msgid "Reset"
@@ -2292,6 +2299,16 @@ msgstr "Tabs"
 msgid "Test notification"
 msgstr "Test notification"
 
+#. Short notice at the foot of the window when Gmail's Add another account is clicked on the free version, which adds no profile
+#: src/shell/toast.tsx
+msgid "The free version uses one profile. Upgrade to Meru Pro to add more."
+msgstr "The free version uses one profile. Upgrade to Meru Pro to add more."
+
+#. Sentence in the popover the Meru Pro badge opens beside a profile the free version does not use, or beside Add profile, in Settings' Profiles section
+#: src/settings/profiles-page.tsx
+msgid "The free version uses one profile. Upgrade to Meru Pro to use as many as you like, along with everything else Meru Pro adds."
+msgstr "The free version uses one profile. Upgrade to Meru Pro to use as many as you like, along with everything else Meru Pro adds."
+
 #. Body of the error dialog shown when the app's window keeps failing to draw; {productName} is the app's name
 #: src/main/shell-recovery.ts
 msgid "The window stopped drawing several times in a row, so {productName} will quit. Open it again to carry on."
@@ -2367,6 +2384,11 @@ msgstr "This profile is disabled. You're still signed in, but Meru isn't checkin
 #: src/settings/saved-searches-card.tsx
 msgid "This search can't be saved."
 msgstr "This search can't be saved."
+
+#. Sentence in the popover a Meru Pro badge opens beside a setting in Settings on the free version
+#: src/settings/pro-badge.tsx
+msgid "This setting isn't available in the free version. Upgrade to Meru Pro to use it, along with everything else Meru Pro adds."
+msgstr "This setting isn't available in the free version. Upgrade to Meru Pro to use it, along with everything else Meru Pro adds."
 
 #. Sender of the stand-in email in the test notification Settings shows: a person's name and the app's
 #: src/main/notifications.ts
@@ -2536,7 +2558,9 @@ msgstr "Until Tomorrow"
 msgid "Until Turned Off"
 msgstr "Until Turned Off"
 
+#. Button in the popover a Meru Pro badge opens in Settings, which opens Meru Pro's page in the default browser
 #. Button on the Meru Pro page of Settings that opens Meru Pro's page in the default browser
+#: src/settings/pro-badge.tsx
 #: src/settings/pro-page.tsx
 msgid "Upgrade"
 msgstr "Upgrade"
@@ -2659,6 +2683,11 @@ msgstr "You haven't saved any searches yet."
 #: src/settings/privacy-page.tsx
 msgid "You haven't trusted any sites yet."
 msgstr "You haven't trusted any sites yet."
+
+#. Line under a profile in Settings' list of profiles on the free version, which uses the first profile alone
+#: src/settings/profiles-page.tsx
+msgid "You need Meru Pro to use this profile."
+msgstr "You need Meru Pro to use this profile."
 
 #. Line under the cards of the Notifications page in Settings while one profile's scope is chosen
 #: src/settings/notifications-page.tsx

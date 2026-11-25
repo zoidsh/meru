@@ -2,6 +2,7 @@ import path from "node:path";
 
 import type { Platform } from "#core/platform.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
+import type { Clipboard } from "#platform/clipboard.ts";
 import { createSessions } from "#platform/sessions.ts";
 import { createTextFile } from "#platform/text-file.ts";
 
@@ -18,18 +19,21 @@ import {
 import { createSidebar } from "../sidebar.ts";
 import { STATE_FILE_NAME, saveState } from "../state-store.ts";
 import { loadStores } from "../stores.ts";
+import { wireEntitlement } from "./entitlement.ts";
 
 /**
- * The stores read, and the profiles, the sidebar, Do Not Disturb and the
- * settings that hold them from then on, with the entitlement as found for
- * its own wiring.
+ * The stores read, the entitlement that says what this run may use of them,
+ * and the profiles, the sidebar, Do Not Disturb and the settings that hold
+ * them from then on.
  */
 export const wireStores = async ({
   lifecycle,
   newId,
+  clipboard,
 }: {
   lifecycle: ReturnType<typeof createAppLifecycle>;
   newId: () => string;
+  clipboard: Clipboard;
 }) => {
   const platform = process.platform as Platform;
   const isMacOS = platform === "darwin";
@@ -51,6 +55,14 @@ export const wireStores = async ({
     now: Date.now,
     log: console.error,
   });
+  // Before the profiles and the settings, which ask it what this run may use.
+  const { entitlement, licenseRequests } = await wireEntitlement({
+    lifecycle,
+    file: entitlementFile,
+    initial: stores.entitlement,
+    clipboard,
+  });
+  const multipleProfiles = () => entitlement.can("profiles");
   const profiles = createProfiles({
     initial: stores.state,
     save: (state) => saveState(stateFile, state),
@@ -59,6 +71,7 @@ export const wireStores = async ({
     clearSession: sessions.clear,
     now: Date.now,
     log: console.error,
+    multipleProfiles,
   });
   // Ahead of every other listener of the profiles, so each reads the
   // sidebar as the change leaves it.
@@ -74,6 +87,13 @@ export const wireStores = async ({
     save: (next) => saveSettings(settingsFile, next),
     platform,
     log: console.error,
+    profileValues: multipleProfiles,
+  });
+
+  // The settings first, so a profile coming back reads its own values.
+  entitlement.onChange(() => {
+    settings.recheck();
+    profiles.recheck();
   });
 
   followRemovedProfiles({ settings, profiles, log: console.error });
@@ -90,7 +110,7 @@ export const wireStores = async ({
     sidebar,
     doNotDisturb,
     settings,
-    entitlementFile,
-    entitlementStore: stores.entitlement,
+    entitlement,
+    licenseRequests,
   };
 };

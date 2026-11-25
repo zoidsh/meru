@@ -31,7 +31,6 @@ import { createTabViews } from "./tab-views.ts";
 import { followThemeSetting } from "./theme.ts";
 import { wireContentBlocker } from "./wiring/content-blocker.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
-import { wireEntitlement } from "./wiring/entitlement.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
@@ -118,6 +117,7 @@ const start = async () => {
   // Until the settings say otherwise, for whatever the stores tell first.
   activateLanguage(resolveLanguage(lifecycle.preferredLanguages()));
 
+  const clipboard = systemClipboard();
   const {
     platform,
     isMacOS,
@@ -126,9 +126,9 @@ const start = async () => {
     sidebar,
     doNotDisturb,
     settings,
-    entitlementFile,
-    entitlementStore,
-  } = await wireStores({ lifecycle, newId });
+    entitlement,
+    licenseRequests,
+  } = await wireStores({ lifecycle, newId, clipboard });
 
   // Before anything that shows a string, as the entitlement's launch prompt.
   const language = createLanguage({
@@ -136,14 +136,6 @@ const start = async () => {
     available: AVAILABLE_LANGUAGES,
     preferredLanguages: lifecycle.preferredLanguages,
     activate: activateLanguage,
-  });
-  const clipboard = systemClipboard();
-
-  const { entitlement, licenseRequests } = await wireEntitlement({
-    lifecycle,
-    file: entitlementFile,
-    initial: entitlementStore,
-    clipboard,
   });
 
   // A renderer's first paint is in the language it is loaded with; a change
@@ -358,7 +350,16 @@ const start = async () => {
     selectTab: profiles.selectTab,
     closeTab: profiles.closeTab,
     newId,
-    addProfile,
+    // A page's Add another account; the free version adds none and says so.
+    addProfile: () => {
+      if (entitlement.can("profiles")) {
+        return addProfile();
+      }
+
+      overlays.open({ kind: "toast", message: "one-profile" });
+
+      return Promise.resolve(undefined);
+    },
     // No key reaches a view before the menu below exists, as nothing between
     // them awaits.
     // oxlint-disable-next-line no-use-before-define -- the menu runs the views' commands

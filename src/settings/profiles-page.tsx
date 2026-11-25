@@ -25,9 +25,10 @@ import {
   ItemTitle,
 } from "#ui/item.tsx";
 
+import { ProBadge } from "./pro-badge.tsx";
 import { ProfileDot } from "./scope-tabs.tsx";
 import { AccountSummary, accountShown } from "./signed-in.tsx";
-import { settingsCalls } from "./sync.ts";
+import { settingsCalls, useSettingsState } from "./sync.ts";
 
 type ListedProfile = SettingsState["profiles"][number];
 
@@ -44,7 +45,9 @@ interface Drop {
 
 /**
  * The profiles in the titlebar's order, each opening its own page, moved by
- * the handle before it; Add profile under them.
+ * the handle before it; Add profile under them. On the free version the
+ * profiles it does not use follow, dimmed with the Meru Pro badge and no
+ * page, and Add profile is disabled with the badge.
  */
 export const ProfilesPage = ({
   profiles,
@@ -73,6 +76,16 @@ export const ProfilesPage = ({
   // drops the focus.
   const refocus = useRef<{ profileId: string; toIndex: number }>(undefined);
   const many = profiles.length > 1;
+  const locked = useSettingsState("lockedProfiles") ?? [];
+  const oneProfile =
+    useSettingsState("proRequired")?.includes("profiles") ?? false;
+  const addId = useId();
+  const onlyOne = t({
+    message:
+      "The free version uses one profile. Upgrade to Meru Pro to use as many as you like, along with everything else Meru Pro adds.",
+    comment:
+      "Sentence in the popover the Meru Pro badge opens beside a profile the free version does not use, or beside Add profile, in Settings' Profiles section",
+  });
 
   useEffect(() => {
     const moved = refocus.current;
@@ -344,13 +357,44 @@ export const ProfilesPage = ({
                 </div>
               );
             })}
+            {locked.map((profile) => {
+              const titleId = `${rowIds}-${profile.id}-title`;
+
+              return (
+                // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Item Group is a `role="list"` div
+                <div key={profile.id} role="listitem" className="flex">
+                  <Item size="sm" className="min-w-0 flex-1">
+                    <ItemMedia className="opacity-60">
+                      <ProfileDot color={profile.color} />
+                    </ItemMedia>
+                    <ItemContent className="min-w-0 opacity-60">
+                      <ItemTitle id={titleId} className="max-w-full">
+                        {profile.name}
+                      </ItemTitle>
+                      <ItemDescription>
+                        {t({
+                          message: "You need Meru Pro to use this profile.",
+                          comment:
+                            "Line under a profile in Settings' list of profiles on the free version, which uses the first profile alone",
+                        })}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <ProBadge labelledBy={titleId} description={onlyOne} />
+                    </ItemActions>
+                  </Item>
+                </div>
+              );
+            })}
           </ItemGroup>
         </CardContent>
       </Card>
-      <div>
+      <div className="flex items-center gap-2">
         <Button
+          id={addId}
           variant="outline"
           size="sm"
+          disabled={oneProfile}
           onClick={() => {
             calls.addProfile({}).then(onAdded).catch(noop);
           }}
@@ -362,6 +406,7 @@ export const ProfilesPage = ({
               "Button under Settings' list of profiles that adds one and opens its page",
           })}
         </Button>
+        {oneProfile && <ProBadge labelledBy={addId} description={onlyOne} />}
       </div>
       {many && (
         <p id={helpId} className="px-1 text-sm text-muted-foreground">

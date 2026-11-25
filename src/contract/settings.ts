@@ -1,5 +1,6 @@
 import { z } from "zod/mini";
 
+import { CAPABILITIES } from "#core/entitlement.ts";
 import { MAIL_STATUSES } from "#core/feed.ts";
 import { PROFILE_COLOR_NAMES } from "#core/profile-color.ts";
 import { SAVED_SEARCH_REFUSALS } from "#core/saved-searches.ts";
@@ -394,6 +395,19 @@ export const SETTINGS_STATE = {
       overrides: pageOverrides,
     })
   ),
+  /**
+   * The stored profiles this run does not use, after `profiles` in their
+   * order, which the free version keeps for a license to bring back.
+   */
+  lockedProfiles: z.array(
+    z.object({ id: profileId, name: z.string(), color: z.string() })
+  ),
+  /**
+   * What this run lacks, by main's `can()`: a row of one of these shows the
+   * Meru Pro badge with its control disabled. Empty during a trial and with
+   * a license.
+   */
+  proRequired: z.array(z.enum(CAPABILITIES)),
   /** What the General page shows that is not a setting. */
   general: z.object({
     /**
