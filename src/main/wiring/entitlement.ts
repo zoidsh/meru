@@ -77,7 +77,8 @@ export const wireEntitlement = async ({
     log: console.error,
   });
 
-  void entitlement.start();
+  const firstRefresh = entitlement.start();
+
   createPower().onResume(() => {
     void entitlement.resume();
   });
@@ -87,5 +88,10 @@ export const wireEntitlement = async ({
   exposeEntitlementToSuite(entitlement);
 
   // One for every surface that sends a license request.
-  return { entitlement, licenseRequests: createLicenseRequests() };
+  return {
+    entitlement,
+    licenseRequests: createLicenseRequests(),
+    /** Settles once the launch's refresh has answered or failed. */
+    firstRefresh,
+  };
 };

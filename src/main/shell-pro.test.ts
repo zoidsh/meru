@@ -206,6 +206,48 @@ const fakeOverlays = () => {
   };
 };
 
+/** The main window as the notices see it, shown or hidden as the test says. */
+const fakeWindow = (shown = true) => {
+  let visible = shown;
+  const onShow = new Set<() => void>();
+
+  return {
+    isVisible: () => visible,
+    on: (event: string, listener: () => void) => {
+      if (event === "show") {
+        onShow.add(listener);
+      }
+    },
+    show: () => {
+      visible = true;
+
+      for (const listener of onShow) {
+        listener();
+      }
+    },
+  };
+};
+
+/** Follows the notices with the overlay's view adopted and the window shown, unless told otherwise. */
+const follow = (
+  snapshot: EntitlementState,
+  {
+    window = fakeWindow(),
+    firstRefresh = Promise.resolve(),
+  }: {
+    window?: ReturnType<typeof fakeWindow>;
+    firstRefresh?: Promise<unknown>;
+  } = {}
+) => {
+  const entitlement = fakeEntitlement(snapshot);
+  const overlays = fakeOverlays();
+
+  overlays.adopt();
+  followLicenseNotice({ entitlement, overlays, window, firstRefresh });
+
+  return { entitlement, overlays, window };
+};
+
 describe(followLicenseNotice, () => {
   const unconfirmed = {
     ...LICENSED,
@@ -221,15 +263,17 @@ describe(followLicenseNotice, () => {
     licenseKey: null,
   } as const;
 
-  it("opens the card for a license not confirmed at launch once the overlay's view is adopted, once, and closes it when confirmed", () => {
-    const entitlement = fakeEntitlement(unconfirmed);
-    const overlays = fakeOverlays();
-
-    followLicenseNotice({ entitlement, overlays });
+  it("opens the card for a license still not confirmed once the launch's refresh has failed, and only once", async () => {
+    const refresh = Promise.withResolvers<undefined>();
+    const { entitlement, overlays } = follow(unconfirmed, {
+      firstRefresh: refresh.promise,
+    });
 
     expect(overlays.opened).toStrictEqual([]);
 
-    overlays.adopt();
+    refresh.resolve(undefined);
+    await refresh.promise;
+    await Promise.resolve();
 
     expect(overlays.opened).toStrictEqual([{ kind: "license" }]);
 
@@ -237,19 +281,44 @@ describe(followLicenseNotice, () => {
     entitlement.move({ lastConfirmed: 5 });
 
     expect(overlays.opened).toHaveLength(1);
+  });
 
-    overlays.open({ kind: "license" });
+  it("opens no card when the launch's refresh confirms the license, so it never flashes", async () => {
+    const refresh = Promise.withResolvers<undefined>();
+    const { entitlement, overlays } = follow(unconfirmed, {
+      firstRefresh: refresh.promise,
+    });
+
     entitlement.move({ status: "licensed", unconfirmedReason: null });
+    refresh.resolve(undefined);
+    await refresh.promise;
+    await Promise.resolve();
 
-    expect(overlays.current()).toBeUndefined();
+    expect(overlays.opened).toStrictEqual([]);
+  });
+
+  it("closes the card when a retry confirms the license, and says so with a toast when it finds the license refused", async () => {
+    const confirmed = follow(unconfirmed);
+
+    await Promise.resolve();
+    confirmed.entitlement.move({ status: "licensed", unconfirmedReason: null });
+
+    expect(confirmed.overlays.current()).toBeUndefined();
+
+    const refused = follow(unconfirmed);
+
+    await Promise.resolve();
+    refused.entitlement.move({ status: "refused", unconfirmedReason: null });
+
+    expect(refused.overlays.current()).toStrictEqual({
+      kind: "toast",
+      message: "license-refused",
+    });
   });
 
   it("tells Pro ending at the next launch by a toast, once per wording, never by the card", () => {
-    const entitlement = fakeEntitlement(trial);
-    const overlays = fakeOverlays();
+    const { entitlement, overlays } = follow(trial);
 
-    overlays.adopt();
-    followLicenseNotice({ entitlement, overlays });
     entitlement.move({
       status: "unconfirmed",
       unconfirmedReason: "offline",
@@ -265,12 +334,24 @@ describe(followLicenseNotice, () => {
     ]);
   });
 
-  it("waits for an open overlay to close before its toast, which would replace it", () => {
-    const entitlement = fakeEntitlement(trial);
-    const overlays = fakeOverlays();
+  it("keeps a toast for a hidden window until it shows, rather than telling it unseen", () => {
+    const window = fakeWindow(false);
+    const { entitlement, overlays } = follow(trial, { window });
 
-    overlays.adopt();
-    followLicenseNotice({ entitlement, overlays });
+    entitlement.move({ status: "trialEnded", downgradePending: true });
+
+    expect(overlays.opened).toStrictEqual([]);
+
+    window.show();
+
+    expect(overlays.opened).toStrictEqual([
+      { kind: "toast", message: "pro-ends-trial-ended" },
+    ]);
+  });
+
+  it("waits for an open overlay to close before its toast, which would replace it", () => {
+    const { entitlement, overlays } = follow(trial);
+
     overlays.open({ kind: "downloads" });
     entitlement.move({ status: "trialEnded", downgradePending: true });
 
@@ -284,19 +365,13 @@ describe(followLicenseNotice, () => {
     });
   });
 
-  it("tells nothing to a trial, a license, or a free run that never had Pro", () => {
-    const overlays = fakeOverlays();
+  it("tells nothing to a trial, a license, or a free run that never had Pro", async () => {
+    const runs = [trial, LICENSED, { ...ENDED, trialChoicePending: false }].map(
+      (snapshot) => follow(snapshot)
+    );
 
-    overlays.adopt();
+    await Promise.resolve();
 
-    for (const snapshot of [
-      trial,
-      LICENSED,
-      { ...ENDED, trialChoicePending: false },
-    ]) {
-      followLicenseNotice({ entitlement: fakeEntitlement(snapshot), overlays });
-    }
-
-    expect(overlays.opened).toStrictEqual([]);
+    expect(runs.flatMap(({ overlays }) => overlays.opened)).toStrictEqual([]);
   });
 });

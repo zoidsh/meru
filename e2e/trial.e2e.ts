@@ -6,6 +6,7 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
+import { delay } from "es-toolkit";
 
 import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
 
@@ -545,6 +546,52 @@ test("Try again in the notice closes it once the license is confirmed", async ({
   await expect(snapshot(app)).resolves.toMatchObject({ status: "licensed" });
 });
 
+test("Try again in the notice that finds the license refused closes it with a toast saying so", async ({
+  launchApp,
+  userDataDir,
+}) => {
+  const offline = LAPSES.find(({ name }) => name === "offline");
+
+  if (!offline) {
+    throw new Error("No offline lapse");
+  }
+
+  const { app, overlay, notice } = await launchLapsed(
+    launchApp,
+    userDataDir,
+    offline
+  );
+
+  await setOffline(app, false);
+  await notice.getByRole("button", { name: "Try again" }).click();
+  await expect(notice).toHaveCount(0);
+  await expect(
+    overlay.getByText("Your license can't be used", { exact: true })
+  ).toBeVisible();
+  await expect(snapshot(app)).resolves.toMatchObject({ status: "refused" });
+});
+
+test("a license key 14 days unconfirmed that the launch's refresh confirms shows no card", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeEntitlement(userDataDir, {
+    licenseKey: KEY,
+    keyStoredAt: Date.now() - 15 * DAY,
+  });
+  await writeStub(userDataDir, knownKey());
+
+  const app = await launchApp();
+
+  await findPage(app, standIn.url);
+
+  const overlay = await findOverlayDocument(app);
+
+  await expect.poll(() => snapshot(app)).toMatchObject({ status: "licensed" });
+  await expect(overlay.getByRole("dialog")).toHaveCount(0);
+});
+
 test.describe("shots", () => {
   test.beforeEach(onlyWithShots);
 
@@ -590,30 +637,58 @@ test.describe("shots", () => {
     }
   });
 
-  test("the toast of a trial that ends while Meru runs, light and dark", async ({
-    app,
-    shell,
-    standIn,
-    userDataDir,
-  }) => {
-    await findPage(app, standIn.url);
-
-    const overlay = await findOverlayDocument(app);
-
-    await writeStub(userDataDir, { trialStartedAt: Date.now() - 15 * DAY });
-    await refresh(shell);
-    await expect(
-      overlay.getByText(TRIAL_ENDED_TOAST, { exact: true })
-    ).toBeVisible();
-
-    // Both within the toast's four seconds, as it is told once per launch.
-    for (const theme of THEMES) {
-      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+  // A toast closes itself after four seconds and is told once per launch,
+  // so each theme's is a launch of its own.
+  for (const theme of THEMES) {
+    test(`the toast of a trial that ends while Meru runs, ${theme}`, async ({
+      app,
+      shell,
+      standIn,
+      userDataDir,
+    }) => {
+      await findPage(app, standIn.url);
       await emulateTheme(app, theme);
-      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+
+      const overlay = await findOverlayDocument(app);
+
+      await writeStub(userDataDir, { trialStartedAt: Date.now() - 15 * DAY });
+      await refresh(shell);
+      await expect(
+        overlay.getByText(TRIAL_ENDED_TOAST, { exact: true })
+      ).toBeVisible();
+      // Lets the toast slide in.
+      await delay(600);
       await shootWindow(app, shell, shotPath("toast-pro-ends", theme));
-    }
-  });
+    });
+
+    test(`the toast of Gmail's Add another account on the free version, ${theme}`, async ({
+      launchApp,
+      userDataDir,
+      standIn,
+    }) => {
+      await writeStub(userDataDir, { trialStartedAt: Date.now() - 15 * DAY });
+
+      const app = await launchApp(NO_TRIAL);
+      const shell = await findPage(app, SHELL_URL);
+      const view = await findPage(app, standIn.url);
+      const overlay = await findOverlayDocument(app);
+
+      await expect
+        .poll(() => snapshot(app))
+        .toMatchObject({ status: "trialEnded" });
+      await emulateTheme(app, theme);
+      await view.getByRole("link", { name: "Add another account" }).click();
+      await expect(
+        overlay.getByText(
+          "The free version uses one profile. Upgrade to Meru Pro to add more.",
+          { exact: true }
+        )
+      ).toBeVisible();
+      // Lets the toast slide in.
+      await delay(600);
+      await shootWindow(app, shell, shotPath("toast-one-profile", theme));
+    });
+  }
 
   for (const lapse of LAPSES) {
     test(`the ${lapse.name} notice, light and dark`, async ({

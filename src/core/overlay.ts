@@ -21,6 +21,8 @@ export const TOAST_MESSAGES = [
   "downloads-folder-missing",
   "one-profile",
   ...DOWNGRADE_TOASTS,
+  "license-refused",
+  "trial-ended",
 ] as const;
 
 export type ToastMessage = (typeof TOAST_MESSAGES)[number];
@@ -45,8 +47,8 @@ export type Overlay =
   | { kind: "inbox" }
   | { kind: "downloads" }
   /**
-   * The notice that Meru Pro ends at the next launch or could not be
-   * confirmed, which only its own buttons and Escape close.
+   * The card at a launch whose license or trial could not be confirmed,
+   * which only its own buttons and Escape close.
    */
   | { kind: "license" }
   /**

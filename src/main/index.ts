@@ -143,6 +143,7 @@ const start = async () => {
     settings,
     entitlement,
     licenseRequests,
+    firstRefresh,
   } = await wireStores({ lifecycle, newId, clipboard });
 
   // Decided once, from the entitlement read at launch.
@@ -697,7 +698,12 @@ const start = async () => {
     doNotDisturb,
   });
 
-  followLicenseNotice({ entitlement, overlays });
+  followLicenseNotice({
+    entitlement,
+    overlays,
+    window: shell.window,
+    firstRefresh,
+  });
 
   // Loaded already for the trial-ended screen, which then gave way.
   if (!shellLoaded) {

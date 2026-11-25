@@ -56,7 +56,7 @@ export const wireStores = async ({
     log: console.error,
   });
   // Before the profiles and the settings, which ask it what this run may use.
-  const { entitlement, licenseRequests } = await wireEntitlement({
+  const { entitlement, licenseRequests, firstRefresh } = await wireEntitlement({
     lifecycle,
     file: entitlementFile,
     initial: stores.entitlement,
@@ -112,5 +112,6 @@ export const wireStores = async ({
     settings,
     entitlement,
     licenseRequests,
+    firstRefresh,
   };
 };

@@ -1,7 +1,9 @@
 import { useLingui } from "@lingui/react/macro";
 import { useEffect } from "react";
 
+import type { LicenseStanding } from "#contract/entitlement.ts";
 import type { ShellState } from "#contract/shell.ts";
+import { useLicenseStatus } from "#shared/license-status.ts";
 import {
   Toast as ToastRoot,
   ToastContent,
@@ -14,6 +16,14 @@ import {
 } from "#ui/toast.tsx";
 
 const notices = createToastManager();
+
+const lapsed = (status: LicenseStanding["status"]): LicenseStanding => ({
+  status,
+  unconfirmedReason: null,
+  trialDaysLeft: null,
+  downgradePending: false,
+  hasLicenseKey: status === "refused",
+});
 
 const NoticeList = () => {
   const { toasts } = useToastManager();
@@ -44,6 +54,9 @@ export const Toast = ({
 }) => {
   const { t } = useLingui();
   const page = title ?? "";
+  // What a retry from the card at launch found, in Settings' own words.
+  const refused = useLicenseStatus(lapsed("refused")).title;
+  const ended = useLicenseStatus(lapsed("trialEnded")).title;
   const text = {
     "no-room": t({
       message: "Not enough room to split",
@@ -101,6 +114,8 @@ export const Toast = ({
       comment:
         "Short notice at the foot of the window when the computer's clock reads well before the license or trial was last confirmed, while Meru is running; at most two lines of a narrow notice",
     }),
+    "license-refused": refused,
+    "trial-ended": ended,
   }[message];
 
   useEffect(() => {

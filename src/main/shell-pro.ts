@@ -1,7 +1,8 @@
 import type { EntitlementState } from "#contract/entitlement.ts";
 import type { ShellState } from "#contract/shell.ts";
 import { downgradeToast } from "#core/entitlement.ts";
-import type { DowngradeToast } from "#core/entitlement.ts";
+import type { ToastMessage } from "#core/overlay.ts";
+import type { AppWindow } from "#platform/window.ts";
 
 import type { LicenseRequests } from "./license-requests.ts";
 import type { Overlays } from "./overlay.ts";
@@ -90,46 +91,77 @@ export const showsTrialFooter = (
   entitlement: Pick<EntitlementSource, "snapshot">
 ) => entitlement.snapshot().trialDaysLeft !== null;
 
+/** The toast for a card's retry that found the license refused or the trial ended. */
+const LAPSED_TOASTS: Partial<Record<EntitlementState["status"], ToastMessage>> =
+  { refused: "license-refused", trialEnded: "trial-ended" };
+
 /**
- * Tells what lapses of Meru Pro. A license or trial that could not be
- * confirmed at launch gets the license card, opened once as the overlay's
- * view is adopted, before anything else is open, and closed once the status
- * moves on. Meru Pro that ends at the next launch, which only arises while
- * Meru runs and the person may be typing, gets a toast, which takes no focus:
- * once per launch for each wording, and only while no other overlay is open,
- * which it would replace.
+ * Tells what lapses of Meru Pro, only while the main window shows, so
+ * nothing is told unseen to a window closed to the tray or launched in the
+ * background; it tells once the window shows.
+ *
+ * A license or trial still not confirmed once the launch's refresh has
+ * answered or failed gets the card, opened once, before anything else is
+ * open; a refresh that confirms it closes the card, and one that finds the
+ * license refused or the trial ended closes it with a toast saying so. Meru
+ * Pro that ends at the next launch, which only arises while Meru runs and the
+ * person may be typing, gets a toast, which takes no focus. Each toast is
+ * told once per launch, and only while no other overlay is open, which it
+ * would replace.
  */
 export const followLicenseNotice = ({
   entitlement,
   overlays,
+  window,
+  firstRefresh,
 }: {
   entitlement: Pick<EntitlementSource, "snapshot" | "onChange">;
   overlays: Pick<
     Overlays,
     "current" | "open" | "close" | "onChange" | "webContentsId"
   >;
+  window: Pick<AppWindow, "isVisible" | "on">;
+  /** Settles once the launch's refresh has answered or failed. */
+  firstRefresh: Promise<unknown>;
 }) => {
-  let cardDue = entitlement.snapshot().status === "unconfirmed";
-  const told = new Set<DowngradeToast>();
+  const unconfirmedAtLaunch = entitlement.snapshot().status === "unconfirmed";
+  let refreshed = false;
+  let cardTold = false;
+  const told = new Set<ToastMessage>();
+
+  const toast = (message: ToastMessage) => {
+    told.add(message);
+    overlays.open({ kind: "toast", message });
+  };
 
   const follow = () => {
     const snapshot = entitlement.snapshot();
     const open = overlays.current();
 
     if (open?.kind === "license" && snapshot.status !== "unconfirmed") {
-      overlays.close();
+      const ended = LAPSED_TOASTS[snapshot.status];
+
+      if (ended !== undefined && !told.has(ended)) {
+        toast(ended);
+      } else {
+        overlays.close();
+      }
 
       return;
     }
 
-    if (overlays.webContentsId() === undefined) {
+    if (overlays.webContentsId() === undefined || !window.isVisible()) {
       return;
     }
 
-    if (cardDue) {
-      cardDue = false;
+    if (unconfirmedAtLaunch && !cardTold) {
+      if (!refreshed) {
+        return;
+      }
 
-      if (snapshot.status === "unconfirmed") {
+      cardTold = true;
+
+      if (snapshot.status === "unconfirmed" && open === undefined) {
         overlays.open({ kind: "license" });
       }
 
@@ -145,11 +177,15 @@ export const followLicenseNotice = ({
       return;
     }
 
-    told.add(message);
-    overlays.open({ kind: "toast", message });
+    toast(message);
   };
 
   entitlement.onChange(follow);
   overlays.onChange(follow);
+  window.on("show", follow);
+  void firstRefresh.finally(() => {
+    refreshed = true;
+    follow();
+  });
   follow();
 };
