@@ -702,6 +702,7 @@ const start = async () => {
     entitlement,
     overlays,
     window: shell.window,
+    windowActive: focus.windowActive,
     firstRefresh,
   });
 

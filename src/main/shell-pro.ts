@@ -96,9 +96,10 @@ const LAPSED_TOASTS: Partial<Record<EntitlementState["status"], ToastMessage>> =
   { refused: "license-refused", trialEnded: "trial-ended" };
 
 /**
- * Tells what lapses of Meru Pro, only while the main window shows, so
- * nothing is told unseen to a window closed to the tray or launched in the
- * background; it tells once the window shows.
+ * Tells what lapses of Meru Pro, only while the main window holds the keys,
+ * and once it comes to hold them: a toast lasts four seconds and the
+ * window's blur closes it, so one told to a window in the tray, in the
+ * background or behind another app would be lost for the run.
  *
  * A license or trial still not confirmed once the launch's refresh has
  * answered or failed gets the card, opened once, before anything else is
@@ -113,6 +114,7 @@ export const followLicenseNotice = ({
   entitlement,
   overlays,
   window,
+  windowActive,
   firstRefresh,
 }: {
   entitlement: Pick<EntitlementSource, "snapshot" | "onChange">;
@@ -120,7 +122,9 @@ export const followLicenseNotice = ({
     Overlays,
     "current" | "open" | "close" | "onChange" | "webContentsId"
   >;
-  window: Pick<AppWindow, "isVisible" | "on">;
+  window: Pick<AppWindow, "on">;
+  /** Focus's own reading of whether the window holds the keys. */
+  windowActive: () => boolean;
   /** Settles once the launch's refresh has answered or failed. */
   firstRefresh: Promise<unknown>;
 }) => {
@@ -150,7 +154,7 @@ export const followLicenseNotice = ({
       return;
     }
 
-    if (overlays.webContentsId() === undefined || !window.isVisible()) {
+    if (overlays.webContentsId() === undefined || !windowActive()) {
       return;
     }
 
@@ -182,6 +186,7 @@ export const followLicenseNotice = ({
 
   entitlement.onChange(follow);
   overlays.onChange(follow);
+  window.on("focus", follow);
   window.on("show", follow);
   void firstRefresh.finally(() => {
     refreshed = true;

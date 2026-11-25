@@ -206,29 +206,36 @@ const fakeOverlays = () => {
   };
 };
 
-/** The main window as the notices see it, shown or hidden as the test says. */
-const fakeWindow = (shown = true) => {
-  let visible = shown;
-  const onShow = new Set<() => void>();
+/**
+ * The main window as the notices see it: whether it holds the keys, as
+ * focus reads it, and its focus and show events.
+ */
+const fakeWindow = (holdsKeys = true) => {
+  let active = holdsKeys;
+  const listeners = new Map<string, Set<() => void>>();
+
+  const emit = (event: string) => {
+    for (const listener of listeners.get(event) ?? []) {
+      listener();
+    }
+  };
 
   return {
-    isVisible: () => visible,
+    active: () => active,
     on: (event: string, listener: () => void) => {
-      if (event === "show") {
-        onShow.add(listener);
-      }
+      listeners.set(event, (listeners.get(event) ?? new Set()).add(listener));
     },
-    show: () => {
-      visible = true;
-
-      for (const listener of onShow) {
-        listener();
-      }
+    blur: () => {
+      active = false;
+    },
+    focus: () => {
+      active = true;
+      emit("focus");
     },
   };
 };
 
-/** Follows the notices with the overlay's view adopted and the window shown, unless told otherwise. */
+/** Follows the notices with the overlay's view adopted and the window holding the keys, unless told otherwise. */
 const follow = (
   snapshot: EntitlementState,
   {
@@ -243,7 +250,13 @@ const follow = (
   const overlays = fakeOverlays();
 
   overlays.adopt();
-  followLicenseNotice({ entitlement, overlays, window, firstRefresh });
+  followLicenseNotice({
+    entitlement,
+    overlays,
+    window,
+    windowActive: window.active,
+    firstRefresh,
+  });
 
   return { entitlement, overlays, window };
 };
@@ -334,7 +347,7 @@ describe(followLicenseNotice, () => {
     ]);
   });
 
-  it("keeps a toast for a hidden window until it shows, rather than telling it unseen", () => {
+  it("keeps a toast while the window does not hold the keys, and tells it once as the window is focused", () => {
     const window = fakeWindow(false);
     const { entitlement, overlays } = follow(trial, { window });
 
@@ -342,7 +355,10 @@ describe(followLicenseNotice, () => {
 
     expect(overlays.opened).toStrictEqual([]);
 
-    window.show();
+    window.focus();
+    overlays.close();
+    window.blur();
+    window.focus();
 
     expect(overlays.opened).toStrictEqual([
       { kind: "toast", message: "pro-ends-trial-ended" },

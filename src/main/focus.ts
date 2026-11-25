@@ -120,6 +120,8 @@ export const createFocus = ({
     },
     /** The web contents that last gained focus. */
     focused: () => focused,
+    /** Whether the main window holds the keys, or counts as holding them. */
+    windowActive: mayFocus,
     /** Focuses the first of `preferences` that is there to focus. */
     focus: (preferences: readonly FocusTarget[]) => {
       pending = preferences;
