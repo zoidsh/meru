@@ -492,11 +492,14 @@ export const buildMenuTemplate = ({
     ],
   };
 
-  // Each pinned tab with a shortcut, by its app's name, as the profiles are.
-  const pinnedCount = Math.min(
-    knownTabs(selectedProfile(context.state)).filter(isPinned).length,
-    PINNED_SHORTCUT_COUNT
-  );
+  // Each pinned tab with a shortcut, by its app's name, as the profiles are;
+  // a list of tabs, so none while the run has one tab alone.
+  const pinnedCount = context.can("workspaceApps")
+    ? Math.min(
+        knownTabs(selectedProfile(context.state)).filter(isPinned).length,
+        PINNED_SHORTCUT_COUNT
+      )
+    : 0;
   const pinnedItems = Array.from({ length: pinnedCount }, (_, index) =>
     item(selectPinnedCommandId(index + 1))
   ).flat();
@@ -685,11 +688,16 @@ export const createApplicationMenu = ({
   build(true);
 
   return {
-    /** Runs the command with `id`, as its menu item would. */
+    /**
+     * Runs the command with `id`, as its menu item would; one the run's
+     * Meru Pro refuses is refused into the log, as its item is disabled.
+     */
     runCommand: (id: string) => {
       const command = commands.find((candidate) => candidate.id === id);
 
-      if (command) {
+      if (command && needsPro(command, context())) {
+        log(`Refused command ${id}, which needs Meru Pro`);
+      } else if (command) {
         void run(command);
       }
     },

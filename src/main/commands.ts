@@ -387,6 +387,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "sidebar.toggle",
+    capability: "workspaceApps",
     title: () =>
       t({
         message: "Sidebar",
@@ -589,6 +590,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "app.open",
+    capability: "workspaceApps",
     title: () =>
       t({
         message: "New Tab…",
@@ -610,6 +612,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.bookmark",
+    capability: "bookmarks",
     inOwnWindow: true,
     title: () => MENU_LABELS.bookmarkTab(),
     label: ({ bookmarked }) =>
@@ -629,6 +632,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.splitRight",
+    capability: "splitView",
     title: () => MENU_LABELS.splitRight(),
     shortcut: {
       darwin: "CommandOrControl+Alt+N",
@@ -646,6 +650,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.splitDown",
+    capability: "splitView",
     title: () => MENU_LABELS.splitDown(),
     shortcut: {
       darwin: "CommandOrControl+Alt+Shift+N",
@@ -663,6 +668,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.separate",
+    capability: "splitView",
     title: () => MENU_LABELS.separateFromSplit(),
     isAvailable: ({ state }) => {
       const profile = selectedProfile(state);
@@ -673,6 +679,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.moveToNewWindow",
+    capability: "workspaceApps",
     title: () => MENU_LABELS.moveToNewWindow(),
     shortcut: {
       darwin: "CommandOrControl+Shift+N",
@@ -690,6 +697,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.moveToMainWindow",
+    capability: "workspaceApps",
     title: () => MENU_LABELS.moveToMainWindow(),
     shortcut: {
       darwin: "CommandOrControl+Shift+M",
@@ -704,6 +712,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.maximize",
+    capability: "splitView",
     title: () => MENU_LABELS.maximizePane(),
     label(context) {
       return isMaximized(selectedProfile(context.state))
@@ -723,6 +732,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.next",
+    capability: "workspaceApps",
     title: () =>
       t({
         message: "Select Next Tab",
@@ -736,6 +746,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.previous",
+    capability: "workspaceApps",
     title: () =>
       t({
         message: "Select Previous Tab",
@@ -753,6 +764,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.close",
+    capability: "workspaceApps",
     title: () => MENU_LABELS.closeTab(),
     shortcut: {
       darwin: "CommandOrControl+Shift+W",
@@ -799,6 +811,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.pin",
+    capability: "workspaceApps",
     title: () =>
       t({
         message: "Pin Tab",
@@ -827,6 +840,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "tab.openAtLaunch",
+    capability: "workspaceApps",
     title: () => MENU_LABELS.openAtLaunch(),
     isAvailable: ({ state }) => {
       const tab = findTab(state, selectedTab(state));
@@ -922,6 +936,7 @@ export const COMMANDS: readonly Command[] = [
 
     return {
       id: selectPinnedCommandId(position),
+      capability: "workspaceApps",
       title: () =>
         t({
           message: `Select Pinned Tab ${position}`,

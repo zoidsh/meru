@@ -90,6 +90,37 @@ describe(buildMenuTemplate, () => {
     }
   );
 
+  it("on the free version keeps every tab, split and bookmark item, disabled and saying Pro, and lists no pinned tab", () => {
+    const free = template("darwin", { ...contextOf(), can: () => false });
+    const gated = [
+      ["sidebar.toggle", "Sidebar (Pro)"],
+      ["app.open", "New Tab… (Pro)"],
+      ["tab.bookmark", "Bookmark Tab (Pro)"],
+      ["tab.next", "Select Next Tab (Pro)"],
+      ["tab.previous", "Select Previous Tab (Pro)"],
+      ["tab.splitRight", "Split Right (Pro)"],
+      ["tab.splitDown", "Split Down (Pro)"],
+      ["tab.maximize", "Maximize Pane (Pro)"],
+      ["tab.separate", "Separate from Split (Pro)"],
+      ["tab.moveToNewWindow", "Move to New Window (Pro)"],
+      ["tab.moveToMainWindow", "Move to Main Window (Pro)"],
+      ["tab.pin", "Unpin Tab (Pro)"],
+      ["tab.openAtLaunch", "Open at Launch (Pro)"],
+      ["tab.close", "Close Tab (Pro)"],
+    ];
+
+    expect(
+      gated.map(([id = ""]) => {
+        const item = itemOf(free, id);
+
+        return [id, item?.label, item?.enabled];
+      })
+    ).toStrictEqual(gated.map(([id, label]) => [id, label, false]));
+    expect(itemOf(free, "tab.pinned.1")).toBeUndefined();
+    expect(itemOf(template("darwin"), "tab.pinned.1")).toBeDefined();
+    expect(itemOf(free, "tab.sleep")?.label).toBe("Sleep Tab");
+  });
+
   it("disables the Do Not Disturb submenu without Meru Pro and says Pro", () => {
     expect(
       (["darwin", "linux"] as const).map((platform) => {
@@ -438,8 +469,9 @@ const withSearches = (savedSearches: unknown[]): State => ({
 const viewItem = (menus: MenuItemConstructorOptions[], id: string) =>
   menus.flatMap(submenu).find((item) => item.id === id);
 
-const setup = () => {
+const setup = ({ can = () => true }: { can?: () => boolean } = {}) => {
   const set: MenuItemConstructorOptions[][] = [];
+  const logs: string[] = [];
   let state = oneProfile;
   let reloads = 0;
   let inboxOpen = false;
@@ -468,7 +500,7 @@ const setup = () => {
       settingsFocused: false,
       settingsHistory: undefined,
       doNotDisturb: undefined,
-      can: () => true,
+      can,
       navigation: { canGoBack: false, canGoForward: false, loading: false },
       inboxOpen,
       downloadsOpen: false,
@@ -483,12 +515,14 @@ const setup = () => {
     locale: () => "en",
     zoom: (change) => zoomed.push(change),
     setMenu: (next) => set.push(next),
-    log: () => false,
+    log: (message) => logs.push(message),
   });
 
   return {
     set,
     menu,
+    logs,
+    inboxOpen: () => inboxOpen,
     reloads: () => reloads,
     selected,
     zoomed,
@@ -540,6 +574,21 @@ describe(buildLaunchMenuTemplate, () => {
 });
 
 describe(createApplicationMenu, () => {
+  it("runs a command a window asks for by id, but not one the run's Meru Pro refuses", async () => {
+    const free = setup({ can: () => false });
+    const pro = setup();
+
+    free.menu.runCommand("inbox.toggle");
+    pro.menu.runCommand("inbox.toggle");
+    await Promise.resolve();
+
+    expect([free.inboxOpen(), free.logs, pro.inboxOpen()]).toStrictEqual([
+      false,
+      ["Refused command inbox.toggle, which needs Meru Pro"],
+      true,
+    ]);
+  });
+
   it("sets the menu at once, and again only when what it offers changes", () => {
     const app = setup();
 
