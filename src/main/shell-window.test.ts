@@ -20,6 +20,7 @@ const createFakeWindow = () => {
   const listeners = new Map<WindowLoadEvent, () => void>();
   const calls: string[] = [];
   let minimized = false;
+  let visible = false;
   let fullScreen = false;
   let leftFullScreen: (() => void) | undefined;
   let closeListener:
@@ -34,16 +35,18 @@ const createFakeWindow = () => {
       listeners.set(event, listener);
     },
     show: () => {
+      visible = true;
       calls.push("show");
     },
     showInactive: () => {
+      visible = true;
       calls.push("showInactive");
     },
     focus: () => {
       calls.push("focus");
     },
     isFocused: () => false,
-    isVisible: () => false,
+    isVisible: () => visible,
     on: () => false,
     focusPage: () => false,
     onPageFocus: () => false,
@@ -62,6 +65,7 @@ const createFakeWindow = () => {
     },
     isDestroyed: () => false,
     hide: () => {
+      visible = false;
       calls.push("hide");
     },
     onClose: (listener) => {
@@ -234,6 +238,21 @@ describe(createShellWindow, () => {
 
     expect([atLaunch, hidden.calls]).toStrictEqual([
       [[], ["showInactive", "minimize"]],
+      ["show", "focus"],
+    ]);
+  });
+
+  it("leaves a window opened again before its first paint shown and focused, at a background launch hidden or minimized", () => {
+    const hidden = open({ atLaunch: "hidden" });
+    const minimized = open({ atLaunch: "minimized" });
+
+    for (const shell of [hidden, minimized]) {
+      revealWindow(shell.window, false);
+      shell.emit("ready-to-show");
+    }
+
+    expect([hidden.calls, minimized.calls]).toStrictEqual([
+      ["show", "focus"],
       ["show", "focus"],
     ]);
   });

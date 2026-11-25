@@ -77,7 +77,9 @@ export const createShellWindow = ({
 
     isShown = true;
 
-    if (atLaunch === "hidden") {
+    // Opening Meru again before its first paint has already shown and
+    // focused it, which a background launch must not undo.
+    if (atLaunch === "hidden" || window.isVisible()) {
       return;
     }
 
