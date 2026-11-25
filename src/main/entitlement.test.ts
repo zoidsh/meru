@@ -160,7 +160,7 @@ describe(createEntitlement, () => {
       status: "licensed",
       tier: "pro",
       licensee: "Ada",
-      licenseKey: "MERU-•••-0001",
+      licenseKey: "••••-•••-••••",
       lastConfirmed: START,
     });
     expect(requests).toStrictEqual([]);
@@ -429,7 +429,7 @@ describe(createEntitlement, () => {
     expect(saved).toStrictEqual([]);
     expect(entitlement.snapshot()).toMatchObject({
       status: "licensed",
-      licenseKey: "MERU-•••-0001",
+      licenseKey: "••••-•••-••••",
     });
     entitlement.dispose();
   });
@@ -715,7 +715,7 @@ describe("the entitlement's license calls landing out of order", () => {
     expect(saved.at(-1)).toStrictEqual(
       expect.objectContaining({ licenseKey: "MERU-NEW-0001", token: activated })
     );
-    expect(entitlement.snapshot().licenseKey).toBe("MERU-•••-0001");
+    expect(entitlement.snapshot().licenseKey).toBe("••••-•••-••••");
     entitlement.dispose();
   });
 
@@ -984,7 +984,7 @@ describe("the entitlement when its file cannot be written", () => {
     );
     expect(entitlement.snapshot()).toMatchObject({
       deviceName: "Studio",
-      licenseKey: "MERU-•••-0000",
+      licenseKey: "••••-•••-••••",
     });
     expect(logs).toContain(LOGGED);
     entitlement.dispose();

@@ -239,9 +239,12 @@ describe(maskLicenseKey, () => {
     expect(maskLicenseKey("AB-CDEFGH-1")).toBe("AB-••••••-1");
   });
 
-  it("shows nothing of a key of eight characters or fewer", () => {
+  it("shows its ends only while at least as many characters stay hidden", () => {
     expect(maskLicenseKey("ABCD-123")).toBe("••••-•••");
-    expect(maskLicenseKey("ABCDEFGH")).toBe("••••••••");
+    expect(maskLicenseKey("ABCDEFGHI")).toBe("•••••••••");
+    expect(maskLicenseKey("ABCDEFGHIJ")).toBe("••••••••••");
+    expect(maskLicenseKey("MERU-KEY-0001")).toBe("••••-•••-••••");
+    expect(maskLicenseKey("MERU-KEYS-KEYS-0001")).toBe("MERU-••••-••••-0001");
   });
 });
 

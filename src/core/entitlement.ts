@@ -311,23 +311,24 @@ const SHOWN_AT_EACH_END = 4;
 /**
  * A license key as a page may show it, so the whole key never leaves main:
  * its first block and its last, at most four characters of each, and every
- * other character but a dash a bullet. A key of eight characters or fewer
- * shows none.
+ * other character but a dash a bullet. The ends show only while at least as
+ * many characters stay hidden as they show, else none do.
  */
 export const maskLicenseKey = (key: string) => {
   const firstDash = key.indexOf("-");
   const lastDash = key.lastIndexOf("-");
-  const shows = key.length > 2 * SHOWN_AT_EACH_END;
-  const head = shows
-    ? Math.min(SHOWN_AT_EACH_END, firstDash === -1 ? key.length : firstDash)
-    : 0;
-  const tail = shows
-    ? Math.min(SHOWN_AT_EACH_END, key.length - lastDash - 1)
-    : 0;
+  const head = Math.min(
+    SHOWN_AT_EACH_END,
+    firstDash === -1 ? key.length : firstDash
+  );
+  const tail = Math.min(SHOWN_AT_EACH_END, key.length - lastDash - 1);
+  const characters = key.replaceAll("-", "").length;
+  const shows = characters - head - tail >= head + tail;
 
   return [...key]
     .map((character, index) =>
-      character === "-" || index < head || index >= key.length - tail
+      character === "-" ||
+      (shows && (index < head || index >= key.length - tail))
         ? character
         : "•"
     )

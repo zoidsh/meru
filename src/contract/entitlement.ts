@@ -83,7 +83,8 @@ export const ENTITLEMENT_STATE = {
     lastConfirmed: z.nullable(z.number()),
     /**
      * The stored key as Settings shows it: at most four characters of its
-     * first and last blocks, bullets for the rest (`MERU-••••-••••-••••-••••-7Q2K`
+     * first and last blocks, and those only while at least as many stay
+     * hidden, bullets for the rest (`MERU-••••-••••-••••-••••-7Q2K`
      * for a key shaped as v3's `MERU-XXXX-XXXX-XXXX-XXXX-XXXX`); `null` with
      * none. The whole key never reaches a page; `copyLicenseKey` copies it.
      */
