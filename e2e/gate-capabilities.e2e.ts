@@ -493,6 +493,40 @@ const USER_STYLES = "body { outline: 3px solid rgb(1, 2, 3) !important; }";
 const outline = (page: Page) =>
   page.evaluate(() => getComputedStyle(document.body).outlineColor);
 
+/**
+ * Has main record each sheet it sends a page on the user styles channel.
+ * Electron's own frame `send` is wrapped, as nothing of Meru's records what
+ * a page was sent, and only then can a test know the free sheet has arrived.
+ */
+const recordUserStyles = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) => {
+    const frame = BrowserWindow.getAllWindows()[0]?.webContents.mainFrame;
+
+    if (!frame) {
+      throw new Error("The app has no window");
+    }
+
+    const prototype = Object.getPrototypeOf(frame) as {
+      send: (channel: string, ...args: unknown[]) => void;
+    };
+    const { send: original } = prototype;
+    const sent: unknown[] = [];
+
+    Reflect.set(globalThis, "meruTestUserStyles", sent);
+    prototype.send = function send(channel, ...args) {
+      if (channel === "gmail:user-styles") {
+        sent.push(args[0]);
+      }
+
+      original.call(this, channel, ...args);
+    };
+  });
+
+const sentUserStyles = (app: ElectronApplication) =>
+  app.evaluate(() => [
+    ...(Reflect.get(globalThis, "meruTestUserStyles") as unknown[]),
+  ]);
+
 test("the free version loads no user styles into Gmail's page and leaves the file as it is, and a license loads them at the next load", async ({
   launchApp,
   userDataDir,
@@ -502,12 +536,12 @@ test("the free version loads no user styles into Gmail's page and leaves the fil
 
   await seedOneProfile(userDataDir, standIn);
   await writeFile(file, USER_STYLES);
-  standIn.setFeed(ANY_SESSION, listing("1"));
 
   const { app, gmail } = await launchFree(launchApp, userDataDir, standIn);
 
-  // The page has shaken hands with main, which sends the styles on that.
-  await expect.poll(() => readUnreadTotal(app)).toBe(1);
+  await recordUserStyles(app);
+  await gmail.reload();
+  await expect.poll(() => sentUserStyles(app)).toStrictEqual([""]);
   expect(await outline(gmail)).not.toBe("rgb(1, 2, 3)");
   await expect(readFile(file, "utf-8")).resolves.toBe(USER_STYLES);
 
@@ -515,6 +549,7 @@ test("the free version loads no user styles into Gmail's page and leaves the fil
 
   await activate(page);
   await gmail.reload();
+  await expect.poll(() => sentUserStyles(app)).toStrictEqual(["", USER_STYLES]);
   await expect.poll(() => outline(gmail)).toBe("rgb(1, 2, 3)");
 });
 
