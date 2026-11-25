@@ -528,8 +528,12 @@ const savedSetting = async (userDataDir: string, key: string) => {
   return saved[key];
 };
 
-const spellingButton = (page: Page) =>
-  page.getByRole("button", { name: "Spelling", exact: true });
+/** Named by its label and then what it reads, `summary` when given. */
+const spellingButton = (page: Page, summary?: string) =>
+  page.getByRole("button", {
+    name: summary === undefined ? /^Spelling\b/u : `Spelling ${summary}`,
+    exact: summary !== undefined,
+  });
 
 /** The languages a profile's session checks, as Chromium holds them. */
 const checkedLanguages = (app: ElectronApplication, profileId: string) =>
@@ -634,7 +638,7 @@ test.describe("Language and Spelling", () => {
     await expect(spellingButton(page)).toHaveCount(0);
   });
 
-  test("Spelling adds a language to every profile's session at once, the system's always checked", async ({
+  test("Spelling adds languages to the profile's session at once, two quick toggles both holding, the system's always checked", async ({
     launchApp,
     standIn,
     userDataDir,
@@ -652,7 +656,7 @@ test.describe("Language and Spelling", () => {
     const profileId = state.profiles[0]?.id ?? "";
     const page = await openGeneral(app);
 
-    await expect(spellingButton(page)).toHaveText("System language");
+    await expect(spellingButton(page, "System language")).toBeVisible();
 
     const system = await checkedLanguages(app, profileId);
 
@@ -665,20 +669,27 @@ test.describe("Language and Spelling", () => {
     await expect(items.first()).toBeChecked();
     await expect(items.first()).toBeDisabled();
 
-    const added = items.nth(1);
-    const addedName = (await added.textContent()) ?? "";
+    const first = items.nth(1);
+    const second = items.nth(2);
+    const names = [
+      (await first.textContent()) ?? "",
+      (await second.textContent()) ?? "",
+    ];
 
-    await added.click();
-    await expect(added).toBeChecked();
+    // The second click lands before the first one's change comes back.
+    await first.click();
+    await second.click();
+    await expect(first).toBeChecked();
+    await expect(second).toBeChecked();
     await page.keyboard.press("Escape");
 
-    await expect(spellingButton(page)).toHaveText(
-      `System language, ${addedName}`
-    );
+    await expect(
+      spellingButton(page, `System language, ${names.join(", ")}`)
+    ).toBeVisible();
 
     await expect
       .poll(() => savedSetting(userDataDir, "spellcheckLanguages"))
-      .toHaveLength(1);
+      .toHaveLength(2);
 
     const chosen = (await savedSetting(
       userDataDir,

@@ -19,9 +19,8 @@ const platform = () => document.documentElement.dataset.platform;
 
 /**
  * Meru's language and spelling, how it starts and where downloads go. App
- * settings alone, so the page
- * has no scopes; the login item and the folder are main's to set, through
- * calls of their own.
+ * settings alone, so the page has no scopes; the spelling languages, the
+ * login item and the folder are main's to set, through calls of their own.
  */
 export const GeneralPage = () => {
   const { t } = useLingui();
@@ -81,6 +80,9 @@ export const GeneralPage = () => {
         spellcheckLanguages={settings.spellcheckLanguages}
         general={general}
         write={write}
+        setSpellcheckLanguage={(code, on) => {
+          calls.setSpellcheckLanguage({ code, on }).catch(noop);
+        }}
       />
       <SettingGroup
         title={t({

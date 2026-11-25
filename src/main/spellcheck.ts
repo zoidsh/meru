@@ -10,8 +10,8 @@ export interface SpellcheckDeps {
 
 /**
  * The languages every profile's session checks on Windows and Linux: the
- * system's, then those chosen in Settings, never none where Chromium has a
- * dictionary for any. A profile's session is given them as it is first
+ * system's, or with no dictionary for it those Chromium chose, then those
+ * chosen in Settings. A profile's session is given them as it is first
  * used, and again on every change.
  */
 export const createSpellcheck = ({
@@ -21,39 +21,27 @@ export const createSpellcheck = ({
 }: SpellcheckDeps) => {
   const prepared = new Set<string>();
 
-  const supported = (partition: string) => (language: string) => {
-    try {
-      checker.set(partition, [language]);
+  // Chromium throws on a language missing from its list, such as the locale
+  // `ja`, and then sets none of the others, so only listed ones are given.
+  const always = () => {
+    const system = checker.systemLanguage();
 
-      return true;
-    } catch (error) {
-      log(
-        `Dropped the spellchecker language ${language}: ${error instanceof Error ? error.message : String(error)}`
-      );
-
-      return false;
-    }
+    return checker.available().includes(system) ? [system] : checker.defaults();
   };
 
   const apply = (partition: string) => {
-    const system = checker.systemLanguage();
-    const chosen = settings.get("spellcheckLanguages");
+    const available = checker.available();
+    const chosen = settings.get("spellcheckLanguages").filter((language) => {
+      if (available.includes(language)) {
+        return true;
+      }
 
-    try {
-      checker.set(partition, [...new Set([system, ...chosen])]);
+      log(`Dropped the spellchecker language ${language}: no dictionary`);
 
-      return;
-    } catch {
-      // Chromium throws on a language it has no dictionary for, such as the
-      // locale `ja`, and then sets none of them, so each is tried alone.
-    }
+      return false;
+    });
 
-    const isSupported = supported(partition);
-    const base = isSupported(system) ? [system] : checker.defaults();
-
-    checker.set(partition, [
-      ...new Set([...base, ...chosen.filter(isSupported)]),
-    ]);
+    checker.set(partition, [...new Set([...always(), ...chosen])]);
   };
 
   settings.onChange("spellcheckLanguages", () => {
@@ -72,15 +60,20 @@ export const createSpellcheck = ({
       prepared.add(partition);
       apply(partition);
     },
-    /** What the Spelling row offers: the system's language and every other one Chromium has. */
+    /**
+     * What the Spelling row offers: the languages every session checks
+     * whatever is chosen, whether they are the system's, and every other
+     * one Chromium has.
+     */
     read: () => {
-      const system = checker.systemLanguage();
+      const base = always();
 
       return {
-        system,
+        always: base,
+        system: base.includes(checker.systemLanguage()),
         available: checker
           .available()
-          .filter((language) => language !== system),
+          .filter((language) => !base.includes(language)),
       };
     },
   };

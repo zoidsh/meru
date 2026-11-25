@@ -814,15 +814,44 @@ describe("the Settings window's Language and Spelling", () => {
     const app = setup(stateOf("Work"), undefined, "linux");
 
     app.spellcheck?.prepare("persist:work");
-    await app.handlers.update({ key: "spellcheckLanguages", value: ["de"] });
+    await app.handlers.setSpellcheckLanguage({ code: "de", on: true });
 
     expect([
       app.read().general.spelling,
       app.checked.get("persist:work"),
     ]).toStrictEqual([
-      { system: "en-US", available: ["de", "fr"] },
+      { always: ["en-US"], system: true, available: ["de", "fr"] },
       ["en-US", "de"],
     ]);
+    app.dispose();
+  });
+
+  it("keeps both of two quick toggles, each applied to the list as stored, and takes one off alone", async () => {
+    const app = setup(stateOf("Work"), undefined, "linux");
+
+    await Promise.all([
+      app.handlers.setSpellcheckLanguage({ code: "de", on: true }),
+      app.handlers.setSpellcheckLanguage({ code: "fr", on: true }),
+    ]);
+
+    expect(app.read().settings.spellcheckLanguages).toStrictEqual(["de", "fr"]);
+
+    await Promise.all([
+      app.handlers.setSpellcheckLanguage({ code: "de", on: false }),
+      app.handlers.setSpellcheckLanguage({ code: "fr", on: true }),
+    ]);
+
+    expect(app.read().settings.spellcheckLanguages).toStrictEqual(["fr"]);
+    app.dispose();
+  });
+
+  it("refuses a spelling language on macOS, which checks with its own", async () => {
+    const app = setup(stateOf("Work"));
+
+    await expect(
+      app.handlers.setSpellcheckLanguage({ code: "de", on: true })
+    ).rejects.toThrow("macOS");
+    expect(app.saved).toStrictEqual([]);
     app.dispose();
   });
 });

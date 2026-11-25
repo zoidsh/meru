@@ -75,10 +75,10 @@ msgstr "{MAX_SHOWN_UNREAD}+"
 msgid "{minutes, plural, one {For # Minute} other {For # Minutes}}"
 msgstr "{minutes, plural, one {For # Minute} other {For # Minutes}}"
 
-#. What the Spelling menu's button in Settings reads with three or more languages checked beside the system's; {shownNames} names the first two, # counts the rest
+#. What the Spelling menu's button in Settings reads with more languages checked than it names; {shownNames} lists the first three, as System language, German, French, and # counts the rest
 #: src/settings/language-group.tsx
-msgid "{more, plural, one {System language, {shownNames} and # more} other {System language, {shownNames} and # more}}"
-msgstr "{more, plural, one {System language, {shownNames} and # more} other {System language, {shownNames} and # more}}"
+msgid "{more, plural, one {{shownNames} and # more} other {{shownNames} and # more}}"
+msgstr "{more, plural, one {{shownNames} and # more} other {{shownNames} and # more}}"
 
 #. Tooltip of a profile's button in the title bar while the profile sleeps: its pages are closed, its mail still checked; {name} is the profile's name
 #: src/shell/titlebar.tsx
@@ -1266,6 +1266,8 @@ msgid "none"
 msgstr "none"
 
 #. Choice of the Sound menu in Settings: no sound with a notification
+#. What the Spelling menu's button in Settings reads while spelling is checked in no language
+#: src/settings/language-group.tsx
 #: src/settings/notifications-page.tsx
 msgid "None"
 msgstr "None"
@@ -2008,26 +2010,20 @@ msgstr "Stopped working"
 msgid "System"
 msgstr "System"
 
-#. Choice of the Language menu in Settings: Meru shows the language the system prefers, named in brackets in its own language, as Deutsch or Français
-#. placeholder {0}: offered.system
+#. Choice of the Language menu in Settings: Meru shows the language the system prefers; {systemLanguage} names it in its own language, as Deutsch or Français
 #: src/settings/language-group.tsx
-msgid "System ({0})"
-msgstr "System ({0})"
+msgid "System ({systemLanguage})"
+msgstr "System ({systemLanguage})"
 
 #. Description of the Icon color menu in Settings; System is the menu's first choice
 #: src/settings/menu-bar-page.tsx
 msgid "System changes with light and dark mode."
 msgstr "System changes with light and dark mode."
 
-#. What the Spelling menu's button in Settings reads when only the system's language is checked
+#. First of the languages the Spelling menu's button in Settings names: the system's, which is always checked
 #: src/settings/language-group.tsx
 msgid "System language"
 msgstr "System language"
-
-#. What the Spelling menu's button in Settings reads with one or two languages checked beside the system's; {shownNames} names them
-#: src/settings/language-group.tsx
-msgid "System language, {shownNames}"
-msgstr "System language, {shownNames}"
 
 #. Heading of the group of Settings on Windows and Linux for Meru's icon in the system tray
 #: src/settings/menu-bar-page.tsx
@@ -2383,6 +2379,11 @@ msgstr "You’re offline"
 #: src/settings/saved-searches-card.tsx
 msgid "You've already saved this search."
 msgstr "You've already saved this search."
+
+#. Unavailable first item of the Spelling menu in Settings when there is no dictionary for the system's language and none was chosen in its place
+#: src/settings/language-group.tsx
+msgid "Your system's language can't be checked"
+msgstr "Your system's language can't be checked"
 
 #. Subject of the stand-in email in the test notification Settings shows
 #: src/main/notifications.ts

@@ -1,6 +1,7 @@
 import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { ChevronDownIcon } from "lucide-react";
+import { useId } from "react";
 
 import type { SettingChange, SettingsState } from "#contract/settings.ts";
 import { Button } from "#ui/button.tsx";
@@ -9,6 +10,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "#ui/dropdown-menu.tsx";
@@ -24,28 +26,35 @@ import {
 import { SettingGroup } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 
+/** How many languages the Spelling button names before counting the rest. */
+const NAMED = 3;
+
 /** Meru's language, and on Windows and Linux the spell checker's. */
 export const LanguageGroup = ({
   language,
   spellcheckLanguages,
   general,
   write,
+  setSpellcheckLanguage,
 }: {
   language: string;
   spellcheckLanguages: readonly string[];
   general: Pick<SettingsState["general"], "language" | "spelling">;
   write: (change: SettingChange) => void;
+  setSpellcheckLanguage: (code: string, on: boolean) => void;
 }) => {
   const { t, i18n } = useLingui();
+  const summaryId = useId();
   const { language: offered, spelling } = general;
+  const systemLanguage = offered.system;
 
   const choices = [
     {
       value: "system",
       label: t({
-        message: `System (${offered.system})`,
+        message: `System (${systemLanguage})`,
         comment:
-          "Choice of the Language menu in Settings: Meru shows the language the system prefers, named in brackets in its own language, as Deutsch or Français",
+          "Choice of the Language menu in Settings: Meru shows the language the system prefers; {systemLanguage} names it in its own language, as Deutsch or Français",
       }),
     },
     ...offered.choices.map((choice) => ({
@@ -110,36 +119,41 @@ export const LanguageGroup = ({
     const others = spelling.available
       .map((code) => ({ code, name: nameOf(code) }))
       .toSorted((a, b) => a.name.localeCompare(b.name, i18n.locale));
-    const chosen = others.filter(({ code }) =>
-      spellcheckLanguages.includes(code)
-    );
+    const checked = [
+      ...(spelling.system
+        ? [
+            t({
+              message: "System language",
+              comment:
+                "First of the languages the Spelling menu's button in Settings names: the system's, which is always checked",
+            }),
+          ]
+        : spelling.always.map(nameOf)),
+      ...others
+        .filter(({ code }) => spellcheckLanguages.includes(code))
+        .map(({ name }) => name),
+    ];
     const shownNames = new Intl.ListFormat(i18n.locale, {
       type: "unit",
       style: "short",
-    }).format(chosen.slice(0, 2).map(({ name }) => name));
-    const more = chosen.length - 2;
-    let summary: string;
+    }).format(checked.slice(0, NAMED));
+    const more = checked.length - NAMED;
+    let summary = shownNames;
 
-    if (chosen.length === 0) {
+    if (checked.length === 0) {
       summary = t({
-        message: "System language",
+        message: "None",
         comment:
-          "What the Spelling menu's button in Settings reads when only the system's language is checked",
+          "What the Spelling menu's button in Settings reads while spelling is checked in no language",
       });
-    } else if (more <= 0) {
-      summary = t({
-        message: `System language, ${shownNames}`,
-        comment:
-          "What the Spelling menu's button in Settings reads with one or two languages checked beside the system's; {shownNames} names them",
-      });
-    } else {
+    } else if (more > 0) {
       summary = t({
         message: plural(more, {
-          one: `System language, ${shownNames} and # more`,
-          other: `System language, ${shownNames} and # more`,
+          one: `${shownNames} and # more`,
+          other: `${shownNames} and # more`,
         }),
         comment:
-          "What the Spelling menu's button in Settings reads with three or more languages checked beside the system's; {shownNames} names the first two, # counts the rest",
+          "What the Spelling menu's button in Settings reads with more languages checked than it names; {shownNames} lists the first three, as System language, German, French, and # counts the rest",
       });
     }
 
@@ -163,19 +177,31 @@ export const LanguageGroup = ({
               render={
                 <Button
                   variant="outline"
-                  aria-labelledby={ids.label}
+                  aria-labelledby={`${ids.label} ${summaryId}`}
                   aria-describedby={ids.description || undefined}
                 />
               }
             >
-              {summary}
+              <span id={summaryId}>{summary}</span>
               <ChevronDownIcon data-icon="inline-end" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
-                <DropdownMenuCheckboxItem checked disabled>
-                  {nameOf(spelling.system)}
-                </DropdownMenuCheckboxItem>
+                {spelling.always.length === 0 ? (
+                  <DropdownMenuItem disabled>
+                    {t({
+                      message: "Your system's language can't be checked",
+                      comment:
+                        "Unavailable first item of the Spelling menu in Settings when there is no dictionary for the system's language and none was chosen in its place",
+                    })}
+                  </DropdownMenuItem>
+                ) : (
+                  spelling.always.map((code) => (
+                    <DropdownMenuCheckboxItem key={code} checked disabled>
+                      {nameOf(code)}
+                    </DropdownMenuCheckboxItem>
+                  ))
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
@@ -185,12 +211,7 @@ export const LanguageGroup = ({
                     checked={spellcheckLanguages.includes(code)}
                     closeOnClick={false}
                     onCheckedChange={(on) => {
-                      write({
-                        key: "spellcheckLanguages",
-                        value: on
-                          ? [...spellcheckLanguages, code]
-                          : spellcheckLanguages.filter((each) => each !== code),
-                      });
+                      setSpellcheckLanguage(code, on);
                     }}
                   >
                     {name}

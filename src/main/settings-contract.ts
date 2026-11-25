@@ -92,7 +92,11 @@ export interface SettingsContractDeps {
   showTestNotification: (profileId: string | undefined) => void;
   general: Pick<
     GeneralPage,
-    "read" | "onChange" | "setOpenAtLogin" | "chooseDownloadsFolder"
+    | "read"
+    | "onChange"
+    | "setOpenAtLogin"
+    | "chooseDownloadsFolder"
+    | "setSpellcheckLanguage"
   >;
 }
 
@@ -365,6 +369,8 @@ export const settingsHandlers = ({
         general.setOpenAtLogin(on);
       }),
     chooseDownloadsFolder: () => general.chooseDownloadsFolder(),
+    setSpellcheckLanguage: ({ code, on }) =>
+      general.setSpellcheckLanguage(code, on),
   };
 };
 

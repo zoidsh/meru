@@ -107,12 +107,41 @@ describe(createSpellcheck, () => {
     expect(languages.get("persist:c")).toStrictEqual(["en-US", "fr"]);
   });
 
-  it("offers every language Chromium has but the system's", () => {
+  it("offers every language Chromium has but the system's, which is always checked", () => {
     const { spellcheck } = setUp([]);
 
     expect(spellcheck.read()).toStrictEqual({
-      system: "en-US",
+      always: ["en-US"],
+      system: true,
       available: ["en-GB", "de", "fr"],
     });
+  });
+
+  it("shows Chromium's own languages as always checked for a system language with no dictionary, as they are applied", () => {
+    const { spellcheck, languages } = setUp([], {
+      system: "ja",
+      defaults: ["en-GB"],
+    });
+
+    spellcheck.prepare("persist:a");
+
+    expect([spellcheck.read(), languages.get("persist:a")]).toStrictEqual([
+      { always: ["en-GB"], system: false, available: ["en-US", "de", "fr"] },
+      ["en-GB"],
+    ]);
+  });
+
+  it("shows nothing always checked when Chromium chose none for a system language with no dictionary", () => {
+    const { spellcheck, languages } = setUp(["de"], {
+      system: "ja",
+      defaults: [],
+    });
+
+    spellcheck.prepare("persist:a");
+
+    expect([spellcheck.read(), languages.get("persist:a")]).toStrictEqual([
+      { always: [], system: false, available: ["en-US", "en-GB", "de", "fr"] },
+      ["de"],
+    ]);
   });
 });

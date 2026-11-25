@@ -311,6 +311,14 @@ export const SETTINGS_CALLS = {
    * downloads to the folder chosen; a cancel changes nothing.
    */
   chooseDownloadsFolder: { request: none, response: z.undefined() },
+  /**
+   * Checks spelling in the language too, or no longer, applied to the list
+   * as stored when main gets to it; refused on macOS.
+   */
+  setSpellcheckLanguage: {
+    request: z.object({ code: z.string(), on: z.boolean() }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -388,12 +396,18 @@ export const SETTINGS_STATE = {
       choices: z.array(z.object({ language: z.string(), name: z.string() })),
     }),
     /**
-     * What Spelling offers: the system's language, always checked, and every
-     * other one there is a dictionary for; `null` on macOS, which checks with
-     * its own.
+     * What Spelling offers: the languages always checked, which are the
+     * system's or, with no dictionary for it, those Chromium chose, and none
+     * when it chose none; whether the system's is among them; and every
+     * other language there is a dictionary for. `null` on macOS, which
+     * checks with its own.
      */
     spelling: z.nullable(
-      z.object({ system: z.string(), available: z.array(z.string()) })
+      z.object({
+        always: z.array(z.string()),
+        system: z.boolean(),
+        available: z.array(z.string()),
+      })
     ),
   }),
   /** The language Meru shows, as a catalog's tag. */

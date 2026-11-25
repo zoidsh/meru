@@ -29,6 +29,7 @@ export const SETTINGS_CALL_NAMES = [
   "signIn",
   "setOpenAtLogin",
   "chooseDownloadsFolder",
+  "setSpellcheckLanguage",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];

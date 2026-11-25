@@ -112,6 +112,21 @@ export const createGeneralPage = ({
 
       await settings.update("downloadsFolder", () => chosen);
     },
+    /**
+     * Applied to the list as stored when the store gets to it, so two quick
+     * toggles both hold, which a list sent from the page would not.
+     */
+    setSpellcheckLanguage: async (code: string, on: boolean) => {
+      if (!spellcheck) {
+        throw new Error("Meru checks spelling with the system's own on macOS");
+      }
+
+      await settings.update("spellcheckLanguages", (languages) => {
+        const others = languages.filter((each) => each !== code);
+
+        return on ? [...others, code] : others;
+      });
+    },
     onChange: (listener: () => void) => {
       listeners.add(listener);
     },
