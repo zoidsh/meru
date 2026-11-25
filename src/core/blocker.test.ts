@@ -47,6 +47,8 @@ const PIXELS = [
   // Gmail's image proxy keeps the image's own URL in the fragment.
   "https://ci3.googleusercontent.com/meips/ADKq_NbXyz=s0-d-e1-ft#https://email.airbnb.com/wf/open?upn=abc",
   "https://ci3.googleusercontent.com/meips/ADKq_Nb=s0-d-e1-ft#https://stripe.com/trk/abc",
+  // A carried URL's scheme in capitals, which a URL's scheme may be.
+  "https://ci3.googleusercontent.com/meips/ADKq_Nb=s0-d-e1-ft#HTTPS://email.airbnb.com/wf/open?upn=abc",
 ];
 
 /**

@@ -76,9 +76,14 @@ const onHost = (hostname: string, hosts: ReadonlySet<string>) => {
   }
 };
 
-/** The URL Gmail's image proxy carries after `#`, where there is one. */
-const carriedUrl = ({ hash }: URL) =>
-  hash.startsWith("#http") ? URL.parse(hash.slice(1)) : null;
+/** The web URL Gmail's image proxy carries after `#`, where there is one. */
+const carriedUrl = ({ hash }: URL) => {
+  const carried = hash === "" ? null : URL.parse(hash.slice(1));
+
+  return carried?.protocol === "http:" || carried?.protocol === "https:"
+    ? carried
+    : null;
+};
 
 /** What the text entries see of a URL: from its host to its query, bounded. */
 const matchedText = ({ host, pathname, search }: URL) =>
