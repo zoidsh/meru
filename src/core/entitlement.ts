@@ -3,7 +3,8 @@ import { z } from "zod/mini";
 /**
  * What a free install lacks, in the order they are to be gated. `profiles`
  * is more than one profile, and with it profile sleep and per-profile
- * settings.
+ * settings; `gmailPageSettings` is v3's Pro switches on Gmail's page;
+ * `incomingLinks` is Meru as the default mail client and links sent to it.
  */
 export const CAPABILITIES = [
   "profiles",
@@ -19,6 +20,11 @@ export const CAPABILITIES = [
   "shortcutCustomization",
   "blocker",
   "linkConfirmation",
+  "gmailPageSettings",
+  "bookmarks",
+  "screenSharePicker",
+  "extensions",
+  "incomingLinks",
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
