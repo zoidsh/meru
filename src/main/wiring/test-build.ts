@@ -172,9 +172,21 @@ export const exposeEntitlementToSuite = (entitlement: Entitlement) => {
   }
 };
 
-/** The suite's build lets a test hold the server's answers. */
-export const suiteEntitlementServer = (server: EntitlementServer) =>
-  MERU_E2E_BUILD ? holdEntitlementServer(server) : server;
+/**
+ * The suite's build lets a test hold the server's answers, through
+ * `meruTestEntitlementServer`'s `hold` and `release`.
+ */
+export const suiteEntitlementServer = (server: EntitlementServer) => {
+  if (!MERU_E2E_BUILD) {
+    return server;
+  }
+
+  const { server: held, hold, release } = holdEntitlementServer(server);
+
+  Reflect.set(globalThis, "meruTestEntitlementServer", { hold, release });
+
+  return held;
+};
 
 /** What Gmail's pages report, recorded for the suite. */
 export const gmailPageCapture = () => MERU_E2E_BUILD && captureGmailPage();

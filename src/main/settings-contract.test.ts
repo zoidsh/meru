@@ -16,7 +16,6 @@ import type { Platform } from "#core/platform.ts";
 import type { Settings } from "#core/settings.ts";
 import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
-import type { EntitlementServer } from "#platform/entitlement-server.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
 
 import { createDoNotDisturb } from "./do-not-disturb.ts";
@@ -28,11 +27,11 @@ import { publicKeyFromRaw } from "./entitlement-token.ts";
 import { createEntitlement, entitlementErrorMessage } from "./entitlement.ts";
 import { createGeneralPage } from "./general-page.ts";
 import { createLanguage } from "./language.ts";
+import { createLicenseRequests } from "./license-requests.ts";
 import { createMailPoller } from "./mail.ts";
 import { createProfiles } from "./profiles.ts";
 import { createRemoveProfile } from "./remove-profile.ts";
 import {
-  createLicenseRequests,
   onSettingsStateChange,
   readSettingsState,
   settingsHandlers,
@@ -40,6 +39,7 @@ import {
 import { createSettingsPages } from "./settings-pages.ts";
 import { createSettingsStore } from "./settings.ts";
 import { createSpellcheck } from "./spellcheck.ts";
+import { holdEntitlementServer } from "./test-hooks.ts";
 import { createTrustedSites } from "./trusted-sites.ts";
 
 const stateOf = (...names: string[]): State => ({
@@ -160,24 +160,13 @@ const setup = (
   });
   // The development stand-in answers; while held, no call is answered
   // until the test lets them through.
-  const stub = createStubEntitlementServer({
-    file: fakeTextFile("/entitlement-stub.json", new Map()),
-    now: Date.now,
-    offline: () => false,
-  });
-  let held: PromiseWithResolvers<void> | undefined;
-  const after =
-    <Request, Answer>(call: (request: Request) => Promise<Answer>) =>
-    async (request: Request) => {
-      await held?.promise;
-
-      return call(request);
-    };
-  const server: EntitlementServer = {
-    refresh: after(stub.refresh),
-    activate: after(stub.activate),
-    setDeviceLabel: after(stub.setDeviceLabel),
-  };
+  const { server, hold, release } = holdEntitlementServer(
+    createStubEntitlementServer({
+      file: fakeTextFile("/entitlement-stub.json", new Map()),
+      now: Date.now,
+      offline: () => false,
+    })
+  );
   const copied: string[] = [];
   const opened: string[] = [];
   const entitlement = createEntitlement({
@@ -294,13 +283,8 @@ const setup = (
     copied,
     opened,
     /** Holds every call to the server until `release`. */
-    hold: () => {
-      held = Promise.withResolvers();
-    },
-    release: () => {
-      held?.resolve();
-      held = undefined;
-    },
+    hold,
+    release,
     profiles,
     /** Polls the listed profiles' feeds, which answer with these, and lets each answer land. */
     poll: async (answers: Record<string, FeedOutcome>) => {

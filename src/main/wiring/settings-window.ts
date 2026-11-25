@@ -23,12 +23,12 @@ import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Entitlement } from "../entitlement.ts";
 import { createGeneralPage } from "../general-page.ts";
 import type { Language } from "../language.ts";
+import type { LicenseRequests } from "../license-requests.ts";
 import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
 import { createRemoveProfile } from "../remove-profile.ts";
 import type { SenderRegistry } from "../senders.ts";
 import {
-  createLicenseRequests,
   onSettingsStateChange,
   readSettingsState,
   settingsHandlers,
@@ -77,6 +77,7 @@ export const wireSettingsWindow = ({
   signIn,
   trustedSites,
   entitlement,
+  licenseRequests,
   systemBrowser,
 }: {
   platform: Platform;
@@ -111,12 +112,13 @@ export const wireSettingsWindow = ({
   signIn: (profileId: string) => Promise<void>;
   trustedSites: TrustedSites;
   entitlement: Entitlement;
+  /** The one license request out, shared with every surface that sends one. */
+  licenseRequests: LicenseRequests;
   /** Meru's own links' browser, for Meru Pro's page. */
   systemBrowser: SystemBrowser;
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
-  const licenseRequests = createLicenseRequests();
 
   const settingsWindow = createSettingsWindow({
     create: () =>

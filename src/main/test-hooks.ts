@@ -60,23 +60,11 @@ export const exposeTestEntitlement = (entitlement: Entitlement) => {
 };
 
 /**
- * The server with each call held while the suite says, under
- * `meruTestEntitlementServer`, so a test sees a request that is still out.
+ * `server` with each call held from `hold` until `release`, so a test sees a
+ * request that is still out.
  */
-export const holdEntitlementServer = (
-  server: EntitlementServer
-): EntitlementServer => {
+export const holdEntitlementServer = (server: EntitlementServer) => {
   let held: PromiseWithResolvers<void> | undefined;
-
-  Reflect.set(globalThis, "meruTestEntitlementServer", {
-    hold: () => {
-      held ??= Promise.withResolvers();
-    },
-    release: () => {
-      held?.resolve();
-      held = undefined;
-    },
-  });
 
   const after =
     <Request, Answer>(call: (request: Request) => Promise<Answer>) =>
@@ -87,9 +75,18 @@ export const holdEntitlementServer = (
     };
 
   return {
-    refresh: after(server.refresh),
-    activate: after(server.activate),
-    setDeviceLabel: after(server.setDeviceLabel),
+    server: {
+      refresh: after(server.refresh),
+      activate: after(server.activate),
+      setDeviceLabel: after(server.setDeviceLabel),
+    } satisfies EntitlementServer,
+    hold: () => {
+      held ??= Promise.withResolvers();
+    },
+    release: () => {
+      held?.resolve();
+      held = undefined;
+    },
   };
 };
 

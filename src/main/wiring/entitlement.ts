@@ -15,6 +15,7 @@ import {
 } from "../entitlement-stub.ts";
 import { publicKeyFromRaw } from "../entitlement-token.ts";
 import { createEntitlement, saveEntitlementFile } from "../entitlement.ts";
+import { createLicenseRequests } from "../license-requests.ts";
 import {
   exposeEntitlementToSuite,
   suiteEntitlementServer,
@@ -84,5 +85,6 @@ export const wireEntitlement = async ({
 
   exposeEntitlementToSuite(entitlement);
 
-  return { entitlement };
+  // One for every surface that sends a license request.
+  return { entitlement, licenseRequests: createLicenseRequests() };
 };

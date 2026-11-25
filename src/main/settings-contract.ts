@@ -38,6 +38,7 @@ import { checkedDockChange } from "./dock.ts";
 import type { Entitlement } from "./entitlement.ts";
 import type { GeneralPage } from "./general-page.ts";
 import type { Language } from "./language.ts";
+import type { LicenseRequests } from "./license-requests.ts";
 import type { MailPoller } from "./mail.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
@@ -116,47 +117,6 @@ export interface SettingsContractDeps {
   /** Meru's own links' browser, which holds a link while Meru is the default. */
   systemBrowser: Pick<SystemBrowser, "open">;
 }
-
-/**
- * The one license request Settings may have out: an activation, a rename or
- * a retry. It lives here rather than in the page, so a window closed and
- * opened again while one is out still waits for it.
- */
-export const createLicenseRequests = () => {
-  let out = false;
-  const listeners = new Set<() => void>();
-
-  const set = (next: boolean) => {
-    out = next;
-
-    for (const listener of listeners) {
-      listener();
-    }
-  };
-
-  return {
-    busy: () => out,
-    /** Runs `request` unless one is out, which it rejects. */
-    run: async <Result>(request: () => Promise<Result>) => {
-      if (out) {
-        throw new Error("A license request is already out");
-      }
-
-      set(true);
-
-      try {
-        return await request();
-      } finally {
-        set(false);
-      }
-    },
-    onChange: (listener: () => void) => {
-      listeners.add(listener);
-    },
-  };
-};
-
-export type LicenseRequests = ReturnType<typeof createLicenseRequests>;
 
 /** The checks keep each key's value to its own type, which a loop over keys loses. */
 interface LooseStore {
