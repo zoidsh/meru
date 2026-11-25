@@ -8,12 +8,23 @@ export interface LoginItem {
   set: (on: boolean) => void;
 }
 
+/**
+ * Windows' portable build runs from a copy it extracts to the temporary
+ * folder, gone by the next login, so its Run key entry names the portable
+ * file itself. Reading asks with the same path, or it reads another entry.
+ */
+const entry = () => {
+  const portable = process.env.PORTABLE_EXECUTABLE_FILE;
+
+  return portable ? { path: portable } : {};
+};
+
 /** The system's own: Login Items on macOS, the Run key on Windows. */
 export const createLoginItem = (): LoginItem => ({
   real: true,
-  isOn: () => app.getLoginItemSettings().openAtLogin,
+  isOn: () => app.getLoginItemSettings(entry()).openAtLogin,
   set: (on) => {
-    app.setLoginItemSettings({ openAtLogin: on });
+    app.setLoginItemSettings({ ...entry(), openAtLogin: on });
   },
 });
 
