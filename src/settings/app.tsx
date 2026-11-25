@@ -1,5 +1,4 @@
 import { useLingui } from "@lingui/react/macro";
-import { cn } from "cn";
 import {
   BellIcon,
   ChevronLeftIcon,
@@ -40,16 +39,14 @@ const NAV_WIDTH = 212;
 interface Section {
   id: SettingsSection;
   icon: LucideIcon;
-  /** The tile's colour behind the icon. */
-  tile: string;
 }
 
 /** The sections built so far, in the nav's groups. */
 const SECTION_GROUPS: readonly (readonly Section[])[] = [
-  [{ id: "profiles", icon: UsersIcon, tile: "bg-[oklch(0.58_0.17_255)]" }],
+  [{ id: "profiles", icon: UsersIcon }],
   [
-    { id: "notifications", icon: BellIcon, tile: "bg-[oklch(0.62_0.2_25)]" },
-    { id: "gmail", icon: MailIcon, tile: "bg-[oklch(0.62_0.15_230)]" },
+    { id: "notifications", icon: BellIcon },
+    { id: "gmail", icon: MailIcon },
   ],
 ];
 
@@ -204,7 +201,7 @@ export const App = () => {
           {shown.length > 0 ? (
             shown.map((group) => (
               <div key={group[0]?.id} className="flex flex-col gap-1">
-                {group.map(({ id, icon: Icon, tile }) => (
+                {group.map(({ id, icon: Icon }) => (
                   <Button
                     key={id}
                     variant={id === sectionId ? "secondary" : "ghost"}
@@ -213,17 +210,9 @@ export const App = () => {
                     onClick={() => {
                       void calls.openPage({ section: id, profileId: null });
                     }}
-                    className="w-full justify-start gap-2 pl-1"
+                    className="w-full justify-start gap-2"
                   >
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "flex size-5 shrink-0 items-center justify-center rounded-md text-white",
-                        tile
-                      )}
-                    >
-                      <Icon className="size-3.25" strokeWidth={2.25} />
-                    </span>
+                    <Icon data-icon="inline-start" aria-hidden />
                     {titles[id]}
                   </Button>
                 ))}
