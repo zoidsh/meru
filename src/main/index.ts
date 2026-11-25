@@ -316,8 +316,9 @@ const start = async () => {
         settings,
         log: console.error,
       });
-  // A page's links leave through the opener; Meru's own, as Open in Browser,
-  // through `systemBrowser`, which asks nothing.
+  // A page's links leave through the opener, which asks first; Meru's own, as
+  // Open in Browser, through `systemBrowser`, which asks nothing. Both show
+  // the default-browser alert while Meru is the default browser.
   const {
     linkOpener,
     ownLinks: systemBrowser,

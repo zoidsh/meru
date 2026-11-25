@@ -449,10 +449,10 @@ export const readSettingsState = ({
 
 /**
  * Calls `listener` on every change to what `readSettingsState` reads, so
- * the Settings window is sent the state again: each setting it shows, which
- * the store announces by key as it does the trusted sites, Do Not Disturb through the profiles' state,
- * the mail check, the General page's own values, the language shown and the
- * page shown.
+ * the Settings window is sent the state again: each setting it shows and the
+ * trusted sites, which the store announces by key, Do Not Disturb through the
+ * profiles' state, the mail check, the General page's own values, the
+ * language shown and the page shown.
  */
 export const onSettingsStateChange = (
   {
