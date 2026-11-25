@@ -414,6 +414,52 @@ const followRealFocus = async (page: Page) => {
   return () => page.evaluate(() => document.hasFocus());
 };
 
+test("focus a hidden tab's page takes, as on Windows one can as it first loads, goes back to the front page", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seed(userDataDir, standIn);
+
+  const app = await launchApp();
+  const calendar = await findPage(app, standIn.calendarUrl);
+  const gmail = await findPage(app, standIn.url);
+  const calendarHasFocus = await followRealFocus(calendar);
+  const gmailHasFocus = await followRealFocus(gmail);
+  const holders = async () => [await calendarHasFocus(), await gmailHasFocus()];
+
+  await expect.poll(holders).toStrictEqual([true, false]);
+
+  // Gmail's page grabs focus; main's focus events say it was given back.
+  await app.evaluate(({ webContents }, url) => {
+    const seen: string[] = [];
+
+    for (const each of webContents.getAllWebContents()) {
+      each.on("focus", () => {
+        seen.push(each.getURL());
+      });
+    }
+
+    Reflect.set(globalThis, "focusedSince", seen);
+    webContents
+      .getAllWebContents()
+      .find((contents) => contents.getURL().startsWith(url))
+      ?.focus();
+  }, standIn.url);
+
+  // In either order: main gives focus back from within Gmail's own focus
+  // event, ahead of the listener above.
+  const focusedSince = () =>
+    app.evaluate(() =>
+      (Reflect.get(globalThis, "focusedSince") as string[]).toSorted()
+    );
+
+  await expect
+    .poll(focusedSince)
+    .toStrictEqual([standIn.url, standIn.calendarUrl].toSorted());
+  await expect.poll(holders).toStrictEqual([true, false]);
+});
+
 test("a split that would leave a pane under the minimum is refused with a toast, which takes no focus, leaves the page focus a tab's menu left it, gives back what a card it replaces took, and closes by itself", async ({
   launchApp,
   standIn,

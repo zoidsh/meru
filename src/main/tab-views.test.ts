@@ -596,6 +596,23 @@ describe(createTabViews, () => {
     ]);
   });
 
+  it("tells of focus a hidden tab's page takes as taken unasked, never as the front page's, as on Windows one can as it first loads", async () => {
+    const window = await setup();
+
+    await window.profiles.selectTab({ profileId: "a", tabId: "c1" });
+    await window.profiles.selectTab({ profileId: "a", tabId: "gmail" });
+    const calendar = window.viewOf("persist:a", 1);
+    const hidden = calendar?.visible;
+
+    calendar?.options.onFocus();
+    window.viewOf("persist:a", 0)?.options.onFocus();
+
+    expect([hidden, [...window.focusEvents]]).toStrictEqual([
+      false,
+      ["stray", "front"],
+    ]);
+  });
+
   it("moves a tab's view to its own window and back without reloading it, Gmail's coming to the front meanwhile", async () => {
     const window = await setup();
     const calendar = { profileId: "a", tabId: "c1" };

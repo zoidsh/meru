@@ -95,9 +95,10 @@ export interface TabViewsDeps {
   /** Told when a tab's page moves to its own window or back to the main one. */
   onMoved: (key: TabKey) => void;
   /**
-   * Told when a shown pane's page other than the front one takes keyboard
-   * focus unasked, as on Linux one does as it first loads, so focus goes
-   * back where it was rather than to a pane the selection left.
+   * Told when a page other than the front one, a pane's or a hidden tab's,
+   * takes keyboard focus unasked, as on Linux and Windows one can as it
+   * first loads, so focus goes back where it was rather than staying on a
+   * page the selection left.
    */
   onStrayFocus: () => void;
   /**
@@ -612,7 +613,7 @@ export const createTabViews = ({
       onFocus: () => {
         if (inWindows.has(key)) {
           onOwnWindowFocus(tabKeyed);
-        } else if (key !== front && shownKeys.has(key) && front !== undefined) {
+        } else if (key !== front && front !== undefined) {
           onStrayFocus();
         } else {
           onFocus();
