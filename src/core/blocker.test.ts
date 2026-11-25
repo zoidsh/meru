@@ -165,6 +165,16 @@ describe(createBlockMatcher, () => {
     ]).toStrictEqual([["https://ad.doubleclick.net./pagead/x"], []]);
   });
 
+  it("matches the list's text in the first 512 characters of host, path and query, and not past them", () => {
+    // "example.com/" is 12 characters, "generate_204" 12 more.
+    expect(
+      blocked(BOTH, [
+        `https://example.com/${"x".repeat(488)}generate_204`,
+        `https://example.com/${"x".repeat(500)}generate_204`,
+      ])
+    ).toStrictEqual([`https://example.com/${"x".repeat(488)}generate_204`]);
+  });
+
   it("classifies a 100,000-character URL, and one carried in a fragment that long, in a few milliseconds", () => {
     const matcher = createBlockMatcher(BOTH, SIGN_IN_ORIGINS);
     // Long runs of what the patterns' unbounded parts take, where a match
@@ -174,6 +184,9 @@ describe(createBlockMatcher, () => {
       `https://email.example.com/${filler}`,
       `https://ci3.googleusercontent.com/meips/x#https://email.example.com/${filler}`,
       `https://example.com/?q=${"/o/".repeat(33_000)}`,
+      // A host of many labels, as such and carried in the fragment.
+      `https://${"a.".repeat(50_000)}doubleclick.net/x`,
+      `https://ci3.googleusercontent.com/meips/x#https://${"a.".repeat(50_000)}doubleclick.net/x`,
     ];
 
     for (const url of urls) {

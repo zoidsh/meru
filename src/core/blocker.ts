@@ -27,17 +27,25 @@ export interface BlockAsk {
 /**
  * How much of a URL's host, path and query the list's text entries are
  * matched against. Every entry names a host and the start of a path, so a
- * tracker's shape sits well inside the first few hundred characters; the
- * rest is a sender's to make as long as it likes, and a regular expression
+ * tracker's marker ends within the first couple of hundred characters; the
+ * rest is a sender's to make as long as they like, and a regular expression
  * over it costs time that grows faster than its length.
  */
-export const MATCHED_TEXT_LENGTH = 2048;
+const MATCHED_TEXT_LENGTH = 512;
+
+/**
+ * No DNS name is longer, so a longer hostname names no host on the list,
+ * and walking its labels would cost time that grows with the square of its
+ * length.
+ */
+const MAX_HOSTNAME_LENGTH = 253;
 
 /**
  * A list entry as a regular expression. One that starts with a character
- * class repeated, `[…]+`, finds a match exactly where the class alone
- * would, since the match is not anchored; alone, it no longer runs to the
- * end of a long run of that class from every position in it.
+ * class repeated, `[…]+`, matches a string whenever the class alone does,
+ * if at a later index, since the match is not anchored, and only `test` is
+ * asked of it; alone, it no longer runs to the end of a long run of that
+ * class from every position in it.
  */
 const compilePattern = (pattern: string) =>
   new RegExp(
@@ -47,6 +55,10 @@ const compilePattern = (pattern: string) =>
 
 /** The host, or any host it is a subdomain of, is in `hosts`. */
 const onHost = (hostname: string, hosts: ReadonlySet<string>) => {
+  if (hostname.length > MAX_HOSTNAME_LENGTH + 1) {
+    return false;
+  }
+
   let suffix = hostname.endsWith(".") ? hostname.slice(0, -1) : hostname;
 
   for (;;) {
