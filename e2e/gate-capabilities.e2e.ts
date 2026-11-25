@@ -6,7 +6,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { ElectronApplication, Locator, Page } from "@playwright/test";
 
 import { DAY } from "#core/entitlement.ts";
 
@@ -29,6 +29,13 @@ import {
   profileRow,
   switchNamed,
 } from "./lib/settings.ts";
+import {
+  THEMES,
+  emulateTheme,
+  onlyWithShots,
+  shootWindow,
+  shotPath,
+} from "./lib/shots.ts";
 import { ANY_SESSION, listing } from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 
@@ -592,4 +599,88 @@ test("the free version lists no saved search and saves none, shows Add search as
       badge: undefined,
       enabled: true,
     });
+});
+
+test.describe("shots", () => {
+  test.beforeEach(onlyWithShots);
+
+  test("each Settings page and the main window's title bar on the free version, with every gated setting stored on, light and dark", async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    await writeState(userDataDir, {
+      profiles: [
+        {
+          id: "home",
+          name: "Home",
+          tabs: [{ id: "gmail", app: "gmail", url: standIn.url, title: "" }],
+          selectedTabId: "gmail",
+          savedSearches: [{ id: "a", query: "is:unread" }],
+        },
+      ],
+      selectedProfileId: "home",
+      doNotDisturb: DO_NOT_DISTURB,
+    });
+    await writeSettings(userDataDir, {
+      titlebarUnifiedInbox: true,
+      titlebarDoNotDisturb: true,
+      quietHours: QUIET_ALL_DAY,
+      notificationImportantOnly: true,
+      notificationSound: "system",
+      verificationCodes: true,
+      verificationCodeTrash: true,
+    });
+
+    const { app, shell } = await launchFree(launchApp, userDataDir, standIn);
+    const page = await openSettings(app);
+    const shoot = async (surface: string, shown?: Locator) => {
+      await shown?.scrollIntoViewIfNeeded();
+
+      for (const theme of THEMES) {
+        // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+        await emulateTheme(app, theme);
+        // oxlint-disable-next-line no-await-in-loop -- one after another
+        await page.screenshot({ path: shotPath(`free-${surface}`, theme) });
+      }
+    };
+    const pages: [string, string, Locator?][] = [
+      ["General", "settings-general"],
+      ["Appearance", "settings-appearance", badgeOf(page, "Unified inbox")],
+      [
+        process.platform === "darwin" ? "Menu Bar & Dock" : "Tray & Taskbar",
+        "settings-menu-bar",
+      ],
+      ["Notifications", "settings-notifications"],
+      [
+        "Notifications",
+        "settings-notifications-quiet-hours",
+        badgeOf(page, "Quiet hours"),
+      ],
+      ["Gmail", "settings-gmail", badgeOf(page, "Find verification codes")],
+      ["Privacy & Security", "settings-privacy"],
+      ["Meru Pro", "settings-meru-pro"],
+    ];
+
+    for (const [section, surface, shown] of pages) {
+      // oxlint-disable-next-line no-await-in-loop -- one page after another
+      await openSection(page, section);
+      // oxlint-disable-next-line no-await-in-loop -- one page after another
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(section);
+      // oxlint-disable-next-line no-await-in-loop -- one page after another
+      await shoot(surface, shown);
+    }
+
+    await openProfiles(page);
+    await profileRow(page, "Home").click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Home");
+    await shoot("settings-profile-page", badgeOf(page, "Add search"));
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await shootWindow(app, shell, shotPath("free-titlebar", theme));
+    }
+  });
 });
