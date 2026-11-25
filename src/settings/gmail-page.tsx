@@ -46,16 +46,16 @@ export const GmailPage = () => {
   };
   const codesOff = !settings.verificationCodes;
   const codesOffReason = t({
-    message: "Turn on Find codes in new mail to use this.",
+    message: "Turn on Find verification codes first.",
     comment:
-      "Description of a verification code setting on the Gmail page in Settings while Find codes in new mail, the switch above it, is off",
+      "Description of a verification code setting on the Gmail page in Settings while Find verification codes, the switch above it, is off; it says what to do to use the setting",
   });
 
-  /** A row under Find codes in new mail is disabled while it is off, its value kept. */
+  /** A row under Find verification codes is disabled while it is off, its value kept. */
   const switchRow = (
     key: SwitchKey,
     label: string,
-    description: string,
+    description: string | undefined,
     dependent = false
   ) => {
     const disabled = dependent && codesOff;
@@ -84,14 +84,14 @@ export const GmailPage = () => {
 
   const copyModes: Record<VerificationCodeCopyMode, string> = {
     notificationClick: t({
-      message: "When you press Copy",
+      message: "When you click Copy",
       comment:
-        "Choice of the Copy the code menu in Settings: the code is copied when the Copy button on its notification is pressed",
+        "Choice of the Copy code menu in Settings: the code is copied when the Copy button on its notification is clicked",
     }),
     immediately: t({
       message: "As soon as it arrives",
       comment:
-        "Choice of the Copy the code menu in Settings: the code is copied as soon as the email with it arrives",
+        "Choice of the Copy code menu in Settings: the code is copied as soon as the email with it arrives",
     }),
   };
 
@@ -101,16 +101,17 @@ export const GmailPage = () => {
         <CardHeader>
           <CardTitle>
             {t({
-              message: "Gmail's page",
+              message: "Gmail page",
               comment:
-                "Title of the group of Settings that hide or change parts of Gmail's own page",
+                "Title of the group of Settings that hide or change parts of the Gmail page",
             })}
           </CardTitle>
           <CardDescription>
             {t({
-              message: "Changes what Meru shows, not your Gmail settings.",
+              message:
+                "These change how Gmail looks in Meru. Your Gmail settings stay the same.",
               comment:
-                "Description of the Gmail's page group in Settings: these settings change only what Meru shows, never Gmail's own settings",
+                "Description of the Gmail page group in Settings: these settings change only what Meru shows, never the person's settings in Gmail",
             })}
           </CardDescription>
         </CardHeader>
@@ -120,69 +121,60 @@ export const GmailPage = () => {
               switchRow(
                 "hideGmailLogo",
                 t({
-                  message: "Hide the Gmail logo",
+                  message: "Hide Gmail logo",
                   comment:
-                    "Label of the switch in Settings that hides the Gmail logo on Gmail's page",
+                    "Label of the switch in Settings that hides the Gmail logo at the top left of the Gmail page",
                 }),
-                t({
-                  message: "The logo in the top left corner.",
-                  comment:
-                    "Description of the Hide the Gmail logo switch in Settings",
-                })
+                undefined
               ),
               switchRow(
                 "hidePromoBanner",
                 t({
-                  message: "Hide promotional banners",
+                  message: "Hide promotions",
                   comment:
-                    "Label of the switch in Settings that hides Google's promotional banners on Gmail's page",
+                    "Label of the switch in Settings that hides the promotional banners Google shows above the inbox, such as offers to upgrade to Google Workspace",
                 }),
                 t({
-                  message:
-                    "Google's offers above the message list, such as Workspace upgrades.",
+                  message: "Hides offers from Google above your inbox.",
                   comment:
-                    "Description of the Hide promotional banners switch in Settings; Workspace is Google Workspace, kept as Google names it",
+                    "Description of the Hide promotions switch in Settings",
                 })
               ),
               switchRow(
                 "hideUpgradeButton",
                 t({
-                  message: "Hide the Upgrade button",
+                  message: "Hide Upgrade button",
                   comment:
-                    "Label of the switch in Settings that hides Gmail's own Upgrade button; Upgrade is the label of Gmail's button, written as Gmail writes it, not Meru Pro's",
+                    "Label of the switch in Settings that hides the Upgrade button Gmail shows at the top of its page; Upgrade is the label of Gmail's button, written as Gmail writes it, not Meru Pro's",
                 }),
-                t({
-                  message: "Gmail's own button, at the top of the page.",
-                  comment:
-                    "Description of the Hide the Upgrade button switch in Settings",
-                })
+                undefined
               ),
               switchRow(
                 "hideInboxFooter",
                 t({
-                  message: "Hide the inbox footer",
+                  message: "Hide inbox footer",
                   comment:
-                    "Label of the switch in Settings that hides the footer Gmail shows under its message list",
+                    "Label of the switch in Settings that hides the footer Gmail shows under the inbox",
                 }),
                 t({
                   message:
-                    "Storage, policies and account activity, under the message list.",
+                    "Hides the storage and account details below your inbox.",
                   comment:
-                    "Description of the Hide the inbox footer switch in Settings: what Gmail's footer shows",
+                    "Description of the Hide inbox footer switch in Settings: Gmail's footer shows the storage used, policies and account activity",
                 })
               ),
               switchRow(
                 "extendDarkTheme",
                 t({
-                  message: "Extend Gmail's Dark theme",
+                  message: "Dark theme for all of Gmail",
                   comment:
-                    "Label of the switch in Settings that darkens what Gmail's own Dark theme leaves white; Dark is the name of Gmail's theme, as Gmail writes it",
+                    "Label of the switch in Settings that darkens the parts of Gmail its own dark theme leaves white",
                 }),
                 t({
                   message:
-                    "Darkens what Gmail's Dark theme leaves white. Only while Gmail's own theme is Dark, whatever Meru's.",
+                    "Darkens the parts of Gmail that stay white in its dark theme. This only works when Gmail itself is set to Dark.",
                   comment:
-                    "Description of the Extend Gmail's Dark theme switch in Settings; Dark is the name of Gmail's theme, and Meru's is the theme chosen in Meru",
+                    "Description of the Dark theme for all of Gmail switch in Settings; Dark is the name of the theme chosen in Gmail's own settings, as Gmail writes it",
                 })
               ),
             ]}
@@ -211,22 +203,23 @@ export const GmailPage = () => {
                 }),
                 t({
                   message:
-                    "In an open conversation. On screen only: Gmail's order is unchanged.",
+                    "Shows the newest message at the top of a conversation.",
                   comment:
-                    "Description of the Newest message first switch in Settings",
+                    "Description of the Newest message first switch in Settings; only what Meru shows changes, not the order in Gmail",
                 })
               ),
               switchRow(
                 "moveAttachmentsToTop",
                 t({
-                  message: "Attachments at the top",
+                  message: "Show attachments first",
                   comment:
                     "Label of the switch in Settings that shows each Gmail message's attachments above its text",
                 }),
                 t({
-                  message: "Above each message's text, rather than below it.",
+                  message:
+                    "Shows attachments above the message instead of below it.",
                   comment:
-                    "Description of the Attachments at the top switch in Settings",
+                    "Description of the Show attachments first switch in Settings",
                 })
               ),
               switchRow(
@@ -237,7 +230,8 @@ export const GmailPage = () => {
                     "Label of the switch in Settings that shows the quoted text Gmail trims; trimmed content is Gmail's own name for it",
                 }),
                 t({
-                  message: "The quoted text Gmail folds behind its ••• button.",
+                  message:
+                    "Shows the quoted text that Gmail hides behind the ••• button.",
                   comment:
                     "Description of the Show trimmed content switch in Settings; ••• is the label of Gmail's button that shows trimmed content, kept as is",
                 })
@@ -262,34 +256,25 @@ export const GmailPage = () => {
               switchRow(
                 "verificationCodes",
                 t({
-                  message: "Find codes in new mail",
+                  message: "Find verification codes",
                   comment:
                     "Label of the switch in Settings that looks for a verification code in each new email",
                 }),
                 t({
                   message:
-                    "A notification shows the code, even during quiet hours or Do Not Disturb.",
+                    "Shows a notification with the code, even during quiet hours or Do Not Disturb.",
                   comment:
-                    "Description of the Find codes in new mail switch in Settings; quiet hours and Do Not Disturb are the Notifications page's settings of those names",
+                    "Description of the Find verification codes switch in Settings; quiet hours and Do Not Disturb are the Notifications page's settings of those names",
                 })
               ),
               <SettingRow
                 key="verificationCodeCopyMode"
                 label={t({
-                  message: "Copy the code",
+                  message: "Copy code",
                   comment:
                     "Label of the menu in Settings choosing when a verification code is copied",
                 })}
-                description={
-                  codesOff
-                    ? codesOffReason
-                    : t({
-                        message:
-                          "With the notification's Copy button, or as soon as the email arrives.",
-                        comment:
-                          "Description of the Copy the code menu in Settings; Copy is the label of the button on the verification code notification",
-                      })
-                }
+                description={codesOff ? codesOffReason : undefined}
                 disabled={codesOff}
               >
                 {(ids) => (
@@ -332,7 +317,7 @@ export const GmailPage = () => {
                     "Label of the switch in Settings that marks the email with a verification code read once the code is copied",
                 }),
                 t({
-                  message: "Never before its code is copied.",
+                  message: "Marks the email as read after you copy its code.",
                   comment:
                     "Description of the Mark as read after copying switch in Settings",
                 }),
@@ -347,9 +332,9 @@ export const GmailPage = () => {
                 }),
                 t({
                   message:
-                    "Instead of marking it read. A wrong guess can move a real email.",
+                    "Moves the email to the Trash after you copy its code. Meru can occasionally mistake a regular email for one with a code.",
                   comment:
-                    "Description of the Move to Trash after copying switch in Settings: it takes the place of marking the email read, and a code found by mistake can move a real email",
+                    "Description of the Move to Trash after copying switch in Settings; Trash is Gmail's folder of that name, and the second sentence warns that a code found by mistake can move a real email",
                 }),
                 true
               ),

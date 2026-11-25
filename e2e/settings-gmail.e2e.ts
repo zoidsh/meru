@@ -27,23 +27,23 @@ const storedValue = async (userDataDir: string, key: string) => {
 
 /** Each switch of the page by its label, with the key it shows, in the page's order. */
 const SWITCHES = [
-  ["Hide the Gmail logo", "hideGmailLogo"],
-  ["Hide promotional banners", "hidePromoBanner"],
-  ["Hide the Upgrade button", "hideUpgradeButton"],
-  ["Hide the inbox footer", "hideInboxFooter"],
-  ["Extend Gmail's Dark theme", "extendDarkTheme"],
+  ["Hide Gmail logo", "hideGmailLogo"],
+  ["Hide promotions", "hidePromoBanner"],
+  ["Hide Upgrade button", "hideUpgradeButton"],
+  ["Hide inbox footer", "hideInboxFooter"],
+  ["Dark theme for all of Gmail", "extendDarkTheme"],
   ["Newest message first", "reverseConversation"],
-  ["Attachments at the top", "moveAttachmentsToTop"],
+  ["Show attachments first", "moveAttachmentsToTop"],
   ["Show trimmed content", "showTrimmedContent"],
-  ["Find codes in new mail", "verificationCodes"],
+  ["Find verification codes", "verificationCodes"],
   ["Mark as read after copying", "verificationCodeMarkRead"],
   ["Move to Trash after copying", "verificationCodeTrash"],
 ] as const;
 
-const CODES_OFF = "Turn on Find codes in new mail to use this.";
+const CODES_OFF = "Turn on Find verification codes first.";
 
 const copyMode = (page: Page) =>
-  page.getByRole("combobox", { name: "Copy the code" });
+  page.getByRole("combobox", { name: "Copy code" });
 
 const openGmail = async (page: Page) => {
   await openSection(page, "Gmail");
@@ -106,7 +106,7 @@ test("each switch shows the stored value and writes the one it is turned to", as
     });
   }
 
-  // Find codes in new mail last, since the rows under it are disabled once it is off.
+  // Find verification codes last, since the rows under it are disabled once it is off.
   const codesLast = SWITCHES.toSorted(
     ([, a], [, b]) =>
       Number(a === "verificationCodes") - Number(b === "verificationCodes")
@@ -143,23 +143,23 @@ test("a hide switched off shows Gmail's logo on the page while it stays loaded, 
   const page = await openSettings(app);
 
   await openGmail(page);
-  await switchNamed(page, "Hide the Gmail logo").click();
+  await switchNamed(page, "Hide Gmail logo").click();
   await expect(logo).toBeVisible();
-  await switchNamed(page, "Hide the Gmail logo").click();
+  await switchNamed(page, "Hide Gmail logo").click();
   await expect(logo).toBeHidden();
   expect(
     await view.evaluate(() => Reflect.get(window, "keptAcrossSettings"))
   ).toBe(true);
 });
 
-test("Copy the code shows the stored mode and writes the one chosen", async ({
+test("Copy code shows the stored mode and writes the one chosen", async ({
   app,
   userDataDir,
 }) => {
   const page = await openSettings(app);
 
   await openGmail(page);
-  await expect(copyMode(page)).toContainText("When you press Copy");
+  await expect(copyMode(page)).toContainText("When you click Copy");
   await copyMode(page).click();
   await page.getByRole("option", { name: "As soon as it arrives" }).click();
 
@@ -184,7 +184,7 @@ test("with codes off the three rows under it are disabled and say why, and come 
   const trash = switchNamed(page, "Move to Trash after copying");
 
   await openGmail(page);
-  await switchNamed(page, "Find codes in new mail").click();
+  await switchNamed(page, "Find verification codes").click();
 
   for (const control of [copyMode(page), markRead, trash]) {
     // oxlint-disable-next-line no-await-in-loop -- one row after another
@@ -197,7 +197,7 @@ test("with codes off the three rows under it are disabled and say why, and come 
     .poll(() => storedValue(userDataDir, "verificationCodes"))
     .toBe(false);
 
-  await switchNamed(page, "Find codes in new mail").click();
+  await switchNamed(page, "Find verification codes").click();
 
   await expect(copyMode(page)).toBeEnabled();
   await expect(copyMode(page)).toContainText("As soon as it arrives");
@@ -205,7 +205,7 @@ test("with codes off the three rows under it are disabled and say why, and come 
   await expect(markRead).toBeChecked();
   await expect(trash).not.toBeChecked();
   await expect(trash).toHaveAccessibleDescription(
-    "Instead of marking it read. A wrong guess can move a real email."
+    "Moves the email to the Trash after you copy its code. Meru can occasionally mistake a regular email for one with a code."
   );
   expect(await readStored(userDataDir)).toMatchObject({
     verificationCodes: true,
@@ -227,7 +227,7 @@ test("the keyboard reaches every control in the page's order", async ({
 
   await openGmail(page);
 
-  const first = switchNamed(page, "Hide the Gmail logo");
+  const first = switchNamed(page, "Hide Gmail logo");
 
   await first.focus();
   await expect(first).toBeFocused();
@@ -265,7 +265,7 @@ test.describe("shots", () => {
     ).scrollIntoViewIfNeeded();
     await shoot("settings-gmail-bottom");
 
-    await switchNamed(page, "Find codes in new mail").click();
+    await switchNamed(page, "Find verification codes").click();
     await expect(copyMode(page)).toBeDisabled();
     await shoot("settings-gmail-codes-off");
   });
