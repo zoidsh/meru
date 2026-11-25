@@ -27,7 +27,6 @@ const storedValue = async (userDataDir: string, key: string) => {
 
 /** Each switch of the page by its label, with the key it shows, in the page's order. */
 const SWITCHES = [
-  ["Hide Gmail logo", "hideGmailLogo"],
   ["Hide promotions", "hidePromoBanner"],
   ["Hide Upgrade button", "hideUpgradeButton"],
   ["Hide inbox footer", "hideInboxFooter"],
@@ -77,7 +76,7 @@ test("each card is a group its heading names, holding its rows", async ({
   await openGmail(page);
 
   for (const [group, label] of [
-    ["Gmail page", "Hide Gmail logo"],
+    ["Gmail page", "Hide promotions"],
     ["Conversations", "Show trimmed content"],
     ["Verification codes", "Move to Trash after copying"],
   ] as const) {
@@ -109,7 +108,6 @@ test("each switch shows the stored value and writes the one it is turned to", as
   const app = await launchApp();
   const page = await openSettings(app);
   const stored = {
-    hideGmailLogo: true,
     hidePromoBanner: false,
     hideUpgradeButton: true,
     hideInboxFooter: true,
@@ -153,14 +151,14 @@ test("each switch shows the stored value and writes the one it is turned to", as
     );
 });
 
-test("a hide switched off shows Gmail's logo on the page while it stays loaded, and on hides it again", async ({
+test("a hide switched off shows Gmail's promotions on the page while it stays loaded, and on hides them again", async ({
   app,
   standIn,
 }) => {
   const view = await findPage(app, standIn.url);
-  const logo = view.getByRole("img", { name: GMAIL_PARTS.logo });
+  const promo = view.getByText(GMAIL_PARTS.promo);
 
-  await expect(logo).toBeHidden();
+  await expect(promo).toBeHidden();
   await view.evaluate(() => {
     Reflect.set(window, "keptAcrossSettings", true);
   });
@@ -168,10 +166,10 @@ test("a hide switched off shows Gmail's logo on the page while it stays loaded, 
   const page = await openSettings(app);
 
   await openGmail(page);
-  await switchNamed(page, "Hide Gmail logo").click();
-  await expect(logo).toBeVisible();
-  await switchNamed(page, "Hide Gmail logo").click();
-  await expect(logo).toBeHidden();
+  await switchNamed(page, "Hide promotions").click();
+  await expect(promo).toBeVisible();
+  await switchNamed(page, "Hide promotions").click();
+  await expect(promo).toBeHidden();
   expect(
     await view.evaluate(() => Reflect.get(window, "keptAcrossSettings"))
   ).toBe(true);
@@ -245,14 +243,14 @@ test("the keyboard reaches every control in the page's order", async ({
   const page = await openSettings(app);
   const labels = SWITCHES.map(([label]) => label);
   const order = [
-    ...labels.slice(0, 9).map((label) => switchNamed(page, label)),
+    ...labels.slice(0, 8).map((label) => switchNamed(page, label)),
     copyMode(page),
-    ...labels.slice(9).map((label) => switchNamed(page, label)),
+    ...labels.slice(8).map((label) => switchNamed(page, label)),
   ];
 
   await openGmail(page);
 
-  const first = switchNamed(page, "Hide Gmail logo");
+  const first = switchNamed(page, "Hide promotions");
 
   await first.focus();
   await expect(first).toBeFocused();

@@ -161,7 +161,6 @@ describe(isDarkBackground, () => {
 });
 
 const switches = (extendDarkTheme: boolean): GmailFeatures => ({
-  hideGmailLogo: true,
   hideInboxFooter: false,
   hidePromoBanner: true,
   hideUpgradeButton: false,

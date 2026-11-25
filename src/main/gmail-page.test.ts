@@ -21,7 +21,6 @@ const CHILD_WINDOW = 13;
 const SHELL = 1;
 
 const ON: GmailFeatures = {
-  hideGmailLogo: true,
   hideInboxFooter: true,
   hidePromoBanner: true,
   hideUpgradeButton: true,
@@ -34,7 +33,6 @@ const ON: GmailFeatures = {
 const HEALTH: GmailHealth = {
   views: ["list"],
   hooks: {
-    logo: "matched",
     footer: "broken",
     promo: "absent",
     upgrade: "matched",

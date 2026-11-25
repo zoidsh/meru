@@ -52,7 +52,6 @@ const APP: PageSettings = {
   notificationSound: "linen",
   unreadBadge: true,
   notificationSoundVolume: 1,
-  hideGmailLogo: true,
   hidePromoBanner: true,
   hideUpgradeButton: true,
   hideInboxFooter: true,

@@ -69,7 +69,6 @@ describe("the registry", () => {
         GMAIL_FEATURES.map((feature) => [feature, SETTINGS[feature].default])
       )
     ).toStrictEqual({
-      hideGmailLogo: true,
       hideInboxFooter: true,
       hidePromoBanner: true,
       hideUpgradeButton: true,
@@ -86,7 +85,6 @@ describe(gmailFeatures, () => {
     expect(
       gmailFeatures((feature) => feature !== "hidePromoBanner")
     ).toStrictEqual({
-      hideGmailLogo: true,
       hideInboxFooter: true,
       hidePromoBanner: false,
       hideUpgradeButton: true,
@@ -100,8 +98,6 @@ describe(gmailFeatures, () => {
 
 /** The hides' stylesheets as they ship, which nothing may change. */
 const SHIPPED_HIDES = {
-  hideGmailLogo:
-    'header div:has(> div > a[href="#inbox"] > img):not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }',
   hideInboxFooter:
     '[role="contentinfo"]:has(a[href*="/gmail/about/policy/"]):not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }\n.apa .apO:has(a[href*="/gmail/about/policy/"]):not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }\n.apa .apc:has(a[href*="/settings/storage"]):not([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable], :has([gh="tl"], [data-legacy-thread-id], [data-message-id], [data-compose-id], [role="main"], [role="navigation"], input, textarea, [contenteditable]), [data-message-id] *, [data-compose-id] *, [contenteditable] *) { display: none !important; }',
   hidePromoBanner:
@@ -140,16 +136,16 @@ describe(featureStylesheet, () => {
   });
 
   it("guards every hide with the shipped guard", () => {
-    expect(guardedSelector(findHook("logo"), "x")).toBe(`x${HOOK_GUARD}`);
+    expect(guardedSelector(findHook("upgrade"), "x")).toBe(`x${HOOK_GUARD}`);
   });
 });
 describe(decideHook, () => {
-  const logo = findHook("logo");
+  const refresh = findHook("refresh");
   const footer = findHook("footer");
   const promo = findHook("promo");
 
   it("is matched when an anchor matches and no witness shows outside it", () => {
-    expect(decideHook(logo, ["list"], true, "none")).toBe("matched");
+    expect(decideHook(refresh, ["list"], true, "none")).toBe("matched");
     expect(decideHook(footer, ["list"], true, "covered")).toBe("matched");
   });
 
@@ -159,11 +155,14 @@ describe(decideHook, () => {
   });
 
   it("is broken when nothing matches in a view that always has it", () => {
-    expect(decideHook(logo, ["thread"], false, "none")).toBe("broken");
+    expect(decideHook(refresh, ["list", "thread"], false, "none")).toBe(
+      "broken"
+    );
   });
 
   it("is only absent where nothing says it should be there", () => {
-    expect(decideHook(logo, [], false, "none")).toBe("absent");
+    expect(decideHook(refresh, [], false, "none")).toBe("absent");
+    expect(decideHook(refresh, ["thread"], false, "none")).toBe("absent");
     expect(decideHook(footer, ["list"], false, "none")).toBe("absent");
     expect(decideHook(promo, ["list"], false, "none")).toBe("absent");
   });

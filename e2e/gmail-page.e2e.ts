@@ -57,7 +57,6 @@ const setSetting = (
 
 /** Each of the stand-in's parts a hide takes, as the page shows it. */
 const parts = (view: Page) => ({
-  hideGmailLogo: view.getByRole("img", { name: GMAIL_PARTS.logo }),
   hidePromoBanner: view.getByText(GMAIL_PARTS.promo),
   hideUpgradeButton: view.getByRole("link", { name: GMAIL_PARTS.upgrade }),
   hideInboxFooter: view.getByRole("link", { name: GMAIL_PARTS.policy }),
@@ -97,7 +96,6 @@ test("hides each of Gmail's parts by default, and reports every hook matched in 
       {
         views: ["list"],
         hooks: {
-          logo: "matched",
           footer: "matched",
           promo: "matched",
           upgrade: "matched",
@@ -112,7 +110,6 @@ test("shows each part whose hide is off at launch", async ({
   userDataDir,
 }) => {
   await writeSettings(userDataDir, {
-    hideGmailLogo: false,
     hideInboxFooter: false,
     hidePromoBanner: false,
     hideUpgradeButton: false,
@@ -135,7 +132,7 @@ test("switches each hide off and on again while the page stays loaded, touching 
   const view = await findPage(app, standIn.url);
   const all = parts(view);
 
-  await expect(all.hideGmailLogo).toBeHidden();
+  await expect(all.hidePromoBanner).toBeHidden();
   await view.evaluate(() => {
     Reflect.set(window, "keptAcrossSwitches", true);
   });
@@ -176,10 +173,9 @@ test("reports a hook broken when the markup it anchors on goes, and absent when 
   await expect.poll(() => readHealth(app)).toHaveLength(1);
 
   // As Gmail might rename its markup: the footer's container loses its role
-  // while its policy link stays, and the logo's image goes.
+  // while its policy link stays.
   await view.evaluate(() => {
     document.querySelector('[role="contentinfo"]')?.removeAttribute("role");
-    document.querySelector('header a[href="#inbox"] > img')?.remove();
     document
       .querySelector("[data-rp-onramp-container] > p")
       ?.parentElement?.remove();
@@ -193,7 +189,6 @@ test("reports a hook broken when the markup it anchors on goes, and absent when 
       timeout: 15_000,
     })
     .toStrictEqual({
-      logo: "broken",
       footer: "broken",
       promo: "absent",
       upgrade: "matched",

@@ -20,7 +20,6 @@ export { SETTINGS_CALL_NAMES, SETTINGS_CHANNELS } from "./settings-channels.ts";
 
 /** The Gmail page's settings, in its order; the app holds them, never a profile. */
 export const GMAIL_PAGE_KEYS = [
-  "hideGmailLogo",
   "hidePromoBanner",
   "hideUpgradeButton",
   "hideInboxFooter",

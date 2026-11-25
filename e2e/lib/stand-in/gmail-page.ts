@@ -7,7 +7,6 @@ export const DRAFT_LABEL = "Draft";
 
 /** Names of the stand-in's parts that Meru's hides take, as a person reads them. */
 export const GMAIL_PARTS = {
-  logo: "Gmail logo",
   promo: "Workspace offer",
   upgrade: "Upgrade",
   policy: "Programme policies",
@@ -15,16 +14,11 @@ export const GMAIL_PARTS = {
   list: "Messages",
 } as const;
 
-/** One pixel, so the logo is an image without a request. */
-const PIXEL =
-  "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-
 /**
  * Just the anchors Meru's hooks into Gmail look for, in Gmail's own
  * attributes and nothing of its classes or layout.
  */
 export const GMAIL_MARKUP = `<header>
-      <div><div><a href="#inbox"><img alt="${GMAIL_PARTS.logo}" src="${PIXEL}"></a></div></div>
       <form><input aria-label="${GMAIL_PARTS.search}"></form>
       <div data-pep-id="global-pep-gmail" data-rp-onramp-container><a href="#upgrade">${GMAIL_PARTS.upgrade}</a></div>
     </header>

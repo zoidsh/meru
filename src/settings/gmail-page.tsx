@@ -107,15 +107,6 @@ export const GmailPage = () => {
         <Rows>
           {[
             switchRow(
-              "hideGmailLogo",
-              t({
-                message: "Hide Gmail logo",
-                comment:
-                  "Label of the switch in Settings that hides the Gmail logo at the top left of the Gmail page",
-              }),
-              undefined
-            ),
-            switchRow(
               "hidePromoBanner",
               t({
                 message: "Hide promotions",

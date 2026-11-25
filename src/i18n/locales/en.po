@@ -923,11 +923,6 @@ msgstr "Hide {appName}"
 msgid "Hide {productName}"
 msgstr "Hide {productName}"
 
-#. Label of the switch in Settings that hides the Gmail logo at the top left of the Gmail page
-#: src/settings/gmail-page.tsx
-msgid "Hide Gmail logo"
-msgstr "Hide Gmail logo"
-
 #. Label of the switch in Settings that hides the footer Gmail shows under the inbox
 #: src/settings/gmail-page.tsx
 msgid "Hide inbox footer"

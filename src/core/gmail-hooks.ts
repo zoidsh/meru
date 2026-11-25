@@ -22,7 +22,6 @@ export const VIEW_ANCHORS = {
 } as const satisfies Record<Exclude<GmailView, "settings">, string>;
 
 export const HOOK_NAMES = [
-  "logo",
   "footer",
   "promo",
   "upgrade",
@@ -77,7 +76,7 @@ export interface Hook {
   scope: HookScope;
   anchors: readonly string[];
   /** Where a page with no match is broken; elsewhere it is only absent. */
-  requiredIn: readonly GmailView[] | "any";
+  requiredIn: readonly GmailView[];
   /**
    * What says the hook's content is on the page: a visible witness that no
    * match contains, or is contained by, makes the hook broken.
@@ -189,12 +188,6 @@ const BODY = ".a3s";
 const TRIMMED_TOGGLE = `.adO > ${BODY} > div > .yj6qo.ajU:has(> .ajR[role="button"])`;
 
 export const HOOKS: readonly Hook[] = [
-  {
-    name: "logo",
-    scope: "chrome",
-    anchors: ['header div:has(> div > a[href="#inbox"] > img)'],
-    requiredIn: "any",
-  },
   {
     name: "footer",
     scope: "chrome",
@@ -446,7 +439,6 @@ export const witnessSelector = (hook: Hook, witness: string) =>
   `${witness}${WITNESS_GUARDS[hook.scope]}`;
 
 export const GMAIL_FEATURES = [
-  "hideGmailLogo",
   "hideInboxFooter",
   "hidePromoBanner",
   "hideUpgradeButton",
@@ -527,7 +519,6 @@ const BODY_CARD = {
 
 /** The rules each feature inserts while on, by the hooks they take. */
 export const FEATURE_RULES: Record<GmailFeature, readonly FeatureRule[]> = {
-  hideGmailLogo: [hide("logo")],
   hideInboxFooter: [hide("footer")],
   hidePromoBanner: [hide("promo")],
   hideUpgradeButton: [hide("upgrade")],
@@ -696,9 +687,7 @@ export type HookStatus = (typeof HOOK_STATUSES)[number];
 export type Witness = "none" | "covered" | "uncovered";
 
 const isRequired = (hook: Hook, views: readonly GmailView[]) =>
-  hook.requiredIn === "any"
-    ? views.length > 0
-    : hook.requiredIn.some((view) => views.includes(view));
+  hook.requiredIn.some((view) => views.includes(view));
 
 /**
  * A hook is broken when its content is on the page and it misses it: its

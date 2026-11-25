@@ -106,6 +106,29 @@ describe(createSettingsStore, () => {
     expect(saved).toStrictEqual([{ ...found, unreadBadge: false }]);
   });
 
+  it("keeps the Hide Gmail logo an earlier build wrote, app-wide and in a profile, when settings change", async () => {
+    const found = {
+      version: 1,
+      hideGmailLogo: false,
+      profiles: { p: { hideGmailLogo: true, unreadBadge: false } },
+    };
+    const { file } = createFakeFile(JSON.stringify(found));
+    const { settings, saved } = setup(await load(file));
+
+    expect(settings.get("unreadBadge", "p")).toBeFalsy();
+
+    await settings.update("hidePromoBanner", () => false);
+    await settings.setOverride("p", "notifications", false);
+    await settings.clearOverride("p", "unreadBadge");
+
+    expect(saved.at(-1)).toStrictEqual({
+      version: 1,
+      hideGmailLogo: false,
+      hidePromoBanner: false,
+      profiles: { p: { hideGmailLogo: true, notifications: false } },
+    });
+  });
+
   it("saves a change before it reads back, and keeps the rest of the file as found", async () => {
     const { settings, saved } = setup({
       version: 1,

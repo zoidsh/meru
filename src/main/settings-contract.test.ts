@@ -578,7 +578,6 @@ describe("the Settings window's Gmail page", () => {
         GMAIL_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
       )
     ).toStrictEqual({
-      hideGmailLogo: true,
       hidePromoBanner: false,
       hideUpgradeButton: true,
       hideInboxFooter: true,
@@ -597,7 +596,7 @@ describe("the Settings window's Gmail page", () => {
   it("writes a switch's and the copy mode's app value, and sends it back", async () => {
     const app = setup(stateOf("Work"));
 
-    await app.handlers.update({ key: "hideGmailLogo", value: false });
+    await app.handlers.update({ key: "hideUpgradeButton", value: false });
     await app.handlers.update({
       key: "verificationCodeCopyMode",
       value: "immediately",
@@ -605,12 +604,12 @@ describe("the Settings window's Gmail page", () => {
 
     expect([
       app.saved.at(-1),
-      app.read().settings.hideGmailLogo,
+      app.read().settings.hideUpgradeButton,
       app.read().settings.verificationCodeCopyMode,
     ]).toStrictEqual([
       {
         version: 1,
-        hideGmailLogo: false,
+        hideUpgradeButton: false,
         verificationCodeCopyMode: "immediately",
       },
       false,

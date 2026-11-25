@@ -14,8 +14,6 @@ import type { HookName } from "#core/gmail-hooks.ts";
 import { RECHECK_MS, checkHealth } from "./health.ts";
 
 // Small, hand-written stand-ins for Gmail's markup, carrying only the anchors.
-const LOGO =
-  '<header><div><div><a href="#inbox"><img></a></div></div></header>';
 const POLICY = '<a href="https://www.google.com/gmail/about/policy/">p</a>';
 const FOOTER = `<div role="contentinfo">${POLICY}</div>`;
 const PROMO = "<div data-rp-onramp-container><p>promo</p></div>";
@@ -34,8 +32,8 @@ const page = (body: string, hash = "#inbox") => {
   };
 };
 
-const inbox = (main: string, header = LOGO) =>
-  page(`${header}${UPGRADE}<div role="main">${main}</div>`);
+const inbox = (main: string) =>
+  page(`${UPGRADE}<div role="main">${main}</div>`);
 
 describe(checkHealth, () => {
   it("looks again 3 s later before calling a hook broken in a release", () => {
@@ -48,7 +46,6 @@ describe(checkHealth, () => {
     ).toStrictEqual({
       views: ["list"],
       hooks: {
-        logo: "matched",
         footer: "matched",
         promo: "matched",
         upgrade: "matched",
@@ -87,12 +84,12 @@ describe(checkHealth, () => {
     expect(
       checkHealth(
         page(
-          `${LOGO}<div role="main"><h2 data-legacy-thread-id="1"></h2><div data-compose-id="2"></div></div>`,
+          `<div role="main"><h2 data-legacy-thread-id="1"></h2><div data-compose-id="2"></div></div>`,
           "#inbox/1"
         )
       ).views
     ).toStrictEqual(["thread", "compose"]);
-    expect(checkHealth(page(LOGO, "#settings/general")).views).toStrictEqual([
+    expect(checkHealth(page("", "#settings/general")).views).toStrictEqual([
       "settings",
     ]);
   });
@@ -103,14 +100,6 @@ describe(checkHealth, () => {
         inbox(`<div hidden>${LIST}</div><h2 data-legacy-thread-id="1"></h2>`)
       ).views
     ).toStrictEqual(["thread"]);
-  });
-
-  it("calls the logo broken when the page has a view but no logo matches", () => {
-    expect(
-      checkHealth(
-        inbox(LIST, '<header><a href="#inbox"><span></span></a></header>')
-      ).hooks.logo
-    ).toBe("broken");
   });
 
   it("calls the footer broken when its policy link shows outside every match, as with the reading pane", () => {
@@ -143,12 +132,12 @@ describe(checkHealth, () => {
     expect(
       checkHealth(
         page(
-          `${LOGO}<header><div data-rp-onramp-container></div></header><div role="main">${LIST}</div>`
+          `<header><div data-rp-onramp-container></div></header><div role="main">${LIST}</div>`
         )
       ).hooks.upgrade
     ).toBe("broken");
     expect(
-      checkHealth(page(`${LOGO}<div role="main">${LIST}</div>`)).hooks.upgrade
+      checkHealth(page(`<div role="main">${LIST}</div>`)).hooks.upgrade
     ).toBe("absent");
   });
 
@@ -187,10 +176,6 @@ const PRECIOUS = {
 const SWALLOWING: Partial<
   Record<HookName, readonly ((inside: string) => string)[]>
 > = {
-  logo: [
-    (inside) =>
-      `<header><div><div><a href="#inbox"><img></a></div>${inside}</div></header>`,
-  ],
   footer: [
     (inside) => `<div role="contentinfo">${POLICY}${inside}</div>`,
     (inside) =>
@@ -369,7 +354,7 @@ const item = (inner: string) =>
 
 const thread = (list: string) =>
   page(
-    `${LOGO}<div role="main"><h2 data-legacy-thread-id="1"></h2>${list}</div>`,
+    `<div role="main"><h2 data-legacy-thread-id="1"></h2>${list}</div>`,
     "#inbox/1"
   );
 

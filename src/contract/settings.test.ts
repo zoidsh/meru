@@ -27,7 +27,7 @@ describe("the settings contract", () => {
     const update = accepts(SETTINGS_CALLS.update.request);
 
     expect([
-      update({ key: "hideGmailLogo", value: false }),
+      update({ key: "hidePromoBanner", value: false }),
       update({ key: "extendDarkTheme", value: true }),
       update({ key: "verificationCodes", value: false }),
       update({ key: "verificationCodeCopyMode", value: "immediately" }),
@@ -36,7 +36,19 @@ describe("the settings contract", () => {
       update({ key: "hideInboxFooter", value: "no" }),
       update({ key: "verificationCodeCopyMode", value: "later" }),
       update({ key: "verificationCodeMarkRead", value: 1 }),
-    ]).toStrictEqual([true, true, true, true, true, true, false, false, false]);
+      update({ key: "hideGmailLogo", value: false }),
+    ]).toStrictEqual([
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+    ]);
   });
 
   it("takes the Menu Bar & Dock page's settings, checked by each one's schema", () => {
@@ -335,7 +347,6 @@ describe("the settings contract", () => {
       notificationSound: "linen",
       unreadBadge: true,
       notificationSoundVolume: 0.5,
-      hideGmailLogo: true,
       hidePromoBanner: true,
       hideUpgradeButton: false,
       hideInboxFooter: true,
