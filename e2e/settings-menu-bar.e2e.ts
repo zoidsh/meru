@@ -197,6 +197,31 @@ test.describe("the Dock", () => {
     });
   });
 
+  test("from a file with both off, turning the menu bar icon on keeps the Dock icon its switch showed, and stores it", async ({
+    launchApp,
+    userDataDir,
+  }) => {
+    await writeSettings(userDataDir, { tray: false, dockIcon: false });
+
+    const app = await launchApp();
+    const page = await openSettings(app);
+    const dock = switchNamed(page, "Show in Dock");
+
+    await openPage(page);
+    await switchNamed(page, TRAY).click();
+
+    await expect(dock).toBeEnabled();
+    await expect(dock).toBeChecked();
+    await expect
+      .poll(async () => {
+        const stored = await readStored(userDataDir);
+
+        return [stored.tray, stored.dockIcon];
+      })
+      .toStrictEqual([true, true]);
+    expect(await dockCalls(app)).toStrictEqual([]);
+  });
+
   test("a hidden Dock icon hides at launch", async ({
     launchApp,
     userDataDir,

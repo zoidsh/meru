@@ -565,6 +565,20 @@ describe("the Settings window's Menu Bar & Dock page", () => {
     app.dispose();
   });
 
+  it("refuses to hide the Dock icon sent while the menu bar icon is still being turned off", async () => {
+    const app = setup(stateOf("Work"), { version: 1, tray: true });
+
+    const trayOff = app.handlers.update({ key: "tray", value: false });
+    const dockOff = app.handlers.update({ key: "dockIcon", value: false });
+
+    await trayOff;
+    await expect(dockOff).rejects.toThrow(
+      "The Dock icon cannot hide while the menu bar icon is off"
+    );
+    expect(app.saved).toStrictEqual([{ version: 1, tray: false }]);
+    app.dispose();
+  });
+
   it("hides the Dock icon once the menu bar icon shows, and shows it again", async () => {
     const app = setup(stateOf("Work"));
 

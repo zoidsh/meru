@@ -1,7 +1,16 @@
+import { delay } from "es-toolkit";
+
 import { canHideDock, dockShown } from "#core/dock.ts";
 import type { Dock } from "#platform/dock.ts";
 
 import type { SettingsStore } from "./settings.ts";
+
+/**
+ * Electron ignores a hide within a second of a show (`Browser::DockHide`),
+ * which keeps macOS from leaving two icons in the Dock. A little over it, so
+ * a hide asked for in that second is made once it has passed.
+ */
+export const DOCK_SHOW_SETTLES_MS = 1100;
 
 export interface DockIconDeps {
   dock: Dock;
@@ -15,7 +24,7 @@ export interface DockIconDeps {
  * Shows or hides Meru's Dock icon as `dockIcon` says, at launch and on each
  * change, and turns the setting back on when the menu bar icon goes, so Meru
  * is never out of reach. A file with both off shows the icon and is left as
- * found until the person changes one of them. macOS alone.
+ * found until the menu bar icon changes. macOS alone.
  */
 export const createDockIcon = ({
   dock,
@@ -26,11 +35,28 @@ export const createDockIcon = ({
   // A launch starts with the icon in the Dock.
   let shown = true;
 
-  const apply = () => {
-    const next = dockShown({
+  const wanted = () =>
+    dockShown({
       dockIcon: settings.get("dockIcon"),
       tray: settings.get("tray"),
     });
+
+  const show = async () => {
+    try {
+      await dock.show();
+      onShown();
+      await delay(DOCK_SHOW_SETTLES_MS);
+
+      if (!wanted()) {
+        dock.hide();
+      }
+    } catch (error) {
+      log(`Could not show the Dock icon: ${String(error)}`);
+    }
+  };
+
+  const apply = () => {
+    const next = wanted();
 
     if (next === shown) {
       return;
@@ -39,8 +65,7 @@ export const createDockIcon = ({
     shown = next;
 
     if (next) {
-      dock.show();
-      onShown();
+      void show();
     } else {
       dock.hide();
     }
@@ -56,11 +81,20 @@ export const createDockIcon = ({
 
   settings.onChange("dockIcon", apply);
   settings.onChange("tray", () => {
-    apply();
+    if (settings.get("dockIcon")) {
+      apply();
 
-    if (!settings.get("tray") && !settings.get("dockIcon")) {
-      void turnBackOn();
+      return;
     }
+
+    // The pair was both off before this change or is now, while the page's
+    // switch read on; the setting is made what the switch said, so turning
+    // the menu bar icon on never hides a Dock icon nobody turned off.
+    if (!settings.get("tray")) {
+      apply();
+    }
+
+    void turnBackOn();
   });
   apply();
 
@@ -70,12 +104,18 @@ export const createDockIcon = ({
   };
 };
 
-/** Refuses a change that would leave neither the Dock nor the menu bar icon. */
-export const assertDockChange = (
-  settings: Pick<SettingsStore, "get">,
-  dockIcon: boolean
-) => {
-  if (!dockIcon && !canHideDock({ tray: settings.get("tray") })) {
-    throw new Error("The Dock icon cannot hide while the menu bar icon is off");
-  }
-};
+/**
+ * The value to store for `dockIcon`, run inside the store's queue so it reads
+ * `tray` after every change queued before it; refuses one that would leave
+ * neither the Dock nor the menu bar icon.
+ */
+export const checkedDockChange =
+  (settings: Pick<SettingsStore, "get">, dockIcon: boolean) => () => {
+    if (!dockIcon && !canHideDock({ tray: settings.get("tray") })) {
+      throw new Error(
+        "The Dock icon cannot hide while the menu bar icon is off"
+      );
+    }
+
+    return dockIcon;
+  };

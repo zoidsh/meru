@@ -2,7 +2,8 @@ import { app } from "electron";
 
 /** Meru's icon in the macOS Dock. */
 export interface Dock {
-  show: () => void;
+  /** Settles once Electron has made Meru a regular app again. */
+  show: () => Promise<void>;
   hide: () => void;
 }
 
@@ -10,11 +11,12 @@ export interface Dock {
  * The Dock itself. Hiding turns Meru into an accessory app, out of the Dock
  * and Cmd+Tab, with no menu bar of its own; showing turns it back. Electron's
  * `show()` activates Meru only when it is already the active app, which it
- * then briefly hands to the Dock and takes back.
+ * then briefly hands to the Dock and takes back. A hide within a second of a
+ * show does nothing in Electron, which `createDockIcon` makes up for.
  */
 export const createDock = (): Dock => ({
-  show: () => {
-    void app.dock?.show();
+  show: async () => {
+    await app.dock?.show();
   },
   hide: () => {
     app.dock?.hide();
@@ -34,6 +36,8 @@ export const createCapturedDock = (): Dock => {
   return {
     show: () => {
       calls.push("show");
+
+      return Promise.resolve();
     },
     hide: () => {
       calls.push("hide");
