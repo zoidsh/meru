@@ -3,7 +3,11 @@ import type { ServerRefusal } from "#core/entitlement.ts";
 /** A signed token, or why there is none. */
 export type ServerAnswer = { token: string } | { error: ServerRefusal };
 
-/** The entitlement API. Every answer that carries a token is signed by the server. */
+/**
+ * The entitlement API. Every answer that carries a token is signed by the
+ * server. A call may reject, as a request over the network does; the service
+ * reads that as no answer, so an adapter need not catch.
+ */
 export interface EntitlementServer {
   /** A trial sends the device's id alone; a license, its key too. */
   refresh: (request: {

@@ -65,11 +65,13 @@ export const SERVER_REFUSALS = [
 
 export type ServerRefusal = (typeof SERVER_REFUSALS)[number];
 
-/** Why an activation or a rename failed: a key out of shape, or the server's reason. */
+/** Why a call about the license failed: a key out of shape, or the server's reason. */
 export const ENTITLEMENT_ERRORS = [
   "malformed",
-  /** A rename with no license on this computer to rename it on. */
+  /** A rename or a copy with no license on this computer. */
   "noLicense",
+  /** This device's id could not be read, so the server cannot be asked. */
+  "noDeviceId",
   ...SERVER_REFUSALS,
 ] as const;
 
@@ -127,6 +129,11 @@ export interface EntitlementView {
   deviceLabel: string | null;
   /** When the server last confirmed this install: the token's issue. */
   lastConfirmed: number | null;
+  /**
+   * The trial ended and the person has not yet chosen between upgrading, a
+   * key and the free version, so the launch asks before anything else.
+   */
+  trialChoicePending: boolean;
 }
 
 /** What the entitlement store holds, as the service reads it. */
@@ -136,6 +143,8 @@ export interface EntitlementRecord {
   licenseKey?: string;
   /** When the store first held `licenseKey` with no token for it. */
   keyStoredAt?: number;
+  /** When the person chose the free version after a trial; a license or a trial clears it. */
+  continuedFreeAt?: number;
 }
 
 const view = (
@@ -150,6 +159,7 @@ const view = (
   licensee: token?.licensee ?? null,
   deviceLabel: token?.deviceLabel ?? null,
   lastConfirmed: token?.issuedAt ?? null,
+  trialChoicePending: false,
   ...fields,
 });
 
@@ -192,19 +202,22 @@ export const entitlementAt = (
       : fromProvisional(record, now);
   }
 
+  const trialEnded = () =>
+    view("trialEnded", token, {
+      trialChoicePending: record.continuedFreeAt === undefined,
+    });
+
   if (token.tier === "free") {
-    return view(
-      token.reason === "licenseRefused" ? "refused" : "trialEnded",
-      token
-    );
+    return token.reason === "licenseRefused"
+      ? view("refused", token)
+      : trialEnded();
   }
 
-  const trialEnded =
+  if (
     token.tier === "trial" &&
-    (token.trialEndsAt === undefined || now >= token.trialEndsAt);
-
-  if (trialEnded) {
-    return view("trialEnded", token);
+    (token.trialEndsAt === undefined || now >= token.trialEndsAt)
+  ) {
+    return trialEnded();
   }
 
   if (now < token.issuedAt - CLOCK_TOLERANCE) {
@@ -291,21 +304,30 @@ export const normalizeLicenseKey = (input: string) => {
   return /^[A-Za-z0-9][A-Za-z0-9-]{7,63}$/u.test(key) ? key : undefined;
 };
 
-const hide = (text: string) => "•".repeat(text.length);
+const SHOWN_AT_EACH_END = 4;
 
 /**
- * A license key as a page may show it: its first and last blocks, each other
- * character a bullet, so the whole key never leaves main. A key with no
- * dashes shows its first and last four.
+ * A license key as a page may show it, so the whole key never leaves main:
+ * its first block and its last, at most four characters of each, and every
+ * other character but a dash a bullet. A key of eight characters or fewer
+ * shows none.
  */
 export const maskLicenseKey = (key: string) => {
-  const blocks = key.split("-");
+  const firstDash = key.indexOf("-");
+  const lastDash = key.lastIndexOf("-");
+  const shows = key.length > 2 * SHOWN_AT_EACH_END;
+  const head = shows
+    ? Math.min(SHOWN_AT_EACH_END, firstDash === -1 ? key.length : firstDash)
+    : 0;
+  const tail = shows
+    ? Math.min(SHOWN_AT_EACH_END, key.length - lastDash - 1)
+    : 0;
 
-  if (blocks.length < 3) {
-    return key.length <= 8
-      ? hide(key)
-      : `${key.slice(0, 4)}${hide(key.slice(4, -4))}${key.slice(-4)}`;
-  }
-
-  return [blocks[0], ...blocks.slice(1, -1).map(hide), blocks.at(-1)].join("-");
+  return [...key]
+    .map((character, index) =>
+      character === "-" || index < head || index >= key.length - tail
+        ? character
+        : "•"
+    )
+    .join("");
 };

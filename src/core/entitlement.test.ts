@@ -60,6 +60,7 @@ describe(entitlementAt, () => {
       licensee: "Ada",
       deviceLabel: "Office Mac",
       lastConfirmed: ISSUED,
+      trialChoicePending: false,
     });
   });
 
@@ -83,6 +84,31 @@ describe(entitlementAt, () => {
       tier: "free",
       trialDaysLeft: null,
     });
+  });
+
+  it("asks for a choice once a trial ends, until the person chooses the free version", () => {
+    const ended = token({ tier: "free", reason: "trialEnded" });
+
+    expect(entitlementAt({ token: ended }, ISSUED)).toMatchObject({
+      trialChoicePending: true,
+    });
+    expect(entitlementAt({ token: trial }, ISSUED + 9.5 * DAY)).toMatchObject({
+      trialChoicePending: true,
+    });
+    expect(
+      entitlementAt({ token: ended, continuedFreeAt: ISSUED }, ISSUED)
+    ).toMatchObject({ status: "trialEnded", trialChoicePending: false });
+  });
+
+  it("asks for no choice where no trial ended", () => {
+    for (const record of [
+      {},
+      { token: trial },
+      { token: token({}) },
+      { token: token({ tier: "free", reason: "licenseRefused" }) },
+    ]) {
+      expect(entitlementAt(record, ISSUED).trialChoicePending).toBeFalsy();
+    }
   });
 
   it("reads the server's free answers as an ended trial or a refused license", () => {
@@ -207,9 +233,15 @@ describe(maskLicenseKey, () => {
     );
   });
 
-  it("shows a key with no blocks by its first and last four, and a short one not at all", () => {
+  it("never shows more than four characters at each end, whatever the blocks", () => {
+    expect(maskLicenseKey("ABCDEFGH-12345678")).toBe("ABCD••••-••••5678");
     expect(maskLicenseKey("ABCDEFGH12345678")).toBe("ABCD••••••••5678");
-    expect(maskLicenseKey("ABCD-12")).toBe("•••••••");
+    expect(maskLicenseKey("AB-CDEFGH-1")).toBe("AB-••••••-1");
+  });
+
+  it("shows nothing of a key of eight characters or fewer", () => {
+    expect(maskLicenseKey("ABCD-123")).toBe("••••-•••");
+    expect(maskLicenseKey("ABCDEFGH")).toBe("••••••••");
   });
 });
 

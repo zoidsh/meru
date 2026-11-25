@@ -1,5 +1,6 @@
 import { z } from "zod/mini";
 
+import type { Tier } from "./entitlement.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
 
@@ -12,8 +13,9 @@ import type { Decoded } from "./store-file.ts";
 export const ENTITLEMENT_VERSION = 1;
 
 /**
- * `entitlement.json` as found: the signed token, the license key, and when
- * the key was first held with no token. Each is read where it has its shape
+ * `entitlement.json` as found: the signed token, the license key, when the
+ * key was first held with no token, and when the person chose the free
+ * version after a trial. Each is read where it has its shape
  * and kept as found where it has not, as is any key this build does not know.
  */
 export type EntitlementFile = Readonly<Record<string, unknown>> & {
@@ -45,29 +47,47 @@ export const storedToken = (file: EntitlementFile) =>
 export const storedLicenseKey = (file: EntitlementFile) =>
   stringField(file, "licenseKey");
 
-export const storedKeyAt = (file: EntitlementFile) => {
-  const value = file.keyStoredAt;
+const instantField = (file: EntitlementFile, key: string) => {
+  const value = file[key];
 
   return typeof value === "number" && Number.isFinite(value)
     ? value
     : undefined;
 };
 
-/** The file with a token the server just signed, for `licenseKey` if given. */
+export const storedKeyAt = (file: EntitlementFile) =>
+  instantField(file, "keyStoredAt");
+
+export const storedContinuedFreeAt = (file: EntitlementFile) =>
+  instantField(file, "continuedFreeAt");
+
+/**
+ * The file with a token the server just signed, of `tier`, for `licenseKey`
+ * if given. A token that grants more than free clears the choice of the
+ * free version, so a trial or license that lapses later asks again.
+ */
 export const withToken = (
   file: EntitlementFile,
   token: string,
-  licenseKey?: string
+  { tier, licenseKey }: { tier: Tier; licenseKey?: string | undefined }
 ): EntitlementFile => {
-  const { keyStoredAt: _, ...rest } = file;
+  const { keyStoredAt: _, continuedFreeAt, ...rest } = file;
 
   return {
     ...rest,
     version: file.version,
     token,
     ...(licenseKey !== undefined && { licenseKey }),
+    ...(tier === "free" &&
+      continuedFreeAt !== undefined && { continuedFreeAt }),
   };
 };
+
+/** The file once the person chose the free version after a trial. */
+export const withContinuedFree = (
+  file: EntitlementFile,
+  now: number
+): EntitlementFile => ({ ...file, continuedFreeAt: now });
 
 /**
  * The file holding a key with no token yet, as the v3 importer stores one,

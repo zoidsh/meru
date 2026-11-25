@@ -1085,6 +1085,10 @@ msgstr "Menu Bar & Dock"
 msgid "Meru can't reach its license server. Check your connection and try again."
 msgstr "Meru can't reach its license server. Check your connection and try again."
 
+#: src/main/entitlement.ts
+msgid "Meru couldn't identify this computer, so it can't check your license. Restart Meru and try again."
+msgstr "Meru couldn't identify this computer, so it can't check your license. Restart Meru and try again."
+
 #. Description of Quiet hours in Settings
 #: src/settings/quiet-hours-field.tsx
 msgid "Meru holds notifications until quiet hours end."
@@ -2009,10 +2013,6 @@ msgstr "The window stopped drawing several times in a row, so {productName} will
 #: src/settings/appearance-page.tsx
 msgid "Theme"
 msgstr "Theme"
-
-#: src/main/entitlement.ts
-msgid "There's no license on this computer to name it on. Enter a license key first."
-msgstr "There's no license on this computer to name it on. Enter a license key first."
 
 #: src/main/entitlement.ts
 msgid "There's no license with this key. Check it and try again, or contact support."

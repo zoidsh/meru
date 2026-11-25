@@ -62,7 +62,6 @@ export const exposeTestEntitlement = (entitlement: Entitlement) => {
  * Sets a setting, or a profile's own value of one, as a settings page would,
  * under `meruTestSettings`.
  */
-
 export const exposeTestSettings = (settings: SettingsStore) => {
   Reflect.set(globalThis, "meruTestSettings", {
     set: <Key extends SettingKey>(key: Key, value: SettingValue<Key>) =>

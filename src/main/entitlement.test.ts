@@ -48,7 +48,9 @@ const createFakeServer = () => {
   const requests: Request[] = [];
   const held: ((answer: ServerAnswer) => void)[] = [];
   let holding = false;
-  let answer = (_request: Request): ServerAnswer => ({ error: "offline" });
+  let answer = (_request: Request): ServerAnswer | Promise<ServerAnswer> => ({
+    error: "offline",
+  });
 
   const handle =
     (call: keyof EntitlementServer) => (request: Record<string, unknown>) => {
@@ -73,7 +75,9 @@ const createFakeServer = () => {
     hold: () => {
       holding = true;
     },
-    answerWith: (next: (request: Request) => ServerAnswer) => {
+    answerWith: (
+      next: (request: Request) => ServerAnswer | Promise<ServerAnswer>
+    ) => {
       answer = next;
     },
     server: {
@@ -88,6 +92,7 @@ const setup = (initial?: EntitlementFile, deviceId = DEVICE) => {
   const fake = createFakeServer();
   const saved: EntitlementFile[] = [];
   const logs: string[] = [];
+  const copied: string[] = [];
   const create = (file: EntitlementFile) =>
     createEntitlement({
       initial: file,
@@ -99,6 +104,13 @@ const setup = (initial?: EntitlementFile, deviceId = DEVICE) => {
       server: fake.server,
       publicKey: keys.publicKey,
       deviceId,
+      clipboard: {
+        writeText: (text) => {
+          copied.push(text);
+
+          return Promise.resolve();
+        },
+      },
       now: Date.now,
       timeZone: "UTC",
       log: (message) => logs.push(message),
@@ -108,10 +120,18 @@ const setup = (initial?: EntitlementFile, deviceId = DEVICE) => {
     ...fake,
     saved,
     logs,
+    copied,
     entitlement: create(initial ?? { version: 1 }),
     create,
   };
 };
+
+const setupLicensed = () =>
+  setup({
+    version: 1,
+    token: signToken({ deviceLabel: "Studio" }),
+    licenseKey: "MERU-OLD-0000",
+  });
 
 describe(createEntitlement, () => {
   beforeEach(() => {
@@ -457,6 +477,7 @@ describe(createEntitlement, () => {
       server: fake.server,
       publicKey: undefined,
       deviceId: DEVICE,
+      clipboard: { writeText: () => Promise.resolve() },
       now: Date.now,
       log: () => {},
     });
@@ -528,7 +549,7 @@ describe("the entitlement's answers out of order, and its edges", () => {
     entitlement.dispose();
   });
 
-  it("never asks the server without a device id", async () => {
+  it("never asks the server without a device id, and says why", async () => {
     const { entitlement, requests, answerWith } = setup(
       { version: 1, licenseKey: "MERU-KEY-0001", token: signToken({}) },
       ""
@@ -538,12 +559,17 @@ describe("the entitlement's answers out of order, and its edges", () => {
     await entitlement.start();
     await entitlement.retry();
 
-    await expect(entitlement.activate("MERU-GOOD-0001")).resolves.toMatchObject(
-      { ok: false, error: "offline" }
+    await expect(entitlement.activate("MERU-GOOD-0001")).resolves.toStrictEqual(
+      {
+        ok: false,
+        error: "noDeviceId",
+        message:
+          "Meru couldn't identify this computer, so it can't check your license. Restart Meru and try again.",
+      }
     );
     await expect(entitlement.setDeviceName("Studio")).resolves.toMatchObject({
       ok: false,
-      error: "offline",
+      error: "noDeviceId",
     });
     expect(requests).toStrictEqual([]);
     entitlement.dispose();
@@ -619,11 +645,240 @@ describe("the entitlement's answers out of order, and its edges", () => {
     ).resolves.toStrictEqual({
       ok: false,
       error: "noLicense",
-      message:
-        "There's no license on this computer to name it on. Enter a license key first.",
+      message: "",
     });
     expect(free.requests).toStrictEqual([]);
     licensed.entitlement.dispose();
     free.entitlement.dispose();
+  });
+});
+
+describe("the entitlement's license calls landing out of order", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: START });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("drops a rename for the key an activation since replaced", async () => {
+    const { entitlement, hold, held, saved } = setupLicensed();
+    const activated = signToken({ deviceLabel: "Device 4F2A" });
+
+    hold();
+
+    const activation = entitlement.activate("MERU-NEW-0001");
+    const rename = entitlement.setDeviceName("Office");
+
+    await vi.waitFor(() => {
+      expect(held).toHaveLength(2);
+    });
+    held[0]?.({ token: activated });
+    await activation;
+    held[1]?.({ token: signToken({ deviceLabel: "Office" }) });
+
+    await expect(rename).resolves.toStrictEqual({ ok: true });
+    expect(saved).toStrictEqual([
+      expect.objectContaining({
+        licenseKey: "MERU-NEW-0001",
+        token: activated,
+      }),
+    ]);
+    expect(entitlement.snapshot().deviceName).toBe("Device 4F2A");
+    entitlement.dispose();
+  });
+
+  it("keeps an activation that lands after a rename sent after it", async () => {
+    const { entitlement, hold, held, saved } = setupLicensed();
+    const activated = signToken({ deviceLabel: "Device 4F2A" });
+
+    hold();
+
+    const activation = entitlement.activate("MERU-NEW-0001");
+    const rename = entitlement.setDeviceName("Office");
+
+    await vi.waitFor(() => {
+      expect(held).toHaveLength(2);
+    });
+    held[1]?.({ token: signToken({ deviceLabel: "Office" }) });
+    await rename;
+    held[0]?.({ token: activated });
+
+    await expect(activation).resolves.toStrictEqual({ ok: true });
+    expect(saved.at(-1)).toStrictEqual(
+      expect.objectContaining({ licenseKey: "MERU-NEW-0001", token: activated })
+    );
+    expect(entitlement.snapshot().licenseKey).toBe("MERU-•••-0001");
+    entitlement.dispose();
+  });
+
+  it("keeps the later of two activations, and the earlier still reads as accepted", async () => {
+    const { entitlement, hold, held, saved } = setupLicensed();
+    const second = signToken({ deviceLabel: "Device 4F2A" });
+
+    hold();
+
+    const first = entitlement.activate("MERU-ONE-0001");
+    const later = entitlement.activate("MERU-TWO-0002");
+
+    await vi.waitFor(() => {
+      expect(held).toHaveLength(2);
+    });
+    held[1]?.({ token: second });
+    await later;
+    held[0]?.({ token: signToken({ deviceLabel: "Device 77C1" }) });
+
+    await expect(first).resolves.toStrictEqual({ ok: true });
+    expect(saved).toStrictEqual([
+      expect.objectContaining({ licenseKey: "MERU-TWO-0002", token: second }),
+    ]);
+    entitlement.dispose();
+  });
+
+  it("reads a server call that rejects as no answer, for every call", async () => {
+    const { entitlement, answerWith, saved, logs } = setupLicensed();
+
+    answerWith(() => Promise.reject(new Error("socket hang up")));
+
+    await entitlement.retry();
+    await expect(entitlement.activate("MERU-NEW-0001")).resolves.toMatchObject({
+      ok: false,
+      error: "offline",
+    });
+    await expect(entitlement.setDeviceName("Office")).resolves.toMatchObject({
+      ok: false,
+      error: "offline",
+    });
+    expect(saved).toStrictEqual([]);
+    expect(logs).toContain(
+      "The entitlement server's call failed: Error: socket hang up"
+    );
+    entitlement.dispose();
+  });
+});
+
+describe("the entitlement on waking from sleep", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: START });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("shows an expiry passed asleep at once, and asks the server only after three hours", async () => {
+    const { entitlement, requests } = setup({
+      version: 1,
+      token: signToken({}),
+      licenseKey: "MERU-KEY-0001",
+    });
+    let changes = 0;
+
+    entitlement.onChange(() => {
+      changes += 1;
+    });
+    await entitlement.start();
+    expect(requests).toHaveLength(1);
+
+    // Asleep for an hour: no timer fired, nothing to ask yet.
+    vi.setSystemTime(START + 60 * 60 * 1000);
+    await entitlement.resume();
+    expect(requests).toHaveLength(1);
+
+    // Asleep past the token's expiry.
+    vi.setSystemTime(START + 15 * DAY);
+    await entitlement.resume();
+
+    expect(requests).toHaveLength(2);
+    expect(changes).toBe(1);
+    expect(entitlement.snapshot()).toMatchObject({
+      status: "unconfirmed",
+      unconfirmedReason: "offline",
+    });
+    entitlement.dispose();
+  });
+});
+
+describe("the license key on the clipboard", () => {
+  it("copies the whole key from main, and nothing with no license", async () => {
+    const withKey = setup({
+      version: 1,
+      token: signToken({}),
+      licenseKey: "MERU-AAAA-BBBB-CCCC-DDDD-EEEE",
+    });
+
+    await expect(withKey.entitlement.copyLicenseKey()).resolves.toStrictEqual({
+      ok: true,
+    });
+    expect(withKey.copied).toStrictEqual(["MERU-AAAA-BBBB-CCCC-DDDD-EEEE"]);
+    expect(withKey.entitlement.snapshot().licenseKey).toBe(
+      "MERU-••••-••••-••••-••••-EEEE"
+    );
+
+    const none = setup();
+
+    await expect(none.entitlement.copyLicenseKey()).resolves.toMatchObject({
+      ok: false,
+      error: "noLicense",
+    });
+    expect(none.copied).toStrictEqual([]);
+    withKey.entitlement.dispose();
+    none.entitlement.dispose();
+  });
+});
+
+describe("the choice after a trial ends", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: START });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("is asked until the person continues free, and again after a later trial or license lapses", async () => {
+    const ended = signToken({ tier: "free", reason: "trialEnded" });
+    const { entitlement, answerWith, saved, create } = setup({
+      version: 1,
+      token: ended,
+    });
+
+    expect(entitlement.snapshot().trialChoicePending).toBeTruthy();
+
+    await entitlement.continueFree();
+
+    expect(entitlement.snapshot()).toMatchObject({
+      status: "trialEnded",
+      trialChoicePending: false,
+    });
+    expect(saved.at(-1)).toMatchObject({ continuedFreeAt: START });
+
+    answerWith(() => ({ token: signToken({}) }));
+    await entitlement.activate("MERU-GOOD-0001");
+
+    const lapsed = create({
+      ...saved.at(-1),
+      version: 1,
+      token: ended,
+    });
+
+    expect(saved.at(-1)).not.toHaveProperty("continuedFreeAt");
+    expect(lapsed.snapshot().trialChoicePending).toBeTruthy();
+    entitlement.dispose();
+    lapsed.dispose();
+  });
+
+  it("records nothing where no trial ended", async () => {
+    const { entitlement, saved } = setup({
+      version: 1,
+      token: signToken({}),
+      licenseKey: "MERU-KEY-0001",
+    });
+
+    await entitlement.continueFree();
+
+    expect(saved).toStrictEqual([]);
+    entitlement.dispose();
   });
 });

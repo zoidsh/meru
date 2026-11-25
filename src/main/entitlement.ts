@@ -7,9 +7,11 @@ import type { EntitlementState } from "#contract/entitlement.ts";
 import {
   createInitialEntitlementFile,
   decodeEntitlementFile,
+  storedContinuedFreeAt,
   storedKeyAt,
   storedLicenseKey,
   storedToken,
+  withContinuedFree,
   withToken,
 } from "#core/entitlement-file.ts";
 import type { EntitlementFile } from "#core/entitlement-file.ts";
@@ -28,6 +30,7 @@ import type {
   EntitlementError,
   EntitlementRecord,
 } from "#core/entitlement.ts";
+import type { Clipboard } from "#platform/clipboard.ts";
 import type {
   EntitlementServer,
   ServerAnswer,
@@ -67,14 +70,18 @@ export type EntitlementResult =
   | { ok: true }
   | { ok: false; error: EntitlementError; message: string };
 
-/** What a person reads when an activation or a rename fails. */
+/** What a person reads when a call about the license fails. */
 export const entitlementErrorMessage = (error: EntitlementError) => {
   switch (error) {
     case "malformed": {
       return t`This isn't a valid license key. Check it and try again.`;
     }
     case "noLicense": {
-      return t`There's no license on this computer to name it on. Enter a license key first.`;
+      // The name and the copy are shown only with a license, so no one reads this.
+      return "";
+    }
+    case "noDeviceId": {
+      return t`Meru couldn't identify this computer, so it can't check your license. Restart Meru and try again.`;
     }
     case "invalidKey": {
       return t`There's no license with this key. Check it and try again, or contact support.`;
@@ -108,6 +115,8 @@ export interface EntitlementDeps {
   publicKey: KeyObject | undefined;
   /** Empty where it could not be read: then no token verifies and the server is never asked. */
   deviceId: string;
+  /** Where the license key goes when the person copies it. */
+  clipboard: Clipboard;
   now: () => number;
   /** Where trial days are counted; the device's own zone when absent. */
   timeZone?: string;
@@ -115,23 +124,20 @@ export interface EntitlementDeps {
 }
 
 /**
- * A call to the server and what its answer may replace. A refresh's answer
- * gives way to any later call's already taken, and to a key changed since it
- * was sent; an activation's or a rename's, only to a later one of those.
+ * A call to the server, and the key its answer is for: the key it was sent
+ * with, or for an activation the key it activates.
  */
 interface Call {
   sequence: number;
-  kind: "refresh" | "license";
-  /** The key the call was made for; a refresh's answer is for it alone. */
-  sentKey: string | undefined;
-  /** The key to store with the token, for an activation. */
-  storeKey?: string;
+  kind: "refresh" | "activation" | "rename";
+  key: string | undefined;
 }
 
 /**
  * The one place that says what this install may do. It reads the stored
- * token with no network, refreshes it in the background at `start` and every
- * three hours, and keeps the old one when a refresh fails, until it expires.
+ * token with no network, refreshes it in the background at `start`, every
+ * three hours and on waking from sleep, and keeps the old one when a refresh
+ * fails, until it expires.
  */
 export const createEntitlement = ({
   initial,
@@ -139,6 +145,7 @@ export const createEntitlement = ({
   server,
   publicKey,
   deviceId,
+  clipboard,
   now,
   timeZone,
   log,
@@ -170,11 +177,13 @@ export const createEntitlement = ({
     const token = text === undefined ? undefined : verify(text);
     const licenseKey = storedLicenseKey(file);
     const keyStoredAt = storedKeyAt(file);
+    const continuedFreeAt = storedContinuedFreeAt(file);
 
     return {
       ...(token && { token }),
       ...(licenseKey !== undefined && { licenseKey }),
       ...(keyStoredAt !== undefined && { keyStoredAt }),
+      ...(continuedFreeAt !== undefined && { continuedFreeAt }),
     };
   };
 
@@ -196,6 +205,7 @@ export const createEntitlement = ({
       lastConfirmed: current.lastConfirmed,
       licenseKey: licenseKey === undefined ? null : maskLicenseKey(licenseKey),
       downgradePending: isDowngradePending(granted, current.tier),
+      trialChoicePending: current.trialChoicePending,
     };
   };
 
@@ -234,28 +244,64 @@ export const createEntitlement = ({
 
   scheduleChange(announce);
 
-  let sequences = 0;
-  let appliedAny = 0;
-  let appliedLicense = 0;
-
-  const call = (
-    kind: Call["kind"],
-    fields: Partial<Pick<Call, "storeKey">> = {}
-  ): Call => {
-    sequences += 1;
-
-    return {
-      sequence: sequences,
-      kind,
-      sentKey: storedLicenseKey(file),
-      ...fields,
-    };
+  const store = async (next: EntitlementFile) => {
+    await save(next);
+    file = next;
+    announce();
   };
 
-  const isStale = ({ sequence, kind, sentKey }: Call) =>
-    kind === "refresh"
-      ? sequence < appliedAny || sentKey !== storedLicenseKey(file)
-      : sequence < appliedLicense;
+  let sequences = 0;
+  let appliedAny = 0;
+  let appliedActivation = 0;
+  const appliedForKey = new Map<string, number>();
+
+  const call = (kind: Call["kind"], key: string | undefined): Call => {
+    sequences += 1;
+
+    return { sequence: sequences, kind, key };
+  };
+
+  /**
+   * Whether an answer landing now would undo one sent later and already
+   * taken. A refresh gives way to any later answer and to a key changed
+   * since; a rename to a later activation, a later answer for its key and a
+   * key changed since; an activation only to a later activation or a later
+   * answer for its own key.
+   */
+  const isStale = ({ sequence, kind, key }: Call) => {
+    const laterForKey =
+      key !== undefined && sequence < (appliedForKey.get(key) ?? 0);
+
+    switch (kind) {
+      case "refresh": {
+        return sequence < appliedAny || key !== storedLicenseKey(file);
+      }
+      case "rename": {
+        return (
+          key !== storedLicenseKey(file) ||
+          sequence < appliedActivation ||
+          laterForKey
+        );
+      }
+      case "activation": {
+        return sequence < appliedActivation || laterForKey;
+      }
+      default: {
+        return kind satisfies never;
+      }
+    }
+  };
+
+  /** The server's answer, or `offline` for a call that rejects. */
+  const ask = async (request: () => Promise<ServerAnswer>) => {
+    try {
+      return await request();
+    } catch (error) {
+      log(`The entitlement server's call failed: ${String(error)}`);
+
+      return { error: "offline" } as const;
+    }
+  };
 
   /** Keeps `answer`'s token if it is this device's, signed and still the latest. */
   const take = async (
@@ -273,7 +319,11 @@ export const createEntitlement = ({
         return failed(answer.error);
       }
 
-      if (!publicKey || !verifyToken(answer.token, publicKey, deviceId)) {
+      const token = publicKey
+        ? verifyToken(answer.token, publicKey, deviceId)
+        : undefined;
+
+      if (!token) {
         log(
           "The entitlement server answered with a token that does not verify"
         );
@@ -281,29 +331,41 @@ export const createEntitlement = ({
         return failed("offline");
       }
 
+      // The server agreed; a later answer already taken says where things
+      // stand now, and that is what the person sees.
       if (isStale(made)) {
-        log("Dropped an entitlement answer that a later one replaced");
+        log(`Dropped an entitlement ${made.kind} that a later answer replaced`);
 
-        return made.kind === "refresh" ? { ok: true } : failed("offline");
+        return { ok: true };
       }
 
-      const next = withToken(file, answer.token, made.storeKey);
-
-      await save(next);
-      file = next;
+      verified = { text: answer.token, token };
+      await store(
+        withToken(file, answer.token, {
+          tier: token.tier,
+          licenseKey: made.kind === "activation" ? made.key : undefined,
+        })
+      );
       appliedAny = Math.max(appliedAny, made.sequence);
 
-      if (made.kind === "license") {
-        appliedLicense = Math.max(appliedLicense, made.sequence);
+      if (made.kind === "activation") {
+        appliedActivation = Math.max(appliedActivation, made.sequence);
       }
 
-      announce();
+      if (made.key !== undefined) {
+        appliedForKey.set(
+          made.key,
+          Math.max(appliedForKey.get(made.key) ?? 0, made.sequence)
+        );
+      }
 
       return { ok: true };
     } finally {
       writes.release();
     }
   };
+
+  let lastAttemptAt: number | undefined;
 
   const refresh = async () => {
     if (disposed) {
@@ -316,31 +378,33 @@ export const createEntitlement = ({
       return;
     }
 
-    const made = call("refresh");
+    lastAttemptAt = now();
 
-    try {
-      const result = await take(
-        await server.refresh({
-          deviceId,
-          ...(made.sentKey !== undefined && { licenseKey: made.sentKey }),
-        }),
-        made
-      );
+    const made = call("refresh", storedLicenseKey(file));
+    const answer = await ask(() =>
+      server.refresh({
+        deviceId,
+        ...(made.key !== undefined && { licenseKey: made.key }),
+      })
+    );
 
-      if (!result.ok) {
-        log(
-          `Kept the stored entitlement: the refresh failed with ${result.error}`
-        );
-      }
-    } catch (error) {
+    // A refresh runs on a timer with no one to tell, so a file that cannot
+    // be written is logged, and the token before it kept.
+    const result = await take(answer, made).catch((error: unknown) => {
+      log(`Could not save the refreshed entitlement: ${String(error)}`);
+
+      return { ok: true } as const;
+    });
+
+    if (!result.ok) {
       log(
-        `Kept the stored entitlement: the refresh failed with ${String(error)}`
+        `Kept the stored entitlement: the refresh failed with ${result.error}`
       );
-    } finally {
-      // Time passes with or without an answer: an expiry or a day gone by
-      // while asleep, or a clock moved, shows by the next refresh at most.
-      announce();
     }
+
+    // Time passes with or without an answer: an expiry or a day gone by, or
+    // a clock moved, shows by the next refresh at most.
+    announce();
   };
 
   let refreshTimer: ReturnType<typeof setInterval> | undefined;
@@ -366,6 +430,20 @@ export const createEntitlement = ({
     /** Asks the server again now, as the dialog's retry does. */
     retry: refresh,
     /**
+     * For waking from sleep, when no timer fired: reads the state again at
+     * once, and refreshes when three hours have gone by since the last try.
+     */
+    resume: async () => {
+      announce();
+
+      if (
+        lastAttemptAt === undefined ||
+        now() - lastAttemptAt >= REFRESH_INTERVAL
+      ) {
+        await refresh();
+      }
+    },
+    /**
      * Activates `input` on this device, which the server names. The key is
      * stored only once the server agrees; a failure keeps the key and token
      * before it, so changing a key is activating another.
@@ -378,12 +456,15 @@ export const createEntitlement = ({
       }
 
       if (deviceId === "") {
-        return failed("offline");
+        return failed("noDeviceId");
       }
 
-      const made = call("license", { storeKey: licenseKey });
+      const made = call("activation", licenseKey);
 
-      return take(await server.activate({ deviceId, licenseKey }), made);
+      return take(
+        await ask(() => server.activate({ deviceId, licenseKey })),
+        made
+      );
     },
     /**
      * Names this device on its license as the person typed it; an empty
@@ -397,19 +478,51 @@ export const createEntitlement = ({
       }
 
       if (deviceId === "") {
-        return failed("offline");
+        return failed("noDeviceId");
       }
 
-      const made = call("license");
+      const made = call("rename", licenseKey);
 
       return take(
-        await server.setDeviceLabel({
-          deviceId,
-          licenseKey,
-          deviceLabel: name.trim(),
-        }),
+        await ask(() =>
+          server.setDeviceLabel({
+            deviceId,
+            licenseKey,
+            deviceLabel: name.trim(),
+          })
+        ),
         made
       );
+    },
+    /** Puts the whole license key on the clipboard from main, so no page ever holds it. */
+    copyLicenseKey: async (): Promise<EntitlementResult> => {
+      const licenseKey = storedLicenseKey(file);
+
+      if (licenseKey === undefined) {
+        return failed("noLicense");
+      }
+
+      await clipboard.writeText(licenseKey);
+
+      return { ok: true };
+    },
+    /**
+     * Records that the person chose the free version after a trial, so the
+     * launch stops asking until a license or a trial lapses again.
+     */
+    continueFree: async () => {
+      await writes.acquire();
+
+      try {
+        if (
+          !disposed &&
+          entitlementAt(record(), now(), timeZone).trialChoicePending
+        ) {
+          await store(withContinuedFree(file, now()));
+        }
+      } finally {
+        writes.release();
+      }
     },
     dispose: () => {
       disposed = true;

@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   ENTITLEMENT_VERSION,
   decodeEntitlementFile,
+  storedContinuedFreeAt,
   storedKeyAt,
   storedLicenseKey,
   storedToken,
   withToken,
+  withContinuedFree,
   withUnconfirmedKey,
 } from "./entitlement-file.ts";
 
@@ -48,13 +50,33 @@ describe("the entitlement file's fields", () => {
       licenseKey: "KEY",
       keyStoredAt: 5,
     });
-    expect(withToken(imported, "TOKEN")).toStrictEqual({
+    expect(withToken(imported, "TOKEN", { tier: "pro" })).toStrictEqual({
       version: 1,
       other: 1,
       licenseKey: "KEY",
       token: "TOKEN",
     });
-    expect(withToken(imported, "TOKEN", "NEW").licenseKey).toBe("NEW");
+    expect(
+      withToken(imported, "TOKEN", { tier: "pro", licenseKey: "NEW" })
+        .licenseKey
+    ).toBe("NEW");
+  });
+
+  it("keep the choice of the free version through free tokens, and drop it for a trial or a license", () => {
+    const chosen = withContinuedFree({ version: 1, token: "OLD" }, 7);
+
+    expect(storedContinuedFreeAt(chosen)).toBe(7);
+    expect(
+      storedContinuedFreeAt(withToken(chosen, "FREE", { tier: "free" }))
+    ).toBe(7);
+    expect(
+      storedContinuedFreeAt(withToken(chosen, "TRIAL", { tier: "trial" }))
+    ).toBeUndefined();
+    expect(
+      storedContinuedFreeAt(
+        withToken(chosen, "PRO", { tier: "pro", licenseKey: "KEY" })
+      )
+    ).toBeUndefined();
   });
 });
 

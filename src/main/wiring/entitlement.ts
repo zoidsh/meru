@@ -2,8 +2,10 @@ import path from "node:path";
 
 import type { EntitlementFile } from "#core/entitlement-file.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
+import type { Clipboard } from "#platform/clipboard.ts";
 import { readDeviceId } from "#platform/device-id.ts";
 import { createUnreachableEntitlementServer } from "#platform/entitlement-server.ts";
+import { createPower } from "#platform/power.ts";
 import { createTextFile } from "#platform/text-file.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
@@ -43,10 +45,12 @@ export const wireEntitlement = async ({
   lifecycle,
   file,
   initial,
+  clipboard,
 }: {
   lifecycle: ReturnType<typeof createAppLifecycle>;
   file: TextFile;
   initial: EntitlementFile;
+  clipboard: Clipboard;
 }) => {
   // A device whose id cannot be read verifies no token and asks nothing.
   const deviceId = await readDeviceId().catch((error: unknown) => {
@@ -59,11 +63,15 @@ export const wireEntitlement = async ({
     save: (next) => saveEntitlementFile(file, next),
     ...entitlementSource(lifecycle.userDataPath),
     deviceId,
+    clipboard,
     now: Date.now,
     log: console.error,
   });
 
   void entitlement.start();
+  createPower().onResume(() => {
+    void entitlement.resume();
+  });
 
   lifecycle.onBeforeQuit(entitlement.dispose);
 

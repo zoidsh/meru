@@ -9,6 +9,8 @@ export const ENTITLEMENT_CALL_NAMES = [
   "activateLicense",
   "setDeviceName",
   "retryEntitlement",
+  "copyLicenseKey",
+  "continueFree",
 ] as const;
 
 export type EntitlementCallName = (typeof ENTITLEMENT_CALL_NAMES)[number];

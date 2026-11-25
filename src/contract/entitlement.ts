@@ -11,7 +11,7 @@ import type { EntitlementCallName } from "./entitlement-channels.ts";
 
 export { ENTITLEMENT_CALL_NAMES } from "./entitlement-channels.ts";
 
-/** How an activation or a rename ended; `message` is worded for the person. */
+/** How a call about the license ended; `message` is worded for the person. */
 const result = z.union([
   z.object({ ok: z.literal(true) }),
   z.object({
@@ -31,13 +31,29 @@ export const ENTITLEMENT_CALLS = {
     request: z.object({ licenseKey: z.string() }),
     response: result,
   },
-  /** Names this device on its license; an empty name gives it back the server's. */
+  /**
+   * Names this device on its license; an empty name gives it back the
+   * server's. For the licensed state only, where the name is shown.
+   */
   setDeviceName: {
     request: z.object({ name: z.string() }),
     response: result,
   },
   /** Asks the server again now, as the dialog shown for an unconfirmed license does. */
   retryEntitlement: {
+    request: z.undefined(),
+    response: z.undefined(),
+  },
+  /**
+   * Puts the whole license key on the clipboard from main, for the masked
+   * key's Copy button. For the licensed state only.
+   */
+  copyLicenseKey: {
+    request: z.undefined(),
+    response: result,
+  },
+  /** The ended trial's Continue with Free Version: the screen does not show again. */
+  continueFree: {
     request: z.undefined(),
     response: z.undefined(),
   },
@@ -61,18 +77,26 @@ export const ENTITLEMENT_STATE = {
     trialDaysLeft: z.nullable(z.number()),
     /** Who the license is for, as the server words it. */
     licensee: z.nullable(z.string()),
-    /** This device's name on the license. */
+    /** This device's name on the license, shown with a license only. */
     deviceName: z.nullable(z.string()),
     /** When the server last confirmed this install, in ms since the epoch. */
     lastConfirmed: z.nullable(z.number()),
     /**
-     * The stored key as the licensed row shows it, first and last blocks
-     * with bullets between (`MERU-••••-••••-••••-••••-90AB`); `null` with
-     * none. The whole key never leaves main.
+     * The stored key as Settings shows it: at most four characters of its
+     * first and last blocks, bullets for the rest (`MERU-••••-••••-••••-••••-7Q2K`
+     * for a key shaped as v3's `MERU-XXXX-XXXX-XXXX-XXXX-XXXX`); `null` with
+     * none. The whole key never reaches a page; `copyLicenseKey` copies it.
      */
     licenseKey: z.nullable(z.string()),
     /** The server took away what this run grants; it applies at the next launch. */
     downgradePending: z.boolean(),
+    /**
+     * The trial ended and the person has not yet chosen: the launch stops
+     * before the profiles and asks Upgrade, Enter License Key… or Continue
+     * with Free Version. A license or a trial clears the choice, so a later
+     * lapse asks again.
+     */
+    trialChoicePending: z.boolean(),
   }),
 } as const;
 

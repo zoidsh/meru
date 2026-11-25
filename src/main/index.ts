@@ -124,10 +124,13 @@ const start = async () => {
     entitlementStore,
   } = await wireStores({ lifecycle, newId });
 
+  const clipboard = systemClipboard();
+
   await wireEntitlement({
     lifecycle,
     file: entitlementFile,
     initial: entitlementStore,
+    clipboard,
   });
 
   const shellUrl = new URL(shellSource.url);
@@ -288,7 +291,6 @@ const start = async () => {
 
   const systemBrowser = createSystemBrowser();
   const contentBlocker = wireContentBlocker({ settings, signInOrigins });
-  const clipboard = systemClipboard();
   // A page's links leave through it; Meru's own, as Open in Browser, do not.
   const { linkOpener } = wireLinks({ settings, systemBrowser, clipboard });
   const preloads = new Map([
