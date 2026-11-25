@@ -38,7 +38,7 @@ export const wireTray = ({
 }: {
   platform: Platform;
   /** The tray's menu is labelled again in each language chosen. */
-  language: Pick<Language, "onChange">;
+  language: Pick<Language, "current" | "onChange">;
   isMacOS: boolean;
   background: boolean;
   lifecycle: ReturnType<typeof createAppLifecycle>;
@@ -61,6 +61,7 @@ export const wireTray = ({
     productName: lifecycle.name,
     setting: settings.get,
     isDark: theme.systemIsDark,
+    locale: language.current,
     state: profiles.get,
     unread,
     window: shell.window,

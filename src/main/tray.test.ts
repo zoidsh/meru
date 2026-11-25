@@ -117,6 +117,7 @@ const setup = ({
   let visible = true;
   let minimized = false;
   let dark = false;
+  let locale = "en";
 
   const tray = createTray({
     trays: fake.trays,
@@ -125,6 +126,7 @@ const setup = ({
     setting: <Key extends SettingKey>(key: Key): SettingValue<Key> =>
       readSetting(values, key, platform),
     isDark: () => dark,
+    locale: () => locale,
     state: () => {
       const state = stateOf(...names);
 
@@ -184,6 +186,10 @@ const setup = ({
     },
     setDark: (next: boolean) => {
       dark = next;
+      tray.update();
+    },
+    setLocale: (next: string) => {
+      locale = next;
       tray.update();
     },
   };
@@ -300,6 +306,17 @@ describe(createTray, () => {
       "-",
       "Quit",
     ]);
+    expect(
+      app.events.filter((event) => event === "setContextMenu")
+    ).toHaveLength(2);
+  });
+
+  it("sets the menu on the icon on Linux again when the language changes, its entries the same", () => {
+    const app = setup({ platform: "linux", names: ["Home"] });
+
+    app.tray.update();
+    app.setLocale("de");
+
     expect(
       app.events.filter((event) => event === "setContextMenu")
     ).toHaveLength(2);

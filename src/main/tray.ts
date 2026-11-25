@@ -14,7 +14,6 @@ import {
 } from "#core/tray.ts";
 import type { TrayEntry, TrayProfile } from "#core/tray.ts";
 import { totalUnread } from "#core/unread.ts";
-import { i18n } from "#i18n/index.ts";
 import type { TrayFactory, TrayIcon, TrayMenuItem } from "#platform/tray.ts";
 import type { AppWindow } from "#platform/window.ts";
 
@@ -28,6 +27,8 @@ export interface TrayDeps {
   /** Read at each update, so a change applies with no restart. */
   setting: <Key extends SettingKey>(key: Key) => SettingValue<Key>;
   isDark: () => boolean;
+  /** The language the menu's labels read in. */
+  locale: () => string;
   state: () => State;
   /** The profile's count as its feed last gave it. */
   unread: (profileId: string) => number | null;
@@ -80,6 +81,7 @@ export const createTray = ({
   productName,
   setting,
   isDark,
+  locale,
   state,
   unread,
   window,
@@ -261,7 +263,7 @@ export const createTray = ({
         : undefined;
 
       const menuShown =
-        entries && ([i18n.locale, entries] as [string, TrayEntry[]]);
+        entries && ([locale(), entries] as [string, TrayEntry[]]);
 
       if (menuShown && !isEqual(menuShown, shown?.menu)) {
         tray.setContextMenu(menu(entries));
