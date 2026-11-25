@@ -45,6 +45,21 @@ const KEY = "MERU-TEST-AAAA-BBBB-CCCC-7Q2K";
 const ONE_PROFILE =
   "The free version uses one profile. Upgrade to Meru Pro to use as many as you like, along with everything else Meru Pro adds.";
 
+/**
+ * Waits for the Meru Pro popover to show and for its opening fade and zoom to
+ * end, which a picture taken at once catches half transparent.
+ */
+const opened = async (page: Page) => {
+  const popover = page.getByRole("dialog", { name: "Requires Meru Pro" });
+
+  await expect(popover).toBeVisible();
+  await popover.evaluate(async (element) => {
+    await Promise.all(
+      element.getAnimations({ subtree: true }).map(({ finished }) => finished)
+    );
+  });
+};
+
 const storedSettings = async (userDataDir: string): Promise<unknown> =>
   JSON.parse(await readFile(path.join(userDataDir, "settings.json"), "utf-8"));
 
@@ -399,9 +414,7 @@ test.describe("shots", () => {
       // oxlint-disable-next-line no-await-in-loop -- one theme at a time
       await page.getByRole("button", { name: "Meru Pro Work" }).click();
       // oxlint-disable-next-line no-await-in-loop -- one theme at a time
-      await expect(
-        page.getByRole("dialog", { name: "Requires Meru Pro" })
-      ).toBeVisible();
+      await opened(page);
       // oxlint-disable-next-line no-await-in-loop -- one theme at a time
       await page.screenshot({
         path: shotPath("settings-profiles-free-popover", theme),
