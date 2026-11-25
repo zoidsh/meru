@@ -106,6 +106,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may record the login item in place of setting it",
     },
     {
+      marker: "meruTestDefaultBrowser",
+      why: "only the end-to-end build may say Meru is the default browser in place of asking the system",
+    },
+    {
       marker: "meruTestGmailPage",
       why: "only the end-to-end build may capture what Gmail's pages report",
     },
