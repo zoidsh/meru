@@ -145,17 +145,28 @@ describe(createFocus, () => {
     expect(focus.focused()).toStrictEqual(overlay);
   });
 
-  it("gives focus taken unasked back to what held it, an overlay keeping it, or the front page", () => {
+  it("gives focus taken unasked back on the next turn to what held it, an overlay keeping it, or the front page", () => {
+    vi.useFakeTimers();
+
     const { focus, focused, window, present } = setup();
 
     window.focused = true;
     focus.giveBack();
+    const atOnce = [...focused];
+
+    vi.runAllTimers();
     focus.noteFocused(overlay);
     focus.giveBack();
+    vi.runAllTimers();
     present.delete("overlay");
     focus.giveBack();
+    vi.runAllTimers();
+    vi.useRealTimers();
 
-    expect(focused).toStrictEqual(["front", "overlay", "front"]);
+    expect([atOnce, focused]).toStrictEqual([
+      [],
+      ["front", "overlay", "front"],
+    ]);
   });
 
   it("notes the front page gaining focus, but while a card or a menu covers the pages gives it to the overlay on the next turn", () => {
@@ -202,20 +213,27 @@ describe(createFocus, () => {
   });
 
   it("never gives focus back to a tab's own window, but to the front tab's view", () => {
+    vi.useFakeTimers();
+
     const { focus, focused, window } = setup();
 
     window.focused = true;
     focus.noteFocused({ kind: "window", key: { profileId: "p", tabId: "c" } });
     focus.giveBack();
+    vi.runAllTimers();
+    vi.useRealTimers();
 
     expect(focused).toStrictEqual(["front"]);
   });
 
   it("gives nothing back while the window is in the background until it comes forward, and leaves a move already waiting", () => {
+    vi.useFakeTimers();
+
     const { focus, focused, window, emit } = setup();
 
     focus.noteFocused(overlay);
     focus.giveBack();
+    vi.runAllTimers();
 
     const behind = [...focused];
 
@@ -224,8 +242,10 @@ describe(createFocus, () => {
     window.focused = false;
     focus.focus([{ kind: "shell" }]);
     focus.giveBack();
+    vi.runAllTimers();
     window.focused = true;
     emit("focus");
+    vi.useRealTimers();
 
     expect([behind, focused]).toStrictEqual([[], ["overlay", "shell"]]);
   });

@@ -146,7 +146,8 @@ export const createFocus = ({
      * the front tab's view, after one took it unasked, as a pane's page can
      * as it first loads; a move already waiting for the window wins. Never
      * to a tab's own window, which would come forward over the main one.
-     * While a card covers the pages, the overlay takes it.
+     * While a card covers the pages, the overlay takes it. On the next turn,
+     * as `takeBackForOverlay`.
      */
     giveBack: () => {
       if (pending) {
@@ -159,12 +160,18 @@ export const createFocus = ({
         return;
       }
 
-      pending = [
-        ...(focused && focused.kind !== "window" ? [focused] : []),
-        { kind: "front" },
-        { kind: "shell" },
-      ];
-      flush();
+      setTimeout(() => {
+        if (pending || overlayCoversPages()) {
+          return;
+        }
+
+        pending = [
+          ...(focused && focused.kind !== "window" ? [focused] : []),
+          { kind: "front" },
+          { kind: "shell" },
+        ];
+        flush();
+      }, 0);
     },
   };
 };
