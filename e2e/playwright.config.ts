@@ -30,6 +30,9 @@ const NEEDS_THE_FOCUS = [
   "**/own-window.e2e.ts",
   "**/bookmarks.e2e.ts",
   "**/general.e2e.ts",
+  // Its shots picture overlays, which another app taking the focus would
+  // close unseen, since a shot asserts nothing.
+  "**/screens.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 
