@@ -6,6 +6,7 @@ import {
   GMAIL_PAGE_KEYS,
   SETTINGS_CALLS,
   MENU_BAR_PAGE_KEYS,
+  PRIVACY_PAGE_KEYS,
 } from "#contract/settings.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
@@ -29,6 +30,7 @@ import {
 import { createSettingsPages } from "./settings-pages.ts";
 import { createSettingsStore } from "./settings.ts";
 import { createSpellcheck } from "./spellcheck.ts";
+import { createTrustedSites } from "./trusted-sites.ts";
 
 const stateOf = (...names: string[]): State => ({
   version: 1,
@@ -190,6 +192,7 @@ const setup = (
     },
     general,
     language,
+    trustedSites: createTrustedSites(settings),
   };
 
   settings.onChange("notificationSender", () =>
@@ -892,6 +895,74 @@ describe("the Settings window's Appearance page", () => {
       true,
     ]);
     app.dispose();
+  });
+});
+
+describe("the Settings window's Privacy & Security page", () => {
+  it("sends the blocker's switches and Ask before opening links, each on where none is stored, and the trusted sites as stored", () => {
+    const app = setup(stateOf("Work"), {
+      version: 1,
+      blockTrackers: false,
+      trustedSites: ["https://a.example", 5, "http://b.example:8080"],
+    });
+
+    expect([
+      Object.fromEntries(
+        PRIVACY_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
+      ),
+      app.read().trustedSites,
+    ]).toStrictEqual([
+      { blockAds: true, blockTrackers: false, confirmLinks: true },
+      ["https://a.example", "http://b.example:8080"],
+    ]);
+    app.dispose();
+  });
+
+  it("writes each switch on its own, neither blocker switch touching the other", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.update({ key: "blockAds", value: false });
+    await app.handlers.update({ key: "confirmLinks", value: false });
+
+    expect(app.saved.at(-1)).toStrictEqual({
+      version: 1,
+      blockAds: false,
+      confirmLinks: false,
+    });
+    app.dispose();
+  });
+
+  it("removes one site at a time from the list as stored, so two quick removals both hold, and a site not listed changes nothing", async () => {
+    const app = setup(stateOf("Work"), {
+      version: 1,
+      trustedSites: [
+        "https://a.example",
+        "https://b.example",
+        "https://c.example",
+      ],
+    });
+    const sends = app.sends();
+
+    await Promise.all([
+      app.handlers.removeTrustedSite({ site: "https://a.example" }),
+      app.handlers.removeTrustedSite({ site: "https://c.example" }),
+    ]);
+    await app.handlers.removeTrustedSite({ site: "https://elsewhere.example" });
+
+    expect([app.read().trustedSites, sends() > 0]).toStrictEqual([
+      ["https://b.example"],
+      true,
+    ]);
+    app.dispose();
+  });
+
+  it("never takes the whole list from the window", () => {
+    expect(
+      SETTINGS_CALLS.update.request.safeParse({
+        key: "trustedSites",
+        value: ["https://a.example"],
+      }).success
+    ).toBeFalsy();
   });
 });
 

@@ -41,6 +41,7 @@ import type { Profiles } from "./profiles.ts";
 import type { SettingsPages } from "./settings-pages.ts";
 import type { SettingsStore } from "./settings.ts";
 import type { SoundOutput } from "./sounds.ts";
+import type { TrustedSites } from "./trusted-sites.ts";
 
 export interface SettingsContractDeps {
   settings: Pick<
@@ -98,6 +99,7 @@ export interface SettingsContractDeps {
     | "chooseDownloadsFolder"
     | "setSpellcheckLanguage"
   >;
+  trustedSites: Pick<TrustedSites, "list" | "remove">;
 }
 
 /** The checks keep each key's value to its own type, which a loop over keys loses. */
@@ -160,6 +162,7 @@ export const settingsHandlers = ({
   deleteBrowsingData,
   signIn,
   general,
+  trustedSites,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
 
@@ -371,6 +374,7 @@ export const settingsHandlers = ({
     chooseDownloadsFolder: () => general.chooseDownloadsFolder(),
     setSpellcheckLanguage: ({ code, on }) =>
       general.setSpellcheckLanguage(code, on),
+    removeTrustedSite: ({ site }) => trustedSites.remove(site),
   };
 };
 
@@ -383,6 +387,7 @@ export const readSettingsState = ({
   pages,
   general,
   language,
+  trustedSites,
 }: Pick<
   SettingsContractDeps,
   | "settings"
@@ -392,6 +397,7 @@ export const readSettingsState = ({
   | "pages"
   | "general"
   | "language"
+  | "trustedSites"
 >): SettingsState => {
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
@@ -431,6 +437,7 @@ export const readSettingsState = ({
       ) as PageOverrides,
     })),
     general: general.read(),
+    trustedSites: trustedSites.list(),
     language: language.current(),
     page: {
       ...pages.current(),
@@ -443,7 +450,7 @@ export const readSettingsState = ({
 /**
  * Calls `listener` on every change to what `readSettingsState` reads, so
  * the Settings window is sent the state again: each setting it shows, which
- * the store announces by key, Do Not Disturb through the profiles' state,
+ * the store announces by key as it does the trusted sites, Do Not Disturb through the profiles' state,
  * the mail check, the General page's own values, the language shown and the
  * page shown.
  */
@@ -465,7 +472,11 @@ export const onSettingsStateChange = (
   },
   listener: () => void
 ) => {
-  for (const key of [...PAGE_SETTING_KEYS, "unifiedInbox"] as const) {
+  for (const key of [
+    ...PAGE_SETTING_KEYS,
+    "unifiedInbox",
+    "trustedSites",
+  ] as const) {
     settings.onChange(key, listener);
   }
 

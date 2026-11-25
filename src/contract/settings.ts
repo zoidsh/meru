@@ -69,6 +69,17 @@ export const MENU_BAR_PAGE_KEYS = [
 ] as const;
 
 /**
+ * The Privacy & Security page's settings, in its order; the app holds them,
+ * never a profile. The trusted sites are a list the page changes one site at
+ * a time, never a setting it writes.
+ */
+export const PRIVACY_PAGE_KEYS = [
+  "blockAds",
+  "blockTrackers",
+  "confirmLinks",
+] as const;
+
+/**
  * The settings a profile may hold a value of its own for, as the
  * Notifications page shows them. `unifiedInbox` is a profile's own switch on
  * its page instead, so it never counts as one of this page's overrides.
@@ -86,6 +97,7 @@ const APP_ONLY_PAGE_KEYS = [
   ...GENERAL_PAGE_KEYS,
   ...APPEARANCE_PAGE_KEYS,
   ...MENU_BAR_PAGE_KEYS,
+  ...PRIVACY_PAGE_KEYS,
 ] as const;
 
 /**
@@ -318,6 +330,14 @@ export const SETTINGS_CALLS = {
     request: z.object({ code: z.string(), on: z.boolean() }),
     response: z.undefined(),
   },
+  /**
+   * Stops trusting one site, applied to the list as stored when main gets
+   * to it; a site not listed changes nothing.
+   */
+  removeTrustedSite: {
+    request: z.object({ site: z.string() }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -409,6 +429,11 @@ export const SETTINGS_STATE = {
       })
     ),
   }),
+  /**
+   * The sites whose links open without asking, each as stored, an origin
+   * such as `https://example.com`, in the order trusted.
+   */
+  trustedSites: z.array(z.string()),
   /** The language Meru shows, as a catalog's tag. */
   language: z.string(),
   /** The page shown, and whether Back and Forward have one to go to. */

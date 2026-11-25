@@ -318,7 +318,11 @@ const start = async () => {
       });
   // A page's links leave through the opener; Meru's own, as Open in Browser,
   // through `systemBrowser`, which asks nothing.
-  const { linkOpener, ownLinks: systemBrowser } = wireLinks({
+  const {
+    linkOpener,
+    ownLinks: systemBrowser,
+    trustedSites,
+  } = wireLinks({
     platform,
     settings,
     systemBrowser: createSystemBrowser(),
@@ -512,6 +516,7 @@ const start = async () => {
     sound,
     showTestNotification,
     deleteBrowsingData: createDeleteBrowsingData({ sessions, views, mail }),
+    trustedSites,
     // Google's sign-in is in the profile's Gmail tab, so the window comes
     // forward with it, unless the background flags hold it back.
     signIn: async (profileId) => {

@@ -30,6 +30,7 @@ export const SETTINGS_CALL_NAMES = [
   "setOpenAtLogin",
   "chooseDownloadsFolder",
   "setSpellcheckLanguage",
+  "removeTrustedSite",
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];

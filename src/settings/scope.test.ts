@@ -79,6 +79,9 @@ const APP: PageSettings = {
   trayUnreadCount: true,
   trayIconColor: "system",
   trayJumpsToUnread: false,
+  blockAds: true,
+  blockTrackers: true,
+  confirmLinks: true,
 };
 
 describe(isScoped, () => {

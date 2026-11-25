@@ -4,7 +4,8 @@ import type { SettingsStore } from "./settings.ts";
 
 /**
  * The sites whose links open without asking, read and changed here alone:
- * the link prompt adds to it, and the Settings page will list and remove.
+ * the link prompt adds to it, and the Settings page lists and removes, one
+ * site at a time against the list as stored.
  */
 export const createTrustedSites = (
   settings: Pick<SettingsStore, "get" | "update">

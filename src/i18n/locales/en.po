@@ -38,6 +38,11 @@ msgstr "{count, plural, one {# override} other {# overrides}}"
 msgid "{count, plural, one {# unread message} other {# unread messages}}"
 msgstr "{count, plural, one {# unread message} other {# unread messages}}"
 
+#. Description of the Trusted sites row in Settings; # counts the sites whose links open in the default browser without Meru asking first
+#: src/settings/privacy-page.tsx
+msgid "{count, plural, one {Links to # site open without asking.} other {Links to # sites open without asking.}}"
+msgstr "{count, plural, one {Links to # site open without asking.} other {Links to # sites open without asking.}}"
+
 #. Muted line under a setting in Settings' All profiles, before a badge naming each profile that sets its own value; # is how many
 #: src/settings/scope.ts
 msgid "{count, plural, one {Set differently for # profile:} other {Set differently for # profiles:}}"
@@ -326,6 +331,11 @@ msgstr "Archive"
 msgid "As soon as it arrives"
 msgstr "As soon as it arrives"
 
+#. Label of the switch in Settings that has Meru ask before a link from a page opens in the default browser
+#: src/settings/privacy-page.tsx
+msgid "Ask before opening links"
+msgstr "Ask before opening links"
+
 #. Label of the switch in Settings that has each download open the system's save dialog
 #: src/settings/general-page.tsx
 msgid "Ask where to save each file"
@@ -367,6 +377,16 @@ msgstr "Below the focused pane"
 #: src/shell/open-app.tsx
 msgid "Beside the focused pane"
 msgstr "Beside the focused pane"
+
+#. Label of the switch in Settings that blocks ads in Meru's pages
+#: src/settings/privacy-page.tsx
+msgid "Block ads"
+msgstr "Block ads"
+
+#. Label of the switch in Settings that blocks trackers, including the pixels that tell a sender an email was opened
+#: src/settings/privacy-page.tsx
+msgid "Block trackers"
+msgstr "Block trackers"
 
 #. Name of a profile's color
 #: src/settings/profile-page.tsx
@@ -569,6 +589,11 @@ msgstr "Compose"
 msgid "Content"
 msgstr "Content"
 
+#. Title of the group of Settings that block ads and trackers in Meru's pages
+#: src/settings/privacy-page.tsx
+msgid "Content blocker"
+msgstr "Content blocker"
+
 #. Title of the group of Settings for how Gmail shows an open conversation
 #: src/settings/gmail-page.tsx
 msgid "Conversations"
@@ -749,6 +774,11 @@ msgstr "Do Not Disturb is on."
 msgid "Dock"
 msgstr "Dock"
 
+#. Button that closes the Trusted sites dialog in Settings
+#: src/settings/trusted-sites-dialog.tsx
+msgid "Done"
+msgstr "Done"
+
 #. Title of the system notification when a download stops before it is done; the file's name is its text
 #: src/main/download-notifications.ts
 msgid "Download failed"
@@ -896,6 +926,11 @@ msgstr "Gmail page"
 #: src/main/commands.ts
 msgid "Gmail Settings"
 msgstr "Gmail Settings"
+
+#. Button under the Privacy & Security page in Settings that opens the Profiles section; Profiles is the section's name
+#: src/settings/privacy-page.tsx
+msgid "Go to Profiles"
+msgstr "Go to Profiles"
 
 #. Heading of the group of Google's apps in the New tab launcher
 #: src/shell/open-app.tsx
@@ -1045,6 +1080,11 @@ msgstr "Lime"
 msgid "Linen"
 msgstr "Linen"
 
+#. Title of the group of Settings for links that leave Meru for the default browser
+#: src/settings/privacy-page.tsx
+msgid "Links"
+msgstr "Links"
+
 #. Detail of the alert saying Meru is the default browser, on macOS; System Settings is macOS's app of that name
 #: src/main/default-browser-guard.ts
 msgid "Links can't leave Meru while it's your default browser. Choose another default browser in System Settings to open them."
@@ -1055,6 +1095,11 @@ msgstr "Links can't leave Meru while it's your default browser. Choose another d
 msgid "Links can't leave Meru while it's your default browser. Choose another default browser in your system settings to open them."
 msgstr "Links can't leave Meru while it's your default browser. Choose another default browser in your system settings to open them."
 
+#. Description of the Trusted sites dialog in Settings; asking is the question Meru shows before a link opens in the default browser
+#: src/settings/trusted-sites-dialog.tsx
+msgid "Links to these sites open without asking."
+msgstr "Links to these sites open without asking."
+
 #. Said by screen readers after a tab's title while its page loads
 #: src/shell/tab-strip.tsx
 msgid "Loading"
@@ -1064,6 +1109,11 @@ msgstr "Loading"
 #: src/main/application-menu.ts
 msgid "Mail"
 msgstr "Mail"
+
+#. Button of the Trusted sites row in Settings that opens the list of sites whose links open without asking
+#: src/settings/trusted-sites-dialog.tsx
+msgid "Manage…"
+msgstr "Manage…"
 
 #. Button on a message in the unified inbox that marks it read. Gmail's own words for the action
 #: src/shell/inbox.tsx
@@ -1110,6 +1160,11 @@ msgstr "Menu bar"
 #: src/settings/app.tsx
 msgid "Menu Bar & Dock"
 msgstr "Menu Bar & Dock"
+
+#. Description of the Ask before opening links switch in Settings
+#: src/settings/privacy-page.tsx
+msgid "Meru asks before a link opens in your default browser."
+msgstr "Meru asks before a link opens in your default browser."
 
 #: src/main/entitlement.ts
 msgid "Meru can't reach its license server. Check your connection and try again."
@@ -1272,6 +1327,11 @@ msgstr "No results."
 #: src/main/application-menu.ts
 msgid "No Saved Searches"
 msgstr "No Saved Searches"
+
+#. Shown in the Trusted sites dialog of Settings when no site is trusted
+#: src/settings/trusted-sites-dialog.tsx
+msgid "No trusted sites"
+msgstr "No trusted sites"
 
 #. Heading of the unified inbox when no profile has unread mail
 #: src/shell/inbox.tsx
@@ -1472,6 +1532,11 @@ msgstr "Play sound"
 msgid "Previous match"
 msgstr "Previous match"
 
+#. Name of the Settings section for the content blocker and the links that leave Meru, in its list and as its title
+#: src/settings/app.tsx
+msgid "Privacy & Security"
+msgstr "Privacy & Security"
+
 #. Name given to a newly added profile, where {n} is a number from 2 up; the person can rename it later
 #: src/main/profile-copy.ts
 msgid "Profile {n}"
@@ -1531,12 +1596,19 @@ msgstr "Reload"
 
 #. Button in the dialog that confirms removing a profile
 #. Tooltip of the button in Settings that removes a saved search
+#. Tooltip of the button in the Trusted sites dialog of Settings that stops trusting the site in its row
 #. Tooltip of the button that removes one window of quiet hours in Settings
 #: src/main/profile-copy.ts
 #: src/settings/quiet-hours-field.tsx
 #: src/settings/saved-searches-card.tsx
+#: src/settings/trusted-sites-dialog.tsx
 msgid "Remove"
 msgstr "Remove"
+
+#. Accessible name of the button in the Trusted sites dialog of Settings that stops trusting the site; {name} is the site, such as example.com
+#: src/settings/trusted-sites-dialog.tsx
+msgid "Remove {name}"
+msgstr "Remove {name}"
 
 #. Question in the dialog that confirms removing a profile; {name} is the profile's name
 #: src/main/profile-copy.ts
@@ -1958,6 +2030,11 @@ msgstr "Signs you out of {name}."
 msgid "Silences all notifications."
 msgstr "Silences all notifications."
 
+#. Shown in the Trusted sites dialog of Settings when no site is trusted; Meru asks before a link opens in the default browser, and the question can trust the link's site
+#: src/settings/trusted-sites-dialog.tsx
+msgid "Sites you trust when Meru asks show up here."
+msgstr "Sites you trust when Meru asks show up here."
+
 #. Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked
 #. Item of a tab's context menu that frees its page until it is woken, keeping its place
 #. Label of the switch on a profile's page in Settings that puts it to sleep or wakes it
@@ -2028,6 +2105,11 @@ msgstr "Stop"
 #: src/shell/tab-strip.tsx
 msgid "Stopped working"
 msgstr "Stopped working"
+
+#. Description of the Block trackers switch in Settings
+#: src/settings/privacy-page.tsx
+msgid "Stops scripts that follow you from site to site."
+msgstr "Stops scripts that follow you from site to site."
 
 #. Choice of the Icon color menu in Settings: the tray icon follows the system's light or dark mode
 #. Choice of the Sound menu in Settings: the system's own notification sound
@@ -2185,6 +2267,14 @@ msgstr "Toggle Full Screen"
 msgid "Tray & Taskbar"
 msgstr "Tray & Taskbar"
 
+#. Accessible name of the table of trusted sites in the Trusted sites dialog of Settings
+#. Label of the row in Settings for the sites whose links open in the default browser without asking
+#. Title of the dialog in Settings listing the sites whose links open in the default browser without asking
+#: src/settings/privacy-page.tsx
+#: src/settings/trusted-sites-dialog.tsx
+msgid "Trusted sites"
+msgstr "Trusted sites"
+
 #. Button in place of a tab's page that could not load, which tries to load it again now
 #: src/shell/tab-problem.tsx
 msgid "Try again"
@@ -2209,6 +2299,11 @@ msgstr "Turn off Do Not Disturb first."
 #: src/settings/profile-page.tsx
 msgid "Turn off to hide this profile and stop checking its mail. You stay signed in."
 msgstr "Turn off to hide this profile and stop checking its mail. You stay signed in."
+
+#. Description of the Trusted sites row in Settings while Ask before opening links, the switch above it, is off; it says what to do to use the row
+#: src/settings/privacy-page.tsx
+msgid "Turn on Ask before opening links first."
+msgstr "Turn on Ask before opening links first."
 
 #. Description of Show in Unified inbox on a profile's page in Settings, whose switch is disabled while Check mail, the row above, is off
 #: src/settings/profile-page.tsx
@@ -2368,6 +2463,16 @@ msgstr "When you click Copy"
 msgid "Window"
 msgstr "Window"
 
+#. Description of the Content blocker group in Settings
+#: src/settings/privacy-page.tsx
+msgid "Works on every page in Meru, including Gmail."
+msgstr "Works on every page in Meru, including Gmail."
+
+#. Line under the Privacy & Security page in Settings, before a button that opens the Profiles section
+#: src/settings/privacy-page.tsx
+msgid "You can delete cookies and cached files for each profile on its page."
+msgstr "You can delete cookies and cached files for each profile on its page."
+
 #. Description of Remove profile on the page of the only enabled profile in Settings, whose button is disabled
 #: src/settings/profile-page.tsx
 msgid "You can't remove the only profile that's turned on."
@@ -2382,6 +2487,11 @@ msgstr "You can't remove your only profile."
 #: src/settings/saved-searches-card.tsx
 msgid "You haven't saved any searches yet."
 msgstr "You haven't saved any searches yet."
+
+#. Description of the Trusted sites row in Settings when no site is trusted
+#: src/settings/privacy-page.tsx
+msgid "You haven't trusted any sites yet."
+msgstr "You haven't trusted any sites yet."
 
 #. Line under the cards of the Notifications page in Settings while one profile's scope is chosen
 #: src/settings/notifications-page.tsx

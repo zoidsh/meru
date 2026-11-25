@@ -21,6 +21,7 @@ const connect = () => {
     "doNotDisturb",
     "profiles",
     "general",
+    "trustedSites",
     "page",
     "language",
   ]);

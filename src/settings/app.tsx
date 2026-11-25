@@ -7,6 +7,7 @@ import {
   MailIcon,
   PaletteIcon,
   SettingsIcon,
+  ShieldIcon,
   UsersIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -22,6 +23,7 @@ import { GeneralPage } from "./general-page.tsx";
 import { GmailPage } from "./gmail-page.tsx";
 import { MenuBarPage, onMacOS } from "./menu-bar-page.tsx";
 import { NotificationsPage } from "./notifications-page.tsx";
+import { PrivacyPage } from "./privacy-page.tsx";
 import { ProfilePage } from "./profile-page.tsx";
 import { ProfilesPage } from "./profiles-page.tsx";
 import type { RemovedProfile } from "./profiles-page.tsx";
@@ -34,6 +36,7 @@ const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
   "menu-bar": MenuBarPage,
   notifications: NotificationsPage,
   gmail: GmailPage,
+  privacy: PrivacyPage,
 };
 
 /** The nav's width, which the titlebar's buttons start after. */
@@ -56,6 +59,7 @@ const SECTION_GROUPS: readonly (readonly Section[])[] = [
     { id: "notifications", icon: BellIcon },
     { id: "gmail", icon: MailIcon },
   ],
+  [{ id: "privacy", icon: ShieldIcon }],
 ];
 
 /** Each section's name, in the nav and as the title. */
@@ -99,6 +103,11 @@ const useSectionTitles = (): Record<SettingsSection, string> => {
       message: "Gmail",
       comment:
         "Name of the Settings section for Gmail's page, its conversations and verification codes, in its list and as its title; Gmail is the product's name",
+    }),
+    privacy: t({
+      message: "Privacy & Security",
+      comment:
+        "Name of the Settings section for the content blocker and the links that leave Meru, in its list and as its title",
     }),
   };
 };

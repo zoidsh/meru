@@ -374,12 +374,20 @@ describe("the settings contract", () => {
       trayUnreadCount: true,
       trayIconColor: "dark",
       trayJumpsToUnread: false,
+      blockAds: true,
+      blockTrackers: false,
+      confirmLinks: true,
     };
 
     expect([
       settings.safeParse(values).success,
       Object.keys(
-        settings.parse({ ...values, trayIcon: true, unifiedInbox: false })
+        settings.parse({
+          ...values,
+          trayIcon: true,
+          unifiedInbox: false,
+          trustedSites: ["https://a.example"],
+        })
       ).toSorted(),
     ]).toStrictEqual([true, Object.keys(values).toSorted()]);
   });

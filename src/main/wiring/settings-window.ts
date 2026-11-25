@@ -36,6 +36,7 @@ import type { SettingsStore } from "../settings.ts";
 import { createRendererRecovery } from "../shell-recovery.ts";
 import type { SoundOutput } from "../sounds.ts";
 import type { Spellcheck } from "../spellcheck.ts";
+import type { TrustedSites } from "../trusted-sites.ts";
 import { openingOptions } from "../windows.ts";
 import { folderPicker, systemLoginItem } from "./test-build.ts";
 
@@ -71,6 +72,7 @@ export const wireSettingsWindow = ({
   showTestNotification,
   deleteBrowsingData,
   signIn,
+  trustedSites,
 }: {
   platform: Platform;
   /** The downloads' own, for the folder they are saved to. */
@@ -102,6 +104,7 @@ export const wireSettingsWindow = ({
     kinds: BrowsingDataKinds
   ) => Promise<void>;
   signIn: (profileId: string) => Promise<void>;
+  trustedSites: TrustedSites;
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
@@ -190,6 +193,7 @@ export const wireSettingsWindow = ({
       deleteBrowsingData,
       signIn,
       general,
+      trustedSites,
       // The system's confirmation shows as a sheet on the window that asked.
       removeProfile: async (profileId) => {
         const window = settingsWindow.current();
@@ -211,6 +215,7 @@ export const wireSettingsWindow = ({
           pages,
           general,
           language,
+          trustedSites,
         }),
       onChange: (listener) => {
         onSettingsStateChange(
