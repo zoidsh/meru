@@ -13,6 +13,7 @@ import type {
   SettingsState,
 } from "#contract/settings.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
+import { MERU_PRO_URL } from "#core/entitlement.ts";
 import { UNTIL_OFF } from "#core/notification-gate.ts";
 import {
   isProfileColorName,
@@ -29,10 +30,12 @@ import {
   isDisabled,
 } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import type { SystemBrowser } from "#platform/system-browser.ts";
 
 import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
 import { checkedDockChange } from "./dock.ts";
+import type { Entitlement } from "./entitlement.ts";
 import type { GeneralPage } from "./general-page.ts";
 import type { Language } from "./language.ts";
 import type { MailPoller } from "./mail.ts";
@@ -100,7 +103,60 @@ export interface SettingsContractDeps {
     | "setSpellcheckLanguage"
   >;
   trustedSites: Pick<TrustedSites, "list" | "remove">;
+  entitlement: Pick<
+    Entitlement,
+    | "snapshot"
+    | "activate"
+    | "setDeviceName"
+    | "retry"
+    | "copyLicenseKey"
+    | "continueFree"
+  >;
+  licenseRequests: Pick<LicenseRequests, "run" | "busy">;
+  /** Meru's own links' browser, which holds a link while Meru is the default. */
+  systemBrowser: Pick<SystemBrowser, "open">;
 }
+
+/**
+ * The one license request Settings may have out: an activation, a rename or
+ * a retry. It lives here rather than in the page, so a window closed and
+ * opened again while one is out still waits for it.
+ */
+export const createLicenseRequests = () => {
+  let out = false;
+  const listeners = new Set<() => void>();
+
+  const set = (next: boolean) => {
+    out = next;
+
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+
+  return {
+    busy: () => out,
+    /** Runs `request` unless one is out, which it rejects. */
+    run: async <Result>(request: () => Promise<Result>) => {
+      if (out) {
+        throw new Error("A license request is already out");
+      }
+
+      set(true);
+
+      try {
+        return await request();
+      } finally {
+        set(false);
+      }
+    },
+    onChange: (listener: () => void) => {
+      listeners.add(listener);
+    },
+  };
+};
+
+export type LicenseRequests = ReturnType<typeof createLicenseRequests>;
 
 /** The checks keep each key's value to its own type, which a loop over keys loses. */
 interface LooseStore {
@@ -163,6 +219,9 @@ export const settingsHandlers = ({
   signIn,
   general,
   trustedSites,
+  entitlement,
+  licenseRequests,
+  systemBrowser,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
 
@@ -375,6 +434,14 @@ export const settingsHandlers = ({
     setSpellcheckLanguage: ({ code, on }) =>
       general.setSpellcheckLanguage(code, on),
     removeTrustedSite: ({ site }) => trustedSites.remove(site),
+    activateLicense: ({ licenseKey }) =>
+      licenseRequests.run(() => entitlement.activate(licenseKey)),
+    setDeviceName: ({ name }) =>
+      licenseRequests.run(() => entitlement.setDeviceName(name)),
+    retryEntitlement: () => licenseRequests.run(entitlement.retry),
+    copyLicenseKey: () => entitlement.copyLicenseKey(),
+    continueFree: () => entitlement.continueFree(),
+    openMeruPro: () => systemBrowser.open(MERU_PRO_URL),
   };
 };
 
@@ -388,6 +455,8 @@ export const readSettingsState = ({
   general,
   language,
   trustedSites,
+  entitlement,
+  licenseRequests,
 }: Pick<
   SettingsContractDeps,
   | "settings"
@@ -398,6 +467,8 @@ export const readSettingsState = ({
   | "general"
   | "language"
   | "trustedSites"
+  | "entitlement"
+  | "licenseRequests"
 >): SettingsState => {
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
@@ -439,6 +510,8 @@ export const readSettingsState = ({
     general: general.read(),
     trustedSites: trustedSites.list(),
     language: language.current(),
+    entitlement: entitlement.snapshot(),
+    licenseRequest: licenseRequests.busy(),
     page: {
       ...pages.current(),
       canGoBack: pages.canGoBack(),
@@ -452,7 +525,7 @@ export const readSettingsState = ({
  * the Settings window is sent the state again: each setting it shows and the
  * trusted sites, which the store announces by key, Do Not Disturb through the
  * profiles' state, the mail check, the General page's own values, the
- * language shown and the page shown.
+ * language shown, the page shown, the entitlement and its request out.
  */
 export const onSettingsStateChange = (
   {
@@ -462,6 +535,8 @@ export const onSettingsStateChange = (
     pages,
     general,
     language,
+    entitlement,
+    licenseRequests,
   }: {
     settings: Pick<SettingsStore, "onChange">;
     profiles: Pick<Profiles, "onChange">;
@@ -469,6 +544,8 @@ export const onSettingsStateChange = (
     pages: Pick<SettingsPages, "onChange">;
     general: Pick<GeneralPage, "onChange">;
     language: Pick<Language, "onChange">;
+    entitlement: Pick<Entitlement, "onChange">;
+    licenseRequests: Pick<LicenseRequests, "onChange">;
   },
   listener: () => void
 ) => {
@@ -485,4 +562,6 @@ export const onSettingsStateChange = (
   pages.onChange(listener);
   general.onChange(listener);
   language.onChange(listener);
+  entitlement.onChange(listener);
+  licenseRequests.onChange(listener);
 };

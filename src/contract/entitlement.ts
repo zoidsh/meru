@@ -60,6 +60,11 @@ export const ENTITLEMENT_CALLS = {
     request: z.undefined(),
     response: result,
   },
+  /** Opens Meru Pro's page in the default browser, the address main's own. */
+  openMeruPro: {
+    request: z.undefined(),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   EntitlementCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }

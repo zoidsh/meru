@@ -14,6 +14,7 @@ import type {
   ContractState,
   SyncMessage,
 } from "./contract.ts";
+import { ENTITLEMENT_CALLS, ENTITLEMENT_STATE } from "./entitlement.ts";
 import type { SettingsCallName } from "./settings-channels.ts";
 
 export { SETTINGS_CALL_NAMES, SETTINGS_CHANNELS } from "./settings-channels.ts";
@@ -338,6 +339,7 @@ export const SETTINGS_CALLS = {
     request: z.object({ site: z.string() }),
     response: z.undefined(),
   },
+  ...ENTITLEMENT_CALLS,
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -436,6 +438,13 @@ export const SETTINGS_STATE = {
   trustedSites: z.array(z.string()),
   /** The language Meru shows, as a catalog's tag. */
   language: z.string(),
+  ...ENTITLEMENT_STATE,
+  /**
+   * Whether an activation, a rename of this device or a retry the window
+   * asked for is still out, so none is sent beside it, even by a window
+   * opened after it was asked.
+   */
+  licenseRequest: z.boolean(),
   /** The page shown, and whether Back and Forward have one to go to. */
   page: z.object({
     ...page.shape,

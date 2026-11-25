@@ -14,11 +14,13 @@ import type { ContextMenus } from "#platform/context-menu.ts";
 import type { Displays } from "#platform/displays.ts";
 import type { DownloadFiles } from "#platform/downloads.ts";
 import type { Ipc } from "#platform/ipc.ts";
+import type { SystemBrowser } from "#platform/system-browser.ts";
 import type { Theme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
 import { serveContract } from "../contract-ipc.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
+import type { Entitlement } from "../entitlement.ts";
 import { createGeneralPage } from "../general-page.ts";
 import type { Language } from "../language.ts";
 import type { MailPoller } from "../mail.ts";
@@ -26,6 +28,7 @@ import type { Profiles } from "../profiles.ts";
 import { createRemoveProfile } from "../remove-profile.ts";
 import type { SenderRegistry } from "../senders.ts";
 import {
+  createLicenseRequests,
   onSettingsStateChange,
   readSettingsState,
   settingsHandlers,
@@ -73,6 +76,8 @@ export const wireSettingsWindow = ({
   deleteBrowsingData,
   signIn,
   trustedSites,
+  entitlement,
+  systemBrowser,
 }: {
   platform: Platform;
   /** The downloads' own, for the folder they are saved to. */
@@ -105,9 +110,13 @@ export const wireSettingsWindow = ({
   ) => Promise<void>;
   signIn: (profileId: string) => Promise<void>;
   trustedSites: TrustedSites;
+  entitlement: Entitlement;
+  /** Meru's own links' browser, for Meru Pro's page. */
+  systemBrowser: SystemBrowser;
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
+  const licenseRequests = createLicenseRequests();
 
   const settingsWindow = createSettingsWindow({
     create: () =>
@@ -194,6 +203,9 @@ export const wireSettingsWindow = ({
       signIn,
       general,
       trustedSites,
+      entitlement,
+      licenseRequests,
+      systemBrowser,
       // The system's confirmation shows as a sheet on the window that asked.
       removeProfile: async (profileId) => {
         const window = settingsWindow.current();
@@ -216,10 +228,21 @@ export const wireSettingsWindow = ({
           general,
           language,
           trustedSites,
+          entitlement,
+          licenseRequests,
         }),
       onChange: (listener) => {
         onSettingsStateChange(
-          { settings, profiles, mail, pages, general, language },
+          {
+            settings,
+            profiles,
+            mail,
+            pages,
+            general,
+            language,
+            entitlement,
+            licenseRequests,
+          },
           listener
         );
       },

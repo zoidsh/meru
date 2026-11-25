@@ -139,7 +139,7 @@ const start = async () => {
   });
   const clipboard = systemClipboard();
 
-  await wireEntitlement({
+  const { entitlement } = await wireEntitlement({
     lifecycle,
     file: entitlementFile,
     initial: entitlementStore,
@@ -518,6 +518,8 @@ const start = async () => {
     showTestNotification,
     deleteBrowsingData: createDeleteBrowsingData({ sessions, views, mail }),
     trustedSites,
+    entitlement,
+    systemBrowser,
     // Google's sign-in is in the profile's Gmail tab, so the window comes
     // forward with it, unless the background flags hold it back.
     signIn: async (profileId) => {

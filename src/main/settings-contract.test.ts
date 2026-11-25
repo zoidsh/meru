@@ -10,19 +10,29 @@ import {
 } from "#contract/settings.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
+import { MERU_PRO_URL } from "#core/entitlement.ts";
 import type { FeedOutcome } from "#core/feed.ts";
 import type { Platform } from "#core/platform.ts";
 import type { Settings } from "#core/settings.ts";
 import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import type { EntitlementServer } from "#platform/entitlement-server.ts";
+import { fakeTextFile } from "#platform/text-file.fake.ts";
 
 import { createDoNotDisturb } from "./do-not-disturb.ts";
+import {
+  DEV_PUBLIC_KEY,
+  createStubEntitlementServer,
+} from "./entitlement-stub.ts";
+import { publicKeyFromRaw } from "./entitlement-token.ts";
+import { createEntitlement, entitlementErrorMessage } from "./entitlement.ts";
 import { createGeneralPage } from "./general-page.ts";
 import { createLanguage } from "./language.ts";
 import { createMailPoller } from "./mail.ts";
 import { createProfiles } from "./profiles.ts";
 import { createRemoveProfile } from "./remove-profile.ts";
 import {
+  createLicenseRequests,
   onSettingsStateChange,
   readSettingsState,
   settingsHandlers,
@@ -148,6 +158,44 @@ const setup = (
     language,
     spellcheck,
   });
+  // The development stand-in answers; while held, no call is answered
+  // until the test lets them through.
+  const stub = createStubEntitlementServer({
+    file: fakeTextFile("/entitlement-stub.json", new Map()),
+    now: Date.now,
+    offline: () => false,
+  });
+  let held: PromiseWithResolvers<void> | undefined;
+  const after =
+    <Request, Answer>(call: (request: Request) => Promise<Answer>) =>
+    async (request: Request) => {
+      await held?.promise;
+
+      return call(request);
+    };
+  const server: EntitlementServer = {
+    refresh: after(stub.refresh),
+    activate: after(stub.activate),
+    setDeviceLabel: after(stub.setDeviceLabel),
+  };
+  const copied: string[] = [];
+  const opened: string[] = [];
+  const entitlement = createEntitlement({
+    initial: { version: 1 },
+    save: () => Promise.resolve(),
+    server,
+    publicKey: publicKeyFromRaw(DEV_PUBLIC_KEY),
+    deviceId: "device",
+    clipboard: {
+      writeText: (text) => {
+        copied.push(text);
+
+        return Promise.resolve();
+      },
+    },
+    now: Date.now,
+    log: () => false,
+  });
   const deps = {
     settings,
     profiles,
@@ -193,6 +241,15 @@ const setup = (
     general,
     language,
     trustedSites: createTrustedSites(settings),
+    entitlement,
+    licenseRequests: createLicenseRequests(),
+    systemBrowser: {
+      open: (url: string) => {
+        opened.push(url);
+
+        return Promise.resolve();
+      },
+    },
   };
 
   settings.onChange("notificationSender", () =>
@@ -234,6 +291,16 @@ const setup = (
     confirming: (next: boolean) => {
       confirms = next;
     },
+    copied,
+    opened,
+    /** Holds every call to the server until `release`. */
+    hold: () => {
+      held = Promise.withResolvers();
+    },
+    release: () => {
+      held?.resolve();
+      held = undefined;
+    },
     profiles,
     /** Polls the listed profiles' feeds, which answer with these, and lets each answer land. */
     poll: async (answers: Record<string, FeedOutcome>) => {
@@ -248,6 +315,7 @@ const setup = (
       await Promise.resolve();
     },
     dispose: () => {
+      entitlement.dispose();
       doNotDisturb.dispose();
       mail.reconcile([], []);
     },
@@ -1572,5 +1640,138 @@ describe("the Settings window's Sign in", () => {
       ["work"],
     ]);
     app.dispose();
+  });
+});
+
+describe("the Settings window's Meru Pro page", () => {
+  const KEY = "MERU-TEST-AAAA-BBBB-CCCC-7Q2K";
+
+  it("sends the entitlement with the key masked, and the whole key never", async () => {
+    const app = setup(stateOf("Work"));
+    const before = app.read();
+
+    await expect(
+      app.handlers.activateLicense({ licenseKey: KEY })
+    ).resolves.toStrictEqual({ ok: true });
+
+    const after = app.read();
+
+    expect([
+      before.entitlement.status,
+      before.entitlement.licenseKey,
+      before.licenseRequest,
+      after.entitlement.status,
+      after.entitlement.licenseKey,
+      after.entitlement.deviceName,
+      JSON.stringify(after).includes(KEY),
+    ]).toStrictEqual([
+      "none",
+      null,
+      false,
+      "licensed",
+      "MERU-••••-••••-••••-••••-7Q2K",
+      expect.stringMatching(/^Device [\dA-F]{4}$/u),
+      false,
+    ]);
+    app.dispose();
+  });
+
+  it("answers a refused or malformed key with main's own wording", async () => {
+    const app = setup(stateOf("Work"));
+    const answers = [];
+
+    for (const licenseKey of [
+      "not a key",
+      "MERU-USED-0000-0000-0000",
+      "MERU-0000-0000-0000-0000",
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- one request at a time
+      answers.push(await app.handlers.activateLicense({ licenseKey }));
+    }
+
+    expect(answers).toStrictEqual(
+      (["malformed", "deviceLimit", "invalidKey"] as const).map((error) => ({
+        ok: false,
+        error,
+        message: entitlementErrorMessage(error),
+      }))
+    );
+    expect(app.read().entitlement.status).toBe("none");
+    app.dispose();
+  });
+
+  it("has one activation, rename or retry out at a time, refusing the others, and says so to every window", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.activateLicense({ licenseKey: KEY });
+
+    const sends = app.sends();
+
+    app.hold();
+
+    const renaming = app.handlers.setDeviceName({ name: "Studio" });
+    const out = app.read().licenseRequest;
+    const refused = await Promise.allSettled([
+      app.handlers.activateLicense({ licenseKey: KEY }),
+      app.handlers.setDeviceName({ name: "Office" }),
+      app.handlers.retryEntitlement(undefined),
+    ]);
+
+    app.release();
+
+    await expect(renaming).resolves.toStrictEqual({ ok: true });
+    expect([
+      out,
+      refused.map(({ status }) => status),
+      app.read().licenseRequest,
+      app.read().entitlement.deviceName,
+      sends() >= 2,
+    ]).toStrictEqual([
+      true,
+      ["rejected", "rejected", "rejected"],
+      false,
+      "Studio",
+      true,
+    ]);
+
+    await expect(
+      app.handlers.retryEntitlement(undefined)
+    ).resolves.toBeUndefined();
+    app.dispose();
+  });
+
+  it("gives the device back its generated name for an empty one", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.activateLicense({ licenseKey: KEY });
+
+    const generated = app.read().entitlement.deviceName;
+
+    await app.handlers.setDeviceName({ name: "Studio" });
+    await app.handlers.setDeviceName({ name: "  " });
+
+    expect(app.read().entitlement.deviceName).toBe(generated);
+    app.dispose();
+  });
+
+  it("copies the whole key from main, and opens Meru Pro's page in Meru's own browser", async () => {
+    const app = setup(stateOf("Work"));
+
+    await expect(app.handlers.copyLicenseKey(undefined)).resolves.toMatchObject(
+      { ok: false, error: "noLicense" }
+    );
+    await app.handlers.activateLicense({ licenseKey: KEY });
+    await app.handlers.copyLicenseKey(undefined);
+    await app.handlers.openMeruPro(undefined);
+
+    expect([app.copied, app.opened]).toStrictEqual([[KEY], [MERU_PRO_URL]]);
+    app.dispose();
+  });
+
+  it("takes no address from the window to open", () => {
+    expect(
+      SETTINGS_CALLS.openMeruPro.request.safeParse("https://example.com")
+        .success
+    ).toBeFalsy();
   });
 });

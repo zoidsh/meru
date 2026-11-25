@@ -11,6 +11,7 @@ export const ENTITLEMENT_CALL_NAMES = [
   "retryEntitlement",
   "copyLicenseKey",
   "continueFree",
+  "openMeruPro",
 ] as const;
 
 export type EntitlementCallName = (typeof ENTITLEMENT_CALL_NAMES)[number];

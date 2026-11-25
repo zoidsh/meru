@@ -43,6 +43,9 @@ export type Tier = (typeof TIERS)[number];
 /** The server names the tier; what each tier holds is the app's to say. */
 export const tierCan = (tier: Tier, _capability: Capability) => tier !== "free";
 
+/** Meru Pro's page, where Upgrade leads, as v3's did. */
+export const MERU_PRO_URL = "https://meru.so/#pricing";
+
 export const DAY = 24 * 60 * 60 * 1000;
 
 /** How long a token holds with no contact, and a key the importer stored with none. */

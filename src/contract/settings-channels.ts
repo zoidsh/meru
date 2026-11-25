@@ -2,6 +2,7 @@
 // which needs only these names, carries no zod.
 
 import { contractChannels } from "./channels.ts";
+import { ENTITLEMENT_CALL_NAMES } from "./entitlement-channels.ts";
 
 export const SETTINGS_CALL_NAMES = [
   "update",
@@ -31,6 +32,7 @@ export const SETTINGS_CALL_NAMES = [
   "chooseDownloadsFolder",
   "setSpellcheckLanguage",
   "removeTrustedSite",
+  ...ENTITLEMENT_CALL_NAMES,
 ] as const;
 
 export type SettingsCallName = (typeof SETTINGS_CALL_NAMES)[number];
