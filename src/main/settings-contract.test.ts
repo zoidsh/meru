@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   APPEARANCE_PAGE_KEYS,
+  GENERAL_PAGE_KEYS,
   GMAIL_PAGE_KEYS,
   MENU_BAR_PAGE_KEYS,
 } from "#contract/settings.ts";
@@ -556,6 +557,23 @@ describe("the Settings window's Gmail page", () => {
       },
       false,
       "immediately",
+    ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's General page", () => {
+  it("sends each of the page's settings, the default where none is stored, and writes each", async () => {
+    const app = setup(stateOf("Work"));
+    const before = Object.fromEntries(
+      GENERAL_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
+    );
+
+    await app.handlers.update({ key: "openInBackground", value: true });
+
+    expect([before, app.saved.at(-1)]).toStrictEqual([
+      { openInBackground: false },
+      { version: 1, openInBackground: true },
     ]);
     app.dispose();
   });

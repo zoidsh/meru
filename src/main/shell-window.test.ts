@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import type { LaunchWindow } from "#core/launch-window.ts";
 import { OVERLAY_FRAME_NAME } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { SHELL_GREY } from "#core/shell-grey.ts";
@@ -55,6 +56,10 @@ const createFakeWindow = () => {
       calls.push("restore");
     },
     isMinimized: () => minimized,
+    minimize: () => {
+      minimized = true;
+      calls.push("minimize");
+    },
     isDestroyed: () => false,
     hide: () => {
       calls.push("hide");
@@ -149,7 +154,11 @@ const createFakeWindow = () => {
   };
 };
 
-const open = ({ background = false, isMacOS = true } = {}) => {
+const open = ({
+  background = false,
+  isMacOS = true,
+  atLaunch = "shown" as LaunchWindow,
+} = {}) => {
   const fake = createFakeWindow();
   const created: WindowOptions[] = [];
   let isDark = false;
@@ -173,6 +182,7 @@ const open = ({ background = false, isMacOS = true } = {}) => {
     preloadPath: "/app/preload-shell.cjs",
     isMacOS,
     background,
+    atLaunch,
     theme: {
       isDark: () => isDark,
       onChange: (listener) => {
@@ -207,6 +217,24 @@ describe(createShellWindow, () => {
     shell.emit("ready-to-show");
 
     expect(shell.calls).toStrictEqual(["showInactive"]);
+  });
+
+  it("leaves the window hidden in the background until something reveals it, and minimizes it where asked, never activating it", () => {
+    const hidden = open({ atLaunch: "hidden" });
+    const minimized = open({ atLaunch: "minimized" });
+
+    hidden.emit("ready-to-show");
+    minimized.emit("ready-to-show");
+    minimized.emit("did-finish-load");
+
+    const atLaunch = [[...hidden.calls], [...minimized.calls]];
+
+    revealWindow(hidden.window, false);
+
+    expect([atLaunch, hidden.calls]).toStrictEqual([
+      [[], ["showInactive", "minimize"]],
+      ["show", "focus"],
+    ]);
   });
 
   it("opens centred on the primary display at the default size", () => {

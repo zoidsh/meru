@@ -1,3 +1,4 @@
+import type { LaunchWindow } from "#core/launch-window.ts";
 import { isShellDocument } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
@@ -16,6 +17,8 @@ export interface ShellWindowDeps {
   preloadPath: string;
   isMacOS: boolean;
   background: boolean;
+  /** As `launchWindow` decides; hidden, it shows once something reveals it. */
+  atLaunch: LaunchWindow;
   theme: Pick<Theme, "isDark" | "onChange">;
 }
 
@@ -29,9 +32,10 @@ const DEFAULT_SIZE = { width: 1280, height: 800 };
 const MINIMUM_SIZE = { width: 540, height: 375 };
 
 /**
- * Opens the shell window and shows it once its page can paint: on
- * `ready-to-show`, or on `did-finish-load` where that comes first, since on
- * Wayland `ready-to-show` sometimes never fires.
+ * Opens the shell window and shows it once its page can paint, unless Open in
+ * the background keeps it hidden or minimized: on `ready-to-show`, or on
+ * `did-finish-load` where that comes first, since on Wayland `ready-to-show`
+ * sometimes never fires.
  */
 export const createShellWindow = ({
   windows,
@@ -41,6 +45,7 @@ export const createShellWindow = ({
   preloadPath,
   isMacOS,
   background,
+  atLaunch,
   theme,
 }: ShellWindowDeps) => {
   const window = windows.create({
@@ -72,10 +77,20 @@ export const createShellWindow = ({
 
     isShown = true;
 
-    if (background) {
+    if (atLaunch === "hidden") {
+      return;
+    }
+
+    // Shown inactive first: minimizing a window never shown leaves it off
+    // the taskbar on Linux.
+    if (background || atLaunch === "minimized") {
       window.showInactive();
     } else {
       window.show();
+    }
+
+    if (atLaunch === "minimized") {
+      window.minimize();
     }
   };
 

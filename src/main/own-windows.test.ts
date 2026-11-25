@@ -88,6 +88,7 @@ const setup = ({ background = true, holdSaves = false } = {}) => {
           showContextMenu: () => fake.calls.push("menu"),
           isVisible: () => true,
           isMinimized: () => fake.minimized,
+          minimize: () => fake.calls.push("minimize"),
           restore: () => fake.calls.push("restore"),
           setTitle: (title) => fake.calls.push(`title ${title}`),
           setBackgroundColor: (next) => fake.calls.push(`color ${next}`),

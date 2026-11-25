@@ -347,6 +347,7 @@ describe("the settings contract", () => {
       verificationCodeCopyMode: "notificationClick",
       verificationCodeMarkRead: false,
       verificationCodeTrash: false,
+      openInBackground: true,
       theme: "dark",
       profileTint: false,
       titlebarNewTab: true,

@@ -65,6 +65,7 @@ export interface PlainWindow {
   isFocused: () => boolean;
   isVisible: () => boolean;
   isMinimized: () => boolean;
+  minimize: () => void;
   restore: () => void;
   setTitle: (title: string) => void;
   setBackgroundColor: (color: string) => void;
@@ -103,6 +104,7 @@ export const plainWindow = (
   isFocused: () => window.isFocused(),
   isVisible: () => window.isVisible(),
   isMinimized: () => window.isMinimized(),
+  minimize: () => window.minimize(),
   restore: () => window.restore(),
   setTitle: (title) => window.setTitle(title),
   setBackgroundColor: (color) => window.setBackgroundColor(color),

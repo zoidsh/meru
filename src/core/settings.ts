@@ -127,6 +127,14 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: false,
   }),
+  /**
+   * Meru starts without showing its main window, at every launch as v3's
+   * Launch minimized did; `launchWindow` says how it stays in reach.
+   */
+  openInBackground: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
+  }),
   /** Light or dark for every window of Meru, or as the system is. */
   theme: setting<ThemeChoice>({
     schema: z.enum(THEMES),

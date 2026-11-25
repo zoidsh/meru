@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { launchWindow } from "#core/launch-window.ts";
 import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import { tabKey } from "#core/tabs.ts";
@@ -137,6 +138,11 @@ const start = async () => {
 
   const displays = createDisplays();
   const shell = createShellWindow({
+    atLaunch: launchWindow({
+      openInBackground: settings.get("openInBackground"),
+      platform,
+      trayShown: settings.get("tray"),
+    }),
     windows: createWindowFactory(contextMenus),
     displays,
     title: lifecycle.name,

@@ -64,6 +64,7 @@ const APP: PageSettings = {
   verificationCodeCopyMode: "notificationClick",
   verificationCodeMarkRead: false,
   verificationCodeTrash: false,
+  openInBackground: false,
   theme: "system",
   profileTint: true,
   titlebarNewTab: true,
