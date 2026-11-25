@@ -73,10 +73,8 @@ describe(createTrialChoice, () => {
   it("waits while the choice is pending, and goes on once it is not, whatever ended it", async () => {
     const entitlement = fakeEntitlement(ENDED);
     const choice = createTrialChoice({ entitlement });
-    const told: boolean[] = [];
     let settled = false;
 
-    choice.onChange(() => told.push(choice.waiting()));
     void choice.chosen.finally(() => {
       settled = true;
     });
@@ -85,15 +83,14 @@ describe(createTrialChoice, () => {
     entitlement.move({ lastConfirmed: 2 });
     await Promise.resolve();
 
-    expect([choice.waiting(), settled, told]).toStrictEqual([true, false, []]);
+    expect([choice.waiting(), settled]).toStrictEqual([true, false]);
 
     // A refresh that brings a license back, as an accepted key does.
     entitlement.move({ status: "licensed", trialChoicePending: false });
     await choice.chosen;
 
-    expect([choice.waiting(), told, entitlement.listening()]).toStrictEqual([
+    expect([choice.waiting(), entitlement.listening()]).toStrictEqual([
       false,
-      [false],
       0,
     ]);
   });

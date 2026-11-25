@@ -223,21 +223,33 @@ const start = async () => {
   );
   const pro = () =>
     readShellPro({ entitlement, licenseRequests, trialChoice, profiles });
+  // Not the profiles, which the app's shell state follows already.
   const onProChange = (listener: () => void) => {
     entitlement.onChange(listener);
     licenseRequests.onChange(listener);
-    trialChoice.onChange(listener);
-    profiles.onChange(listener);
   };
   // Served from the first paint, so the trial-ended screen can draw before
-  // anything of a profile exists.
+  // anything of a profile exists. The screen stays until the app's state
+  // takes over, so the shell opens nothing of the app before main listens.
   const shellContract = createShellSource({
     handlers: launchHandlers,
     state: {
-      read: () => ({ language: language.current(), pro: pro() }),
+      read: () => ({
+        language: language.current(),
+        pro: { ...pro(), trialChoice: true },
+      }),
       onChange: (listener) => {
-        language.onChange(listener);
-        onProChange(listener);
+        const stops = [
+          language.onChange(listener),
+          entitlement.onChange(listener),
+          licenseRequests.onChange(listener),
+        ];
+
+        return () => {
+          for (const stop of stops) {
+            stop();
+          }
+        };
       },
     },
   });

@@ -26,7 +26,6 @@ export const createTrialChoice = ({
   entitlement: EntitlementSource;
 }) => {
   let waiting = entitlement.snapshot().trialChoicePending;
-  const listeners = new Set<() => void>();
 
   const { promise: chosen, resolve } = Promise.withResolvers<undefined>();
 
@@ -38,11 +37,6 @@ export const createTrialChoice = ({
 
       stop();
       waiting = false;
-
-      for (const listener of listeners) {
-        listener();
-      }
-
       resolve(undefined);
     });
   } else {
@@ -54,9 +48,6 @@ export const createTrialChoice = ({
     waiting: () => waiting,
     /** Settles once the launch may go on, at once when it never waited. */
     chosen,
-    onChange: (listener: () => void) => {
-      listeners.add(listener);
-    },
   };
 };
 

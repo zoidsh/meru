@@ -51,8 +51,13 @@ export const createLanguage = ({
     /** What System shows Meru in. */
     system: () => appLanguage("system", preferredLanguages(), available),
     available,
+    /** Returns what stops it. */
     onChange: (listener: () => void) => {
       listeners.add(listener);
+
+      return () => {
+        listeners.delete(listener);
+      };
     },
   };
 };

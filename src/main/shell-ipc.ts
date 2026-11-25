@@ -35,7 +35,8 @@ export interface ShellIpcDeps {
 
 /** Serves the shell contract to the shell's main frame alone. */
 export const serveShellContract = ({ shellOrigin, ...deps }: ShellIpcDeps) => {
-  serveContract({
+  // While the launch waits, the shell's state has only a few slices.
+  serveContract<typeof SHELL_CALLS, typeof SHELL_STATE, Partial<ShellState>>({
     ...deps,
     role: "shell",
     surface: "shell",
@@ -54,7 +55,11 @@ export const serveShellContract = ({ shellOrigin, ...deps }: ShellIpcDeps) => {
  */
 export const createShellSource = (launch: {
   handlers: LaunchHandlers;
-  state: ContractStateSource<LaunchShellState>;
+  state: {
+    read: () => LaunchShellState;
+    /** Returns what stops it, which `start` calls. */
+    onChange: (listener: () => void) => () => void;
+  };
 }) => {
   let app:
     | { handlers: ShellHandlers; state: ContractStateSource<ShellState> }
@@ -85,11 +90,7 @@ export const createShellSource = (launch: {
     ])
   ) as ShellHandlers;
 
-  launch.state.onChange(() => {
-    if (!app) {
-      notify();
-    }
-  });
+  const stopLaunch = launch.state.onChange(notify);
 
   return {
     handlers,
@@ -110,6 +111,7 @@ export const createShellSource = (launch: {
       }
 
       app = next;
+      stopLaunch();
       next.state.onChange(notify);
       notify();
     },

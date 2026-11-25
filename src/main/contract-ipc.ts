@@ -31,6 +31,7 @@ export interface ContractStateSource<State> {
 export interface ContractIpcDeps<
   Calls extends CallSchemas,
   Slices extends SliceSchemas,
+  Read extends Partial<ContractState<Slices>> = ContractState<Slices>,
 > {
   ipc: Ipc;
   senders: Pick<SenderRegistry, "identify">;
@@ -45,10 +46,10 @@ export interface ContractIpcDeps<
   channels: ContractChannels<keyof Calls & string>;
   handlers: ContractHandlers<Calls>;
   /**
-   * A slice it leaves out reads as not known yet, as a renderer's does until
-   * the first snapshot; the shell's, while the launch waits, has only a few.
+   * Every slice, unless the caller names a partial `Read`: a slice left out
+   * reads as not known yet, as a renderer's does until the first snapshot.
    */
-  state: ContractStateSource<Partial<ContractState<Slices>>>;
+  state: ContractStateSource<NoInfer<Read>>;
   log: (message: string) => void;
 }
 
@@ -65,6 +66,7 @@ export class RefusedCallError extends Error {
 export const serveContract = <
   Calls extends CallSchemas,
   Slices extends SliceSchemas,
+  Read extends Partial<ContractState<Slices>> = ContractState<Slices>,
 >({
   ipc,
   senders,
@@ -77,7 +79,7 @@ export const serveContract = <
   handlers,
   state,
   log,
-}: ContractIpcDeps<Calls, Slices>) => {
+}: ContractIpcDeps<Calls, Slices, Read>) => {
   type State = ContractState<Slices>;
   type SliceName = keyof Slices & string;
 

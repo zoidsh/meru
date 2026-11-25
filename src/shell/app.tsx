@@ -107,13 +107,13 @@ const Panes = ({
 );
 
 /** The main window as drawn once the launch has gone on. */
-const MainWindow = ({ pro }: { pro: ShellState["pro"] | undefined }) => {
+const MainWindow = ({ pro }: { pro: ShellState["pro"] }) => {
   const { t } = useLingui();
   const tabs = useShellState("tabs");
   const profiles = useShellState("profiles");
   const sidebar = useShellState("sidebar")?.state ?? "hidden";
   const tint = useShellState("appearance")?.tint ?? true;
-  const footerDays = pro?.trialFooterDays ?? null;
+  const footerDays = pro.trialFooterDays;
   const { inset, radius } = viewFrame({
     sidebar,
     trialFooter: footerDays !== null,
@@ -182,7 +182,13 @@ const MainWindow = ({ pro }: { pro: ShellState["pro"] | undefined }) => {
 export const App = () => {
   const pro = useShellState("pro");
 
+  // Nothing until main says whether the launch waits: the main window would
+  // open the overlay's document before main listens for it.
+  if (!pro) {
+    return null;
+  }
+
   // Until the person chooses, no profile has started, so there is nothing
   // else to draw and no overlay document to open.
-  return pro?.trialChoice ? <TrialEnded pro={pro} /> : <MainWindow pro={pro} />;
+  return pro.trialChoice ? <TrialEnded pro={pro} /> : <MainWindow pro={pro} />;
 };

@@ -32,8 +32,13 @@ export const createLicenseRequests = () => {
         set(false);
       }
     },
+    /** Returns what stops it. */
     onChange: (listener: () => void) => {
       listeners.add(listener);
+
+      return () => {
+        listeners.delete(listener);
+      };
     },
   };
 };

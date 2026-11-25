@@ -730,7 +730,7 @@ describe(createShellSource, () => {
 
   const sourceSetup = () => {
     const launched: unknown[] = [];
-    const launchListeners: (() => void)[] = [];
+    const launchListeners = new Set<() => void>();
     let launchState = { language: "en", pro: PRO };
     const source = createShellSource({
       handlers: {
@@ -750,7 +750,11 @@ describe(createShellSource, () => {
       state: {
         read: () => launchState,
         onChange: (listener) => {
-          launchListeners.push(listener);
+          launchListeners.add(listener);
+
+          return () => {
+            launchListeners.delete(listener);
+          };
         },
       },
     });
@@ -764,6 +768,7 @@ describe(createShellSource, () => {
       source,
       launched,
       told: () => told,
+      launchListening: () => launchListeners.size,
       moveLaunch: (pro: ShellState["pro"]) => {
         launchState = { ...launchState, pro };
 
@@ -794,7 +799,7 @@ describe(createShellSource, () => {
   });
 
   it("answers from the app's once started, telling the change, and only once", async () => {
-    const { source, told, moveLaunch } = sourceSetup();
+    const { source, told, launchListening, moveLaunch } = sourceSetup();
     const appCalls: unknown[] = [];
     const appListeners: (() => void)[] = [];
     const appState = { language: "de", pro: { ...PRO, trialChoice: false } };
@@ -823,7 +828,8 @@ describe(createShellSource, () => {
       appState,
     ]);
 
-    // The launch's own changes no longer tell; the app's do.
+    // The launch's listeners end with the wait; the app's tell.
+    expect(launchListening()).toBe(0);
     moveLaunch(PRO);
 
     for (const listener of appListeners) {
