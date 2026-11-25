@@ -2011,6 +2011,10 @@ msgid "Theme"
 msgstr "Theme"
 
 #: src/main/entitlement.ts
+msgid "There's no license on this computer to name it on. Enter a license key first."
+msgstr "There's no license on this computer to name it on. Enter a license key first."
+
+#: src/main/entitlement.ts
 msgid "There's no license with this key. Check it and try again, or contact support."
 msgstr "There's no license with this key. Check it and try again, or contact support."
 

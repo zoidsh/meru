@@ -61,7 +61,12 @@ export const SERVER_REFUSALS = [
 export type ServerRefusal = (typeof SERVER_REFUSALS)[number];
 
 /** Why an activation or a rename failed: a key out of shape, or the server's reason. */
-export const ENTITLEMENT_ERRORS = ["malformed", ...SERVER_REFUSALS] as const;
+export const ENTITLEMENT_ERRORS = [
+  "malformed",
+  /** A rename with no license on this computer to rename it on. */
+  "noLicense",
+  ...SERVER_REFUSALS,
+] as const;
 
 export type EntitlementError = (typeof ENTITLEMENT_ERRORS)[number];
 
@@ -279,4 +284,23 @@ export const normalizeLicenseKey = (input: string) => {
   const key = input.trim();
 
   return /^[A-Za-z0-9][A-Za-z0-9-]{7,63}$/u.test(key) ? key : undefined;
+};
+
+const hide = (text: string) => "•".repeat(text.length);
+
+/**
+ * A license key as a page may show it: its first and last blocks, each other
+ * character a bullet, so the whole key never leaves main. A key with no
+ * dashes shows its first and last four.
+ */
+export const maskLicenseKey = (key: string) => {
+  const blocks = key.split("-");
+
+  if (blocks.length < 3) {
+    return key.length <= 8
+      ? hide(key)
+      : `${key.slice(0, 4)}${hide(key.slice(4, -4))}${key.slice(-4)}`;
+  }
+
+  return [blocks[0], ...blocks.slice(1, -1).map(hide), blocks.at(-1)].join("-");
 };

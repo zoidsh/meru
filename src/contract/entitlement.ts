@@ -31,7 +31,7 @@ export const ENTITLEMENT_CALLS = {
     request: z.object({ licenseKey: z.string() }),
     response: result,
   },
-  /** Renames this device on its license. */
+  /** Names this device on its license; an empty name gives it back the server's. */
   setDeviceName: {
     request: z.object({ name: z.string() }),
     response: result,
@@ -65,7 +65,12 @@ export const ENTITLEMENT_STATE = {
     deviceName: z.nullable(z.string()),
     /** When the server last confirmed this install, in ms since the epoch. */
     lastConfirmed: z.nullable(z.number()),
-    hasLicenseKey: z.boolean(),
+    /**
+     * The stored key as the licensed row shows it, first and last blocks
+     * with bullets between (`MERU-••••-••••-••••-••••-90AB`); `null` with
+     * none. The whole key never leaves main.
+     */
+    licenseKey: z.nullable(z.string()),
     /** The server took away what this run grants; it applies at the next launch. */
     downgradePending: z.boolean(),
   }),

@@ -10,7 +10,7 @@ interface Snapshot {
   tier: string;
   trialDaysLeft: number | null;
   deviceName: string | null;
-  hasLicenseKey: boolean;
+  licenseKey: string | null;
 }
 
 const snapshot = (app: ElectronApplication) =>
@@ -57,6 +57,6 @@ test("starts a 14-day trial at the first launch and keeps a license offline", as
   await expect(snapshot(offline)).resolves.toMatchObject({
     status: "licensed",
     tier: "pro",
-    hasLicenseKey: true,
+    licenseKey: "MERU-••••-••••-••••-0000",
   });
 });

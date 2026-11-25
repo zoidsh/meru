@@ -48,7 +48,7 @@ export const wireEntitlement = async ({
   file: TextFile;
   initial: EntitlementFile;
 }) => {
-  // A device whose id cannot be read verifies no token and is sent none.
+  // A device whose id cannot be read verifies no token and asks nothing.
   const deviceId = await readDeviceId().catch((error: unknown) => {
     console.error(`Could not read this device's id: ${String(error)}`);
 
@@ -63,9 +63,7 @@ export const wireEntitlement = async ({
     log: console.error,
   });
 
-  if (deviceId !== "") {
-    void entitlement.start();
-  }
+  void entitlement.start();
 
   lifecycle.onBeforeQuit(entitlement.dispose);
 

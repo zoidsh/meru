@@ -6,6 +6,7 @@ import {
   entitledProfiles,
   entitlementAt,
   isDowngradePending,
+  maskLicenseKey,
   nextChangeAt,
   normalizeLicenseKey,
   sessionTier,
@@ -196,6 +197,19 @@ describe(entitledProfiles, () => {
       "b",
       "c",
     ]);
+  });
+});
+
+describe(maskLicenseKey, () => {
+  it("shows a key's first and last blocks and bullets the rest", () => {
+    expect(maskLicenseKey("MERU-ABCD-EFGH-1234-5678-90AB")).toBe(
+      "MERU-••••-••••-••••-••••-90AB"
+    );
+  });
+
+  it("shows a key with no blocks by its first and last four, and a short one not at all", () => {
+    expect(maskLicenseKey("ABCDEFGH12345678")).toBe("ABCD••••••••5678");
+    expect(maskLicenseKey("ABCD-12")).toBe("•••••••");
   });
 });
 

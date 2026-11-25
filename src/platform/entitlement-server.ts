@@ -18,6 +18,7 @@ export interface EntitlementServer {
     deviceId: string;
     licenseKey: string;
   }) => Promise<ServerAnswer>;
+  /** An empty `deviceLabel` gives the device back the name the server chose. */
   setDeviceLabel: (request: {
     deviceId: string;
     licenseKey: string;

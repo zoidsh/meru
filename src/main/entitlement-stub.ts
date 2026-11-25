@@ -48,7 +48,8 @@ export const generatedDeviceName = () =>
 /** What the stand-in remembers, as the server would: the trial's start and the keys activated here. */
 interface StubRecord {
   trialStartedAt?: number;
-  licenses: Record<string, { deviceLabel: string }>;
+  /** Each key's name for this device: the one given at activation, and the person's own. */
+  licenses: Record<string, { generated: string; chosen?: string }>;
 }
 
 const readRecord = async (file: TextFile): Promise<StubRecord> => {
@@ -129,7 +130,7 @@ export const createStubEntitlementServer = ({
           const license = record.licenses[licenseKey];
 
           return license
-            ? licensed(deviceId, license.deviceLabel)
+            ? licensed(deviceId, license.chosen ?? license.generated)
             : token(deviceId, { tier: "free", reason: "licenseRefused" });
         }
 
@@ -151,21 +152,29 @@ export const createStubEntitlementServer = ({
           return { error: "invalidKey" };
         }
 
-        const deviceLabel = generatedDeviceName();
+        const license = record.licenses[licenseKey] ?? {
+          generated: generatedDeviceName(),
+        };
 
-        record.licenses[licenseKey] = { deviceLabel };
+        record.licenses[licenseKey] = license;
 
-        return licensed(deviceId, deviceLabel);
+        return licensed(deviceId, license.chosen ?? license.generated);
       }),
     setDeviceLabel: ({ deviceId, licenseKey, deviceLabel }) =>
       answer((record) => {
-        if (!record.licenses[licenseKey]) {
+        const license = record.licenses[licenseKey];
+
+        if (!license) {
           return { error: "refused" };
         }
 
-        record.licenses[licenseKey] = { deviceLabel };
+        // An empty name gives the device back the one it was given.
+        record.licenses[licenseKey] = {
+          generated: license.generated,
+          ...(deviceLabel !== "" && { chosen: deviceLabel }),
+        };
 
-        return licensed(deviceId, deviceLabel);
+        return licensed(deviceId, deviceLabel || license.generated);
       }),
   };
 };
