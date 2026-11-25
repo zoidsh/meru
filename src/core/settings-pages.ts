@@ -7,6 +7,7 @@ export const SETTINGS_SECTIONS = [
   "notifications",
   "gmail",
   "privacy",
+  "pro",
 ] as const;
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];

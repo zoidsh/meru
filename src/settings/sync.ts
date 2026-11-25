@@ -24,6 +24,8 @@ const connect = () => {
     "trustedSites",
     "page",
     "language",
+    "entitlement",
+    "licenseRequest",
   ]);
 
   return connection;

@@ -48,6 +48,11 @@ msgstr "{count, plural, one {Links to # site open without asking.} other {Links 
 msgid "{count, plural, one {Set differently for # profile:} other {Set differently for # profiles:}}"
 msgstr "{count, plural, one {Set differently for # profile:} other {Set differently for # profiles:}}"
 
+#. On the Meru Pro page of Settings during the trial; # counts the calendar days left, two or more
+#: src/settings/pro-page.tsx
+msgid "{days, plural, one {Your trial ends in # day.} other {Your trial ends in # days.}}"
+msgstr "{days, plural, one {Your trial ends in # day.} other {Your trial ends in # days.}}"
+
 #. How much of a running download has arrived, in the Downloads card, such as 12.4 of 48 MB; done is a number, total a size with its unit
 #: src/shell/downloads.tsx
 msgid "{done} of {total}"
@@ -245,6 +250,11 @@ msgstr "A download finished"
 msgid "About {appName}"
 msgstr "About {appName}"
 
+#. Button in the license key dialog of Settings that checks the key and, once it is accepted, unlocks Meru Pro on this computer
+#: src/settings/license-dialog.tsx
+msgid "Activate"
+msgstr "Activate"
+
 #. Menu item in the View menu that sets the page's zoom back to 100%
 #: src/main/application-menu.ts
 msgid "Actual Size"
@@ -294,6 +304,11 @@ msgstr "Allow notifications"
 #: src/shell/drop-zone.tsx
 msgid "Along the whole view"
 msgstr "Along the whole view"
+
+#. Description of the License key row on the Meru Pro page of Settings with no key entered
+#: src/settings/pro-page.tsx
+msgid "Already bought Meru Pro? Enter your key to unlock it."
+msgstr "Already bought Meru Pro? Enter your key to unlock it."
 
 #. Checkbox in the dialog that asks before a link opens in the default browser; {name} is the site, such as example.com, which is then listed under Trusted sites in Settings
 #: src/main/link-opener.ts
@@ -459,10 +474,12 @@ msgstr "Cached images and files"
 #. Button in the alert saying Meru is the default browser, which opens nothing
 #. Button in the dialog that asks before a link opens in the default browser, which opens nothing
 #. Button in the dialog that confirms removing a profile, which keeps it
+#. Button in the license key dialog of Settings that closes it, changing nothing
 #: src/main/default-browser-guard.ts
 #: src/main/link-opener.ts
 #: src/main/profile-copy.ts
 #: src/settings/delete-browsing-data.tsx
+#: src/settings/license-dialog.tsx
 #: src/settings/saved-searches-card.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -477,13 +494,21 @@ msgstr "Cancel download"
 msgid "Canceled · {when}"
 msgstr "Canceled · {when}"
 
+#. Accessible name of the Change… button beside the license key on the Meru Pro page of Settings
+#. Title of the dialog on the Meru Pro page of Settings that replaces the license key
+#: src/settings/license-dialog.tsx
+msgid "Change license key"
+msgstr "Change license key"
+
 #. Accessible name of the Change… button in Settings that opens the system's folder picker for where downloads are saved
 #: src/settings/general-page.tsx
 msgid "Change where downloads are saved"
 msgstr "Change where downloads are saved"
 
+#. Button beside the license key on the Meru Pro page of Settings that opens a dialog to enter another key
 #. Button in Settings beside the downloads folder that opens the system's folder picker
 #: src/settings/general-page.tsx
+#: src/settings/license-dialog.tsx
 msgid "Change…"
 msgstr "Change…"
 
@@ -584,6 +609,11 @@ msgstr "Color"
 msgid "Compose"
 msgstr "Compose"
 
+#. Second sentence on the Meru Pro page of Settings when the license server no longer accepts the license, after a refund or the device's removal
+#: src/settings/pro-page.tsx
+msgid "Contact support if you think this is a mistake."
+msgstr "Contact support if you think this is a mistake."
+
 #. Accessible name of the window's main area, below the title bar, read by screen readers
 #: src/shell/app.tsx
 msgid "Content"
@@ -604,6 +634,11 @@ msgstr "Conversations"
 msgid "Cookies and other site data"
 msgstr "Cookies and other site data"
 
+#. Read out by screen readers once the license key is on the clipboard, from the Meru Pro page of Settings
+#: src/settings/pro-page.tsx
+msgid "Copied"
+msgstr "Copied"
+
 #. Text of the notification for an email that carries a one-time code, already copied to the clipboard. {verificationCode} is the code's digits, such as 482910
 #: src/main/notifications.ts
 msgid "Copied verification code {verificationCode}"
@@ -611,8 +646,10 @@ msgstr "Copied verification code {verificationCode}"
 
 #. Button on a notification that copies the verification code
 #. Menu item in the Edit menu
+#. Tooltip of the button beside the license key on the Meru Pro page of Settings that copies the whole key
 #: src/main/application-menu.ts
 #: src/main/notifications.ts
+#: src/settings/pro-page.tsx
 msgid "Copy"
 msgstr "Copy"
 
@@ -620,6 +657,11 @@ msgstr "Copy"
 #: src/settings/gmail-page.tsx
 msgid "Copy code"
 msgstr "Copy code"
+
+#. Accessible name of the button beside the license key on the Meru Pro page of Settings that copies the whole key
+#: src/settings/pro-page.tsx
+msgid "Copy license key"
+msgstr "Copy license key"
 
 #. Button in the alert saying Meru is the default browser, which copies the link that could not open
 #. Button in the dialog that asks before a link opens in the default browser, which copies it and opens nothing
@@ -731,6 +773,11 @@ msgstr "Delete…"
 msgid "Deletes cookies, site data and cached files for this profile."
 msgstr "Deletes cookies, site data and cached files for this profile."
 
+#. Label of the field on the Meru Pro page of Settings that names this computer on the license
+#: src/settings/pro-page.tsx
+msgid "Device name"
+msgstr "Device name"
+
 #. Badge on a disabled profile's row in Settings' list of profiles, one turned off by its Enabled switch
 #: src/settings/profiles-page.tsx
 msgid "Disabled"
@@ -841,6 +888,16 @@ msgstr "Enabled"
 msgid "Enter a search."
 msgstr "Enter a search."
 
+#. Title of the dialog on the Meru Pro page of Settings where a license key is entered
+#: src/settings/license-dialog.tsx
+msgid "Enter license key"
+msgstr "Enter license key"
+
+#. Button on the Meru Pro page of Settings that opens a dialog to enter a license key
+#: src/settings/license-dialog.tsx
+msgid "Enter license key…"
+msgstr "Enter license key…"
+
 #. Days of a window of quiet hours, in the Settings caption naming the value under All profiles, as in 22:00–07:00 every day
 #: src/settings/scope.ts
 msgid "every day"
@@ -926,6 +983,11 @@ msgstr "Gmail page"
 #: src/main/commands.ts
 msgid "Gmail Settings"
 msgstr "Gmail Settings"
+
+#. Second sentence on the Meru Pro page of Settings when the license or trial could not be confirmed, beside the Try again button
+#: src/settings/pro-page.tsx
+msgid "Go online and try again."
+msgstr "Go online and try again."
 
 #. Button under the Privacy & Security page in Settings that opens the Profiles section; Profiles is the section's name
 #: src/settings/privacy-page.tsx
@@ -1063,6 +1125,23 @@ msgstr "Language"
 msgid "Left pane {percent}"
 msgstr "Left pane {percent}"
 
+#. Title of the group on the Meru Pro page of Settings holding the license key and this computer's name
+#: src/settings/pro-page.tsx
+msgid "License"
+msgstr "License"
+
+#. Label of the field in the license key dialog on the Meru Pro page of Settings
+#. Label of the row on the Meru Pro page of Settings that shows or enters the license key
+#: src/settings/license-dialog.tsx
+#: src/settings/pro-page.tsx
+msgid "License key"
+msgstr "License key"
+
+#. Badge on the Meru Pro page of Settings saying this computer has a license
+#: src/settings/pro-page.tsx
+msgid "Licensed"
+msgstr "Licensed"
+
 #. Choice of the Icon color menu in Settings: a light tray icon
 #. Choice of the Theme menu in Settings: Meru is always light
 #: src/settings/appearance-page.tsx
@@ -1171,9 +1250,24 @@ msgstr "Menu Bar & Dock"
 msgid "Meru asks before a link opens in your default browser."
 msgstr "Meru asks before a link opens in your default browser."
 
+#. First sentence on the Meru Pro page of Settings when the computer's date looks wrong; it is the date
+#: src/settings/pro-page.tsx
+msgid "Meru can't confirm Meru Pro until it's right."
+msgstr "Meru can't confirm Meru Pro until it's right."
+
 #: src/main/entitlement.ts
 msgid "Meru can't reach its license server. Check your connection and try again."
 msgstr "Meru can't reach its license server. Check your connection and try again."
+
+#. Status on the Meru Pro page of Settings when the license could not be confirmed for 14 days, as Meru could not reach its server
+#: src/settings/pro-page.tsx
+msgid "Meru couldn't confirm your license"
+msgstr "Meru couldn't confirm your license"
+
+#. Status on the Meru Pro page of Settings when the trial could not be confirmed for 14 days, as Meru could not reach its server
+#: src/settings/pro-page.tsx
+msgid "Meru couldn't confirm your trial"
+msgstr "Meru couldn't confirm your trial"
 
 #: src/main/entitlement.ts
 msgid "Meru couldn't identify this computer, so it can't check your license. Restart Meru and try again."
@@ -1187,6 +1281,11 @@ msgstr "Meru couldn't save your license. Check that your disk isn't full, then t
 #: src/settings/quiet-hours-field.tsx
 msgid "Meru holds notifications until quiet hours end."
 msgstr "Meru holds notifications until quiet hours end."
+
+#. On the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed
+#: src/settings/pro-page.tsx
+msgid "Meru is checking your license."
+msgstr "Meru is checking your license."
 
 #. Title of the alert Meru shows in place of opening a link in the default browser, since Meru itself is the system's default browser
 #: src/main/default-browser-guard.ts
@@ -1203,6 +1302,20 @@ msgstr "Meru keeps running in the tray when you close its window."
 msgid "Meru keeps trying by itself."
 msgstr "Meru keeps trying by itself."
 
+#. Name of the Settings section for the trial and the license, in its list and as its title; Meru Pro is the product's name
+#. Status on the Meru Pro page of Settings on the free version with no trial; Meru Pro is the product's name
+#. Status on the Meru Pro page of Settings while a license key carried over from an earlier Meru is not yet confirmed; Meru Pro is the product's name
+#. Status on the Meru Pro page of Settings with a license; Meru Pro is the product's name
+#: src/settings/app.tsx
+#: src/settings/pro-page.tsx
+msgid "Meru Pro"
+msgstr "Meru Pro"
+
+#. Status on the Meru Pro page of Settings during the trial
+#: src/settings/pro-page.tsx
+msgid "Meru Pro trial"
+msgstr "Meru Pro trial"
+
 #. Second sentence of Sleep's description on a profile's page in Settings, while its Check mail is on
 #: src/settings/profile-page.tsx
 msgid "Meru still checks its mail."
@@ -1212,6 +1325,11 @@ msgstr "Meru still checks its mail."
 #: src/settings/profile-page.tsx
 msgid "Meru uses it for the profile dot and to tint the title bar."
 msgstr "Meru uses it for the profile dot and to tint the title bar."
+
+#. Placeholder of the license key field, showing a key's shape; MERU stays as it is and each X stands for a letter or digit
+#: src/settings/license-dialog.tsx
+msgid "MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
+msgstr "MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
 
 #. Menu item in the Window menu
 #: src/main/application-menu.ts
@@ -1542,6 +1660,11 @@ msgstr "Previous match"
 msgid "Privacy & Security"
 msgstr "Privacy & Security"
 
+#. First sentence on the Meru Pro page of Settings when the trial or license ended while Meru was running; what Pro unlocked stays on until Meru is quit
+#: src/settings/pro-page.tsx
+msgid "Pro features turn off when you quit Meru."
+msgstr "Pro features turn off when you quit Meru."
+
 #. Name given to a newly added profile, where {n} is a number from 2 up; the person can rename it later
 #: src/main/profile-copy.ts
 msgid "Profile {n}"
@@ -1719,7 +1842,9 @@ msgstr "Restore Panes"
 msgid "Same as All profiles."
 msgstr "Same as All profiles."
 
+#. Button beside Device name on the Meru Pro page of Settings that sends the name to the license
 #. Button in Settings that adds the saved search typed above
+#: src/settings/pro-page.tsx
 #: src/settings/saved-searches-card.tsx
 msgid "Save"
 msgstr "Save"
@@ -1728,6 +1853,11 @@ msgstr "Save"
 #: src/main/commands.ts
 msgid "Save Current Search"
 msgstr "Save Current Search"
+
+#. Accessible name of the Save button beside Device name on the Meru Pro page of Settings
+#: src/settings/pro-page.tsx
+msgid "Save device name"
+msgstr "Save device name"
 
 #. Label of the row in Settings showing the folder downloads are saved to, with a button to change it
 #: src/settings/general-page.tsx
@@ -1818,6 +1948,11 @@ msgstr "Services"
 #: src/settings/row-scope.tsx
 msgid "Set for {name} only. For all profiles, it's {appValue}."
 msgstr "Set for {name} only. For all profiles, it's {appValue}."
+
+#. Second sentence on the Meru Pro page of Settings when the computer's date looks wrong, beside the Try again button
+#: src/settings/pro-page.tsx
+msgid "Set the correct date and time, then try again."
+msgstr "Set the correct date and time, then try again."
 
 #. Title of the Settings window
 #: src/settings/app.tsx
@@ -2196,6 +2331,11 @@ msgstr "This development build never opens at login."
 msgid "This folder isn't available. Downloads go to Downloads until it's back."
 msgstr "This folder isn't available. Downloads go to Downloads until it's back."
 
+#. Description of the Device name field in Settings
+#: src/settings/pro-page.tsx
+msgid "This is how this computer shows up on your license."
+msgstr "This is how this computer shows up on your license."
+
 #. Start of the stand-in email's text in the test notification Settings shows
 #: src/main/notifications.ts
 msgid "This is what a new email notification looks like."
@@ -2281,6 +2421,8 @@ msgid "Trusted sites"
 msgstr "Trusted sites"
 
 #. Button in place of a tab's page that could not load, which tries to load it again now
+#. Button on the Meru Pro page of Settings that asks Meru's license server again now
+#: src/settings/pro-page.tsx
 #: src/shell/tab-problem.tsx
 msgid "Try again"
 msgstr "Try again"
@@ -2394,6 +2536,21 @@ msgstr "Until Tomorrow"
 msgid "Until Turned Off"
 msgstr "Until Turned Off"
 
+#. Button on the Meru Pro page of Settings that opens Meru Pro's page in the default browser
+#: src/settings/pro-page.tsx
+msgid "Upgrade"
+msgstr "Upgrade"
+
+#. Second sentence on the Meru Pro page of Settings during the trial, beside the Upgrade button
+#: src/settings/pro-page.tsx
+msgid "Upgrade to keep every feature."
+msgstr "Upgrade to keep every feature."
+
+#. Second sentence on the Meru Pro page of Settings when the trial ended while Meru was running; them are Pro's features
+#: src/settings/pro-page.tsx
+msgid "Upgrade to keep them."
+msgstr "Upgrade to keep them."
+
 #. Said by screen readers of the gap between two panes one above the other: how much of the two the upper one takes; {percent} is a percentage, such as 60%
 #: src/shell/pane-handle.tsx
 msgid "Upper pane {percent}"
@@ -2488,6 +2645,11 @@ msgstr "You can't remove the only profile that's turned on."
 msgid "You can't remove your only profile."
 msgstr "You can't remove your only profile."
 
+#. On the Meru Pro page of Settings with a license
+#: src/settings/pro-page.tsx
+msgid "You have every feature, and you can use Meru for work. Thanks for your support."
+msgstr "You have every feature, and you can use Meru for work. Thanks for your support."
+
 #. Shown in the Saved searches card on a profile's page in Settings while it has none
 #: src/settings/saved-searches-card.tsx
 msgid "You haven't saved any searches yet."
@@ -2508,6 +2670,11 @@ msgstr "You set Do Not Disturb under All profiles. It applies to every profile."
 msgid "You'll be signed out, and its tabs, saved searches and settings will be deleted from this computer. Your Google account isn't affected."
 msgstr "You'll be signed out, and its tabs, saved searches and settings will be deleted from this computer. Your Google account isn't affected."
 
+#. Description of the License key field on the Meru Pro page of Settings
+#: src/settings/license-dialog.tsx
+msgid "You'll find it in the email you got when you bought Meru Pro."
+msgstr "You'll find it in the email you got when you bought Meru Pro."
+
 #. Line at the top of a profile's page in Settings, when its Google account is signed out
 #: src/settings/signed-in.tsx
 msgid "You're not signed in, so Meru can't check mail for this profile."
@@ -2518,10 +2685,40 @@ msgstr "You're not signed in, so Meru can't check mail for this profile."
 msgid "You’re offline"
 msgstr "You’re offline"
 
+#. First sentence on the Meru Pro page of Settings when the license or trial could not be confirmed
+#: src/settings/pro-page.tsx
+msgid "You're using the free version until it's confirmed."
+msgstr "You're using the free version until it's confirmed."
+
+#. First sentence on the Meru Pro page of Settings when the license can't be used, on the free version
+#: src/settings/pro-page.tsx
+msgid "You're using the free version."
+msgstr "You're using the free version."
+
+#. On the Meru Pro page of Settings after the trial, on the free version
+#: src/settings/pro-page.tsx
+msgid "You're using the free version. Upgrade to get every feature back."
+msgstr "You're using the free version. Upgrade to get every feature back."
+
+#. On the Meru Pro page of Settings on the free version with no trial
+#: src/settings/pro-page.tsx
+msgid "You're using the free version. Upgrade to get every feature."
+msgstr "You're using the free version. Upgrade to get every feature."
+
 #. Shown under the Search field in Settings when the profile has a saved search with the same Gmail query
 #: src/settings/saved-searches-card.tsx
 msgid "You've already saved this search."
 msgstr "You've already saved this search."
+
+#. Status on the Meru Pro page of Settings when the computer's clock reads well before the license or trial was last confirmed
+#: src/settings/pro-page.tsx
+msgid "Your computer's date looks wrong"
+msgstr "Your computer's date looks wrong"
+
+#. Status on the Meru Pro page of Settings when the license server no longer accepts the license, after a refund or the device's removal
+#: src/settings/pro-page.tsx
+msgid "Your license can't be used"
+msgstr "Your license can't be used"
 
 #. Unavailable first item of the Spelling menu in Settings when there is no dictionary for the system's language and none was chosen in its place
 #: src/settings/language-group.tsx
@@ -2532,6 +2729,21 @@ msgstr "Your system's language can't be checked"
 #: src/main/notifications.ts
 msgid "Your test notification request"
 msgstr "Your test notification request"
+
+#. On the Meru Pro page of Settings on the trial's last day
+#: src/settings/pro-page.tsx
+msgid "Your trial ends today."
+msgstr "Your trial ends today."
+
+#. On the Meru Pro page of Settings on the trial's last day but one
+#: src/settings/pro-page.tsx
+msgid "Your trial ends tomorrow."
+msgstr "Your trial ends tomorrow."
+
+#. Status on the Meru Pro page of Settings after the trial
+#: src/settings/pro-page.tsx
+msgid "Your trial has ended"
+msgstr "Your trial has ended"
 
 #. Menu item in the macOS Window menu that toggles the window between its size and filling the screen
 #: src/main/application-menu.ts

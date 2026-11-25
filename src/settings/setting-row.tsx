@@ -6,6 +6,7 @@ import {
   Field,
   FieldContent,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
@@ -28,6 +29,7 @@ export const SettingRow = ({
   description,
   notice,
   paused,
+  error,
   scope = NO_SCOPE,
   disabled = false,
   children,
@@ -39,6 +41,8 @@ export const SettingRow = ({
   notice?: string | undefined;
   /** The line saying Do Not Disturb outranks it, while it does. */
   paused?: string | undefined;
+  /** Why what the row last sent failed, which marks its control invalid. */
+  error?: string | undefined;
   scope?: RowScope;
   disabled?: boolean;
   children: (ids: { label: string; description: string }) => ReactNode;
@@ -47,10 +51,12 @@ export const SettingRow = ({
   const descriptionId = useId();
   const noticeId = useId();
   const pausedId = useId();
+  const errorId = useId();
   const describedBy = [
     description && descriptionId,
     notice && noticeId,
     paused && pausedId,
+    error && errorId,
   ]
     .filter(Boolean)
     .join(" ");
@@ -61,6 +67,7 @@ export const SettingRow = ({
       orientation="horizontal"
       className="relative"
       data-disabled={disabled || undefined}
+      data-invalid={error ? true : undefined}
     >
       {scope.bar && <OverrideBar color={scope.bar} />}
       <FieldContent>
@@ -77,6 +84,7 @@ export const SettingRow = ({
         )}
         {notice && <FieldDescription id={noticeId}>{notice}</FieldDescription>}
         {paused && <FieldDescription id={pausedId}>{paused}</FieldDescription>}
+        {error && <FieldError id={errorId}>{error}</FieldError>}
         {scope.line}
       </FieldContent>
       <div className="flex flex-col items-end gap-1.5">

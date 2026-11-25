@@ -1,6 +1,6 @@
-// Nothing in a window shows the entitlement yet, so this reads it through the
-// suite's hook, from the stand-in server the suite's build holds in place of
-// the entitlement API.
+// The service itself, read through the suite's hook, from the stand-in server
+// the suite's build holds in place of the entitlement API; Settings' page of
+// it is in settings-meru-pro.e2e.ts.
 import type { ElectronApplication } from "@playwright/test";
 
 import { SHELL_URL, expect, findPage, test } from "./lib/app.ts";

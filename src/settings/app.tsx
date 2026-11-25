@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import {
+  BadgeCheckIcon,
   BellIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -24,6 +25,7 @@ import { GmailPage } from "./gmail-page.tsx";
 import { MenuBarPage, onMacOS } from "./menu-bar-page.tsx";
 import { NotificationsPage } from "./notifications-page.tsx";
 import { PrivacyPage } from "./privacy-page.tsx";
+import { ProPage } from "./pro-page.tsx";
 import { ProfilePage } from "./profile-page.tsx";
 import { ProfilesPage } from "./profiles-page.tsx";
 import type { RemovedProfile } from "./profiles-page.tsx";
@@ -37,6 +39,7 @@ const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
   notifications: NotificationsPage,
   gmail: GmailPage,
   privacy: PrivacyPage,
+  pro: ProPage,
 };
 
 /** The nav's width, which the titlebar's buttons start after. */
@@ -60,6 +63,7 @@ const SECTION_GROUPS: readonly (readonly Section[])[] = [
     { id: "gmail", icon: MailIcon },
   ],
   [{ id: "privacy", icon: ShieldIcon }],
+  [{ id: "pro", icon: BadgeCheckIcon }],
 ];
 
 /** Each section's name, in the nav and as the title. */
@@ -108,6 +112,11 @@ const useSectionTitles = (): Record<SettingsSection, string> => {
       message: "Privacy & Security",
       comment:
         "Name of the Settings section for the content blocker and the links that leave Meru, in its list and as its title",
+    }),
+    pro: t({
+      message: "Meru Pro",
+      comment:
+        "Name of the Settings section for the trial and the license, in its list and as its title; Meru Pro is the product's name",
     }),
   };
 };
