@@ -97,8 +97,8 @@ msgstr "{name} couldn’t load"
 
 #. Read by screen readers after a profile is moved in Settings' list of profiles; {place} is its new place from 1 and {count} how many profiles there are
 #: src/settings/profiles-page.tsx
-msgid "{name} is now {place} of {count} in the titlebar."
-msgstr "{name} is now {place} of {count} in the titlebar."
+msgid "{name} is now {place} of {count} in the title bar."
+msgstr "{name} is now {place} of {count} in the title bar."
 
 #. Second sentence after an action in the unified inbox failed because the profile's Google account is signed out; {name} is the profile
 #: src/shell/inbox.tsx
@@ -225,21 +225,6 @@ msgstr "{unreadCount, plural, one {{name}: the newest {listed} of # unread} othe
 msgid "<0>Failed</0> · {when}"
 msgstr "<0>Failed</0> · {when}"
 
-#. Description of Check mail on a disabled profile's page in Settings, whose switch is disabled
-#: src/settings/profile-page.tsx
-msgid "A disabled profile checks no mail; this applies once it is enabled."
-msgstr "A disabled profile checks no mail; this applies once it is enabled."
-
-#. Description of Sleep on a disabled profile's page in Settings, whose switch is disabled
-#: src/settings/profile-page.tsx
-msgid "A disabled profile has no pages."
-msgstr "A disabled profile has no pages."
-
-#. Description of Show in Unified inbox on a disabled profile's page in Settings, whose switch is disabled
-#: src/settings/profile-page.tsx
-msgid "A disabled profile is not in the Unified inbox."
-msgstr "A disabled profile is not in the Unified inbox."
-
 #. Read by screen readers on the title bar's Downloads button, green once a download finished and the list has not been opened since
 #: src/shell/downloads.tsx
 msgid "A download finished"
@@ -265,11 +250,15 @@ msgstr "Add"
 msgid "Add profile"
 msgstr "Add profile"
 
-#. Button on a profile's page in Settings that opens the fields to add a saved search
 #. Name of the group of fields in Settings that adds a saved search to a profile
 #: src/settings/saved-searches-card.tsx
 msgid "Add saved search"
 msgstr "Add saved search"
+
+#. Button on a profile's page in Settings that opens the fields to add a saved search
+#: src/settings/saved-searches-card.tsx
+msgid "Add search"
+msgstr "Add search"
 
 #. A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the value under All profiles; {days} is when, such as every day or weekdays
 #: src/settings/scope.ts
@@ -333,6 +322,16 @@ msgstr "As soon as it arrives"
 #: src/shell/tab-strip.tsx
 msgid "Asleep"
 msgstr "Asleep"
+
+#. Description of Sleep on a profile's page in Settings, whose switch is disabled since every other profile sleeps
+#: src/settings/profile-page.tsx
+msgid "At least one profile has to stay awake."
+msgstr "At least one profile has to stay awake."
+
+#. Description of Enabled on the page of the only enabled profile in Settings, whose switch is disabled
+#: src/settings/profile-page.tsx
+msgid "At least one profile has to stay on."
+msgstr "At least one profile has to stay on."
 
 #. Accessible name and tooltip of the title bar button that goes to the page the tab showed before
 #. Accessible name of the Settings window's button that goes back to the page shown before, a section or a profile's page
@@ -405,7 +404,12 @@ msgstr "Breeze"
 msgid "Bring All to Front"
 msgstr "Bring All to Front"
 
-#. Description of Delete browsing data on a profile's page in Settings, once its data was deleted
+#. Label of the row on a profile's page in Settings whose Delete… button deletes its browsing data
+#: src/settings/profile-page.tsx
+msgid "Browsing data"
+msgstr "Browsing data"
+
+#. Description of Browsing data on a profile's page in Settings, once its data was deleted
 #: src/settings/profile-page.tsx
 msgid "Browsing data deleted."
 msgstr "Browsing data deleted."
@@ -496,10 +500,10 @@ msgstr "Close Tabs Below"
 msgid "Close Window"
 msgstr "Close Window"
 
-#. Description of Sleep, turned off, on a profile's page in Settings
+#. Description of Sleep on a profile's page in Settings
 #: src/settings/profile-page.tsx
-msgid "Closes its pages until it is selected again."
-msgstr "Closes its pages until it is selected again."
+msgid "Closes its pages to save memory until you select it again."
+msgstr "Closes its pages to save memory until you select it again."
 
 #. Accessible name and tooltip of the button at the foot of the wide list of tabs that collapses it to a narrow column of icons alone
 #: src/shell/tab-strip.tsx
@@ -558,6 +562,11 @@ msgstr "Copy URL"
 msgid "Couldn’t archive the message."
 msgstr "Couldn’t archive the message."
 
+#. Under the checkboxes of the Delete browsing data dialog in Settings, when deleting failed
+#: src/settings/delete-browsing-data.tsx
+msgid "Couldn't delete browsing data. Try again."
+msgstr "Couldn't delete browsing data. Try again."
+
 #. Said by screen readers after a tab's title when its page could not load
 #: src/shell/tab-strip.tsx
 msgid "Couldn’t load"
@@ -609,10 +618,12 @@ msgctxt "profile name"
 msgid "Default"
 msgstr "Default"
 
+#. Button in the Delete browsing data dialog in Settings that deletes what is checked
 #. Button on a new email notification that moves the email to Gmail's Trash. Gmail's own word for the action
 #. Menu item in the Edit menu that deletes the selected text
 #: src/main/application-menu.ts
 #: src/main/notifications.ts
+#: src/settings/delete-browsing-data.tsx
 msgid "Delete"
 msgstr "Delete"
 
@@ -622,32 +633,25 @@ msgctxt "inbox action"
 msgid "Delete"
 msgstr "Delete"
 
-#. Label of the row on a profile's page in Settings that deletes its browsing data
 #. Title of the dialog in Settings that deletes a profile's browsing data
 #: src/settings/delete-browsing-data.tsx
-#: src/settings/profile-page.tsx
 msgid "Delete browsing data"
 msgstr "Delete browsing data"
 
-#. Button on a profile's page in Settings that opens a dialog asking which of its browsing data to delete
+#. Button of the Browsing data row on a profile's page in Settings that opens a dialog asking which of its browsing data to delete
 #: src/settings/delete-browsing-data.tsx
-msgid "Delete browsing data…"
-msgstr "Delete browsing data…"
+msgid "Delete…"
+msgstr "Delete…"
 
-#. Button in the Delete browsing data dialog in Settings that deletes what is checked
-#: src/settings/delete-browsing-data.tsx
-msgid "Delete data"
-msgstr "Delete data"
+#. Description of Browsing data on a profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "Deletes cookies, site data and cached files for this profile."
+msgstr "Deletes cookies, site data and cached files for this profile."
 
 #. Badge on a disabled profile's row in Settings' list of profiles, one turned off by its Enabled switch
 #: src/settings/profiles-page.tsx
 msgid "Disabled"
 msgstr "Disabled"
-
-#. Line at the top of a disabled profile's page in Settings
-#: src/settings/profile-page.tsx
-msgid "Disabled: not in the titlebar, the Unified inbox or the profile shortcuts, and its mail is not checked. It stays signed in."
-msgstr "Disabled: not in the titlebar, the Unified inbox or the profile shortcuts, and its mail is not checked. It stays signed in."
 
 #. Accessible name of the moon button in the title bar that holds new mail notifications, read by screen readers with whether it is pressed
 #. Command that turns Do Not Disturb on until turned off, or off, checked while it holds new mail notifications
@@ -708,6 +712,11 @@ msgstr "Downloading"
 msgid "Downloads"
 msgstr "Downloads"
 
+#. Line under Settings' list of profiles, in the title bar's order; each row has a handle to drag, which the up and down arrow keys also move
+#: src/settings/profiles-page.tsx
+msgid "Drag to reorder."
+msgstr "Drag to reorder."
+
 #. Name of a notification sound, picked in Settings
 #: src/settings/notifications-page.tsx
 msgid "Duet"
@@ -723,7 +732,7 @@ msgstr "Duplicate"
 msgid "Edit"
 msgstr "Edit"
 
-#. Label of the switch on a profile's page in Settings that turns the profile off or on; off, it leaves the titlebar and its mail is not checked
+#. Label of the switch on a profile's page in Settings that turns the profile off or on; off, it leaves the title bar and its mail is not checked
 #: src/settings/profile-page.tsx
 msgid "Enabled"
 msgstr "Enabled"
@@ -884,50 +893,15 @@ msgstr "In split view"
 msgid "In split view, maximized"
 msgstr "In split view, maximized"
 
-#. Line under Settings' list of profiles
-#: src/settings/profiles-page.tsx
-msgid "In the titlebar's order. Drag a profile by its handle, or focus the handle and press the up or down arrow, to move it."
-msgstr "In the titlebar's order. Drag a profile by its handle, or focus the handle and press the up or down arrow, to move it."
-
 #. Second sentence after an action in the unified inbox failed: the message shows in the list again
 #: src/shell/inbox.tsx
 msgid "It’s back in the list."
 msgstr "It’s back in the list."
 
-#. Description of a profile's color on its page in Settings
-#: src/settings/profile-page.tsx
-msgid "Its dot, and the titlebar's and sidebar's tint while it is selected."
-msgstr "Its dot, and the titlebar's and sidebar's tint while it is selected."
-
-#. Second sentence of Sleep's description on a profile's page in Settings, while its Check mail is on
-#: src/settings/profile-page.tsx
-msgid "Its mail is still checked."
-msgstr "Its mail is still checked."
-
 #. Explanation under the heading in place of a tab's page that crashed
 #: src/shell/tab-problem.tsx
 msgid "Its page quit unexpectedly. Reload it to carry on."
 msgstr "Its page quit unexpectedly. Reload it to carry on."
-
-#. Description of Sleep, turned on, on a profile's page in Settings
-#: src/settings/profile-page.tsx
-msgid "Its pages stay closed until it is selected again."
-msgstr "Its pages stay closed until it is selected again."
-
-#. Description of Check mail, turned on, on the only profile's page in Settings, which has no Unified inbox
-#: src/settings/profile-page.tsx
-msgid "Its unread count and notifications come from this."
-msgstr "Its unread count and notifications come from this."
-
-#. Description of Check mail, turned on, on a profile's page in Settings when there are several profiles
-#: src/settings/profile-page.tsx
-msgid "Its unread count, notifications and place in the Unified inbox come from this."
-msgstr "Its unread count, notifications and place in the Unified inbox come from this."
-
-#. Description of Show in Unified inbox on a profile's page in Settings; the Unified inbox lists every profile's unread mail
-#: src/settings/profile-page.tsx
-msgid "Its unread mail is listed with the other profiles'."
-msgstr "Its unread mail is listed with the other profiles'."
 
 #. Under the Downloads title: how long a downloaded file stays in the list below
 #: src/shell/downloads.tsx
@@ -1005,11 +979,6 @@ msgstr "Maximize Pane"
 msgid "Maximized · Restore"
 msgstr "Maximized · Restore"
 
-#. Under the checkboxes of the Delete browsing data dialog in Settings, when deleting failed
-#: src/settings/delete-browsing-data.tsx
-msgid "Meru couldn't delete this profile's browsing data. Try again."
-msgstr "Meru couldn't delete this profile's browsing data. Try again."
-
 #. Description of Quiet hours in Settings
 #: src/settings/quiet-hours-field.tsx
 msgid "Meru holds notifications until quiet hours end."
@@ -1020,25 +989,15 @@ msgstr "Meru holds notifications until quiet hours end."
 msgid "Meru keeps trying by itself."
 msgstr "Meru keeps trying by itself."
 
-#. Description of Remove profile on the page of the only enabled profile in Settings, whose button is disabled
+#. Second sentence of Sleep's description on a profile's page in Settings, while its Check mail is on
 #: src/settings/profile-page.tsx
-msgid "Meru needs at least one profile turned on, so the last can't be removed."
-msgstr "Meru needs at least one profile turned on, so the last can't be removed."
+msgid "Meru still checks its mail."
+msgstr "Meru still checks its mail."
 
-#. Description of Enabled on the page of the only enabled profile in Settings, whose switch is disabled
+#. Description of a profile's color on its page in Settings; the profile dot is the colored dot that marks the profile
 #: src/settings/profile-page.tsx
-msgid "Meru needs at least one profile turned on."
-msgstr "Meru needs at least one profile turned on."
-
-#. Description of Remove profile on the page of the only profile in Settings, whose button is disabled
-#: src/settings/profile-page.tsx
-msgid "Meru needs at least one profile, so the last can't be removed."
-msgstr "Meru needs at least one profile, so the last can't be removed."
-
-#. Explanation in the dialog that confirms removing a profile
-#: src/main/profile-copy.ts
-msgid "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected."
-msgstr "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected."
+msgid "Meru uses it for the profile dot and to tint the title bar."
+msgstr "Meru uses it for the profile dot and to tint the title bar."
 
 #. Menu item in the Window menu
 #: src/main/application-menu.ts
@@ -1163,11 +1122,6 @@ msgstr "No results."
 msgid "No Saved Searches"
 msgstr "No Saved Searches"
 
-#. Shown in the Saved searches card on a profile's page in Settings while it has none
-#: src/settings/saved-searches-card.tsx
-msgid "No saved searches yet. Save a search from the Mail menu, or add one here."
-msgstr "No saved searches yet. Save a search from the Mail menu, or add one here."
-
 #. Heading of the unified inbox when no profile has unread mail
 #: src/shell/inbox.tsx
 msgid "No unread messages"
@@ -1198,11 +1152,6 @@ msgstr "Not enough room to split"
 msgid "Not signed in"
 msgstr "Not signed in"
 
-#. Line at the top of a profile's page in Settings, when its Google account is signed out
-#: src/settings/signed-in.tsx
-msgid "Not signed in to Google, so its mail is not checked."
-msgstr "Not signed in to Google, so its mail is not checked."
-
 #. Accessible name of the region at the foot of the window that holds Meru's short notices, such as one saying there is not enough room to split
 #. Name of the Settings section for notifications, the unread badge and Do Not Disturb, in its list and as its title
 #: src/settings/app.tsx
@@ -1215,30 +1164,10 @@ msgstr "Notifications"
 msgid "Off"
 msgstr "Off"
 
-#. Description of Enabled, turned off, on a profile's page in Settings
-#: src/settings/profile-page.tsx
-msgid "Off: it stays signed in. Turn it on to put it back in the titlebar."
-msgstr "Off: it stays signed in. Turn it on to put it back in the titlebar."
-
-#. Description of Check mail, turned off, on the only profile's page in Settings, which has no Unified inbox
-#: src/settings/profile-page.tsx
-msgid "Off: no unread count and no notifications."
-msgstr "Off: no unread count and no notifications."
-
-#. Description of Check mail, turned off, on a profile's page in Settings when there are several profiles
-#: src/settings/profile-page.tsx
-msgid "Off: no unread count, no notifications, and nothing in the Unified inbox."
-msgstr "Off: no unread count, no notifications, and nothing in the Unified inbox."
-
 #. A switch's value under All profiles in the Settings caption under a profile's own value: For all profiles, it's On.
 #: src/settings/scope.ts
 msgid "On"
 msgstr "On"
-
-#. Description of a profile's name on its page in Settings
-#: src/settings/profile-page.tsx
-msgid "On its button in the titlebar."
-msgstr "On its button in the titlebar."
 
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications; {time} is the time of day it ends, such as 14:30
 #: src/main/do-not-disturb.ts
@@ -1305,6 +1234,11 @@ msgstr "Open in Default Browser"
 msgid "Open in split"
 msgstr "Open in split"
 
+#. Description of the Saved searches card on a profile's page in Settings; Saved Searches and Mail name the menus as the app's menu bar shows them
+#: src/settings/saved-searches-card.tsx
+msgid "Open these from Saved Searches in the Mail menu."
+msgstr "Open these from Saved Searches in the Mail menu."
+
 #. Placeholder of the Name field of a new saved search in Settings, which may stay empty
 #: src/settings/saved-searches-card.tsx
 msgid "Optional"
@@ -1314,6 +1248,11 @@ msgstr "Optional"
 #: src/settings/profile-page.tsx
 msgid "Orange"
 msgstr "Orange"
+
+#. Description of Cached images and files in the Delete browsing data dialog in Settings
+#: src/settings/delete-browsing-data.tsx
+msgid "Pages may load a little slower next time."
+msgstr "Pages may load a little slower next time."
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -1407,8 +1346,10 @@ msgstr "Redo"
 msgid "Reload"
 msgstr "Reload"
 
+#. Button in the dialog that confirms removing a profile
 #. Tooltip of the button in Settings that removes a saved search
 #. Tooltip of the button that removes one window of quiet hours in Settings
+#: src/main/profile-copy.ts
 #: src/settings/quiet-hours-field.tsx
 #: src/settings/saved-searches-card.tsx
 msgid "Remove"
@@ -1457,16 +1398,6 @@ msgstr "Remove from the list"
 msgid "Remove profile"
 msgstr "Remove profile"
 
-#. Button in the dialog that confirms removing a profile
-#: src/main/profile-copy.ts
-msgid "Remove Profile"
-msgstr "Remove Profile"
-
-#. Button on a profile's page in Settings that asks to remove it
-#: src/settings/profile-page.tsx
-msgid "Remove profile…"
-msgstr "Remove profile…"
-
 #. Accessible name of the button that removes one window of quiet hours in Settings; {place} is its place in the list, from 1
 #: src/settings/quiet-hours-field.tsx
 msgid "Remove quiet hours {place}"
@@ -1476,6 +1407,11 @@ msgstr "Remove quiet hours {place}"
 #: src/main/application-menu.ts
 msgid "Remove Saved Search"
 msgstr "Remove Saved Search"
+
+#. Button of the Remove profile row on a profile's page in Settings that asks to remove the profile
+#: src/settings/profile-page.tsx
+msgid "Remove…"
+msgstr "Remove…"
 
 #. Tooltip of the button in Settings that renames a saved search
 #: src/settings/saved-searches-card.tsx
@@ -1517,11 +1453,6 @@ msgstr "Restore panes"
 #: src/main/menu-labels.ts
 msgid "Restore Panes"
 msgstr "Restore Panes"
-
-#. Description of the Saved searches card on a profile's page in Settings; Saved Searches and Mail name the menus as the app's menu bar shows them
-#: src/settings/saved-searches-card.tsx
-msgid "Run from Saved Searches in the Mail menu while Gmail is open in this profile."
-msgstr "Run from Saved Searches in the Mail menu while Gmail is open in this profile."
 
 #. Caption under a Settings row in a profile's scope while the profile has no value of its own
 #: src/settings/row-scope.tsx
@@ -1750,6 +1681,11 @@ msgstr "Shows the newest message at the top of a conversation."
 msgid "Shows the quoted text that Gmail hides behind the ••• button."
 msgstr "Shows the quoted text that Gmail hides behind the ••• button."
 
+#. Description of Check mail on a profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "Shows unread counts and notifies you about new mail for this profile."
+msgstr "Shows unread counts and notifies you about new mail for this profile."
+
 #. Accessible name of the title bar button that shows or hides the list of tabs down the left of the window, read by screen readers with whether it is pressed
 #: src/shell/titlebar.tsx
 msgctxt "title bar button"
@@ -1776,13 +1712,13 @@ msgstr "Sign in required"
 
 #. Line at the top of a profile's page in Settings; {address} is the email address of the Google account the profile is signed in to
 #: src/settings/signed-in.tsx
-msgid "Signed in to Google as {address}."
-msgstr "Signed in to Google as {address}."
+msgid "Signed in as {address}."
+msgstr "Signed in as {address}."
 
 #. Description of Remove profile on a profile's page in Settings
 #: src/settings/profile-page.tsx
-msgid "Signs out of this profile and deletes its data on this device. Your Google account isn't affected."
-msgstr "Signs out of this profile and deletes its data on this device. Your Google account isn't affected."
+msgid "Signs you out and deletes this profile from this computer. Your Google account isn't affected."
+msgstr "Signs you out and deletes this profile from this computer. Your Google account isn't affected."
 
 #. Description of Cookies and other site data in the Delete browsing data dialog; {name} is the profile's name
 #: src/settings/delete-browsing-data.tsx
@@ -1812,11 +1748,6 @@ msgstr "Sleep Profile"
 #: src/main/commands.ts
 msgid "Sleep Tab"
 msgstr "Sleep Tab"
-
-#. Description of Cached images and files in the Delete browsing data dialog in Settings
-#: src/settings/delete-browsing-data.tsx
-msgid "Some pages may load more slowly the next time."
-msgstr "Some pages may load more slowly the next time."
 
 #. Label of the menu in Settings choosing the sound a new mail notification makes
 #: src/settings/notifications-page.tsx
@@ -1872,11 +1803,6 @@ msgstr "Tabs"
 msgid "Test notification"
 msgstr "Test notification"
 
-#. Description of Sleep on a profile's page in Settings, whose switch is disabled since every other profile sleeps
-#: src/settings/profile-page.tsx
-msgid "The last awake profile can't sleep."
-msgstr "The last awake profile can't sleep."
-
 #. Body of the error dialog shown when the app's window keeps failing to draw; {productName} is the app's name
 #: src/main/shell-recovery.ts
 msgid "The window stopped drawing several times in a row, so {productName} will quit. Open it again to carry on."
@@ -1907,20 +1833,15 @@ msgstr "This is what a new email notification looks like."
 msgid "This profile has {most} saved searches, the most it can keep."
 msgstr "This profile has {most} saved searches, the most it can keep."
 
-#. Description of Delete browsing data on a profile's page in Settings
+#. Line at the top of a disabled profile's page in Settings
 #: src/settings/profile-page.tsx
-msgid "This profile's cookies and site data, or its cached images and files."
-msgstr "This profile's cookies and site data, or its cached images and files."
+msgid "This profile is disabled. You're still signed in, but Meru isn't checking its mail."
+msgstr "This profile is disabled. You're still signed in, but Meru isn't checking its mail."
 
 #. Shown under the Search field in Settings when the search cannot be saved for another reason
 #: src/settings/saved-searches-card.tsx
 msgid "This search can't be saved."
 msgstr "This search can't be saved."
-
-#. Shown under the Search field in Settings when the profile has a saved search with the same Gmail query
-#: src/settings/saved-searches-card.tsx
-msgid "This search is saved already."
-msgstr "This search is saved already."
 
 #. Sender of the stand-in email in the test notification Settings shows: a person's name and the app's
 #: src/main/notifications.ts
@@ -1971,20 +1892,26 @@ msgstr "Turn Off"
 msgid "Turn off Do Not Disturb first."
 msgstr "Turn off Do Not Disturb first."
 
+#. Description of Enabled on a profile's page in Settings
+#: src/settings/profile-page.tsx
+msgid "Turn off to hide this profile and stop checking its mail. You stay signed in."
+msgstr "Turn off to hide this profile and stop checking its mail. You stay signed in."
+
 #. Description of Show in Unified inbox on a profile's page in Settings, whose switch is disabled while Check mail, the row above, is off
 #: src/settings/profile-page.tsx
-msgid "Turn on Check mail to use this."
-msgstr "Turn on Check mail to use this."
+msgid "Turn on Check mail first."
+msgstr "Turn on Check mail first."
+
+#. Description of a switch on a disabled profile's page in Settings, which is disabled until Enabled, the page's first switch, is turned on
+#. Description of a switch on a disabled profile's page in Settings, which is disabled until Enabled, the page's first switch, is turned on
+#: src/settings/profile-page.tsx
+msgid "Turn on Enabled first."
+msgstr "Turn on Enabled first."
 
 #. Description of a verification code setting on the Gmail page in Settings while Find verification codes, the switch above it, is off; it says what to do to use the setting
 #: src/settings/gmail-page.tsx
 msgid "Turn on Find verification codes first."
 msgstr "Turn on Find verification codes first."
-
-#. Description of Enabled, turned on, on a profile's page in Settings
-#: src/settings/profile-page.tsx
-msgid "Turned off, it stays signed in but leaves the titlebar, the Unified inbox and the profile shortcuts, and its mail is not checked."
-msgstr "Turned off, it stays signed in but leaves the titlebar, the Unified inbox and the profile shortcuts, and its mail is not checked."
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -2111,15 +2038,45 @@ msgstr "When you click Copy"
 msgid "Window"
 msgstr "Window"
 
+#. Description of Remove profile on the page of the only enabled profile in Settings, whose button is disabled
+#: src/settings/profile-page.tsx
+msgid "You can't remove the only profile that's turned on."
+msgstr "You can't remove the only profile that's turned on."
+
+#. Description of Remove profile on the page of the only profile in Settings, whose button is disabled
+#: src/settings/profile-page.tsx
+msgid "You can't remove your only profile."
+msgstr "You can't remove your only profile."
+
+#. Shown in the Saved searches card on a profile's page in Settings while it has none
+#: src/settings/saved-searches-card.tsx
+msgid "You haven't saved any searches yet."
+msgstr "You haven't saved any searches yet."
+
 #. Line under the cards of the Notifications page in Settings while one profile's scope is chosen
 #: src/settings/notifications-page.tsx
 msgid "You set Do Not Disturb under All profiles. It applies to every profile."
 msgstr "You set Do Not Disturb under All profiles. It applies to every profile."
 
+#. Explanation in the dialog that confirms removing a profile
+#: src/main/profile-copy.ts
+msgid "You'll be signed out, and its tabs, saved searches and settings will be deleted from this computer. Your Google account isn't affected."
+msgstr "You'll be signed out, and its tabs, saved searches and settings will be deleted from this computer. Your Google account isn't affected."
+
+#. Line at the top of a profile's page in Settings, when its Google account is signed out
+#: src/settings/signed-in.tsx
+msgid "You're not signed in, so Meru can't check mail for this profile."
+msgstr "You're not signed in, so Meru can't check mail for this profile."
+
 #. Heading shown in place of a tab's page that could not load because the computer is offline
 #: src/shell/tab-problem.tsx
 msgid "You’re offline"
 msgstr "You’re offline"
+
+#. Shown under the Search field in Settings when the profile has a saved search with the same Gmail query
+#: src/settings/saved-searches-card.tsx
+msgid "You've already saved this search."
+msgstr "You've already saved this search."
 
 #. Subject of the stand-in email in the test notification Settings shows
 #: src/main/notifications.ts

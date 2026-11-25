@@ -62,7 +62,7 @@ const KindBox = ({
 };
 
 /**
- * Delete browsing data… and its dialog, which asks which of the profile's
+ * Browsing data's Delete… and its dialog, which asks which of the profile's
  * data to delete and stays open while it is deleted.
  */
 export const DeleteBrowsingData = ({
@@ -123,9 +123,9 @@ export const DeleteBrowsingData = ({
         }
       >
         {t({
-          message: "Delete browsing data…",
+          message: "Delete…",
           comment:
-            "Button on a profile's page in Settings that opens a dialog asking which of its browsing data to delete",
+            "Button of the Browsing data row on a profile's page in Settings that opens a dialog asking which of its browsing data to delete",
         })}
       </AlertDialogTrigger>
       <AlertDialogContent initialFocus={cancel}>
@@ -165,7 +165,7 @@ export const DeleteBrowsingData = ({
                 "Checkbox in the Delete browsing data dialog in Settings, as in Chrome's own dialog",
             })}
             description={t({
-              message: "Some pages may load more slowly the next time.",
+              message: "Pages may load a little slower next time.",
               comment:
                 "Description of Cached images and files in the Delete browsing data dialog in Settings",
             })}
@@ -176,8 +176,7 @@ export const DeleteBrowsingData = ({
           {failed && (
             <FieldError id={errorId}>
               {t({
-                message:
-                  "Meru couldn't delete this profile's browsing data. Try again.",
+                message: "Couldn't delete browsing data. Try again.",
                 comment:
                   "Under the checkboxes of the Delete browsing data dialog in Settings, when deleting failed",
               })}
@@ -201,7 +200,7 @@ export const DeleteBrowsingData = ({
             }}
           >
             {t({
-              message: "Delete data",
+              message: "Delete",
               comment:
                 "Button in the Delete browsing data dialog in Settings that deletes what is checked",
             })}

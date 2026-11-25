@@ -83,7 +83,7 @@ const searchField = (page: Page) =>
   addForm(page).getByRole("textbox", { name: "Search" });
 
 const add = async (page: Page, query: string, name?: string) => {
-  await button(page, "Add saved search").click();
+  await button(page, "Add search").click();
   await expect(searchField(page)).toBeFocused();
   await searchField(page).fill(query);
 
@@ -105,15 +105,13 @@ test("adds a search with and without a name, which the Mail menu lists and a res
   const page = await openHome(first);
 
   await expect(
-    page.getByText(
-      "No saved searches yet. Save a search from the Mail menu, or add one here."
-    )
+    page.getByText("You haven't saved any searches yet.")
   ).toBeVisible();
 
   await add(page, " is:unread ");
-  await expect(button(page, "Add saved search")).toBeFocused();
+  await expect(button(page, "Add search")).toBeFocused();
   await add(page, "has:attachment", " Files ");
-  await expect(button(page, "Add saved search")).toBeFocused();
+  await expect(button(page, "Add search")).toBeFocused();
 
   await expect(row(page, "is:unread")).toBeVisible();
   await expect(row(page, "Files")).toContainText("has:attachment");
@@ -164,12 +162,12 @@ test("refuses an empty and a repeated search with the reason under Search, and C
   await expect(reason).toHaveCount(0);
   await expect(searchField(page)).not.toHaveAttribute("aria-invalid");
   await searchField(page).press("Enter");
-  await expect(reason).toHaveText("This search is saved already.");
+  await expect(reason).toHaveText("You've already saved this search.");
   await expect(searchField(page)).toBeFocused();
 
   await addForm(page).getByRole("button", { name: "Cancel" }).click();
   await expect(addForm(page)).toHaveCount(0);
-  await expect(button(page, "Add saved search")).toBeFocused();
+  await expect(button(page, "Add search")).toBeFocused();
   expect(await readSaved(userDataDir)).toStrictEqual([
     { id: "a", query: "is:unread" },
   ]);
@@ -226,14 +224,14 @@ test("renames by Enter and by leaving the field, keeps the name on Escape, clear
   await expect(button(page, "Remove has:attachment")).toBeFocused();
   await button(page, "Remove in:sent").click();
   await expect(row(page, "in:sent")).toHaveCount(0);
-  await expect(button(page, "Add saved search")).toBeFocused();
+  await expect(button(page, "Add search")).toBeFocused();
   await expect
     .poll(() => readSaved(userDataDir))
     .toStrictEqual([{ id: "b", query: "has:attachment" }]);
   await expect.poll(() => menuSearches(app)).toStrictEqual(["has:attachment"]);
 });
 
-test("removing the last row with the add form open focuses Search, and Save or Cancel then focuses Add saved search", async ({
+test("removing the last row with the add form open focuses Search, and Save or Cancel then focuses Add search", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -246,27 +244,27 @@ test("removing the last row with the add form open focuses Search, and Save or C
   const app = await launchApp();
   const page = await openHome(app);
 
-  await button(page, "Add saved search").click();
+  await button(page, "Add search").click();
   await button(page, "Remove in:sent").click();
   await expect(row(page, "in:sent")).toHaveCount(0);
   await expect(searchField(page)).toBeFocused();
   await searchField(page).fill("is:starred");
   await addForm(page).getByRole("button", { name: "Save" }).click();
-  await expect(button(page, "Add saved search")).toBeFocused();
+  await expect(button(page, "Add search")).toBeFocused();
 
-  await button(page, "Add saved search").click();
+  await button(page, "Add search").click();
   await button(page, "Remove is:starred").click();
   await expect(row(page, "is:starred")).toHaveCount(0);
   await expect(searchField(page)).toBeFocused();
   await addForm(page).getByRole("button", { name: "Cancel" }).click();
-  await expect(button(page, "Add saved search")).toBeFocused();
+  await expect(button(page, "Add search")).toBeFocused();
 
-  await button(page, "Add saved search").click();
+  await button(page, "Add search").click();
   await button(page, "Remove is:unread").click();
   await expect(row(page, "is:unread")).toHaveCount(0);
   await expect(searchField(page)).toBeFocused();
   await searchField(page).press("Escape");
-  await expect(button(page, "Add saved search")).toBeFocused();
+  await expect(button(page, "Add search")).toBeFocused();
 });
 
 test("a long query shows two lines, the whole of it in its title", async ({
@@ -360,7 +358,7 @@ test.describe("shots", () => {
 
     await add(page, "is:unread");
     await expect(addForm(page).getByRole("alert")).toHaveText(
-      "This search is saved already."
+      "You've already saved this search."
     );
     await shoot(
       "settings-saved-searches-add-refused",

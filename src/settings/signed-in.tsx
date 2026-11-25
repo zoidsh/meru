@@ -76,7 +76,7 @@ export const AccountLine = ({ profile }: { profile: ListedProfile }) => {
     return (
       <p className="truncate px-1 text-sm text-muted-foreground">
         {t({
-          message: `Signed in to Google as ${address}.`,
+          message: `Signed in as ${address}.`,
           comment:
             "Line at the top of a profile's page in Settings; {address} is the email address of the Google account the profile is signed in to",
         })}
@@ -89,7 +89,8 @@ export const AccountLine = ({ profile }: { profile: ListedProfile }) => {
       <SignedOutMark />
       <p className="flex-1">
         {t({
-          message: "Not signed in to Google, so its mail is not checked.",
+          message:
+            "You're not signed in, so Meru can't check mail for this profile.",
           comment:
             "Line at the top of a profile's page in Settings, when its Google account is signed out",
         })}

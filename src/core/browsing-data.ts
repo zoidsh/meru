@@ -1,4 +1,4 @@
-/** What Delete browsing data… can delete of a profile. */
+/** What Browsing data's Delete… can delete of a profile. */
 export interface BrowsingDataKinds {
   /** Cookies and other site data, which signs the profile out. */
   cookies: boolean;

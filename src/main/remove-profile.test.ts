@@ -47,8 +47,8 @@ describe(createRemoveProfile, () => {
       {
         message: "Remove Work?",
         detail:
-          "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected.",
-        confirmLabel: "Remove Profile",
+          "You'll be signed out, and its tabs, saved searches and settings will be deleted from this computer. Your Google account isn't affected.",
+        confirmLabel: "Remove",
         cancelLabel: "Cancel",
       },
     ]);

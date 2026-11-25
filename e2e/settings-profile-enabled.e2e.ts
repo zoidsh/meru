@@ -40,21 +40,21 @@ test("Enabled off takes a profile out of the titlebar, the Unified inbox and not
 
   await expect(enabled).not.toBeChecked();
   await expect(enabled).toHaveAccessibleDescription(
-    "Off: it stays signed in. Turn it on to put it back in the titlebar."
+    "Turn off to hide this profile and stop checking its mail. You stay signed in."
   );
   await expect(
     pageLine(
       page,
-      "Disabled: not in the titlebar, the Unified inbox or the profile shortcuts, and its mail is not checked. It stays signed in."
+      "This profile is disabled. You're still signed in, but Meru isn't checking its mail."
     )
   ).toBeVisible();
   await expect(switchNamed(page, "Check mail")).toBeDisabled();
   await expect(switchNamed(page, "Check mail")).toHaveAccessibleDescription(
-    "A disabled profile checks no mail; this applies once it is enabled."
+    "Turn on Enabled first."
   );
   await expect(switchNamed(page, "Sleep")).toBeDisabled();
   await expect(switchNamed(page, "Sleep")).toHaveAccessibleDescription(
-    "A disabled profile has no pages."
+    "Turn on Enabled first."
   );
   await expect(profileTab(shell, "Work")).toHaveCount(0);
 
@@ -109,7 +109,7 @@ test("the last enabled profile's Enabled and Remove are disabled with their reas
   ]);
   const page = await openSettings(app);
   const enabled = switchNamed(page, "Enabled");
-  const remove = page.getByRole("button", { name: "Remove profile…" });
+  const remove = page.getByRole("button", { name: "Remove…" });
 
   await expect(profileTab(shell, "Work")).toHaveCount(0);
   await expect(
@@ -121,11 +121,11 @@ test("the last enabled profile's Enabled and Remove are disabled with their reas
 
   await expect(enabled).toBeDisabled();
   await expect(enabled).toHaveAccessibleDescription(
-    "Meru needs at least one profile turned on."
+    "At least one profile has to stay on."
   );
   await expect(remove).toBeDisabled();
   await expect(remove).toHaveAccessibleDescription(
-    "Meru needs at least one profile turned on, so the last can't be removed."
+    "You can't remove the only profile that's turned on."
   );
 
   await page.getByRole("button", { name: "Back" }).click();

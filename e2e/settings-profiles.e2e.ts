@@ -272,7 +272,7 @@ test("a profile's handle moves it with the arrow keys, which the titlebar and st
 
   await expect(titlebarProfiles(shell)).toHaveText(["Home", "Travel", "Work"]);
   await expect(page.getByRole("status")).toHaveText(
-    "Travel is now 2 of 3 in the titlebar."
+    "Travel is now 2 of 3 in the title bar."
   );
   await expect(handle).toBeFocused();
 
@@ -300,7 +300,7 @@ test("Remove profile asks; Cancel keeps the profile, and confirming removes it a
   const app = await launchApp();
   const shell = await shellOf(app);
   const page = await openSettings(app);
-  const remove = page.getByRole("button", { name: "Remove profile…" });
+  const remove = page.getByRole("button", { name: "Remove…" });
 
   await openProfiles(page);
   await profileRow(page, "Work").click();
@@ -336,11 +336,11 @@ test("the last profile's Remove profile is disabled, saying why", async ({
   await openProfiles(page);
   await profileRow(page, "Default").click();
 
-  const remove = page.getByRole("button", { name: "Remove profile…" });
+  const remove = page.getByRole("button", { name: "Remove…" });
 
   await expect(remove).toBeDisabled();
   await expect(remove).toHaveAccessibleDescription(
-    "Meru needs at least one profile, so the last can't be removed."
+    "You can't remove your only profile."
   );
   await expect(page.getByRole("button", { name: /^Move /u })).toHaveCount(0);
 });

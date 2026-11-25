@@ -74,9 +74,7 @@ test("Show in Unified inbox off leaves the profile's mail out of the Unified inb
   await openProfiles(page);
   await profileRow(page, "Work").click();
   await expect(inInbox).toBeChecked();
-  await expect(inInbox).toHaveAccessibleDescription(
-    "Its unread mail is listed with the other profiles'."
-  );
+  await expect(inInbox).toHaveAccessibleDescription("");
   await inInbox.click();
 
   await expect(inInbox).not.toBeChecked();
@@ -132,7 +130,7 @@ test("Show in Unified inbox is disabled with its reason while Check mail is off 
   await expect(checkMail).not.toBeChecked();
   await expect(inInbox).toBeDisabled();
   await expect(inInbox).toHaveAccessibleDescription(
-    "Turn on Check mail to use this."
+    "Turn on Check mail first."
   );
 
   await checkMail.click();
@@ -142,9 +140,7 @@ test("Show in Unified inbox is disabled with its reason while Check mail is off 
   await profileRow(page, "Club").click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Club");
   await expect(inInbox).toBeDisabled();
-  await expect(inInbox).toHaveAccessibleDescription(
-    "A disabled profile is not in the Unified inbox."
-  );
+  await expect(inInbox).toHaveAccessibleDescription("Turn on Enabled first.");
 });
 
 test("Check mail off clears the titlebar's count and the profile's inbox rows and stops its notifications; on brings them back", async ({
@@ -233,7 +229,7 @@ test("Sleep from Settings puts the titlebar's profile to sleep, is disabled for 
   await expect(sleep).toBeChecked();
   await expect(profileTab(shell, "Work")).toHaveAccessibleName("Work, asleep");
   await expect(sleep).toHaveAccessibleDescription(
-    "Its pages stay closed until it is selected again. Its mail is still checked."
+    "Closes its pages to save memory until you select it again. Meru still checks its mail."
   );
 
   await page.getByRole("button", { name: "Back" }).click();
@@ -244,7 +240,7 @@ test("Sleep from Settings puts the titlebar's profile to sleep, is disabled for 
 
   await expect(sleep).toBeDisabled();
   await expect(sleep).toHaveAccessibleDescription(
-    "The last awake profile can't sleep."
+    "At least one profile has to stay awake."
   );
 
   await page.getByRole("button", { name: "Back" }).click();
@@ -291,14 +287,15 @@ test("the list and a profile's page show the signed-in address, Not signed in fo
   await expect(profileRow(page, "Club")).toHaveAccessibleDescription("");
 
   await profileRow(page, "Home").click();
-  await expect(
-    pageLine(page, "Signed in to Google as home@example.org.")
-  ).toBeVisible();
+  await expect(pageLine(page, "Signed in as home@example.org.")).toBeVisible();
 
   await page.getByRole("button", { name: "Back" }).click();
   await profileRow(page, "Work").click();
   await expect(
-    pageLine(page, "Not signed in to Google, so its mail is not checked.")
+    pageLine(
+      page,
+      "You're not signed in, so Meru can't check mail for this profile."
+    )
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Back" }).click();

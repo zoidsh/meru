@@ -15,7 +15,7 @@ const dialogOf = (page: Page) =>
   page.getByRole("alertdialog", { name: "Delete browsing data" });
 
 const openDialog = async (page: Page) => {
-  await page.getByRole("button", { name: "Delete browsing data…" }).click();
+  await page.getByRole("button", { name: "Delete…" }).click();
 
   const dialog = dialogOf(page);
 
@@ -28,7 +28,7 @@ const openDialog = async (page: Page) => {
     }),
     cache: dialog.getByRole("checkbox", { name: "Cached images and files" }),
     cancel: dialog.getByRole("button", { name: "Cancel" }),
-    remove: dialog.getByRole("button", { name: "Delete data" }),
+    remove: dialog.getByRole("button", { name: "Delete", exact: true }),
   };
 };
 
@@ -60,7 +60,7 @@ const launchSignedIn = async (
   return { app, page };
 };
 
-test("Delete browsing data… asks with the cache checked and Cancel focused, needs one box checked, and Cancel or Escape deletes nothing", async ({
+test("Browsing data's Delete… asks with the cache checked and Cancel focused, needs one box checked, and Cancel or Escape deletes nothing", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -92,13 +92,11 @@ test("Delete browsing data… asks with the cache checked and Cancel focused, ne
   await expect(second.dialog).toBeHidden();
 
   await expect(
-    page.getByRole("button", { name: "Delete browsing data…" })
+    page.getByRole("button", { name: "Delete…" })
   ).toHaveAccessibleDescription(
-    "This profile's cookies and site data, or its cached images and files."
+    "Deletes cookies, site data and cached files for this profile."
   );
-  await expect(
-    pageLine(page, "Signed in to Google as work@example.com.")
-  ).toBeVisible();
+  await expect(pageLine(page, "Signed in as work@example.com.")).toBeVisible();
 });
 
 test("deleting the cache keeps the profile signed in, and deleting cookies signs it out", async ({
@@ -107,7 +105,7 @@ test("deleting the cache keeps the profile signed in, and deleting cookies signs
   standIn,
 }) => {
   const { app, page } = await launchSignedIn(launchApp, userDataDir, standIn);
-  const button = page.getByRole("button", { name: "Delete browsing data…" });
+  const button = page.getByRole("button", { name: "Delete…" });
   const cacheOnly = await openDialog(page);
 
   await cacheOnly.remove.click();
@@ -115,9 +113,7 @@ test("deleting the cache keeps the profile signed in, and deleting cookies signs
   await expect(cacheOnly.dialog).toBeHidden();
   await expect(button).toHaveAccessibleDescription("Browsing data deleted.");
   await pollAll(app);
-  await expect(
-    pageLine(page, "Signed in to Google as work@example.com.")
-  ).toBeVisible();
+  await expect(pageLine(page, "Signed in as work@example.com.")).toBeVisible();
 
   const withCookies = await openDialog(page);
 
@@ -128,7 +124,10 @@ test("deleting the cache keeps the profile signed in, and deleting cookies signs
   await expect(button).toHaveAccessibleDescription("Browsing data deleted.");
   // Polled at once, with no wait for the next round.
   await expect(
-    pageLine(page, "Not signed in to Google, so its mail is not checked.")
+    pageLine(
+      page,
+      "You're not signed in, so Meru can't check mail for this profile."
+    )
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 

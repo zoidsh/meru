@@ -434,7 +434,7 @@ test("a profile removed in Profiles leaves the Notifications page's scopes, and 
       .getByRole("list", { name: "Profiles" })
       .getByRole("button", { name, exact: true })
       .click();
-    await page.getByRole("button", { name: "Remove profile…" }).click();
+    await page.getByRole("button", { name: "Remove…" }).click();
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Profiles"
     );

@@ -114,7 +114,7 @@ export const ProfilesPage = ({
     const count = profiles.length;
 
     const moved = t({
-      message: `${name} is now ${place} of ${count} in the titlebar.`,
+      message: `${name} is now ${place} of ${count} in the title bar.`,
       comment:
         "Read by screen readers after a profile is moved in Settings' list of profiles; {place} is its new place from 1 and {count} how many profiles there are",
     });
@@ -366,9 +366,9 @@ export const ProfilesPage = ({
       {many && (
         <p id={helpId} className="px-1 text-sm text-muted-foreground">
           {t({
-            message:
-              "In the titlebar's order. Drag a profile by its handle, or focus the handle and press the up or down arrow, to move it.",
-            comment: "Line under Settings' list of profiles",
+            message: "Drag to reorder.",
+            comment:
+              "Line under Settings' list of profiles, in the title bar's order; each row has a handle to drag, which the up and down arrow keys also move",
           })}
         </p>
       )}

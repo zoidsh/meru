@@ -59,21 +59,29 @@ const Row = ({
   children,
 }: {
   label: string;
-  description: string;
+  /** Nothing, or an empty string, shows no description. */
+  description?: string | undefined;
   disabled?: boolean;
+  /** `description` is empty while the row has none. */
   children: (ids: { label: string; description: string }) => ReactNode;
 }) => {
   const labelId = useId();
   const descriptionId = useId();
+  const described = Boolean(description);
 
   return (
     <Field orientation="horizontal" data-disabled={disabled || undefined}>
       <FieldContent>
         <FieldLabel id={labelId}>{label}</FieldLabel>
-        <FieldDescription id={descriptionId}>{description}</FieldDescription>
+        {described && (
+          <FieldDescription id={descriptionId}>{description}</FieldDescription>
+        )}
       </FieldContent>
       <div className="flex items-center gap-2">
-        {children({ label: labelId, description: descriptionId })}
+        {children({
+          label: labelId,
+          description: described ? descriptionId : "",
+        })}
       </div>
     </Field>
   );
@@ -86,23 +94,17 @@ const Row = ({
 const UnifiedInboxRow = ({ profile }: { profile: ListedProfile }) => {
   const { t } = useLingui();
   const blocked = !profile.enabled || !profile.checkMail;
-  let description: string;
+  let description: string | undefined;
 
   if (!profile.enabled) {
     description = t({
-      message: "A disabled profile is not in the Unified inbox.",
+      message: "Turn on Enabled first.",
       comment:
-        "Description of Show in Unified inbox on a disabled profile's page in Settings, whose switch is disabled",
+        "Description of a switch on a disabled profile's page in Settings, which is disabled until Enabled, the page's first switch, is turned on",
     });
-  } else if (profile.checkMail) {
+  } else if (!profile.checkMail) {
     description = t({
-      message: "Its unread mail is listed with the other profiles'.",
-      comment:
-        "Description of Show in Unified inbox on a profile's page in Settings; the Unified inbox lists every profile's unread mail",
-    });
-  } else {
-    description = t({
-      message: "Turn on Check mail to use this.",
+      message: "Turn on Check mail first.",
       comment:
         "Description of Show in Unified inbox on a profile's page in Settings, whose switch is disabled while Check mail, the row above, is off",
     });
@@ -123,7 +125,7 @@ const UnifiedInboxRow = ({ profile }: { profile: ListedProfile }) => {
           checked={profile.unifiedInbox}
           disabled={blocked}
           aria-labelledby={ids.label}
-          aria-describedby={ids.description}
+          aria-describedby={ids.description || undefined}
           onCheckedChange={(on) => {
             settingsCalls()
               .setUnifiedInbox({ profileId: profile.id, on })
@@ -206,7 +208,7 @@ const NameInput = ({
       autoComplete="off"
       spellCheck={false}
       aria-labelledby={ids.label}
-      aria-describedby={ids.description}
+      aria-describedby={ids.description || undefined}
       onChange={(event) => {
         setDraft({ text: event.target.value, over: profile.name });
       }}
@@ -268,46 +270,21 @@ export const ProfilePage = ({
   const removable = count > 1 && !lastEnabled;
   const many = count > 1;
   const off = !profile.enabled;
-  let checkMailDescription: string;
-
-  if (off) {
-    checkMailDescription = t({
-      message:
-        "A disabled profile checks no mail; this applies once it is enabled.",
-      comment:
-        "Description of Check mail on a disabled profile's page in Settings, whose switch is disabled",
-    });
-  } else if (profile.checkMail) {
-    checkMailDescription = many
-      ? t({
-          message:
-            "Its unread count, notifications and place in the Unified inbox come from this.",
-          comment:
-            "Description of Check mail, turned on, on a profile's page in Settings when there are several profiles",
-        })
-      : t({
-          message: "Its unread count and notifications come from this.",
-          comment:
-            "Description of Check mail, turned on, on the only profile's page in Settings, which has no Unified inbox",
-        });
-  } else {
-    checkMailDescription = many
-      ? t({
-          message:
-            "Off: no unread count, no notifications, and nothing in the Unified inbox.",
-          comment:
-            "Description of Check mail, turned off, on a profile's page in Settings when there are several profiles",
-        })
-      : t({
-          message: "Off: no unread count and no notifications.",
-          comment:
-            "Description of Check mail, turned off, on the only profile's page in Settings, which has no Unified inbox",
-        });
-  }
-
+  const enableFirst = t({
+    message: "Turn on Enabled first.",
+    comment:
+      "Description of a switch on a disabled profile's page in Settings, which is disabled until Enabled, the page's first switch, is turned on",
+  });
+  const checkMailDescription = off
+    ? enableFirst
+    : t({
+        message:
+          "Shows unread counts and notifies you about new mail for this profile.",
+        comment: "Description of Check mail on a profile's page in Settings",
+      });
   const stillChecked = profile.checkMail
     ? ` ${t({
-        message: "Its mail is still checked.",
+        message: "Meru still checks its mail.",
         comment:
           "Second sentence of Sleep's description on a profile's page in Settings, while its Check mail is on",
       })}`
@@ -315,74 +292,49 @@ export const ProfilePage = ({
   let sleepDescription: string;
 
   if (off) {
-    sleepDescription = t({
-      message: "A disabled profile has no pages.",
-      comment:
-        "Description of Sleep on a disabled profile's page in Settings, whose switch is disabled",
-    });
+    sleepDescription = enableFirst;
   } else if (lastAwake) {
     sleepDescription = t({
-      message: "The last awake profile can't sleep.",
+      message: "At least one profile has to stay awake.",
       comment:
         "Description of Sleep on a profile's page in Settings, whose switch is disabled since every other profile sleeps",
     });
-  } else if (profile.asleep) {
-    sleepDescription = `${t({
-      message: "Its pages stay closed until it is selected again.",
-      comment:
-        "Description of Sleep, turned on, on a profile's page in Settings",
-    })}${stillChecked}`;
   } else {
     sleepDescription = `${t({
-      message: "Closes its pages until it is selected again.",
-      comment:
-        "Description of Sleep, turned off, on a profile's page in Settings",
+      message: "Closes its pages to save memory until you select it again.",
+      comment: "Description of Sleep on a profile's page in Settings",
     })}${stillChecked}`;
   }
 
-  let enabledDescription: string;
-
-  if (lastEnabled) {
-    enabledDescription = t({
-      message: "Meru needs at least one profile turned on.",
-      comment:
-        "Description of Enabled on the page of the only enabled profile in Settings, whose switch is disabled",
-    });
-  } else if (off) {
-    enabledDescription = t({
-      message:
-        "Off: it stays signed in. Turn it on to put it back in the titlebar.",
-      comment:
-        "Description of Enabled, turned off, on a profile's page in Settings",
-    });
-  } else {
-    enabledDescription = t({
-      message:
-        "Turned off, it stays signed in but leaves the titlebar, the Unified inbox and the profile shortcuts, and its mail is not checked.",
-      comment:
-        "Description of Enabled, turned on, on a profile's page in Settings",
-    });
-  }
-
+  const enabledDescription = lastEnabled
+    ? t({
+        message: "At least one profile has to stay on.",
+        comment:
+          "Description of Enabled on the page of the only enabled profile in Settings, whose switch is disabled",
+      })
+    : t({
+        message:
+          "Turn off to hide this profile and stop checking its mail. You stay signed in.",
+        comment: "Description of Enabled on a profile's page in Settings",
+      });
   let removeDescription: string;
 
   if (count === 1) {
     removeDescription = t({
-      message: "Meru needs at least one profile, so the last can't be removed.",
+      message: "You can't remove your only profile.",
       comment:
         "Description of Remove profile on the page of the only profile in Settings, whose button is disabled",
     });
   } else if (lastEnabled) {
     removeDescription = t({
-      message:
-        "Meru needs at least one profile turned on, so the last can't be removed.",
+      message: "You can't remove the only profile that's turned on.",
       comment:
         "Description of Remove profile on the page of the only enabled profile in Settings, whose button is disabled",
     });
   } else {
     removeDescription = t({
       message:
-        "Signs out of this profile and deletes its data on this device. Your Google account isn't affected.",
+        "Signs you out and deletes this profile from this computer. Your Google account isn't affected.",
       comment: "Description of Remove profile on a profile's page in Settings",
     });
   }
@@ -394,7 +346,7 @@ export const ProfilePage = ({
           <BanIcon aria-hidden className="size-3.5 shrink-0" />
           {t({
             message:
-              "Disabled: not in the titlebar, the Unified inbox or the profile shortcuts, and its mail is not checked. It stays signed in.",
+              "This profile is disabled. You're still signed in, but Meru isn't checking its mail.",
             comment: "Line at the top of a disabled profile's page in Settings",
           })}
         </p>
@@ -410,7 +362,7 @@ export const ProfilePage = ({
                   label={t({
                     message: "Enabled",
                     comment:
-                      "Label of the switch on a profile's page in Settings that turns the profile off or on; off, it leaves the titlebar and its mail is not checked",
+                      "Label of the switch on a profile's page in Settings that turns the profile off or on; off, it leaves the title bar and its mail is not checked",
                   })}
                   description={enabledDescription}
                   disabled={lastEnabled}
@@ -420,7 +372,7 @@ export const ProfilePage = ({
                       checked={profile.enabled}
                       disabled={lastEnabled}
                       aria-labelledby={ids.label}
-                      aria-describedby={ids.description}
+                      aria-describedby={ids.description || undefined}
                       onCheckedChange={(enabled) => {
                         calls
                           .setProfileEnabled({ profileId: profile.id, enabled })
@@ -436,11 +388,6 @@ export const ProfilePage = ({
               label={t({
                 message: "Name",
                 comment: "Label of a profile's name on its page in Settings",
-              })}
-              description={t({
-                message: "On its button in the titlebar.",
-                comment:
-                  "Description of a profile's name on its page in Settings",
               })}
             >
               {(ids) => (
@@ -460,9 +407,9 @@ export const ProfilePage = ({
               })}
               description={t({
                 message:
-                  "Its dot, and the titlebar's and sidebar's tint while it is selected.",
+                  "Meru uses it for the profile dot and to tint the title bar.",
                 comment:
-                  "Description of a profile's color on its page in Settings",
+                  "Description of a profile's color on its page in Settings; the profile dot is the colored dot that marks the profile",
               })}
             >
               {(ids) => (
@@ -482,7 +429,7 @@ export const ProfilePage = ({
                 >
                   <SelectTrigger
                     aria-labelledby={ids.label}
-                    aria-describedby={ids.description}
+                    aria-describedby={ids.description || undefined}
                     className="min-w-28"
                   >
                     <SelectValue>
@@ -526,7 +473,7 @@ export const ProfilePage = ({
                   checked={profile.checkMail}
                   disabled={off}
                   aria-labelledby={ids.label}
-                  aria-describedby={ids.description}
+                  aria-describedby={ids.description || undefined}
                   onCheckedChange={(on) => {
                     calls
                       .setCheckMail({ profileId: profile.id, on })
@@ -554,7 +501,7 @@ export const ProfilePage = ({
                       checked={profile.asleep && !off}
                       disabled={lastAwake || off}
                       aria-labelledby={ids.label}
-                      aria-describedby={ids.description}
+                      aria-describedby={ids.description || undefined}
                       onCheckedChange={(asleep) => {
                         calls
                           .setAsleep({ profileId: profile.id, asleep })
@@ -574,22 +521,22 @@ export const ProfilePage = ({
           <FieldGroup>
             <Row
               label={t({
-                message: "Delete browsing data",
+                message: "Browsing data",
                 comment:
-                  "Label of the row on a profile's page in Settings that deletes its browsing data",
+                  "Label of the row on a profile's page in Settings whose Delete… button deletes its browsing data",
               })}
               description={
                 deleted
                   ? t({
                       message: "Browsing data deleted.",
                       comment:
-                        "Description of Delete browsing data on a profile's page in Settings, once its data was deleted",
+                        "Description of Browsing data on a profile's page in Settings, once its data was deleted",
                     })
                   : t({
                       message:
-                        "This profile's cookies and site data, or its cached images and files.",
+                        "Deletes cookies, site data and cached files for this profile.",
                       comment:
-                        "Description of Delete browsing data on a profile's page in Settings",
+                        "Description of Browsing data on a profile's page in Settings",
                     })
               }
             >
@@ -618,16 +565,16 @@ export const ProfilePage = ({
                   variant="destructive"
                   size="sm"
                   disabled={!removable}
-                  aria-describedby={ids.description}
+                  aria-describedby={ids.description || undefined}
                   onClick={() => {
                     onRemoveAsked();
                     calls.removeProfile({ profileId: profile.id }).catch(noop);
                   }}
                 >
                   {t({
-                    message: "Remove profile…",
+                    message: "Remove…",
                     comment:
-                      "Button on a profile's page in Settings that asks to remove it",
+                      "Button of the Remove profile row on a profile's page in Settings that asks to remove the profile",
                   })}
                 </Button>
               )}

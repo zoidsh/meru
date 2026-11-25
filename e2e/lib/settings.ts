@@ -154,13 +154,13 @@ export const addProfileInSettings = async (app: ElectronApplication) => {
 };
 
 /**
- * Presses Remove profile… on the profile's page in Settings; the
+ * Presses Remove… on the profile's page in Settings; the
  * confirmation is to be stood in for first.
  */
 export const removeProfileInSettings = async (page: Page, name: string) => {
   await openProfiles(page);
   await profileRow(page, name).click();
-  await page.getByRole("button", { name: "Remove profile…" }).click();
+  await page.getByRole("button", { name: "Remove…" }).click();
 };
 
 export interface SeededWithMail {

@@ -31,11 +31,11 @@ export const removeProfileConfirmation = (name: string): Confirmation => ({
   }),
   detail: t({
     message:
-      "Meru signs out of this profile and deletes its data on this device. Your Google account isn't affected.",
+      "You'll be signed out, and its tabs, saved searches and settings will be deleted from this computer. Your Google account isn't affected.",
     comment: "Explanation in the dialog that confirms removing a profile",
   }),
   confirmLabel: t({
-    message: "Remove Profile",
+    message: "Remove",
     comment: "Button in the dialog that confirms removing a profile",
   }),
   cancelLabel: t({

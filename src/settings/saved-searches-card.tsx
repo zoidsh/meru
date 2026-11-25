@@ -276,7 +276,7 @@ const AddForm = ({
         "Shown under the Search field in Settings when Save is pressed with it empty",
     }),
     duplicate: t({
-      message: "This search is saved already.",
+      message: "You've already saved this search.",
       comment:
         "Shown under the Search field in Settings when the profile has a saved search with the same Gmail query",
     }),
@@ -477,8 +477,7 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
         </CardTitle>
         <CardDescription>
           {t({
-            message:
-              "Run from Saved Searches in the Mail menu while Gmail is open in this profile.",
+            message: "Open these from Saved Searches in the Mail menu.",
             comment:
               "Description of the Saved searches card on a profile's page in Settings; Saved Searches and Mail name the menus as the app's menu bar shows them",
           })}
@@ -517,8 +516,7 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
         ) : (
           <FieldDescription>
             {t({
-              message:
-                "No saved searches yet. Save a search from the Mail menu, or add one here.",
+              message: "You haven't saved any searches yet.",
               comment:
                 "Shown in the Saved searches card on a profile's page in Settings while it has none",
             })}
@@ -545,7 +543,7 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
             >
               <PlusIcon data-icon="inline-start" />
               {t({
-                message: "Add saved search",
+                message: "Add search",
                 comment:
                   "Button on a profile's page in Settings that opens the fields to add a saved search",
               })}

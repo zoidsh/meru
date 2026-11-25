@@ -263,7 +263,7 @@ test("removing the selected profile in Settings, once confirmed, removes its but
   expect(await askedRemovals(app)).toStrictEqual([
     expect.objectContaining({
       message: "Remove Profile 2?",
-      buttons: ["Remove Profile", "Cancel"],
+      buttons: ["Remove", "Cancel"],
       defaultId: 1,
       cancelId: 1,
     }),
@@ -286,7 +286,7 @@ test("removing the selected profile in Settings, once confirmed, removes its but
   // The last profile cannot be removed.
   await settingsProfileRow(settings, "Default").click();
   await expect(
-    settings.getByRole("button", { name: "Remove profile…" })
+    settings.getByRole("button", { name: "Remove…" })
   ).toBeDisabled();
 });
 
