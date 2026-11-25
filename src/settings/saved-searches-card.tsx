@@ -424,7 +424,7 @@ export const SavedSearchesCard = ({ profile }: { profile: ListedProfile }) => {
   // each request so one asked for again runs again.
   const [focusNext, setFocusNext] = useState<{ target: string }>();
   const searches = profile.savedSearches;
-  const pro = useNeedsPro()("savedSearches");
+  const pro = useNeedsPro().capability("savedSearches");
   const addId = useId();
 
   useEffect(() => {

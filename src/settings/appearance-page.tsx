@@ -57,13 +57,13 @@ export const AppearancePage = () => {
       key={key}
       label={label}
       description={description}
-      pro={needsPro(key)}
-      disabled={needsPro(key)}
+      pro={needsPro.setting(key)}
+      disabled={needsPro.setting(key)}
     >
       {(ids) => (
         <Switch
           checked={settings[key]}
-          disabled={needsPro(key)}
+          disabled={needsPro.setting(key)}
           aria-labelledby={ids.label}
           aria-describedby={ids.description || undefined}
           onCheckedChange={(on) => {

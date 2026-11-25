@@ -3,7 +3,6 @@ import { noop } from "es-toolkit";
 import { useId } from "react";
 
 import { settingCapability } from "#core/entitled-settings.ts";
-import { CAPABILITIES } from "#core/entitlement.ts";
 import type { Capability } from "#core/entitlement.ts";
 import type { SettingKey } from "#core/settings.ts";
 import { Badge } from "#ui/badge.tsx";
@@ -20,24 +19,24 @@ import {
 import { settingsCalls, useSettingsState } from "./sync.ts";
 
 /**
- * Whether a row of the setting, or of the capability, is a Pro row now: one
- * whose capability main's `can()` refuses, so never during a trial or with
- * a license.
+ * Whether a row is a Pro row now: one whose capability main's `can()`
+ * refuses, so never during a trial or with a license. A row asks by the
+ * capability it shows or by the setting it changes, never by a name that
+ * could be either, as `verificationCodes` is.
  */
 export const useNeedsPro = () => {
   const required = useSettingsState("proRequired");
+  const capability = (name: Capability) => required?.includes(name) ?? false;
 
-  return (of: SettingKey | Capability) => {
-    const capability = isCapability(of) ? of : settingCapability(of);
+  return {
+    capability,
+    setting: (key: SettingKey) => {
+      const gated = settingCapability(key);
 
-    return (
-      capability !== undefined && (required?.includes(capability) ?? false)
-    );
+      return gated !== undefined && capability(gated);
+    },
   };
 };
-
-const isCapability = (value: string): value is Capability =>
-  (CAPABILITIES as readonly string[]).includes(value);
 
 /**
  * The Meru Pro badge beside a Pro row's label on the free version: a button

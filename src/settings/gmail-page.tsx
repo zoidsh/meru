@@ -40,7 +40,7 @@ export const GmailPage = () => {
   const write = (change: SettingChange) => {
     void calls.update(change);
   };
-  const codesPro = needsPro("verificationCodes");
+  const codesPro = needsPro.capability("verificationCodes");
   // On the free version the rows say Pro, not to turn the switch on.
   const codesOff = !settings.verificationCodes && !codesPro;
   const codesOffReason = t({
@@ -57,7 +57,7 @@ export const GmailPage = () => {
     dependent = false
   ) => {
     const off = dependent && codesOff;
-    const pro = needsPro(key);
+    const pro = needsPro.setting(key);
     const disabled = off || pro;
 
     return (

@@ -200,13 +200,13 @@ export const NotificationsPage = () => {
       description={description}
       paused={pausable ? paused : undefined}
       scope={rowScope(key, label)}
-      pro={needsPro(key)}
-      disabled={needsPro(key)}
+      pro={needsPro.setting(key)}
+      disabled={needsPro.setting(key)}
     >
       {(ids) => (
         <Switch
           checked={values[key]}
-          disabled={needsPro(key)}
+          disabled={needsPro.setting(key)}
           aria-labelledby={ids.label}
           aria-describedby={ids.description || undefined}
           onCheckedChange={(checked) => {
@@ -257,13 +257,13 @@ export const NotificationsPage = () => {
                   description={doNotDisturbCaption(doNotDisturb, i18n.locale)}
                   paused={undefined}
                   scope={{}}
-                  pro={needsPro("notificationGates")}
-                  disabled={needsPro("notificationGates")}
+                  pro={needsPro.capability("notificationGates")}
+                  disabled={needsPro.capability("notificationGates")}
                 >
                   {(ids) => (
                     <Switch
                       checked={doNotDisturb.on}
-                      disabled={needsPro("notificationGates")}
+                      disabled={needsPro.capability("notificationGates")}
                       aria-labelledby={ids.label}
                       aria-describedby={ids.description || undefined}
                       onCheckedChange={(on) => {
@@ -315,8 +315,8 @@ export const NotificationsPage = () => {
                 label={soundLabel}
                 paused={paused}
                 scope={rowScope("notificationSound", soundLabel)}
-                pro={needsPro("notificationSound")}
-                disabled={needsPro("notificationSound")}
+                pro={needsPro.capability("notificationSound")}
+                disabled={needsPro.capability("notificationSound")}
               >
                 {(ids) => (
                   <>
@@ -343,7 +343,7 @@ export const NotificationsPage = () => {
                         label: soundNames[sound],
                       }))}
                       value={values.notificationSound}
-                      disabled={needsPro("notificationSound")}
+                      disabled={needsPro.capability("notificationSound")}
                       onValueChange={(value) => {
                         if (value !== null) {
                           write("notificationSound", value);
@@ -408,7 +408,7 @@ export const NotificationsPage = () => {
                 list={values.quietHours}
                 paused={paused}
                 scope={rowScope("quietHours", quietHoursLabel)}
-                pro={needsPro("quietHours")}
+                pro={needsPro.setting("quietHours")}
                 onChange={(value) => {
                   write("quietHours", [...value]);
                 }}
