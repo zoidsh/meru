@@ -115,14 +115,10 @@ export const createInbox = ({
         return;
       }
 
-      if (!allowed()) {
-        log("Refused to open the unified inbox, which needs Meru Pro");
-
-        return;
-      }
-
       if (!inboxAvailable(state)) {
-        log("Refused to open the unified inbox with only one profile enabled");
+        log(
+          "Refused to open the unified inbox, which needs Meru Pro and more than one profile enabled"
+        );
 
         return;
       }
