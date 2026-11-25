@@ -1,7 +1,7 @@
 // Linux needs a display: `xvfb-run -a pnpm test:e2e` where there is none.
 import { execFile, spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -662,7 +662,12 @@ export const test = base.extend<AppFixtures>({
     await use([]);
   },
   userDataDir: async ({ launched }, use) => {
-    const dir = await mkdtemp(path.join(tmpdir(), "meru4-e2e-"));
+    // Canonical, as a person's own folders are: Windows runners name the
+    // temporary folder in its 8.3 form (`RUNNER~1`), which Chromium keeps as
+    // given, and macOS's sits behind the `/var` link.
+    const dir = await realpath(
+      await mkdtemp(path.join(tmpdir(), "meru4-e2e-"))
+    );
 
     try {
       await use(dir);
