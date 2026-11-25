@@ -20,6 +20,12 @@ export const GATED_SETTINGS: {
 } = {
   unifiedInbox: { capability: "unifiedInbox", free: () => false },
   titlebarUnifiedInbox: { capability: "unifiedInbox", free: () => false },
+  quietHours: { capability: "notificationGates", free: () => [] },
+  notificationImportantOnly: {
+    capability: "notificationGates",
+    free: () => false,
+  },
+  titlebarDoNotDisturb: { capability: "notificationGates", free: () => false },
 };
 
 /** The capability the setting needs, if any. */

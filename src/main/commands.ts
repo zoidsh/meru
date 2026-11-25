@@ -1007,6 +1007,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "doNotDisturb.toggle",
+    capability: "notificationGates",
     inOwnWindow: true,
     title: () =>
       t({
@@ -1020,6 +1021,7 @@ export const COMMANDS: readonly Command[] = [
   },
   {
     id: "doNotDisturb.off",
+    capability: "notificationGates",
     inOwnWindow: true,
     title: () =>
       t({
@@ -1032,6 +1034,7 @@ export const COMMANDS: readonly Command[] = [
   },
   ...DO_NOT_DISTURB_DURATIONS.map((duration): Command => ({
     id: doNotDisturbCommandId(duration),
+    capability: "notificationGates",
     inOwnWindow: true,
     title: () => durationTitle(duration),
     run: (_context, { switchDoNotDisturb }) => switchDoNotDisturb(duration),

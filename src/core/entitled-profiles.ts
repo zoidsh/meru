@@ -1,5 +1,55 @@
 import { entitledProfiles } from "./entitlement.ts";
+import type { Capability } from "./entitlement.ts";
+import { switchDoNotDisturb, withDoNotDisturbOf } from "./state.ts";
 import type { Profile, State } from "./state.ts";
+
+/** The capabilities that shape the state a run may use. */
+export const STATE_CAPABILITIES = [
+  "profiles",
+  "notificationGates",
+] as const satisfies readonly Capability[];
+
+/** Whether the run holds each of `STATE_CAPABILITIES`. */
+export type StateGrants = Record<(typeof STATE_CAPABILITIES)[number], boolean>;
+
+export const stateGrants = (
+  can: (capability: Capability) => boolean
+): StateGrants => ({
+  profiles: can("profiles"),
+  notificationGates: can("notificationGates"),
+});
+
+/**
+ * The state a run may use: `entitledState`'s profiles, and without
+ * `notificationGates` no Do Not Disturb, which stays stored, so nothing
+ * holds a notification with no control on screen to end it.
+ */
+export const entitledView = (stored: State, grants: StateGrants): State => {
+  const view = entitledState(stored, grants.profiles);
+
+  return grants.notificationGates ? view : switchDoNotDisturb(view, undefined);
+};
+
+/**
+ * The stored state after `next`, a change made to what `entitledView` gave
+ * of `stored`: `storedAfter`'s profiles and selection, and whatever the view
+ * left out of the rest as `stored` holds it.
+ */
+export const storedAfterView = (
+  stored: State,
+  grants: StateGrants,
+  next: State
+): State => {
+  const written = storedAfter(
+    stored,
+    entitledState(stored, grants.profiles),
+    next
+  );
+
+  return grants.notificationGates
+    ? written
+    : withDoNotDisturbOf(written, stored);
+};
 
 /**
  * The state a run may use: the stored one with more than one profile

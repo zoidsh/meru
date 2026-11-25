@@ -5,12 +5,7 @@ import { useId } from "react";
 
 import type { QuietWindow } from "#core/notification-gate.ts";
 import { Button } from "#ui/button.tsx";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-} from "#ui/field.tsx";
+import { Field, FieldContent, FieldDescription } from "#ui/field.tsx";
 import {
   Select,
   SelectContent,
@@ -33,6 +28,7 @@ import {
 } from "./quiet-hours.ts";
 import type { RowScope } from "./row-scope.tsx";
 import { OverrideBar } from "./row-scope.tsx";
+import { RowLabel } from "./setting-row.tsx";
 
 const TimeSelect = ({
   value,
@@ -80,8 +76,11 @@ export const QuietHoursField = ({
   list,
   paused,
   scope,
+  pro,
   onChange,
 }: {
+  /** A Pro row on the free version: the Meru Pro badge, and Add disabled. */
+  pro: boolean;
   label: string;
   list: readonly QuietWindow[];
   /** The line saying Do Not Disturb outranks it, while it does. */
@@ -97,14 +96,18 @@ export const QuietHoursField = ({
     <Field
       orientation="vertical"
       aria-labelledby={labelId}
+      data-disabled={pro || undefined}
       className="relative gap-3"
     >
       {scope.bar && <OverrideBar color={scope.bar} />}
       <div className="flex items-start gap-2">
         <FieldContent>
-          <FieldLabel id={labelId} className={cn(dims && "opacity-50")}>
-            {label}
-          </FieldLabel>
+          <RowLabel
+            id={labelId}
+            label={label}
+            pro={pro}
+            className={cn(dims && "opacity-50")}
+          />
           <FieldDescription className={cn(dims && "opacity-50")}>
             {t({
               message: "Meru holds notifications until quiet hours end.",
@@ -222,6 +225,7 @@ export const QuietHoursField = ({
         <Button
           variant="outline"
           size="sm"
+          disabled={pro}
           onClick={() => {
             onChange(addQuietWindow(list));
           }}

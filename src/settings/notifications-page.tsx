@@ -23,6 +23,7 @@ import { Switch } from "#ui/switch.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { doNotDisturbCaption } from "./do-not-disturb.ts";
+import { useNeedsPro } from "./pro-badge.tsx";
 import { QuietHoursField } from "./quiet-hours-field.tsx";
 import { DiffersLine, OverrideCaption, ResetButton } from "./row-scope.tsx";
 import type { RowScope } from "./row-scope.tsx";
@@ -63,6 +64,7 @@ export const NotificationsPage = () => {
   const settings = useSettingsState("settings");
   const doNotDisturb = useSettingsState("doNotDisturb");
   const profiles = useSettingsState("profiles");
+  const needsPro = useNeedsPro();
   const [chosenScope, setChosenScope] = useState<Scope>("all");
   const testBlockedId = useId();
   const previewVolume = useMemo(
@@ -198,10 +200,13 @@ export const NotificationsPage = () => {
       description={description}
       paused={pausable ? paused : undefined}
       scope={rowScope(key, label)}
+      pro={needsPro(key)}
+      disabled={needsPro(key)}
     >
       {(ids) => (
         <Switch
           checked={values[key]}
+          disabled={needsPro(key)}
           aria-labelledby={ids.label}
           aria-describedby={ids.description || undefined}
           onCheckedChange={(checked) => {
@@ -252,10 +257,13 @@ export const NotificationsPage = () => {
                   description={doNotDisturbCaption(doNotDisturb, i18n.locale)}
                   paused={undefined}
                   scope={{}}
+                  pro={needsPro("notificationGates")}
+                  disabled={needsPro("notificationGates")}
                 >
                   {(ids) => (
                     <Switch
                       checked={doNotDisturb.on}
+                      disabled={needsPro("notificationGates")}
                       aria-labelledby={ids.label}
                       aria-describedby={ids.description || undefined}
                       onCheckedChange={(on) => {
@@ -397,6 +405,7 @@ export const NotificationsPage = () => {
                 list={values.quietHours}
                 paused={paused}
                 scope={rowScope("quietHours", quietHoursLabel)}
+                pro={needsPro("quietHours")}
                 onChange={(value) => {
                   write("quietHours", [...value]);
                 }}

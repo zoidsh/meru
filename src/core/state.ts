@@ -1107,6 +1107,21 @@ export const switchDoNotDisturb = (
     : { ...rest, doNotDisturb: { ...doNotDisturb, until } };
 };
 
+/** The state with `from`'s Do Not Disturb as `from` holds it, one kept as found included. */
+export const withDoNotDisturbOf = (state: State, from: State): State => {
+  const without = switchDoNotDisturb(state, undefined);
+
+  return {
+    ...without,
+    ...(from.doNotDisturb !== undefined && {
+      doNotDisturb: from.doNotDisturb,
+    }),
+    ...(DO_NOT_DISTURB_AS_FOUND in from && {
+      [DO_NOT_DISTURB_AS_FOUND]: from[DO_NOT_DISTURB_AS_FOUND],
+    }),
+  };
+};
+
 /** The state without a Do Not Disturb that ended by `time`, else as it is. */
 export const forgetEndedDoNotDisturb = (state: State, time: number): State =>
   state.doNotDisturb?.until !== null &&

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
+import type { Capability } from "#core/entitlement.ts";
 import { decodeState, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
@@ -355,6 +356,89 @@ describe("Do Not Disturb in the profiles' state", () => {
     await profiles.select("a");
 
     expect(saved[0]?.doNotDisturb).toStrictEqual({ until: 3000 });
+  });
+});
+
+/** Profiles whose run lacks `refused` until `license`. */
+const setupGated = (initial: State, refused: Capability) => {
+  let granted = false;
+  const saved: State[] = [];
+  const heard: State[] = [];
+  const profiles = createProfiles({
+    initial,
+    save: (state) => {
+      saved.push(state);
+
+      return Promise.resolve();
+    },
+    newId: () => "new",
+    profileName: (n) => `Profile ${n}`,
+    clearSession: () => Promise.resolve(),
+    now: () => 2000,
+    log: () => false,
+    can: (capability) => granted || capability !== refused,
+  });
+
+  profiles.onChange((state) => heard.push(state));
+
+  return {
+    profiles,
+    saved,
+    heard,
+    license: () => {
+      granted = true;
+      profiles.recheck();
+    },
+  };
+};
+
+describe("Do Not Disturb without Meru Pro", () => {
+  it("holds none, switches none, and writes the stored one back as found, ended or not", async () => {
+    const { profiles, saved } = setupGated(
+      { ...two, doNotDisturb: { until: null, later: "kept" } },
+      "notificationGates"
+    );
+    const ended = setupGated(
+      { ...two, doNotDisturb: { until: 1000 } },
+      "notificationGates"
+    );
+
+    const read = profiles.get();
+    const switched = await Promise.allSettled([
+      profiles.switchDoNotDisturb(5000),
+      profiles.switchDoNotDisturb(undefined),
+    ]);
+
+    await profiles.select("a");
+    await ended.profiles.select("a");
+
+    expect([
+      read.doNotDisturb,
+      switched.map((result) => result.status),
+      saved.map((state) => state.doNotDisturb),
+      ended.saved.map((state) => state.doNotDisturb),
+      await ended.profiles.forgetEndedDoNotDisturb(),
+    ]).toStrictEqual([
+      undefined,
+      ["rejected", "rejected"],
+      [{ until: null, later: "kept" }],
+      [{ until: 1000 }],
+      false,
+    ]);
+  });
+
+  it("brings the stored one back at once with a license, and tells every listener", () => {
+    const { profiles, heard, license } = setupGated(
+      { ...two, doNotDisturb: { until: null } },
+      "notificationGates"
+    );
+
+    license();
+
+    expect([profiles.get().doNotDisturb, heard.length]).toStrictEqual([
+      { until: null },
+      1,
+    ]);
   });
 });
 

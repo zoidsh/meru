@@ -15,12 +15,73 @@ import {
   SHELL_URL,
   expect,
   findPage,
+  readState,
+  readUnreadTotal,
+  retitle,
   test,
   writeSettings,
   writeState,
 } from "./lib/app.ts";
 import { openSection, openSettings, switchNamed } from "./lib/settings.ts";
+import { ANY_SESSION, listing } from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
+
+/** One profile, Home, with its Gmail tab, and whatever else the state holds. */
+const seedOneProfile = (
+  userDataDir: string,
+  standIn: StandIn,
+  extra: Record<string, unknown> = {}
+) =>
+  writeState(userDataDir, {
+    profiles: [
+      {
+        id: "home",
+        name: "Home",
+        tabs: [{ id: "gmail", app: "gmail", url: standIn.url, title: "" }],
+        selectedTabId: "gmail",
+      },
+    ],
+    selectedProfileId: "home",
+    ...extra,
+  });
+
+/** The titles of the notifications the suite's build captured in place of showing them. */
+const notified = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as { title: string }[]
+    ).map(({ title }) => title)
+  );
+
+/** Mail 2 arrives after mail 1, which the first poll found. */
+const arrive = async (
+  app: ElectronApplication,
+  gmail: Page,
+  standIn: StandIn,
+  extra: Record<string, unknown> = {}
+) => {
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
+  standIn.setFeed(ANY_SESSION, { ...listing("2", "1"), ...extra });
+  await retitle(gmail, "Inbox (2)");
+  await expect.poll(() => readUnreadTotal(app)).toBe(2);
+};
+
+/** The application menu's submenu labelled `label` or with Pro after it, as an item is read. */
+const menuNamed = (app: ElectronApplication, label: string) =>
+  app.evaluate(({ Menu }, wanted) => {
+    const item = Menu.getApplicationMenu()
+      ?.items.flatMap((menu) => menu.submenu?.items ?? [])
+      .find(
+        (candidate) =>
+          candidate.label === wanted || candidate.label === `${wanted} (Pro)`
+      );
+
+    return {
+      label: item?.label,
+      badge: item?.badge?.content,
+      enabled: item?.enabled,
+    };
+  }, label);
 
 const KEY = "MERU-TEST-AAAA-BBBB-CCCC-7Q2K";
 
@@ -72,9 +133,9 @@ const launchFree = async (
   await expect
     .poll(() => snapshot(app))
     .toMatchObject({ status: "trialEnded" });
-  await findPage(app, standIn.url);
+  const gmail = await findPage(app, standIn.url);
 
-  return { app, shell };
+  return { app, shell, gmail };
 };
 
 /** Activates a license from Settings' Meru Pro page, as a person would. */
@@ -154,5 +215,89 @@ test("the free version offers no unified inbox, shows its title bar switch as a 
     .toStrictEqual({ label: "Unified Inbox", badge: undefined, enabled: true });
   await expect(
     titlebar(shell).getByRole("button", { name: "Unified inbox", exact: true })
+  ).toBeVisible();
+});
+
+const DO_NOT_DISTURB = { until: null };
+const QUIET_ALL_DAY = [{ start: "00:00", end: "00:00" }];
+
+test("the free version holds no mail by Do Not Disturb, quiet hours or important only, shows no moon, and keeps all three stored", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedOneProfile(userDataDir, standIn, { doNotDisturb: DO_NOT_DISTURB });
+  await writeSettings(userDataDir, {
+    quietHours: QUIET_ALL_DAY,
+    notificationImportantOnly: true,
+    titlebarDoNotDisturb: true,
+  });
+  standIn.setFeed(ANY_SESSION, listing("1"));
+
+  const settingsBefore = await readStored(userDataDir, SETTINGS_FILE);
+  const { app, shell, gmail } = await launchFree(
+    launchApp,
+    userDataDir,
+    standIn
+  );
+
+  await arrive(app, gmail, standIn, { important: [] });
+  await expect.poll(() => notified(app)).toStrictEqual(["Sender 2"]);
+  await expect(
+    titlebar(shell).getByRole("button", { name: "Do Not Disturb" })
+  ).toHaveCount(0);
+  await expect
+    .poll(() => menuNamed(app, "Do Not Disturb"))
+    .toStrictEqual(proItem("Do Not Disturb"));
+
+  const page = await openSettings(app);
+
+  await expect(switchNamed(page, "Do Not Disturb")).toBeDisabled();
+  await expect(switchNamed(page, "Do Not Disturb")).not.toBeChecked();
+  await expect(switchNamed(page, "Only important mail")).toBeDisabled();
+  await expect(switchNamed(page, "Only important mail")).not.toBeChecked();
+  await expect(page.getByRole("group", { name: "Quiet hours 1" })).toHaveCount(
+    0
+  );
+  await expect(
+    page.getByRole("button", { name: "Add", exact: true })
+  ).toBeDisabled();
+
+  for (const label of [
+    "Do Not Disturb",
+    "Only important mail",
+    "Quiet hours",
+  ]) {
+    // oxlint-disable-next-line no-await-in-loop -- one row after another
+    await expect(badgeOf(page, label)).toBeVisible();
+  }
+
+  await expect(badgeOf(page, "Allow notifications")).toHaveCount(0);
+  await openSection(page, "Appearance");
+  await expect(switchNamed(page, "Do Not Disturb")).toBeDisabled();
+  await expect(badgeOf(page, "Do Not Disturb")).toBeVisible();
+  await expect(readStored(userDataDir, SETTINGS_FILE)).resolves.toBe(
+    settingsBefore
+  );
+  await expect(
+    readState<{ doNotDisturb?: unknown }>(userDataDir)
+  ).resolves.toMatchObject({ doNotDisturb: DO_NOT_DISTURB });
+
+  await activate(page);
+  await expect(
+    titlebar(shell).getByRole("button", { name: "Do Not Disturb" })
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect
+    .poll(() => menuNamed(app, "Do Not Disturb"))
+    .toStrictEqual({
+      label: "Do Not Disturb",
+      badge: undefined,
+      enabled: true,
+    });
+  await openSection(page, "Notifications");
+  await expect(switchNamed(page, "Do Not Disturb")).toBeChecked();
+  await expect(switchNamed(page, "Only important mail")).toBeChecked();
+  await expect(
+    page.getByRole("group", { name: "Quiet hours 1" })
   ).toBeVisible();
 });

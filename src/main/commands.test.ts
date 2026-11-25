@@ -689,6 +689,19 @@ describe("the command registry", () => {
     expect(app.isChecked("inbox.toggle")).toBeFalsy();
   });
 
+  it("offers no Do Not Disturb, on or off, without Meru Pro", () => {
+    const app = setup();
+    const ids = COMMANDS.filter((command) =>
+      command.id.startsWith("doNotDisturb.")
+    ).map((command) => command.id);
+
+    app.refuse("notificationGates");
+
+    expect(ids.map((id) => app.isAvailable(id))).toStrictEqual(
+      ids.map(() => false)
+    );
+  });
+
   it("offers no unified inbox without Meru Pro, whatever the profiles", () => {
     const app = setup();
 

@@ -28,6 +28,14 @@ describe(entitledSetting, () => {
     ]).toStrictEqual([false, false]);
   });
 
+  it("holds nothing by quiet hours or important only, and hides the moon's button, without Meru Pro", () => {
+    expect([
+      entitledSetting("quietHours", [{ start: "22:00", end: "07:00" }], free),
+      entitledSetting("notificationImportantOnly", true, free),
+      entitledSetting("titlebarDoNotDisturb", true, free),
+    ]).toStrictEqual([[], false, false]);
+  });
+
   it("asks only the capability the setting needs", () => {
     const asked: Capability[] = [];
 

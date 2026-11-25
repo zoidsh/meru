@@ -66,6 +66,12 @@ const itemOf = (menus: MenuItemConstructorOptions[], id: string) =>
 const labels = (menus: MenuItemConstructorOptions[]) =>
   menus.map((menu) => menu.label);
 
+/** The app menu's Do Not Disturb submenu, which has no id. */
+const submenuOf = (platform: Platform, can: () => boolean) =>
+  template(platform, { ...contextOf(), can })
+    .flatMap(submenu)
+    .find((item) => item.submenu && String(item.label).startsWith("Do"));
+
 describe(buildMenuTemplate, () => {
   it.each([
     [
@@ -91,6 +97,20 @@ describe(buildMenuTemplate, () => {
       ]).toStrictEqual([shown, false, "Unified Inbox", undefined]);
     }
   );
+
+  it("disables the Do Not Disturb submenu without Meru Pro and says Pro", () => {
+    expect(
+      (["darwin", "linux"] as const).map((platform) => {
+        const item = submenuOf(platform, () => false);
+
+        return [item?.label, item?.badge?.content, item?.enabled];
+      })
+    ).toStrictEqual([
+      ["Do Not Disturb", "Pro", false],
+      ["Do Not Disturb (Pro)", undefined, false],
+    ]);
+    expect(submenuOf("darwin", () => true)?.enabled).toBeUndefined();
+  });
 
   it("on macOS keeps the roles' own keys and has Help", () => {
     const menus = template("darwin");

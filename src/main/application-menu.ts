@@ -333,12 +333,15 @@ export const buildMenuTemplate = ({
     return [commandItem(command, type)];
   };
 
+  const doNotDisturbLabel = t({
+    message: "Do Not Disturb",
+    comment:
+      "Submenu of the app menu with how long to hold new mail notifications for, or to stop",
+  });
   const doNotDisturb: MenuItemConstructorOptions = {
-    label: t({
-      message: "Do Not Disturb",
-      comment:
-        "Submenu of the app menu with how long to hold new mail notifications for, or to stop",
-    }),
+    ...(context.can("notificationGates")
+      ? { label: doNotDisturbLabel }
+      : { ...proMenuItem(doNotDisturbLabel, platform), enabled: false }),
     submenu: doNotDisturbItems(commands, context, locale, run),
   };
 

@@ -2,6 +2,7 @@ import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import type { SoundRequest } from "#contract/shell-sound.ts";
+import { entitledSetting } from "#core/entitled-settings.ts";
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import type { MailAction } from "#core/mail-actions.ts";
 import {
@@ -73,6 +74,7 @@ const setup = ({
   copies = true,
   supported = true,
   quiet = false,
+  free = false,
 } = {}) => {
   let copying = copies;
   let writing: PromiseWithResolvers<void> | undefined;
@@ -122,8 +124,13 @@ const setup = ({
     // Fixed, so these tests prove the path and not the extractor.
     extractCode: ([subject, summary]) =>
       subject === CODE_SUBJECT ? /\d{6}/u.exec(summary ?? "")?.[0] : undefined,
+    // As the settings store reads them, the free version's included.
     setting: (key, profileId) =>
-      readSetting(settings, key, "darwin", profileId),
+      entitledSetting(
+        key,
+        readSetting(settings, key, "darwin", profileId),
+        () => !free
+      ),
     state: () => current,
     hasSubtitle,
     inbox: INBOX,
@@ -948,6 +955,22 @@ describe("sounds", () => {
       expect([app.shown, app.played]).toStrictEqual([[], []]);
     }
   );
+
+  it("holds nothing by quiet hours or important only on the free version, and never asks the Important feed", async () => {
+    const app = setup({
+      free: true,
+      important: () => Promise.resolve(new Set()),
+    });
+
+    app.set("quietHours", [{ start: "00:00", end: "00:00" }]);
+    app.set("notificationImportantOnly", true);
+    await arrive(app, entry("1"));
+
+    expect([
+      app.shown.map((notification) => notification.title),
+      app.askedImportant,
+    ]).toStrictEqual([["Sender 1"], []]);
+  });
 
   it("sounds for a verification code while the mail beside it is held, in the same quiet period", async () => {
     const app = setup({ doNotDisturb: { until: null } });

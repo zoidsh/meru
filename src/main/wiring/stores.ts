@@ -72,6 +72,7 @@ export const wireStores = async ({
     now: Date.now,
     log: console.error,
     multipleProfiles,
+    can: entitlement.can,
   });
   // Ahead of every other listener of the profiles, so each reads the
   // sidebar as the change leaves it.

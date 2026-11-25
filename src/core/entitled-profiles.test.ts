@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import { APPS } from "./apps.ts";
 import {
   entitledState,
+  entitledView,
   lockedProfiles,
   storedAfter,
+  storedAfterView,
 } from "./entitled-profiles.ts";
+import type { StateGrants } from "./entitled-profiles.ts";
 import {
   decodeState,
   encodeState,
@@ -118,5 +121,45 @@ describe(storedAfter, () => {
     const next = selectProfile(state, "home");
 
     expect(next && storedAfter(state, state, next)).toBe(next);
+  });
+});
+
+const ALL: StateGrants = { profiles: true, notificationGates: true };
+
+describe(entitledView, () => {
+  it("is the stored state itself with every grant", () => {
+    const state = { ...stored(), doNotDisturb: { until: null } };
+
+    expect(entitledView(state, ALL)).toBe(state);
+  });
+
+  it("holds no Do Not Disturb without notificationGates, and writes the stored one back as found, one that does not parse included", () => {
+    const grants = { ...ALL, notificationGates: false };
+    const parsed = { ...stored(), doNotDisturb: { until: null } };
+    const decoded = decodeState({
+      ...(encodeState(stored()) as object),
+      doNotDisturb: "not one",
+    });
+
+    if (decoded.kind !== "read") {
+      throw new Error("The fixture does not decode");
+    }
+
+    const unparsed = decoded.value;
+    const write = (state: State) => {
+      const next = selectProfile(entitledView(state, grants), "home");
+
+      return next && encodeState(storedAfterView(state, grants, next));
+    };
+
+    expect([
+      entitledView(parsed, grants).doNotDisturb,
+      write(parsed),
+      write(unparsed),
+    ]).toStrictEqual([
+      undefined,
+      expect.objectContaining({ doNotDisturb: { until: null } }),
+      expect.objectContaining({ doNotDisturb: "not one" }),
+    ]);
   });
 });

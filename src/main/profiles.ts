@@ -1,13 +1,16 @@
-import { Mutex } from "es-toolkit";
+import { Mutex, isEqual } from "es-toolkit";
 
 import type { App } from "#core/apps.ts";
 import { removeBookmark, toggleBookmark } from "#core/bookmarks.ts";
 import type { BookmarkedPage } from "#core/bookmarks.ts";
 import {
-  entitledState,
+  entitledView,
   lockedProfiles,
-  storedAfter,
+  stateGrants,
+  storedAfterView,
 } from "#core/entitled-profiles.ts";
+import type { StateGrants } from "#core/entitled-profiles.ts";
+import type { Capability } from "#core/entitlement.ts";
 import type { PaneDirection, Split } from "#core/pane-tree.ts";
 import { firstUnusedColor } from "#core/profile-color.ts";
 import type { ProfileColorName } from "#core/profile-color.ts";
@@ -77,6 +80,12 @@ export interface ProfilesDeps {
    * absent.
    */
   multipleProfiles?: () => boolean;
+  /**
+   * The entitlement's `can`, asked again at each `recheck`: without
+   * `notificationGates` the state has no Do Not Disturb and none is
+   * switched, the stored one kept. Everything when absent.
+   */
+  can?: (capability: Capability) => boolean;
 }
 
 const describe = (error: unknown) =>
@@ -96,15 +105,20 @@ export const createProfiles = ({
   now,
   log,
   multipleProfiles = () => true,
+  can = () => true,
 }: ProfilesDeps) => {
   const mutex = new Mutex();
   const listeners = new Set<(state: State) => void>();
   const removalListeners = new Set<(profileId: string) => void>();
-  let allowed = multipleProfiles();
+  const grantsNow = (): StateGrants => ({
+    ...stateGrants(can),
+    profiles: multipleProfiles(),
+  });
+  let grants = grantsNow();
   // What the file holds, and what this run may use of it, which every reader
   // and every change but the clears sees.
   let stored = initial;
-  let state = entitledState(stored, allowed);
+  let state = entitledView(stored, grants);
 
   const notify = () => {
     for (const listener of listeners) {
@@ -123,9 +137,10 @@ export const createProfiles = ({
     }
 
     // Dropped with a write that happens anyway, never by one of its own.
-    const written = forgetEndedDoNotDisturb(
-      storedAfter(stored, state, next),
-      now()
+    const written = storedAfterView(
+      stored,
+      grants,
+      forgetEndedDoNotDisturb(next, now())
     );
 
     await save(written);
@@ -136,7 +151,7 @@ export const createProfiles = ({
       .filter((id) => !kept.has(id));
 
     stored = written;
-    state = entitledState(stored, allowed);
+    state = entitledView(stored, grants);
     notify();
 
     for (const profileId of removed) {
@@ -223,20 +238,20 @@ export const createProfiles = ({
   return {
     get: () => state,
     /** The stored profiles this run does not use, for Settings to list. */
-    locked: () => lockedProfiles(stored, allowed),
+    locked: () => lockedProfiles(stored, grants.profiles),
     /**
-     * Asks `multipleProfiles` again, for a change of the entitlement, and
-     * tells every listener when its answer changed.
+     * Asks `multipleProfiles` and `can` again, for a change of the
+     * entitlement, and tells every listener when an answer changed.
      */
     recheck: () => {
-      const next = multipleProfiles();
+      const next = grantsNow();
 
-      if (next === allowed) {
+      if (isEqual(next, grants)) {
         return;
       }
 
-      allowed = next;
-      state = entitledState(stored, allowed);
+      grants = next;
+      state = entitledView(stored, grants);
       notify();
     },
     /** Settles once every change asked for so far is written, for a quit to wait on. */
@@ -264,7 +279,7 @@ export const createProfiles = ({
      */
     add: () =>
       exclusive(async () => {
-        if (!allowed) {
+        if (!grants.profiles) {
           return;
         }
 
@@ -418,7 +433,11 @@ export const createProfiles = ({
       exclusive(() => commit(next(state))),
     /** On until `until`, `null` for until turned off, or off with `undefined`. */
     switchDoNotDisturb: (until: number | null | undefined) =>
-      exclusive(() => commit(switchDoNotDisturb(state, until))),
+      exclusive(() =>
+        grants.notificationGates
+          ? commit(switchDoNotDisturb(state, until))
+          : Promise.reject(new Error("Do Not Disturb needs Meru Pro"))
+      ),
     /**
      * Run once at startup, before any view exists: deletes the data of each
      * profile a removal did not finish clearing.
