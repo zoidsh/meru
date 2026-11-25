@@ -806,6 +806,72 @@ describe("the entitlement on waking from sleep", () => {
   });
 });
 
+describe("the entitlement's wake beside other work", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: START });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("sends no second refresh while one is still out", async () => {
+    const { entitlement, hold, held, requests } = setup();
+
+    hold();
+
+    const launch = entitlement.start();
+
+    await vi.waitFor(() => {
+      expect(held).toHaveLength(1);
+    });
+    vi.setSystemTime(START + REFRESH_INTERVAL + 1);
+    await entitlement.resume();
+
+    expect(requests).toHaveLength(1);
+    held[0]?.({ error: "offline" });
+    await launch;
+    entitlement.dispose();
+  });
+
+  it("does nothing once disposed", async () => {
+    const { entitlement, requests } = setup({
+      version: 1,
+      token: signToken({}),
+      licenseKey: "MERU-KEY-0001",
+    });
+    let changes = 0;
+
+    entitlement.onChange(() => {
+      changes += 1;
+    });
+    entitlement.dispose();
+    vi.setSystemTime(START + 15 * DAY);
+    await entitlement.resume();
+
+    expect(requests).toStrictEqual([]);
+    expect(changes).toBe(0);
+    expect(entitlement.snapshot().status).toBe("licensed");
+  });
+
+  it("asks nothing without a device id, and says so once rather than on every wake", async () => {
+    const { entitlement, requests, logs } = setup(undefined, "");
+
+    await entitlement.start();
+    for (const hours of [4, 8, 12]) {
+      vi.setSystemTime(START + hours * 60 * 60 * 1000);
+      // oxlint-disable-next-line no-await-in-loop -- one wake after another
+      await entitlement.resume();
+    }
+
+    expect(requests).toStrictEqual([]);
+    expect(
+      logs.filter((line) => line.includes("this device's id is unknown"))
+    ).toHaveLength(1);
+    entitlement.dispose();
+  });
+});
+
 describe("the license key on the clipboard", () => {
   it("copies the whole key from main, and nothing with no license", async () => {
     const withKey = setup({

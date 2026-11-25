@@ -389,6 +389,8 @@ export const createEntitlement = ({
   };
 
   let lastAttemptAt: number | undefined;
+  let refreshing = 0;
+  let toldNoDeviceId = false;
 
   const refresh = async () => {
     if (disposed) {
@@ -396,12 +398,17 @@ export const createEntitlement = ({
     }
 
     if (deviceId === "") {
-      log("Did not ask for the entitlement: this device's id is unknown");
+      // Every three hours and every wake would say it again.
+      if (!toldNoDeviceId) {
+        toldNoDeviceId = true;
+        log("Did not ask for the entitlement: this device's id is unknown");
+      }
 
       return;
     }
 
     lastAttemptAt = now();
+    refreshing += 1;
 
     const made = call("refresh", storedLicenseKey(file));
     const result = await take(
@@ -412,7 +419,9 @@ export const createEntitlement = ({
         })
       ),
       made
-    );
+    ).finally(() => {
+      refreshing -= 1;
+    });
 
     if (!result.ok) {
       log(
@@ -452,12 +461,18 @@ export const createEntitlement = ({
      * once, and refreshes when three hours have gone by since the last try.
      */
     resume: async () => {
+      if (disposed) {
+        return;
+      }
+
       announce();
 
-      if (
+      const due =
         lastAttemptAt === undefined ||
-        now() - lastAttemptAt >= REFRESH_INTERVAL
-      ) {
+        now() - lastAttemptAt >= REFRESH_INTERVAL;
+
+      // A refresh still out answers for this wake too.
+      if (due && refreshing === 0) {
         await refresh();
       }
     },
