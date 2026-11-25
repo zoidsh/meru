@@ -140,20 +140,42 @@ describe(createLinkOpener, () => {
     expect([asked, opened]).toStrictEqual([[], [LINK]]);
   });
 
-  it("reads a trusted list it cannot parse as none, and writes it back as found until one is added", async () => {
-    const { opener, asked, saved, trustedSites, answer } = setup({
+  it("reads a trusted list that is not a list as none, keeps it as found, and replaces it once a site is trusted", async () => {
+    const { opener, asked, saved, answer } = setup({
       version: 1,
-      trustedSites: "https://example.org",
+      trustedSites: "https://example.net",
     });
 
-    await opener.open(LINK);
+    await opener.open("https://example.net/");
 
     expect([asked.length, saved]).toStrictEqual([1, []]);
 
     answer({ choice: "open", trust: true });
     await opener.open(LINK);
 
-    expect(trustedSites.list()).toStrictEqual(["https://example.org"]);
+    expect(saved.at(-1)?.trustedSites).toStrictEqual(["https://example.org"]);
+  });
+
+  it("reads a trusted list entry by entry, and keeps its readable entries when a site is added", async () => {
+    const { opener, asked, saved, trustedSites, answer } = setup({
+      version: 1,
+      trustedSites: ["https://example.net", 5, null],
+    });
+
+    await opener.open("https://example.net/");
+
+    expect([asked, trustedSites.list()]).toStrictEqual([
+      [],
+      ["https://example.net"],
+    ]);
+
+    answer({ choice: "open", trust: true });
+    await opener.open(LINK);
+
+    expect(saved.at(-1)?.trustedSites).toStrictEqual([
+      "https://example.net",
+      "https://example.org",
+    ]);
   });
 });
 

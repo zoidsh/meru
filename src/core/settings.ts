@@ -310,10 +310,16 @@ export const SETTINGS = {
   }),
   /**
    * The sites whose links open without asking, each an origin such as
-   * `https://example.com`, as v3's trusted hosts are.
+   * `https://example.com`, as v3's trusted hosts are. Read entry by entry,
+   * so one that is not a string costs only itself.
    */
   trustedSites: setting<string[]>({
-    schema: z.array(z.string()),
+    schema: z.pipe(
+      z.array(z.unknown()),
+      z.transform((entries) =>
+        entries.filter((entry): entry is string => typeof entry === "string")
+      )
+    ),
     default: [],
   }),
 } satisfies SettingDeclarations;
