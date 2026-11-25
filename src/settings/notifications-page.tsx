@@ -3,8 +3,11 @@ import { debounce, noop } from "es-toolkit";
 import { PlayIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 
-import type { PageSettings, SettingChange } from "#contract/settings.ts";
-import type { OverridableSettingKey } from "#core/settings.ts";
+import type {
+  PageOverridableKey,
+  PageSettings,
+  SettingChange,
+} from "#contract/settings.ts";
 import { NOTIFICATION_SOUNDS, isNotificationSound } from "#core/sounds.ts";
 import type { NotificationSound, SoundChoice } from "#core/sounds.ts";
 import { Button } from "#ui/button.tsx";
@@ -52,10 +55,8 @@ const SOUND_ORDER: readonly SoundChoice[] = [
 const VOLUME_PREVIEW_WAIT = 250;
 
 type BooleanKey = {
-  [Key in OverridableSettingKey]: PageSettings[Key] extends boolean
-    ? Key
-    : never;
-}[OverridableSettingKey];
+  [Key in PageOverridableKey]: PageSettings[Key] extends boolean ? Key : never;
+}[PageOverridableKey];
 
 export const NotificationsPage = () => {
   const { t, i18n } = useLingui();
@@ -136,7 +137,7 @@ export const NotificationsPage = () => {
     }),
   };
 
-  const write = <Key extends OverridableSettingKey>(
+  const write = <Key extends PageOverridableKey>(
     key: Key,
     value: PageSettings[Key]
   ) => {
@@ -150,7 +151,7 @@ export const NotificationsPage = () => {
   };
 
   /** What the row adds in the scope shown; nothing while the page has no scopes. */
-  const rowScope = (key: OverridableSettingKey, label: string): RowScope => {
+  const rowScope = (key: PageOverridableKey, label: string): RowScope => {
     if (!scoped) {
       return {};
     }
@@ -562,24 +563,6 @@ export const NotificationsPage = () => {
                         "Description of the Count unread in the badge switch in Settings on Windows and Linux",
                     })
               ),
-              ...(scoped
-                ? [
-                    switchRow(
-                      "unifiedInbox",
-                      t({
-                        message: "Show in the Unified inbox",
-                        comment:
-                          "Label of the switch in Settings that lists unread mail in the Unified inbox, the list of every profile's unread mail",
-                      }),
-                      t({
-                        message:
-                          "Unread mail is listed with the other profiles'.",
-                        comment:
-                          "Description of the Show in the Unified inbox switch in Settings",
-                      })
-                    ),
-                  ]
-                : []),
             ]}
           </Rows>
         </CardContent>

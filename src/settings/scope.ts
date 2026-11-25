@@ -1,8 +1,11 @@
 import { plural, t } from "@lingui/core/macro";
 
-import type { PageSettings, SettingsState } from "#contract/settings.ts";
+import type {
+  PageOverridableKey,
+  PageSettings,
+  SettingsState,
+} from "#contract/settings.ts";
 import type { QuietWindow } from "#core/notification-gate.ts";
-import type { OverridableSettingKey } from "#core/settings.ts";
 import type { SoundChoice } from "#core/sounds.ts";
 
 import { WEEK, dayName, quietDays } from "./quiet-hours.ts";
@@ -42,7 +45,7 @@ export const shownScope = (
 /** The profiles holding a value of their own for the key, in their order. */
 export const differingProfiles = (
   profiles: readonly ListedProfile[],
-  key: OverridableSettingKey
+  key: PageOverridableKey
 ) => profiles.filter((profile) => Object.hasOwn(profile.overrides, key));
 
 /** The profiles a row names, and how many more it only counts. */
@@ -115,7 +118,7 @@ const windowText = (window: QuietWindow, locale: string) => {
  * The app value as a profile's caption names it: On or Off, the sound's
  * name, or each window of quiet hours.
  */
-export const appValueText = <Key extends OverridableSettingKey>(
+export const appValueText = <Key extends PageOverridableKey>(
   key: Key,
   value: PageSettings[Key],
   soundNames: Readonly<Record<SoundChoice, string>>,

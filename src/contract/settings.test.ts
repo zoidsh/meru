@@ -18,10 +18,9 @@ describe("the settings contract", () => {
         key: "quietHours",
         value: [{ start: "22:00", end: "07:00", days: [1, 2] }],
       }),
-      update({ key: "unifiedInbox", value: true }),
       update({ key: "notificationSoundVolume", value: 0.05 }),
       update({ key: "notificationSoundVolume", value: 1 }),
-    ]).toStrictEqual([true, true, true, true, true, true]);
+    ]).toStrictEqual([true, true, true, true, true]);
   });
 
   it("takes the Gmail page's settings, checked by each one's schema", () => {
@@ -54,10 +53,12 @@ describe("the settings contract", () => {
       update({ key: "notificationSoundVolume", value: 0 }),
       update({ key: "notificationSoundVolume", value: 1.5 }),
       update({ key: "trayIcon", value: false }),
+      update({ key: "unifiedInbox", value: true }),
       update({ key: "version", value: 2 }),
       update({ value: true }),
       update(undefined),
     ]).toStrictEqual([
+      false,
       false,
       false,
       false,
@@ -96,10 +97,23 @@ describe("the settings contract", () => {
         key: "notificationSoundVolume",
         value: 0.5,
       }),
+      setOverride({ profileId: "work", key: "unifiedInbox", value: false }),
       clearOverride({ profileId: "work", key: "verificationCodes" }),
       clearOverride({ profileId: "work", key: "notificationSoundVolume" }),
+      clearOverride({ profileId: "work", key: "unifiedInbox" }),
       clearOverride({ profileId: "work" }),
-    ]).toStrictEqual([false, false, false, false, false, false, false, false]);
+    ]).toStrictEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
   });
 
   it("sends each profile's own values of the page's settings, only those", () => {
@@ -112,6 +126,7 @@ describe("the settings contract", () => {
       enabled: true,
       asleep: false,
       checkMail: true,
+      unifiedInbox: true,
       mail: { status: "ok", address: "work@example.org" },
       savedSearches: [],
       overrides: { notificationSound: "chime" },
@@ -125,7 +140,11 @@ describe("the settings contract", () => {
       profiles.parse([
         {
           ...work,
-          overrides: { trayIcon: "dark", notificationSoundVolume: 0.5 },
+          overrides: {
+            trayIcon: "dark",
+            notificationSoundVolume: 0.5,
+            unifiedInbox: false,
+          },
         },
       ])[0]?.overrides,
     ]).toStrictEqual([true, false, {}]);
@@ -141,6 +160,7 @@ describe("the settings contract", () => {
         enabled: true,
         asleep: true,
         checkMail: false,
+        unifiedInbox: false,
         mail: { status: "notChecked", address: null },
         savedSearches: [],
         overrides: {},
@@ -162,16 +182,20 @@ describe("the settings contract", () => {
     ]);
   });
 
-  it("sets a listed profile's Check mail and sleep by its id and a boolean", () => {
+  it("sets a listed profile's Check mail, Unified inbox and sleep by its id and a boolean", () => {
     const setCheckMail = accepts(SETTINGS_CALLS.setCheckMail.request);
+    const setUnifiedInbox = accepts(SETTINGS_CALLS.setUnifiedInbox.request);
     const setAsleep = accepts(SETTINGS_CALLS.setAsleep.request);
 
     expect([
       setCheckMail({ profileId: "work", on: false }),
       setCheckMail({ profileId: "", on: false }),
+      setUnifiedInbox({ profileId: "work", on: false }),
+      setUnifiedInbox({ profileId: "work", on: "no" }),
+      setUnifiedInbox({ on: true }),
       setAsleep({ profileId: "work", asleep: true }),
       setAsleep({ profileId: "work", asleep: "yes" }),
-    ]).toStrictEqual([true, false, true, false]);
+    ]).toStrictEqual([true, false, true, false, false, true, false]);
   });
 
   it("adds, renames and removes a saved search by the profile's and the search's ids", () => {
@@ -215,6 +239,7 @@ describe("the settings contract", () => {
           enabled: true,
           asleep: false,
           checkMail: true,
+          unifiedInbox: true,
           mail: { status: "ok", address: null },
           savedSearches,
           overrides: {},
@@ -278,7 +303,6 @@ describe("the settings contract", () => {
       quietHours: [],
       notificationSound: "linen",
       unreadBadge: true,
-      unifiedInbox: true,
       notificationSoundVolume: 0.5,
       hideGmailLogo: true,
       hidePromoBanner: true,
@@ -296,7 +320,9 @@ describe("the settings contract", () => {
 
     expect([
       settings.safeParse(values).success,
-      Object.keys(settings.parse({ ...values, trayIcon: true })).toSorted(),
+      Object.keys(
+        settings.parse({ ...values, trayIcon: true, unifiedInbox: false })
+      ).toSorted(),
     ]).toStrictEqual([true, Object.keys(values).toSorted()]);
   });
 

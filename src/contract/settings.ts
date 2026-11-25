@@ -34,6 +34,17 @@ export const GMAIL_PAGE_KEYS = [
   "verificationCodeTrash",
 ] as const;
 
+/**
+ * The settings a profile may hold a value of its own for, as the
+ * Notifications page shows them. `unifiedInbox` is a profile's own switch on
+ * its page instead, so it never counts as one of this page's overrides.
+ */
+export type PageOverridableKey = Exclude<OverridableSettingKey, "unifiedInbox">;
+
+export const PAGE_OVERRIDABLE_KEYS = OVERRIDABLE_SETTING_KEYS.filter(
+  (key): key is PageOverridableKey => key !== "unifiedInbox"
+);
+
 /** The pages' settings that only the app holds, never a profile. */
 const APP_ONLY_PAGE_KEYS = [
   "notificationSoundVolume",
@@ -46,12 +57,12 @@ const APP_ONLY_PAGE_KEYS = [
  * app-only ones.
  */
 export const PAGE_SETTING_KEYS = [
-  ...OVERRIDABLE_SETTING_KEYS,
+  ...PAGE_OVERRIDABLE_KEYS,
   ...APP_ONLY_PAGE_KEYS,
 ];
 
 export type PageSettingKey =
-  | OverridableSettingKey
+  | PageOverridableKey
   | (typeof APP_ONLY_PAGE_KEYS)[number];
 
 export type PageSettings = {
@@ -59,7 +70,7 @@ export type PageSettings = {
 };
 
 /** The values a profile holds of its own, of the page's settings. */
-export type PageOverrides = Partial<Pick<PageSettings, OverridableSettingKey>>;
+export type PageOverrides = Partial<Pick<PageSettings, PageOverridableKey>>;
 
 type ChangeOf<Keys extends PageSettingKey> = {
   [Key in Keys]: { key: Key; value: SettingValue<Key> };
@@ -69,7 +80,7 @@ type ChangeOf<Keys extends PageSettingKey> = {
 export type SettingChange = ChangeOf<PageSettingKey>;
 
 /** One setting's new value of the profile's own. */
-export type OverrideChange = ChangeOf<OverridableSettingKey> & {
+export type OverrideChange = ChangeOf<PageOverridableKey> & {
   profileId: string;
 };
 
@@ -95,7 +106,7 @@ const settingChange = z.union(
 ) as unknown as z.ZodMiniType<SettingChange>;
 
 const overrideChange = z.union(
-  OVERRIDABLE_SETTING_KEYS.map((key) =>
+  PAGE_OVERRIDABLE_KEYS.map((key) =>
     z.object({ profileId, key: z.literal(key), value: schemaOf(key) })
   )
 ) as unknown as z.ZodMiniType<OverrideChange>;
@@ -108,7 +119,7 @@ const pageSettings = z.object(
 ) as unknown as z.ZodMiniType<PageSettings>;
 
 const pageOverrides = z.partial(
-  z.object(shapeOf(OVERRIDABLE_SETTING_KEYS))
+  z.object(shapeOf(PAGE_OVERRIDABLE_KEYS))
 ) as unknown as z.ZodMiniType<PageOverrides>;
 
 /** Each call the Settings window may make, with what main accepts of it. */
@@ -125,10 +136,7 @@ export const SETTINGS_CALLS = {
     request: z.object({
       profileId,
       key: z.enum(
-        OVERRIDABLE_SETTING_KEYS as [
-          OverridableSettingKey,
-          ...OverridableSettingKey[],
-        ]
+        PAGE_OVERRIDABLE_KEYS as [PageOverridableKey, ...PageOverridableKey[]]
       ),
     }),
     response: z.undefined(),
@@ -189,6 +197,15 @@ export const SETTINGS_CALLS = {
   removeProfile: { request: z.object({ profileId }), response: z.undefined() },
   /** Turns a listed profile's Check mail on or off. */
   setCheckMail: {
+    request: z.object({ profileId, on: z.boolean() }),
+    response: z.undefined(),
+  },
+  /**
+   * Lists a listed profile's mail in the Unified inbox or leaves it out: its
+   * own `unifiedInbox` while that differs from the app value, which no page
+   * shows, and none once they are equal.
+   */
+  setUnifiedInbox: {
     request: z.object({ profileId, on: z.boolean() }),
     response: z.undefined(),
   },
@@ -279,6 +296,8 @@ export const SETTINGS_STATE = {
       enabled: z.boolean(),
       asleep: z.boolean(),
       checkMail: z.boolean(),
+      /** Whether its mail is listed in the Unified inbox: its own value, else the app's. */
+      unifiedInbox: z.boolean(),
       /**
        * Where its feed stands, and the signed-in account's address once a
        * feed has given it, `null` before that and once signed out.

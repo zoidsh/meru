@@ -1,17 +1,151 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import { expect, findOverlayDocument, shownViews, test } from "./lib/app.ts";
 import {
   launchWithMail,
   notified,
   openProfiles,
+  openSection,
   openSettings,
   pageLine,
   pollAll,
   profileRow,
   profileTab,
+  scopeTab,
   switchNamed,
 } from "./lib/settings.ts";
 import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
 import { listing } from "./lib/stand-in/feed.ts";
+
+/** A profile's own values in `settings.json`, or none before its first write. */
+const storedForProfile = async (userDataDir: string, profileId: string) => {
+  try {
+    const stored = JSON.parse(
+      await readFile(path.join(userDataDir, "settings.json"), "utf-8")
+    ) as { profiles?: Record<string, Record<string, unknown>> };
+
+    return stored.profiles?.[profileId] ?? {};
+  } catch {
+    return {};
+  }
+};
+
+const inboxOf = async (
+  app: Parameters<typeof findOverlayDocument>[0],
+  shell: Parameters<typeof profileTab>[0]
+) => {
+  const overlay = await findOverlayDocument(app);
+  const button = shell.getByRole("button", {
+    name: "Unified inbox",
+    exact: true,
+  });
+  const rows = overlay
+    .getByRole("dialog", { name: "Unified inbox" })
+    .getByRole("grid", { name: "Unread messages" })
+    .getByRole("row");
+
+  /** The subjects the inbox lists, opened and closed again. */
+  return async () => {
+    await button.click();
+    await expect(rows.first()).toBeVisible();
+    const subjects = await rows.allInnerTexts();
+
+    await button.click();
+    await expect(rows).toHaveCount(0);
+
+    return subjects.flatMap((text) => text.match(/Subject \w+/u) ?? []);
+  };
+};
+
+test("Show in Unified inbox off leaves the profile's mail out of the Unified inbox and writes its own value; on brings it back and clears it; Notifications has no such row", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell } = await launchWithMail(launchApp, userDataDir, standIn, [
+    { id: "home", name: "Home", feed: listing("a1") },
+    { id: "work", name: "Work", feed: listing("b1") },
+  ]);
+  const listed = await inboxOf(app, shell);
+  const page = await openSettings(app);
+  const inInbox = switchNamed(page, "Show in Unified inbox");
+
+  await openProfiles(page);
+  await profileRow(page, "Work").click();
+  await expect(inInbox).toBeChecked();
+  await expect(inInbox).toHaveAccessibleDescription(
+    "Its unread mail is listed with the other profiles'."
+  );
+  await inInbox.click();
+
+  await expect(inInbox).not.toBeChecked();
+  await expect
+    .poll(() => storedForProfile(userDataDir, "work"))
+    .toStrictEqual({ unifiedInbox: false });
+  expect(await listed()).toStrictEqual(["Subject a1"]);
+  // Out of the inbox only: its tab still counts its mail.
+  await expect(profileTab(shell, "Work")).toHaveAccessibleName(
+    "Work, 1 unread message"
+  );
+
+  await inInbox.click();
+
+  await expect(inInbox).toBeChecked();
+  await expect
+    .poll(() => storedForProfile(userDataDir, "work"))
+    .toStrictEqual({});
+  const both = await listed();
+
+  expect(both.toSorted()).toStrictEqual(["Subject a1", "Subject b1"]);
+
+  const notificationsRow = page.getByRole("switch", {
+    name: /unified inbox/iu,
+  });
+
+  await openSection(page, "Notifications");
+  await expect(scopeTab(page, "All profiles")).toBeVisible();
+  await expect(notificationsRow).toHaveCount(0);
+  await scopeTab(page, "Work").click();
+  await expect(scopeTab(page, "Work")).toHaveAttribute("aria-selected", "true");
+  await expect(notificationsRow).toHaveCount(0);
+});
+
+test("Show in Unified inbox is disabled with its reason while Check mail is off and on a disabled profile's page", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app } = await launchWithMail(launchApp, userDataDir, standIn, [
+    { id: "home", name: "Home", feed: listing() },
+    { id: "work", name: "Work", feed: listing() },
+    { id: "club", name: "Club", feed: listing(), disabled: true },
+  ]);
+  const page = await openSettings(app);
+  const inInbox = switchNamed(page, "Show in Unified inbox");
+  const checkMail = switchNamed(page, "Check mail");
+
+  await openProfiles(page);
+  await profileRow(page, "Work").click();
+  await checkMail.click();
+
+  await expect(checkMail).not.toBeChecked();
+  await expect(inInbox).toBeDisabled();
+  await expect(inInbox).toHaveAccessibleDescription(
+    "Turn on Check mail to use this."
+  );
+
+  await checkMail.click();
+  await expect(inInbox).toBeEnabled();
+
+  await page.getByRole("button", { name: "Back" }).click();
+  await profileRow(page, "Club").click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Club");
+  await expect(inInbox).toBeDisabled();
+  await expect(inInbox).toHaveAccessibleDescription(
+    "A disabled profile is not in the Unified inbox."
+  );
+});
 
 test("Check mail off clears the titlebar's count and the profile's inbox rows and stops its notifications; on brings them back", async ({
   launchApp,
@@ -265,6 +399,7 @@ test.describe("shots", () => {
 
     await profileRow(page, "Work").click();
     await expect(switchNamed(page, "Sleep")).toBeChecked();
+    await expect(switchNamed(page, "Show in Unified inbox")).toBeChecked();
 
     for (const theme of THEMES) {
       // oxlint-disable-next-line no-await-in-loop -- one theme at a time

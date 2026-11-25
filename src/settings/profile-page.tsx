@@ -80,6 +80,62 @@ const Row = ({
 };
 
 /**
+ * Whether the profile's unread mail is listed in the Unified inbox; disabled,
+ * its value kept, while nothing of its mail is checked.
+ */
+const UnifiedInboxRow = ({ profile }: { profile: ListedProfile }) => {
+  const { t } = useLingui();
+  const blocked = !profile.enabled || !profile.checkMail;
+  let description: string;
+
+  if (!profile.enabled) {
+    description = t({
+      message: "A disabled profile is not in the Unified inbox.",
+      comment:
+        "Description of Show in Unified inbox on a disabled profile's page in Settings, whose switch is disabled",
+    });
+  } else if (profile.checkMail) {
+    description = t({
+      message: "Its unread mail is listed with the other profiles'.",
+      comment:
+        "Description of Show in Unified inbox on a profile's page in Settings; the Unified inbox lists every profile's unread mail",
+    });
+  } else {
+    description = t({
+      message: "Turn on Check mail to use this.",
+      comment:
+        "Description of Show in Unified inbox on a profile's page in Settings, whose switch is disabled while Check mail, the row above, is off",
+    });
+  }
+
+  return (
+    <Row
+      label={t({
+        message: "Show in Unified inbox",
+        comment:
+          "Label of the switch on a profile's page in Settings that lists its unread mail in the Unified inbox, the list of every profile's unread mail",
+      })}
+      description={description}
+      disabled={blocked}
+    >
+      {(ids) => (
+        <Switch
+          checked={profile.unifiedInbox}
+          disabled={blocked}
+          aria-labelledby={ids.label}
+          aria-describedby={ids.description}
+          onCheckedChange={(on) => {
+            settingsCalls()
+              .setUnifiedInbox({ profileId: profile.id, on })
+              .catch(noop);
+          }}
+        />
+      )}
+    </Row>
+  );
+};
+
+/**
  * The name as typed until it is saved on Enter, on leaving the field or on
  * leaving the page; Escape puts back the stored one.
  */
@@ -481,6 +537,8 @@ export const ProfilePage = ({
             </Row>
             {many && (
               <>
+                <FieldSeparator />
+                <UnifiedInboxRow profile={profile} />
                 <FieldSeparator />
                 <Row
                   label={t({

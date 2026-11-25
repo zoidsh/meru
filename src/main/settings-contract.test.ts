@@ -346,6 +346,7 @@ describe("the Settings window's profile calls", () => {
         enabled: true,
         asleep: false,
         checkMail: true,
+        unifiedInbox: true,
         mail: { status: "unknown", address: null },
         savedSearches: [],
         overrides: {},
@@ -536,6 +537,7 @@ describe(readSettingsState, () => {
         enabled: true,
         asleep: false,
         checkMail: true,
+        unifiedInbox: true,
         mail: { status: "unknown", address: null },
         savedSearches: [],
         overrides: {},
@@ -562,6 +564,7 @@ describe(readSettingsState, () => {
         enabled: true,
         asleep: false,
         checkMail: true,
+        unifiedInbox: true,
         mail: { status: "unknown", address: null },
         savedSearches: [],
         overrides: {},
@@ -574,6 +577,7 @@ describe(readSettingsState, () => {
         enabled: true,
         asleep: false,
         checkMail: true,
+        unifiedInbox: true,
         mail: { status: "unknown", address: null },
         savedSearches: [],
         overrides: { notificationSound: "chime" },
@@ -681,6 +685,90 @@ describe("the Settings window's Check mail and Sleep", () => {
       [false, false],
       "work",
     ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Show in Unified inbox", () => {
+  it("writes a profile's own value only while it differs from the app's, and never counts it among the page's overrides", async () => {
+    const app = setup(stateOf("Home", "Work"));
+    const inbox = () =>
+      app.read().profiles.map((profile) => profile.unifiedInbox);
+
+    await app.handlers.setUnifiedInbox({ profileId: "work", on: false });
+
+    const off = {
+      inbox: inbox(),
+      file: app.saved.at(-1),
+      overrides: app.read().profiles[1]?.overrides,
+    };
+
+    await app.handlers.setUnifiedInbox({ profileId: "work", on: true });
+
+    expect([off, inbox(), app.saved.at(-1)]).toStrictEqual([
+      {
+        inbox: [true, false],
+        file: { version: 1, profiles: { work: { unifiedInbox: false } } },
+        overrides: {},
+      },
+      [true, true],
+      { version: 1 },
+    ]);
+    app.dispose();
+  });
+
+  it("keeps an app value of false from an earlier build: a profile without its own stays out, and one switched on holds true", async () => {
+    const app = setup(stateOf("Home", "Work"), {
+      version: 1,
+      unifiedInbox: false,
+    });
+    const inbox = () =>
+      app.read().profiles.map((profile) => profile.unifiedInbox);
+    const before = inbox();
+
+    await app.handlers.setUnifiedInbox({ profileId: "home", on: true });
+
+    const on = { inbox: inbox(), file: app.saved.at(-1) };
+
+    await app.handlers.setUnifiedInbox({ profileId: "home", on: false });
+
+    expect([before, on, inbox(), app.saved.at(-1)]).toStrictEqual([
+      [false, false],
+      {
+        inbox: [true, false],
+        file: {
+          version: 1,
+          unifiedInbox: false,
+          profiles: { home: { unifiedInbox: true } },
+        },
+      },
+      [false, false],
+      { version: 1, unifiedInbox: false },
+    ]);
+    app.dispose();
+  });
+
+  it("sends a lone profile that holds only its own Unified inbox no override, so the page has no scopes", () => {
+    const app = setup(stateOf("Work"), {
+      version: 1,
+      profiles: { work: { unifiedInbox: false } },
+    });
+
+    expect(
+      app.read().profiles.map(({ unifiedInbox, overrides }) => ({
+        unifiedInbox,
+        overrides,
+      }))
+    ).toStrictEqual([{ unifiedInbox: false, overrides: {} }]);
+    app.dispose();
+  });
+
+  it("refuses an unlisted profile", async () => {
+    const app = setup(stateOf("Home", "Work"));
+
+    await expect(
+      app.handlers.setUnifiedInbox({ profileId: "gone", on: false })
+    ).rejects.toThrow("No listed profile has the id gone");
     app.dispose();
   });
 });

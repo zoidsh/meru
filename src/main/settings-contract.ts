@@ -1,6 +1,10 @@
-import { PAGE_SETTING_KEYS } from "#contract/settings.ts";
+import {
+  PAGE_OVERRIDABLE_KEYS,
+  PAGE_SETTING_KEYS,
+} from "#contract/settings.ts";
 import type {
   OverrideChange,
+  PageOverridableKey,
   PageOverrides,
   PageSettingKey,
   PageSettings,
@@ -16,8 +20,6 @@ import {
   profileColorName,
 } from "#core/profile-color.ts";
 import { savedSearches } from "#core/saved-searches.ts";
-import { OVERRIDABLE_SETTING_KEYS } from "#core/settings.ts";
-import type { OverridableSettingKey } from "#core/settings.ts";
 import {
   canDisableProfile,
   canRemoveProfile,
@@ -97,7 +99,7 @@ interface LooseStore {
   ) => Promise<void>;
   setOverride: (
     profileId: string,
-    key: OverridableSettingKey,
+    key: PageOverridableKey,
     value: PageSettings[PageSettingKey]
   ) => Promise<void>;
 }
@@ -251,6 +253,15 @@ export const settingsHandlers = ({
       assertListed(profiles, profileId);
       await profiles.setCheckMail(profileId, on);
     },
+    // Equal to the app value it is cleared, so the file holds only what
+    // differs, and an app value of false from an earlier build keeps every
+    // profile without one of its own out.
+    setUnifiedInbox: async ({ profileId, on }) => {
+      assertListed(profiles, profileId);
+      await (on === settings.get("unifiedInbox")
+        ? settings.clearOverride(profileId, "unifiedInbox")
+        : settings.setOverride(profileId, "unifiedInbox", on));
+    },
     setAsleep: async ({ profileId, asleep }) => {
       assertListed(profiles, profileId);
 
@@ -351,10 +362,7 @@ export const readSettingsState = ({
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
   const overriding = new Map(
-    OVERRIDABLE_SETTING_KEYS.map((key) => [
-      key,
-      settings.overridingProfiles(key),
-    ])
+    PAGE_OVERRIDABLE_KEYS.map((key) => [key, settings.overridingProfiles(key)])
   );
   const current = doNotDisturb.current();
 
@@ -374,6 +382,7 @@ export const readSettingsState = ({
       enabled: !isDisabled(state, profile),
       asleep: isAsleep(state, profile),
       checkMail: checksMail(profile),
+      unifiedInbox: settings.get("unifiedInbox", profile.id),
       mail: {
         status: mail.mail(profile.id).status,
         address: mail.address(profile.id) ?? null,
@@ -382,7 +391,7 @@ export const readSettingsState = ({
         ({ id, query, label }) => ({ id, query, name: label?.trim() || null })
       ),
       overrides: Object.fromEntries(
-        OVERRIDABLE_SETTING_KEYS.filter((key) =>
+        PAGE_OVERRIDABLE_KEYS.filter((key) =>
           overriding.get(key)?.includes(profile.id)
         ).map((key) => [key, store.get(key, profile.id)])
       ) as PageOverrides,

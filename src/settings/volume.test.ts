@@ -14,6 +14,7 @@ const profile = (
   enabled: true,
   asleep: false,
   checkMail: true,
+  unifiedInbox: true,
   mail: { status: "unknown", address: null },
   savedSearches: [],
   overrides,

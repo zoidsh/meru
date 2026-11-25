@@ -235,6 +235,11 @@ msgstr "A disabled profile checks no mail; this applies once it is enabled."
 msgid "A disabled profile has no pages."
 msgstr "A disabled profile has no pages."
 
+#. Description of Show in Unified inbox on a disabled profile's page in Settings, whose switch is disabled
+#: src/settings/profile-page.tsx
+msgid "A disabled profile is not in the Unified inbox."
+msgstr "A disabled profile is not in the Unified inbox."
+
 #. Read by screen readers on the title bar's Downloads button, green once a download finished and the list has not been opened since
 #: src/shell/downloads.tsx
 msgid "A download finished"
@@ -974,6 +979,11 @@ msgstr "Its unread count and notifications come from this."
 msgid "Its unread count, notifications and place in the Unified inbox come from this."
 msgstr "Its unread count, notifications and place in the Unified inbox come from this."
 
+#. Description of Show in Unified inbox on a profile's page in Settings; the Unified inbox lists every profile's unread mail
+#: src/settings/profile-page.tsx
+msgid "Its unread mail is listed with the other profiles'."
+msgstr "Its unread mail is listed with the other profiles'."
+
 #. Under the Downloads title: how long a downloaded file stays in the list below
 #: src/shell/downloads.tsx
 msgid "Kept for 30 days"
@@ -1707,10 +1717,10 @@ msgstr "Show in Finder"
 msgid "Show in folder"
 msgstr "Show in folder"
 
-#. Label of the switch in Settings that lists unread mail in the Unified inbox, the list of every profile's unread mail
-#: src/settings/notifications-page.tsx
-msgid "Show in the Unified inbox"
-msgstr "Show in the Unified inbox"
+#. Label of the switch on a profile's page in Settings that lists its unread mail in the Unified inbox, the list of every profile's unread mail
+#: src/settings/profile-page.tsx
+msgid "Show in Unified inbox"
+msgstr "Show in Unified inbox"
 
 #. Tooltip of the title bar button that shows the list of tabs down the left of the window
 #: src/shell/titlebar.tsx
@@ -1963,6 +1973,11 @@ msgstr "Turn Off"
 msgid "Turn off Do Not Disturb to show a test notification."
 msgstr "Turn off Do Not Disturb to show a test notification."
 
+#. Description of Show in Unified inbox on a profile's page in Settings, whose switch is disabled while Check mail, the row above, is off
+#: src/settings/profile-page.tsx
+msgid "Turn on Check mail to use this."
+msgstr "Turn on Check mail to use this."
+
 #. Description of a verification code setting on the Gmail page in Settings while Find codes in new mail, the switch above it, is off
 #: src/settings/gmail-page.tsx
 msgid "Turn on Find codes in new mail to use this."
@@ -2023,11 +2038,6 @@ msgstr "Unread mail appears here once a profile is signed in to Gmail."
 #: src/shell/inbox.tsx
 msgid "Unread mail from all your profiles shows here. A message leaves the list once you read it."
 msgstr "Unread mail from all your profiles shows here. A message leaves the list once you read it."
-
-#. Description of the Show in the Unified inbox switch in Settings
-#: src/settings/notifications-page.tsx
-msgid "Unread mail is listed with the other profiles'."
-msgstr "Unread mail is listed with the other profiles'."
 
 #. Accessible name of the unified inbox's list of every profile's unread mail, read by screen readers
 #: src/shell/inbox.tsx

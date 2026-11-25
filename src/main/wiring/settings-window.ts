@@ -164,7 +164,7 @@ export const wireSettingsWindow = ({
       read: () =>
         readSettingsState({ settings, profiles, mail, doNotDisturb, pages }),
       onChange: (listener) => {
-        for (const key of PAGE_SETTING_KEYS) {
+        for (const key of [...PAGE_SETTING_KEYS, "unifiedInbox"] as const) {
           settings.onChange(key, listener);
         }
 

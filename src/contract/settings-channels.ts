@@ -19,6 +19,7 @@ export const SETTINGS_CALL_NAMES = [
   "moveProfile",
   "removeProfile",
   "setCheckMail",
+  "setUnifiedInbox",
   "setAsleep",
   "addSavedSearch",
   "renameSavedSearch",
