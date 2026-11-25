@@ -179,6 +179,33 @@ const saveFailure = async (
     });
   });
 
+  // Whether the system gave a window the foreground at all, or main moved
+  // focus elsewhere within it, which no picture tells apart.
+  await keep("focus", async () => {
+    const focus = await app.evaluate(({ BrowserWindow, webContents }) => ({
+      windows: BrowserWindow.getAllWindows().map((window) => ({
+        id: window.id,
+        focused: window.isFocused(),
+        visible: window.isVisible(),
+      })),
+      webContents: webContents.getAllWebContents().map((contents) => ({
+        id: contents.id,
+        url: contents.getURL(),
+        frame: contents.mainFrame.name,
+        focused: contents.isFocused(),
+      })),
+    }));
+
+    await writeFile(
+      testInfo.outputPath(`${name}-focus.json`),
+      JSON.stringify(focus, undefined, 2)
+    );
+    await testInfo.attach(`${name} focus`, {
+      path: testInfo.outputPath(`${name}-focus.json`),
+      contentType: "application/json",
+    });
+  });
+
   const pages = app.windows().filter((page) => !page.isClosed());
   const shell = pages.find((page) => page.url().startsWith(SHELL_URL));
   const names = await Promise.all(
