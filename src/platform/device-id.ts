@@ -13,6 +13,9 @@ import {
 
 const run = promisify(execFile);
 
+// The window waits on the id; one that does not come in time reads as none.
+const READ_TIMEOUT = 3000;
+
 const LINUX_ID_FILES = ["/var/lib/dbus/machine-id", "/etc/machine-id"];
 
 const readLinuxId = async () => {
@@ -26,11 +29,11 @@ const readLinuxId = async () => {
 
 const readPlatformId = async () => {
   if (process.platform === "darwin") {
-    const { stdout } = await run("ioreg", [
-      "-rd1",
-      "-c",
-      "IOPlatformExpertDevice",
-    ]);
+    const { stdout } = await run(
+      "ioreg",
+      ["-rd1", "-c", "IOPlatformExpertDevice"],
+      { timeout: READ_TIMEOUT }
+    );
 
     return parseIoregOutput(stdout);
   }
@@ -38,12 +41,16 @@ const readPlatformId = async () => {
   if (process.platform === "win32") {
     const systemRoot =
       process.env.SystemRoot ?? process.env.windir ?? String.raw`C:\Windows`;
-    const { stdout } = await run(path.join(systemRoot, "System32", "reg.exe"), [
-      "QUERY",
-      String.raw`HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography`,
-      "/v",
-      "MachineGuid",
-    ]);
+    const { stdout } = await run(
+      path.join(systemRoot, "System32", "reg.exe"),
+      [
+        "QUERY",
+        String.raw`HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography`,
+        "/v",
+        "MachineGuid",
+      ],
+      { timeout: READ_TIMEOUT }
+    );
 
     return parseRegOutput(stdout);
   }
@@ -51,8 +58,9 @@ const readPlatformId = async () => {
   return normalizeLinuxId(await readLinuxId());
 };
 
-/** This computer's id as the license server knows it: the platform's own id, hashed. */
-export const readDeviceId = async () =>
-  createHash("sha256")
-    .update(await readPlatformId())
-    .digest("hex");
+/** A platform's own id as the license server knows the device: hashed, as v3 hashes it. */
+export const hashPlatformId = (id: string) =>
+  createHash("sha256").update(id).digest("hex");
+
+/** This computer's id as the license server knows it. */
+export const readDeviceId = async () => hashPlatformId(await readPlatformId());
