@@ -214,7 +214,7 @@ export const wireSettingsWindow = ({
         }),
       onChange: (listener) => {
         onSettingsStateChange(
-          { settings, profiles, mail, pages, general },
+          { settings, profiles, mail, pages, general, language },
           listener
         );
       },

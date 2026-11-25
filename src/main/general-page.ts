@@ -24,7 +24,7 @@ export interface GeneralPageDeps {
   home: string;
   /** The system's folder picker on the Settings window, at `defaultPath`. */
   pickFolder: (defaultPath: string) => Promise<string | undefined>;
-  language: Pick<Language, "system" | "available" | "onChange">;
+  language: Pick<Language, "system" | "available">;
   /** None on macOS, which checks spelling with its own. */
   spellcheck: Pick<Spellcheck, "read"> | undefined;
 }
@@ -53,8 +53,6 @@ export const createGeneralPage = ({
   };
 
   settings.onChange("downloadsFolder", notify);
-  // System is named in the language shown.
-  language.onChange(notify);
 
   /** Where the next download goes: the chosen folder while it is usable. */
   const saveFolder = () =>

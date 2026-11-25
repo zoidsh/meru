@@ -438,7 +438,8 @@ export const readSettingsState = ({
  * Calls `listener` on every change to what `readSettingsState` reads, so
  * the Settings window is sent the state again: each setting it shows, which
  * the store announces by key, Do Not Disturb through the profiles' state,
- * the mail check, the General page's own values and the page shown.
+ * the mail check, the General page's own values, the language shown and the
+ * page shown.
  */
 export const onSettingsStateChange = (
   {
@@ -447,12 +448,14 @@ export const onSettingsStateChange = (
     mail,
     pages,
     general,
+    language,
   }: {
     settings: Pick<SettingsStore, "onChange">;
     profiles: Pick<Profiles, "onChange">;
     mail: Pick<MailPoller, "onChange">;
     pages: Pick<SettingsPages, "onChange">;
     general: Pick<GeneralPage, "onChange">;
+    language: Pick<Language, "onChange">;
   },
   listener: () => void
 ) => {
@@ -464,4 +467,5 @@ export const onSettingsStateChange = (
   mail.onChange(listener);
   pages.onChange(listener);
   general.onChange(listener);
+  language.onChange(listener);
 };

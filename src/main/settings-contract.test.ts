@@ -197,6 +197,7 @@ const setup = (
   );
 
   return {
+    deps,
     handlers: settingsHandlers(deps),
     read: () => readSettingsState(deps),
     /** How many times the Settings window would be sent its state again. */
@@ -778,7 +779,11 @@ describe("the Settings window's Language and Spelling", () => {
 
   it("offers System, named as the language it shows, and each language in its own name, and switches at once", async () => {
     const app = setup(stateOf("Work"), undefined, "darwin", ["en", "xx"]);
-    const sends = app.sends();
+    const sent: string[] = [];
+
+    onSettingsStateChange(app.deps, () => {
+      sent.push(app.read().language);
+    });
 
     expect(app.read().general.language).toStrictEqual({
       system: "English",
@@ -794,7 +799,7 @@ describe("the Settings window's Language and Spelling", () => {
       "xx",
       ["en", "xx"],
     ]);
-    expect(sends()).toBeGreaterThan(0);
+    expect(sent.at(-1)).toBe("xx");
     app.dispose();
   });
 
