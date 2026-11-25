@@ -13,6 +13,7 @@ import {
 } from "#ui/select.tsx";
 import { Switch } from "#ui/switch.tsx";
 
+import { useNeedsPro } from "./pro-badge.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
@@ -29,6 +30,7 @@ type SwitchKey = Exclude<
 export const GmailPage = () => {
   const { t } = useLingui();
   const settings = useSettingsState("settings");
+  const needsPro = useNeedsPro();
 
   if (!settings) {
     return null;
@@ -38,7 +40,9 @@ export const GmailPage = () => {
   const write = (change: SettingChange) => {
     void calls.update(change);
   };
-  const codesOff = !settings.verificationCodes;
+  const codesPro = needsPro("verificationCodes");
+  // On the free version the rows say Pro, not to turn the switch on.
+  const codesOff = !settings.verificationCodes && !codesPro;
   const codesOffReason = t({
     message: "Turn on Find verification codes first.",
     comment:
@@ -52,14 +56,17 @@ export const GmailPage = () => {
     description: string | undefined,
     dependent = false
   ) => {
-    const disabled = dependent && codesOff;
+    const off = dependent && codesOff;
+    const pro = needsPro(key);
+    const disabled = off || pro;
 
     return (
       <SettingRow
         key={key}
         label={label}
-        description={disabled ? codesOffReason : description}
+        description={off ? codesOffReason : description}
         disabled={disabled}
+        pro={pro}
       >
         {(ids) => (
           <Switch
@@ -244,7 +251,8 @@ export const GmailPage = () => {
                   "Label of the menu in Settings choosing when a verification code is copied",
               })}
               description={codesOff ? codesOffReason : undefined}
-              disabled={codesOff}
+              disabled={codesOff || codesPro}
+              pro={codesPro}
             >
               {(ids) => (
                 <Select
@@ -253,7 +261,7 @@ export const GmailPage = () => {
                     label: copyModes[mode],
                   }))}
                   value={settings.verificationCodeCopyMode}
-                  disabled={codesOff}
+                  disabled={codesOff || codesPro}
                   onValueChange={(mode) => {
                     if (mode !== null) {
                       write({ key: "verificationCodeCopyMode", value: mode });

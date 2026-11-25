@@ -36,6 +36,15 @@ describe(entitledSetting, () => {
     ]).toStrictEqual([[], false, false]);
   });
 
+  it("finds no verification code without Meru Pro, the settings under it read as stored", () => {
+    expect([
+      entitledSetting("verificationCodes", true, free),
+      entitledSetting("verificationCodeCopyMode", "immediately", free),
+      entitledSetting("verificationCodeMarkRead", true, free),
+      entitledSetting("verificationCodeTrash", true, free),
+    ]).toStrictEqual([false, "immediately", true, true]);
+  });
+
   it("asks only the capability the setting needs", () => {
     const asked: Capability[] = [];
 

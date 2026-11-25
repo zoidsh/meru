@@ -301,3 +301,111 @@ test("the free version holds no mail by Do Not Disturb, quiet hours or important
     page.getByRole("group", { name: "Quiet hours 1" })
   ).toBeVisible();
 });
+
+const CODE = "493021";
+
+const codeMail = (id: string) => ({
+  id,
+  subject: "Your verification code",
+  summary: `Use ${CODE} to finish signing in`,
+  senderName: "Example",
+  senderAddress: "no-reply@example.com",
+});
+
+const plainMail = {
+  id: "1",
+  subject: "Lunch",
+  summary: "Are we still on?",
+  senderName: "Ada",
+  senderAddress: "ada@example.com",
+};
+
+/** The notifications the suite's build captured, as title and body. */
+const notifications = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestNotifications") as {
+        title: string;
+        body: string;
+      }[]
+    ).map(({ title, body }) => ({ title, body }))
+  );
+
+/** What the suite's build would have written to the clipboard. */
+const copied = (app: ElectronApplication) =>
+  app.evaluate(() => [
+    ...((Reflect.get(globalThis, "meruTestClipboard") as
+      | string[]
+      | undefined) ?? []),
+  ]);
+
+test("the free version finds no verification code, so its mail is notified as any other, and its four rows are Pro rows", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedOneProfile(userDataDir, standIn);
+  await writeSettings(userDataDir, {
+    verificationCodeCopyMode: "immediately",
+    verificationCodeTrash: true,
+  });
+  standIn.setFeed(ANY_SESSION, { unreadCount: 1, mail: [plainMail] });
+
+  const settingsBefore = await readStored(userDataDir, SETTINGS_FILE);
+  const { app, gmail } = await launchFree(launchApp, userDataDir, standIn);
+
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
+  standIn.setFeed(ANY_SESSION, {
+    unreadCount: 2,
+    mail: [codeMail("2"), plainMail],
+  });
+  await retitle(gmail, "Inbox (2)");
+  await expect
+    .poll(() => notifications(app))
+    .toStrictEqual([
+      {
+        title: "Example",
+        body: `Your verification code\nUse ${CODE} to finish signing in`,
+      },
+    ]);
+  expect(await copied(app)).toStrictEqual([]);
+  expect(standIn.actions).toStrictEqual([]);
+
+  const page = await openSettings(app);
+
+  await openSection(page, "Gmail");
+  await expect(switchNamed(page, "Find verification codes")).toBeDisabled();
+  await expect(switchNamed(page, "Find verification codes")).not.toBeChecked();
+  await expect(switchNamed(page, "Move to Trash after copying")).toBeChecked();
+  await expect(switchNamed(page, "Move to Trash after copying")).toBeDisabled();
+  await expect(
+    page.getByRole("combobox", { name: "Copy code" })
+  ).toBeDisabled();
+
+  for (const label of [
+    "Find verification codes",
+    "Copy code",
+    "Mark as read after copying",
+    "Move to Trash after copying",
+  ]) {
+    // oxlint-disable-next-line no-await-in-loop -- one row after another
+    await expect(badgeOf(page, label)).toBeVisible();
+  }
+
+  await expect(
+    page.getByText("Turn on Find verification codes first.")
+  ).toHaveCount(0);
+  await expect(readStored(userDataDir, SETTINGS_FILE)).resolves.toBe(
+    settingsBefore
+  );
+
+  await activate(page);
+  await openSection(page, "Gmail");
+  await expect(switchNamed(page, "Find verification codes")).toBeChecked();
+  standIn.setFeed(ANY_SESSION, {
+    unreadCount: 3,
+    mail: [codeMail("3"), codeMail("2"), plainMail],
+  });
+  await retitle(gmail, "Inbox (3)");
+  await expect.poll(() => copied(app)).toStrictEqual([CODE]);
+});

@@ -26,6 +26,10 @@ export const GATED_SETTINGS: {
     free: () => false,
   },
   titlebarDoNotDisturb: { capability: "notificationGates", free: () => false },
+  verificationCodes: { capability: "verificationCodes", free: () => false },
+  verificationCodeCopyMode: { capability: "verificationCodes" },
+  verificationCodeMarkRead: { capability: "verificationCodes" },
+  verificationCodeTrash: { capability: "verificationCodes" },
 };
 
 /** The capability the setting needs, if any. */

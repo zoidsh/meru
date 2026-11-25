@@ -868,6 +868,42 @@ describe("verification codes", () => {
     expect(app.logs).toStrictEqual([]);
   });
 
+  it("finds no code on the free version, copying, marking and moving nothing, and holds the mail as any other", async () => {
+    const app = setup({ free: true });
+
+    app.set("verificationCodeCopyMode", "immediately");
+    app.set("verificationCodeTrash", true);
+    await arrive(app, codeEntry("1"));
+
+    const shown = content(app.shown);
+    const held = setup({ free: true });
+
+    held.set("notifications", false);
+    await arrive(held, codeEntry("1"));
+
+    expect([
+      shown,
+      app.copied,
+      app.acted,
+      app.logs,
+      held.shown,
+      held.played,
+    ]).toStrictEqual([
+      [
+        {
+          title: "Sender 1",
+          body: `Your verification code\nUse ${CODE} to finish signing in`,
+          actions: ["Archive", "Mark as Read", "Delete", "Mark as Spam"],
+        },
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+    ]);
+  });
+
   it("logs that a code was found and what was done, never the code or its mail", async () => {
     const app = setup();
 
