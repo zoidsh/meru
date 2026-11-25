@@ -82,6 +82,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may answer the folder picker in place of showing it",
     },
     {
+      marker: "meruTestSaveDialog",
+      why: "only the end-to-end build may answer the save dialog in place of showing it",
+    },
+    {
       marker: "meruTestLoginItem",
       why: "only the end-to-end build may record the login item in place of setting it",
     },

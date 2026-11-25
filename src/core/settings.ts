@@ -143,6 +143,11 @@ export const SETTINGS = {
     schema: z.nullable(z.string().check(z.minLength(1))),
     default: null,
   }),
+  /** Each download opens the system's save dialog, at the folder above. */
+  downloadsSaveAs: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
+  }),
   /** Light or dark for every window of Meru, or as the system is. */
   theme: setting<ThemeChoice>({
     schema: z.enum(THEMES),

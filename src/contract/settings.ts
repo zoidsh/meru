@@ -38,7 +38,10 @@ export const GMAIL_PAGE_KEYS = [
  * The General page's settings, in its order; the app holds them, never a
  * profile. Open at login is the system's login item, not a setting.
  */
-export const GENERAL_PAGE_KEYS = ["openInBackground"] as const;
+export const GENERAL_PAGE_KEYS = [
+  "openInBackground",
+  "downloadsSaveAs",
+] as const;
 
 /** The Appearance page's settings, in its order; the app holds them, never a profile. */
 export const APPEARANCE_PAGE_KEYS = [

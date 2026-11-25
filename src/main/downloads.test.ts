@@ -41,6 +41,10 @@ const entry = (
 
 interface FakeItem extends DownloadItem {
   savedTo: string | undefined;
+  /** Where the save dialog opened, if it was asked. */
+  askedAt: string | undefined;
+  /** Answers the save dialog: a file, or nothing as Cancel does. */
+  answer: (file: string | undefined) => void;
   cancelled: boolean;
   /** Bytes in so far, read on the next beat. */
   arrive: (bytes: number) => void;
@@ -55,12 +59,32 @@ const fakeItem = ({
 }: { fileName?: string; mimeType?: string; total?: number } = {}) => {
   const done = new Set<(end: DownloadEnd) => void>();
   let received = 0;
+  let answered: ((file: string | undefined) => void) | undefined;
   const item: FakeItem = {
     fileName,
     mimeType,
     startedAt: NOW,
     savedTo: undefined,
+    askedAt: undefined,
     cancelled: false,
+    askWhere: (defaultPath) => {
+      item.askedAt = defaultPath;
+
+      const { promise, resolve } = Promise.withResolvers<string | undefined>();
+
+      answered = resolve;
+
+      return promise;
+    },
+    answer: (file) => {
+      if (file === undefined) {
+        item.cancel();
+      } else {
+        item.savedTo = file;
+      }
+
+      answered?.(file);
+    },
     received: () => received,
     total: () => total,
     saveTo: (file) => {
@@ -112,6 +136,7 @@ const setup = ({
   const calls: string[] = [];
   const progress: (number | null | undefined)[] = [];
   let chosenFolder: string | null = null;
+  let saveAs = false;
   const files: DownloadFiles = {
     folder: () => FOLDER,
     usable: (folder) => folders.includes(folder),
@@ -168,6 +193,7 @@ const setup = ({
     signals,
     choices: {
       folder: () => chosenFolder,
+      saveAs: () => saveAs,
     },
     onFolderMissing: (folder) => {
       calls.push(`missing ${folder}`);
@@ -214,6 +240,9 @@ const setup = ({
     /** The folder Settings holds, `null` for the system's. */
     choose: (folder: string | null) => {
       chosenFolder = folder;
+    },
+    askEachTime: () => {
+      saveAs = true;
     },
     calls,
     progress,
@@ -291,6 +320,71 @@ describe("taking a download", () => {
       ],
       ["missing /Gone", "missing /Other"],
     ]);
+  });
+
+  it("asks where to save each download, offering the name it would take, and lists it under the file chosen", async () => {
+    const { downloads, askEachTime, history } = setup({
+      onDisk: ["/Downloads/report.pdf"],
+    });
+    const item = fakeItem();
+
+    askEachTime();
+    downloads.take(item);
+    await settle();
+
+    const beforeAnswer = history();
+
+    item.answer("/Elsewhere/minutes.pdf");
+    await settle();
+
+    expect([item.askedAt, beforeAnswer, history()]).toStrictEqual([
+      "/Downloads/report (1).pdf",
+      [],
+      [
+        {
+          id: "d1",
+          fileName: "minutes.pdf",
+          path: "/Elsewhere/minutes.pdf",
+          size: 1000,
+          startedAt: NOW,
+          state: "progressing",
+        },
+      ],
+    ]);
+  });
+
+  it("leaves nothing listed, removed or told of once the save dialog is cancelled", async () => {
+    const { downloads, askEachTime, history, calls } = setup();
+    const ended: string[] = [];
+    const item = fakeItem();
+
+    downloads.onEnded(({ end }) => ended.push(end));
+    askEachTime();
+    downloads.take(item);
+    item.answer(undefined);
+    await settle();
+
+    expect([item.cancelled, history(), calls, ended]).toStrictEqual([
+      true,
+      [],
+      [],
+      [],
+    ]);
+  });
+
+  it("follows a download saved where the dialog said to its end", async () => {
+    const { downloads, askEachTime, history } = setup();
+    const item = fakeItem();
+
+    askEachTime();
+    downloads.take(item);
+    item.arrive(1000);
+    item.answer("/Downloads/report.pdf");
+    await settle();
+    item.end("completed");
+    await settle();
+
+    expect(history().map((each) => each.state)).toStrictEqual(["completed"]);
   });
 
   it("counts past a name on disk or held by one running, without case on macOS", () => {

@@ -12,7 +12,7 @@ import type { SettingsStore } from "../settings.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import { revealWindow } from "../windows.ts";
 import { inOwnWindow } from "./own-windows.ts";
-import { downloadFiles, downloadSignals } from "./test-build.ts";
+import { downloadFiles, downloadSignals, saveDialog } from "./test-build.ts";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -46,7 +46,7 @@ export const wireDownloads = ({
   notifier: Notifier;
   newId: () => string;
 }) => {
-  const sessions = createDownloadSessions();
+  const sessions = createDownloadSessions(saveDialog());
   const files = downloadFiles();
   const downloads = createDownloads({
     platform,
@@ -56,6 +56,7 @@ export const wireDownloads = ({
     signals: downloadSignals(shell.window),
     choices: {
       folder: () => settings.get("downloadsFolder"),
+      saveAs: () => settings.get("downloadsSaveAs"),
     },
     // Said where the downloads show, unless a card or menu holds the overlay.
     onFolderMissing: (folder) => {

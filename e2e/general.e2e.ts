@@ -9,6 +9,7 @@ import {
   expect,
   findOverlayDocument,
   findPage,
+  readState,
   test,
   writeSettings,
 } from "./lib/app.ts";
@@ -164,4 +165,58 @@ test("with the chosen folder gone, a download is saved to the system's Downloads
       await readFile(path.join(userDataDir, "settings.json"), "utf-8")
     ) as unknown
   ).toStrictEqual({ version: 1, downloadsFolder: chosen });
+});
+
+/** Sets what the test build's save dialog answers: a file, or `null` to cancel. */
+const answerSaveDialog = (app: ElectronApplication, answer: string | null) =>
+  app.evaluate((_electron, file) => {
+    (
+      Reflect.get(globalThis, "meruTestSaveDialog") as { answer: string | null }
+    ).answer = file;
+  }, answer);
+
+const saveDialogAsked = (app: ElectronApplication) =>
+  app.evaluate(
+    () =>
+      (Reflect.get(globalThis, "meruTestSaveDialog") as { asked: string[] })
+        .asked
+  );
+
+test("Ask where to save each file asks through the save dialog at the name it would take, saves where it says, and a cancel leaves nothing", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  const elsewhere = path.join(canonical(userDataDir), "Elsewhere");
+
+  await mkdir(elsewhere);
+  await writeSettings(userDataDir, { downloadsSaveAs: true });
+
+  const app = await launchApp();
+  const gmail = await downloadsPage(app, standIn);
+
+  await answerSaveDialog(app, path.join(elsewhere, "minutes.pdf"));
+  await downloadReport(gmail);
+
+  await expect.poll(() => filesIn(elsewhere)).toStrictEqual(["minutes.pdf"]);
+
+  await answerSaveDialog(app, null);
+  await downloadReport(gmail);
+
+  await expect.poll(() => saveDialogAsked(app)).toHaveLength(2);
+
+  const asked = await saveDialogAsked(app);
+  const { downloads } = await readState<{ downloads?: unknown[] }>(userDataDir);
+
+  expect([
+    asked.map((file) => path.basename(file)),
+    await filesIn(elsewhere),
+    await filesIn(systemFolder(userDataDir)),
+    downloads,
+  ]).toStrictEqual([
+    [REPORT, REPORT],
+    ["minutes.pdf"],
+    [],
+    [expect.anything()],
+  ]);
 });

@@ -20,6 +20,7 @@ import {
 import { createCapturedDock, createDock } from "#platform/dock.ts";
 import {
   createCapturedDownloadFiles,
+  createCapturedSaveDialog,
   createCapturedDownloadSignals,
   createDownloadFiles,
   createDownloadSignals,
@@ -217,3 +218,10 @@ export const systemLoginItem = () => {
 /** The suite's build answers the folder picker as the test says. */
 export const folderPicker = () =>
   MERU_E2E_BUILD ? createCapturedFolderPicker() : createFolderPicker();
+
+/**
+ * The suite's build answers the save dialog as the test says; every other
+ * build leaves it to Chromium's own.
+ */
+export const saveDialog = () =>
+  MERU_E2E_BUILD ? createCapturedSaveDialog() : undefined;

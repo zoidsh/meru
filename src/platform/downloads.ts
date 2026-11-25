@@ -38,11 +38,42 @@ export interface DownloadItem {
   total: () => number;
   /** Saves it there without asking; called before the item's first turn ends. */
   saveTo: (file: string) => void;
+  /**
+   * In place of `saveTo`, asks with the system's save dialog, opened at
+   * `defaultPath`: the file chosen, or nothing once the dialog is cancelled,
+   * which cancels the download.
+   */
+  askWhere: (defaultPath: string) => Promise<string | undefined>;
   /** Stops it; Chromium removes what it had written. */
   cancel: () => void;
-  /** Once, however it ends. */
+  /** Once, however it ends; at once for one told after it ended. */
   onDone: (listener: (end: DownloadEnd) => void) => void;
 }
+
+/**
+ * What the end-to-end build's save dialog answers, set by the test, and the
+ * path it opened at each time; on the main process's global under
+ * `meruTestSaveDialog`. `null` answers as Cancel does.
+ */
+export interface CapturedSaveDialog {
+  answer: string | null;
+  asked: string[];
+}
+
+/** A save dialog that answers at once, the end-to-end build's. */
+export type SaveDialog = (defaultPath: string) => string | undefined;
+
+export const createCapturedSaveDialog = (): SaveDialog => {
+  const captured: CapturedSaveDialog = { answer: null, asked: [] };
+
+  Reflect.set(globalThis, "meruTestSaveDialog", captured);
+
+  return (defaultPath) => {
+    captured.asked.push(defaultPath);
+
+    return captured.answer ?? undefined;
+  };
+};
 
 export interface DownloadSessions {
   /**
@@ -56,15 +87,60 @@ export interface DownloadSessions {
   ) => void;
 }
 
-const wrap = (item: Electron.DownloadItem): DownloadItem => {
+/**
+ * Asks with Chromium's own save dialog, which opens once the item's turn
+ * ends; the path it was given is known from the first update after, or as it
+ * ends.
+ */
+const askWithDialog = (item: Electron.DownloadItem, defaultPath: string) => {
+  item.setSaveDialogOptions({ defaultPath });
+
+  const { promise, resolve } = Promise.withResolvers<string | undefined>();
+  const chosen = () => item.getSavePath() || undefined;
+
+  item.on("updated", () => {
+    const file = chosen();
+
+    if (file !== undefined) {
+      resolve(file);
+    }
+  });
+  item.once("done", (_event, state) => {
+    resolve(state === "cancelled" ? undefined : chosen());
+  });
+
+  return promise;
+};
+
+/** Asks the end-to-end build's dialog, which answers at once. */
+const askFake = (
+  item: Electron.DownloadItem,
+  defaultPath: string,
+  dialog: SaveDialog
+) => {
+  const file = dialog(defaultPath);
+
+  if (file === undefined) {
+    item.cancel();
+  } else {
+    item.setSavePath(file);
+  }
+
+  return Promise.resolve(file);
+};
+
+const wrap = (
+  item: Electron.DownloadItem,
+  saveDialog: SaveDialog | undefined
+): DownloadItem => {
   const ended = new Set<(end: DownloadEnd) => void>();
-  let over = false;
+  let final: DownloadEnd | undefined;
   const end = (state: DownloadEnd) => {
-    if (over) {
+    if (final !== undefined) {
       return;
     }
 
-    over = true;
+    final = state;
 
     for (const listener of ended) {
       listener(state);
@@ -74,7 +150,7 @@ const wrap = (item: Electron.DownloadItem): DownloadItem => {
   item.on("updated", (_event, state) => {
     // Chromium may wait to resume an interrupted download; as v3, it fails
     // then, and cancelling takes the partial file away.
-    if (state === "interrupted" && !over) {
+    if (state === "interrupted" && final === undefined) {
       end("failed");
       item.cancel();
     }
@@ -92,16 +168,30 @@ const wrap = (item: Electron.DownloadItem): DownloadItem => {
     saveTo: (file) => {
       item.setSavePath(file);
     },
+    askWhere: (defaultPath) =>
+      saveDialog
+        ? askFake(item, defaultPath, saveDialog)
+        : askWithDialog(item, defaultPath),
     cancel: () => {
       item.cancel();
     },
     onDone: (listener) => {
-      ended.add(listener);
+      if (final === undefined) {
+        ended.add(listener);
+      } else {
+        listener(final);
+      }
     },
   };
 };
 
-export const createDownloadSessions = (): DownloadSessions => {
+/**
+ * Each session's downloads; `saveDialog` in place of the system's, as the
+ * end-to-end build has it.
+ */
+export const createDownloadSessions = (
+  saveDialog?: SaveDialog
+): DownloadSessions => {
   const watched = new WeakSet<Electron.Session>();
 
   return {
@@ -114,7 +204,7 @@ export const createDownloadSessions = (): DownloadSessions => {
 
       watched.add(watching);
       watching.on("will-download", (_event, item, startedIn) => {
-        take(wrap(item), startedIn.id);
+        take(wrap(item, saveDialog), startedIn.id);
       });
     },
   };

@@ -45,6 +45,8 @@ export interface DownloadsDeps {
   choices: {
     /** The folder they chose, `null` for the system's. */
     folder: () => string | null;
+    /** Whether each download asks where to save it. */
+    saveAs: () => boolean;
   };
   /**
    * Told once a run of each chosen folder that was not there or could not be
@@ -270,20 +272,11 @@ export const createDownloads = ({
     return files.folder();
   };
 
-  /**
-   * Names and saves a download as its session starts it, at once, since
-   * Chromium asks where to save it once the item's turn ends.
-   */
-  const take = (item: DownloadItem) => {
+  /** Runs and lists the download, saving to `filePath`. */
+  const start = (item: DownloadItem, filePath: string) => {
     const id = newId();
-    const folder = saveFolder();
-    const fileName = unusedName(
-      withExtension(safeName(item.fileName), item.mimeType),
-      pathTaken(folder)
-    );
-    const filePath = path.join(folder, fileName);
+    const fileName = path.basename(filePath);
 
-    item.saveTo(filePath);
     running.set(id, { item, path: filePath });
     watchRunning();
     item.onDone((end) => {
@@ -302,6 +295,40 @@ export const createDownloads = ({
     void save((current) => addDownload(current, entry));
     showProgress();
     notify();
+  };
+
+  const askWhere = async (item: DownloadItem, offered: string) => {
+    const chosen = await item.askWhere(offered);
+
+    if (chosen !== undefined) {
+      start(item, chosen);
+    }
+  };
+
+  /**
+   * Names and saves a download as its session starts it, at once, since
+   * Chromium asks where to save it once the item's turn ends; or, where
+   * each download asks, offers that name in the save dialog, a cancel
+   * leaving nothing listed.
+   */
+  const take = (item: DownloadItem) => {
+    const folder = saveFolder();
+    const filePath = path.join(
+      folder,
+      unusedName(
+        withExtension(safeName(item.fileName), item.mimeType),
+        pathTaken(folder)
+      )
+    );
+
+    if (!choices.saveAs()) {
+      item.saveTo(filePath);
+      start(item, filePath);
+
+      return;
+    }
+
+    void askWhere(item, filePath);
   };
 
   const listed = () => historyOf(state());
