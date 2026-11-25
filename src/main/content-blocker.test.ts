@@ -24,9 +24,11 @@ const SIGN_IN = {
 /** A session per partition holding what the blocker last set on it. */
 const fakeRequests = () => {
   const filters = new Map<string, ((ask: BlockAsk) => boolean) | undefined>();
+  const sets: string[] = [];
   const requests: RequestBlocker = {
     block: (partition, blocks) => {
       filters.set(partition, blocks);
+      sets.push(partition);
     },
   };
   /** What the partition's session does to each request, or `unhooked`. */
@@ -40,7 +42,7 @@ const fakeRequests = () => {
     return blocks(ask) ? "blocked" : "allowed";
   };
 
-  return { requests, filters, outcome };
+  return { requests, sets, outcome };
 };
 
 const setup = (initial?: Settings) => {
@@ -120,12 +122,13 @@ describe(createContentBlocker, () => {
     expect(outcome("persist:a", TRACKER)).toBe("unhooked");
   });
 
-  it("touches only the sessions it was asked to prepare", () => {
-    const { blocker, filters } = setup();
+  it("hooks a session once however many of its views are prepared, and only sessions prepared", () => {
+    const { blocker, sets } = setup();
 
     blocker.prepare("persist:a");
     blocker.prepare("persist:a");
+    blocker.prepare("persist:b");
 
-    expect([...filters.keys()]).toStrictEqual(["persist:a"]);
+    expect(sets).toStrictEqual(["persist:a", "persist:b"]);
   });
 });

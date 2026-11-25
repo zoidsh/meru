@@ -41,7 +41,10 @@ export const createContentBlocker = ({
   settings.onChange("blockTrackers", follow);
 
   return {
-    /** Before a session's first page, once per session. */
+    /**
+     * Before each view or keep-alive page in the partition's session; only
+     * the first call for a partition hooks it, the rest do nothing.
+     */
     prepare: (partition: string) => {
       if (partitions.has(partition)) {
         return;
