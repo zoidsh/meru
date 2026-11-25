@@ -327,6 +327,22 @@ describe("taking a download", () => {
     ]);
   });
 
+  it("opens the save dialog in the system's folder while the chosen one is missing, telling of nothing, since the person picks where it goes", async () => {
+    const { downloads, choose, askEachTime, calls } = setup();
+    const item = fakeItem();
+
+    choose("/Gone");
+    askEachTime();
+    downloads.take(item);
+    item.answer("/Elsewhere/report.pdf");
+    await settle();
+
+    expect([
+      item.askedAt,
+      calls.filter((call) => call.startsWith("missing")),
+    ]).toStrictEqual(["/Downloads/report.pdf", []]);
+  });
+
   it("shows each finished download in its folder where Settings says so, after it is quarantined, and never one that failed", async () => {
     const { downloads, showEachWhenDone, calls } = setup();
     const before = fakeItem();

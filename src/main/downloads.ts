@@ -261,16 +261,18 @@ export const createDownloads = ({
 
   /**
    * The chosen folder where it can take the file, else the system's, the
-   * chosen one left as stored for when it is back.
+   * chosen one left as stored for when it is back. `announce` tells of the
+   * fallback, for a download saved there rather than one the save dialog
+   * only starts at.
    */
-  const saveFolder = () => {
+  const saveFolder = (announce: boolean) => {
     const chosen = choices.folder();
 
     if (chosen === null || files.usable(chosen)) {
       return chosen ?? files.folder();
     }
 
-    if (!missing.has(chosen)) {
+    if (announce && !missing.has(chosen)) {
       missing.add(chosen);
       onFolderMissing(chosen);
     }
@@ -318,7 +320,8 @@ export const createDownloads = ({
    * leaving nothing listed.
    */
   const take = (item: DownloadItem) => {
-    const folder = saveFolder();
+    const asks = choices.saveAs();
+    const folder = saveFolder(!asks);
     const filePath = path.join(
       folder,
       unusedName(
@@ -327,7 +330,7 @@ export const createDownloads = ({
       )
     );
 
-    if (!choices.saveAs()) {
+    if (!asks) {
       item.saveTo(filePath);
       start(item, filePath);
 
