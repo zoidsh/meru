@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { APPS } from "#core/apps.ts";
+import { APPS, entitledApps } from "#core/apps.ts";
+import type { App } from "#core/apps.ts";
 import type { FoundInPage } from "#core/find.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
@@ -74,7 +75,14 @@ const MAIN_HOST = 1;
  * The real profiles over a save that only records, a fake window, and a
  * network whose return the test announces.
  */
-const setup = async ({ state = initial }: { state?: State } = {}) => {
+const setup = async ({
+  state = initial,
+  tabApps,
+}: {
+  state?: State;
+  /** The apps a link may open a tab of, every one when absent. */
+  tabApps?: () => readonly App[];
+} = {}) => {
   let size: Size = { width: 1280, height: 800 };
   let sidebar: SidebarState = "wide";
   let trialFooter = false;
@@ -221,6 +229,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
       },
     },
     apps: APPS,
+    ...(tabApps && { tabApps }),
     signInOrigins: SIGN_IN_ORIGINS,
     background: true,
     systemBrowser: {
@@ -813,6 +822,25 @@ describe(createTabViews, () => {
     await window.profiles.selectTab({ profileId: "a", tabId: "gmail" });
 
     expect(gmail?.loaded).toHaveLength(2);
+  });
+
+  it("sends a link to another Google app to the system browser while the run may open Gmail's tab alone, and still opens Gmail's own pop-out", async () => {
+    const window = await setup({ tabApps: () => entitledApps(APPS, false) });
+    const gmail = window.viewOf("persist:a");
+    const link = "https://drive.google.com/file/d/1";
+
+    expect([
+      gmail?.options.onWindowOpen(link),
+      gmail?.options.onWindowOpen(`${GMAIL}/u/0/?view=cm`),
+    ]).toStrictEqual(["deny", "allow"]);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const [tabs] = window.profiles.get().profiles;
+
+    expect([
+      window.opened,
+      tabs && knownTabs(tabs).map((tab) => tab.id),
+    ]).toStrictEqual([[link], ["gmail", "c1"]]);
   });
 
   it("opens a claimed link as a tab in the same session, selected, loading the link", async () => {

@@ -54,6 +54,12 @@ export interface TabViewsDeps {
   ownWindows: Pick<OwnWindows, "open" | "close" | "onResize">;
   /** The registry, or the suite's stand-ins for it. */
   apps: readonly App[];
+  /**
+   * The apps a page's link may open a tab of, as they are now: `apps`, or
+   * Gmail alone on the free version, whose links to another app leave
+   * Meru as any other site's do. `apps` when absent.
+   */
+  tabApps?: () => readonly App[];
   /** Google's sign-in, or the suite's stand-in for it. */
   signInOrigins: readonly string[];
   background: boolean;
@@ -165,6 +171,7 @@ export const createTabViews = ({
   window,
   ownWindows,
   apps,
+  tabApps = () => apps,
   signInOrigins,
   background,
   systemBrowser,
@@ -568,7 +575,7 @@ export const createTabViews = ({
   };
 
   const routing = createWindowOpenRouting({
-    apps,
+    apps: tabApps,
     signInOrigins,
     systemBrowser,
     openerApp: (key) => findTab(state(), key)?.app ?? "",

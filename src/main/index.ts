@@ -3,6 +3,7 @@ import path from "node:path";
 import { pick } from "es-toolkit";
 
 import { SHELL_ENTITLEMENT_CALL_NAMES } from "#contract/entitlement-channels.ts";
+import { entitledApps } from "#core/apps.ts";
 import { launchWindow } from "#core/launch-window.ts";
 import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
@@ -438,6 +439,7 @@ const start = async () => {
     window: shell.window,
     ownWindows,
     apps,
+    tabApps: () => entitledApps(apps, entitlement.can("workspaceApps")),
     signInOrigins,
     background,
     systemBrowser: linkOpener,
