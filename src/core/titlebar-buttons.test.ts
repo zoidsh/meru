@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { titlebarButtonsShown } from "./titlebar-buttons.ts";
 
 const ALL = {
+  sidebar: true,
   newTab: true,
   unifiedInbox: true,
   downloads: true,
@@ -10,6 +11,7 @@ const ALL = {
 };
 
 const NONE = {
+  sidebar: false,
   newTab: false,
   unifiedInbox: false,
   downloads: false,
@@ -35,6 +37,13 @@ describe(titlebarButtonsShown, () => {
         profileCount: 1,
       })
     ).toStrictEqual({ ...ALL, newTab: false, unifiedInbox: false });
+  });
+
+  it("lets the sidebar's toggle show only where the sidebar may", () => {
+    expect([
+      titlebarButtonsShown(ALL, AT_REST).sidebar,
+      titlebarButtonsShown({ ...ALL, sidebar: false }, AT_REST).sidebar,
+    ]).toStrictEqual([true, false]);
   });
 
   it("shows Do Not Disturb's moon while it holds, hidden or not, and hides it again once it ends", () => {

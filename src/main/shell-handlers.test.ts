@@ -469,6 +469,7 @@ const CHROME = {
   appearance: {
     tint: true,
     buttons: {
+      sidebar: true,
       newTab: true,
       unifiedInbox: true,
       downloads: true,

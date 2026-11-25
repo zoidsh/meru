@@ -684,6 +684,7 @@ const start = async () => {
     clipboard,
     systemBrowser,
     settings,
+    can: entitlement.can,
   });
 
   wireTray({

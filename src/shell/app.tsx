@@ -111,8 +111,11 @@ const MainWindow = ({ pro }: { pro: ShellState["pro"] }) => {
   const { t } = useLingui();
   const tabs = useShellState("tabs");
   const profiles = useShellState("profiles");
-  const sidebar = useShellState("sidebar")?.state ?? "hidden";
-  const tint = useShellState("appearance")?.tint ?? true;
+  const appearance = useShellState("appearance");
+  const placed = useShellState("sidebar")?.state ?? "hidden";
+  // The free version draws no sidebar, whatever main last placed.
+  const sidebar = appearance?.buttons.sidebar === false ? "hidden" : placed;
+  const tint = appearance?.tint ?? true;
   const footerDays = pro.trialFooterDays;
   const { inset, radius } = viewFrame({
     sidebar,

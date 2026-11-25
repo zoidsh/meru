@@ -454,6 +454,11 @@ export const SHELL_STATE = {
      * where it otherwise would.
      */
     buttons: z.object({
+      /**
+       * Whether the sidebar and its toggle may show: not on the free
+       * version, which has the Gmail tab alone.
+       */
+      sidebar: z.boolean(),
       newTab: z.boolean(),
       unifiedInbox: z.boolean(),
       downloads: z.boolean(),

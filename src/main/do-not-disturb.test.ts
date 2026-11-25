@@ -298,6 +298,7 @@ describe("an end no date holds", () => {
             appearance: {
               tint: true,
               buttons: {
+                sidebar: true,
                 newTab: true,
                 unifiedInbox: true,
                 downloads: true,

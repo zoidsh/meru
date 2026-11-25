@@ -862,6 +862,7 @@ test.describe("shots", () => {
       doNotDisturb: DO_NOT_DISTURB,
     });
     await writeSettings(userDataDir, {
+      titlebarNewTab: true,
       titlebarUnifiedInbox: true,
       titlebarDoNotDisturb: true,
       quietHours: QUIET_ALL_DAY,

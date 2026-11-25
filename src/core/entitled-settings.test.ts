@@ -37,6 +37,14 @@ describe(entitledSetting, () => {
     ]).toStrictEqual([[], false, false]);
   });
 
+  it("hides the title bar's New tab button without Meru Pro, the free version opening no tab", () => {
+    expect([
+      entitledSetting("titlebarNewTab", true, free),
+      entitledSetting("titlebarNewTab", true, pro),
+      settingWritable("titlebarNewTab", free),
+    ]).toStrictEqual([false, true, false]);
+  });
+
   it("finds no verification code without Meru Pro, the settings under it read as stored", () => {
     expect([
       entitledSetting("verificationCodes", true, free),

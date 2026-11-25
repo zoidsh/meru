@@ -622,6 +622,7 @@ const DoNotDisturbButton = () => {
 
 /** Before the first snapshot, as the defaults have them. */
 const ALL_SHOWN = {
+  sidebar: true,
   newTab: true,
   unifiedInbox: true,
   downloads: true,
@@ -683,6 +684,8 @@ export const Titlebar = ({
   const profiles = useShellState("profiles");
   const shortcuts = useShellState("shortcuts");
   const profileCount = profiles?.profiles.length ?? 0;
+  const sidebarAllowed =
+    useShellState("appearance")?.buttons.sidebar ?? ALL_SHOWN.sidebar;
 
   return (
     // The traffic lights take the left end on macOS.
@@ -716,7 +719,9 @@ export const Titlebar = ({
           profilesFrom === undefined ? "mr-2" : "mr-1"
         )}
       >
-        <SidebarToggle shown={sidebarShown} shortcuts={shortcuts} />
+        {sidebarAllowed && (
+          <SidebarToggle shown={sidebarShown} shortcuts={shortcuts} />
+        )}
         <FrontNavigationButtons shortcuts={shortcuts} />
       </div>
       {profiles && profileCount >= 2 && (

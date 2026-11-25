@@ -1,5 +1,7 @@
 /** Whether Settings lets each titlebar button show. */
 export interface TitlebarButtonChoices {
+  /** Whether the sidebar may show at all, and with it its toggle. */
+  sidebar: boolean;
   newTab: boolean;
   unifiedInbox: boolean;
   downloads: boolean;
@@ -20,6 +22,7 @@ export const titlebarButtonsShown = (
     doNotDisturbOn,
   }: { sidebarShown: boolean; profileCount: number; doNotDisturbOn: boolean }
 ) => ({
+  sidebar: choices.sidebar,
   newTab: choices.newTab && !sidebarShown,
   unifiedInbox: choices.unifiedInbox && profileCount >= 2,
   downloads: choices.downloads,

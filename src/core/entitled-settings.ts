@@ -30,6 +30,8 @@ export const GATED_SETTINGS: {
     free: () => false,
   },
   titlebarDoNotDisturb: { capability: "notificationGates", free: () => false },
+  // Its command opens a tab, which the free version's one tab never does.
+  titlebarNewTab: { capability: "workspaceApps", free: () => false },
   verificationCodes: { capability: "verificationCodes", free: () => false },
   verificationCodeCopyMode: { capability: "verificationCodes" },
   verificationCodeMarkRead: { capability: "verificationCodes" },

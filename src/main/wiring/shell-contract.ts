@@ -1,5 +1,6 @@
 import type { ShellState } from "#contract/shell.ts";
 import type { App } from "#core/apps.ts";
+import type { Capability } from "#core/entitlement.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import type { Platform } from "#core/platform.ts";
 import { findTab, tabKey } from "#core/tabs.ts";
@@ -74,6 +75,7 @@ export const wireShellContract = ({
   systemBrowser,
   settings,
   language,
+  can,
 }: {
   platform: Platform;
   /** The language Meru shows, which the shell shows too. */
@@ -110,6 +112,8 @@ export const wireShellContract = ({
   clipboard: ReturnType<typeof createClipboard>;
   systemBrowser: ReturnType<typeof createSystemBrowser>;
   settings: Pick<SettingsStore, "get" | "onChange">;
+  /** What this run may use; `onProChange` follows a change. */
+  can: (capability: Capability) => boolean;
 }) => {
   const shortcuts = shellShortcuts(COMMANDS, platform);
   const ariaShortcuts = shellShortcuts(COMMANDS, platform, true);
@@ -225,6 +229,7 @@ export const wireShellContract = ({
             appearance: {
               tint: settings.get("profileTint"),
               buttons: {
+                sidebar: can("workspaceApps"),
                 newTab: settings.get("titlebarNewTab"),
                 unifiedInbox: settings.get("titlebarUnifiedInbox"),
                 downloads: settings.get("titlebarDownloads"),
