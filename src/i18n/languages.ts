@@ -42,3 +42,23 @@ export const matchLanguage = <T extends string>(
 
 export const resolveLanguage = (preferred: readonly string[]): Language =>
   matchLanguage(preferred, LANGUAGES);
+
+/**
+ * Each language named in itself, the same in every language, so never
+ * translated.
+ */
+export const LANGUAGE_NAMES: Record<Language, string> = {
+  en: "English",
+};
+
+/**
+ * What a stored `language` shows Meru in: the catalog it names, where this
+ * build has one, else the one the system's preferred languages match.
+ */
+export const appLanguage = <T extends string>(
+  stored: string,
+  preferred: readonly string[],
+  available: readonly [T, ...T[]]
+): T =>
+  available.find((language) => language === stored) ??
+  matchLanguage(preferred, available);

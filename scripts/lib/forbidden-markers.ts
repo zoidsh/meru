@@ -113,6 +113,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       marker: "meruTestSettings",
       why: "only the end-to-end build may switch settings from outside the app",
     },
+    {
+      marker: "en-XA",
+      why: "only the end-to-end build may show its pseudo-language",
+    },
   ];
 
 export interface OutputFile {

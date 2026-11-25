@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { matchLanguage } from "./languages.ts";
+import { appLanguage, matchLanguage } from "./languages.ts";
 
 const AVAILABLE = ["en", "de", "pt-BR"] as const;
 
@@ -30,5 +30,16 @@ describe(matchLanguage, () => {
     expect(match("fr-FR", "ja")).toBe("en");
     expect(match()).toBe("en");
     expect(match("")).toBe("en");
+  });
+});
+
+describe(appLanguage, () => {
+  it("takes the stored language where the build has its catalog", () => {
+    expect(appLanguage("de", ["en-US"], AVAILABLE)).toBe("de");
+  });
+
+  it("reads System, and a language the build lacks, as the system's", () => {
+    expect(appLanguage("system", ["de-AT"], AVAILABLE)).toBe("de");
+    expect(appLanguage("ja", ["pt-PT"], AVAILABLE)).toBe("pt-BR");
   });
 });

@@ -39,6 +39,7 @@ await Promise.all([
       root: rendererRoot(renderer),
       mode: "production",
       logLevel: "warn",
+      define: { MERU_E2E_BUILD: JSON.stringify(target === "e2e") },
       build: { outDir: path.join(out, renderer), emptyOutDir: true },
     })
   ),
