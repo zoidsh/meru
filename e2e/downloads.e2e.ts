@@ -371,7 +371,7 @@ test("pulses the button while a size is not known, and names a second file of th
   );
 });
 
-test("cancels a running download from its row, which stays listed as cancelled with no file left", async ({
+test("cancels a running download from its row, which stays listed as canceled with no file left", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -396,7 +396,7 @@ test("cancels a running download from its row, which stays listed as cancelled w
   await running.hover();
   await running.getByRole("button", { name: "Cancel download" }).click();
 
-  await expect(running).toContainText("Cancelled · now");
+  await expect(running).toContainText("Canceled · now");
   await expect(downloadsButton(shell)).toHaveAttribute(
     "data-downloads",
     "plain"
@@ -792,7 +792,7 @@ test("moves through the list with the keys, opens with Enter, cancels a running 
 
   // A running download is cancelled, and stays listed.
   await overlay.keyboard.press("Delete");
-  await expect(row(overlay, cancelled)).toContainText("Cancelled · now");
+  await expect(row(overlay, cancelled)).toContainText("Canceled · now");
   await expect(row(overlay, running)).toContainText("Starting…");
 
   await overlay.keyboard.press("ArrowDown");
@@ -816,7 +816,7 @@ test("moves through the list with the keys, opens with Enter, cancels a running 
   ).toBeDisabled();
 });
 
-test("lists one running at the last quit as cancelled, and drops what started over 30 days ago", async ({
+test("lists one running at the last quit as canceled, and drops what started over 30 days ago", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -827,7 +827,7 @@ test("lists one running at the last quit as cancelled, and drops what started ov
   ]);
 
   await openCard(shell, overlay);
-  await expect(row(overlay, "quit.zip")).toContainText("Cancelled · ");
+  await expect(row(overlay, "quit.zip")).toContainText("Canceled · ");
   await expectFileNames(overlay, ["quit.zip"]);
 });
 

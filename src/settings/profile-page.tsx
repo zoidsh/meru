@@ -37,7 +37,7 @@ import { settingsCalls } from "./sync.ts";
 
 type ListedProfile = SettingsState["profiles"][number];
 
-/** A colour's dot and its name, in the Colour menu and on its trigger. */
+/** A color's dot and its name, in the Color menu and on its trigger. */
 const ColorItem = ({
   name,
   label,
@@ -46,7 +46,7 @@ const ColorItem = ({
   label: string;
 }) => (
   <>
-    {/* The item's text is a flex row that does not centre its children. */}
+    {/* The item's text is a flex row that does not center its children. */}
     <ProfileDot color={paletteColor(name)} className="size-2 self-center" />
     {label}
   </>
@@ -226,7 +226,7 @@ const NameInput = ({
 };
 
 /**
- * A profile's own page inside Profiles: its name, colour, mail and sleep, its
+ * A profile's own page inside Profiles: its name, color, mail and sleep, its
  * saved searches and its removal.
  */
 export const ProfilePage = ({
@@ -254,14 +254,14 @@ export const ProfilePage = ({
   const { t } = useLingui();
   const calls = settingsCalls();
   const colorNames: Record<ProfileColorName, string> = {
-    blue: t({ message: "Blue", comment: "Name of a profile's colour" }),
-    orange: t({ message: "Orange", comment: "Name of a profile's colour" }),
-    green: t({ message: "Green", comment: "Name of a profile's colour" }),
-    pink: t({ message: "Pink", comment: "Name of a profile's colour" }),
-    cyan: t({ message: "Cyan", comment: "Name of a profile's colour" }),
-    lime: t({ message: "Lime", comment: "Name of a profile's colour" }),
-    amber: t({ message: "Amber", comment: "Name of a profile's colour" }),
-    violet: t({ message: "Violet", comment: "Name of a profile's colour" }),
+    blue: t({ message: "Blue", comment: "Name of a profile's color" }),
+    orange: t({ message: "Orange", comment: "Name of a profile's color" }),
+    green: t({ message: "Green", comment: "Name of a profile's color" }),
+    pink: t({ message: "Pink", comment: "Name of a profile's color" }),
+    cyan: t({ message: "Cyan", comment: "Name of a profile's color" }),
+    lime: t({ message: "Lime", comment: "Name of a profile's color" }),
+    amber: t({ message: "Amber", comment: "Name of a profile's color" }),
+    violet: t({ message: "Violet", comment: "Name of a profile's color" }),
   };
   // Said until the page is left, as v3's toast was shown once.
   const [deleted, setDeleted] = useState(false);
@@ -455,14 +455,14 @@ export const ProfilePage = ({
             <FieldSeparator />
             <Row
               label={t({
-                message: "Colour",
-                comment: "Label of a profile's colour on its page in Settings",
+                message: "Color",
+                comment: "Label of a profile's color on its page in Settings",
               })}
               description={t({
                 message:
                   "Its dot, and the titlebar's and sidebar's tint while it is selected.",
                 comment:
-                  "Description of a profile's colour on its page in Settings",
+                  "Description of a profile's color on its page in Settings",
               })}
             >
               {(ids) => (
@@ -489,9 +489,9 @@ export const ProfilePage = ({
                       {(name: ProfileColorName | null) =>
                         name === null ? (
                           t({
-                            message: "Choose a colour",
+                            message: "Choose a color",
                             comment:
-                              "Shown in the Colour menu on a profile's page in Settings while the profile's stored colour is one this version does not know",
+                              "Shown in the Color menu on a profile's page in Settings while the profile's stored color is one this version does not know",
                           })
                         ) : (
                           <ColorItem name={name} label={colorNames[name]} />

@@ -137,16 +137,16 @@ const RowDetail = ({ row, now }: { row: Row; now: number }) => {
     }
     case "failed": {
       return (
-        <Trans comment="Second line of a download in the Downloads card that was interrupted, such as Failed · 2 hours ago, Failed in the destructive colour; {when} is when it started, such as 2 hours ago or yesterday">
+        <Trans comment="Second line of a download in the Downloads card that was interrupted, such as Failed · 2 hours ago, Failed in the destructive color; {when} is when it started, such as 2 hours ago or yesterday">
           <span className="text-destructive">Failed</span> · {when}
         </Trans>
       );
     }
     case "cancelled": {
       return t({
-        message: `Cancelled · ${when}`,
+        message: `Canceled · ${when}`,
         comment:
-          "Second line of a download in the Downloads card that was cancelled, such as Cancelled · 2 hours ago; {when} is when it started, such as 2 hours ago or yesterday",
+          "Second line of a download in the Downloads card that was canceled, such as Canceled · 2 hours ago; {when} is when it started, such as 2 hours ago or yesterday",
       });
     }
     default: {

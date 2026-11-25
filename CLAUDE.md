@@ -32,7 +32,7 @@ Components in `src/ui` come only from `pnpm exec shadcn add <name>`, never writt
 
 ## Strings
 
-Every string a person reads is wrapped for Lingui: `t` from `@lingui/core/macro` in main, `<Trans>` or `useLingui()`'s `t` from `@lingui/react/macro` in a renderer. A short or ambiguous one, or one with a placeholder, takes a translator comment through `t({ message, comment })` or `<Trans comment="…">`. Log lines, thrown errors and the product name stay unwrapped. Call `t` where the string is shown, never at module load. `pnpm i18n:extract` rewrites the committed `src/i18n/locales/en.po`, which `pnpm check` compares with the source. Lint catches a bare JSX text child and a literal `aria-label`, `title`, `alt` or `placeholder`; strings main passes to a dialog or a menu are for review.
+Interface strings and their translator comments are American English (color, canceled, license). Every string a person reads is wrapped for Lingui: `t` from `@lingui/core/macro` in main, `<Trans>` or `useLingui()`'s `t` from `@lingui/react/macro` in a renderer. A short or ambiguous one, or one with a placeholder, takes a translator comment through `t({ message, comment })` or `<Trans comment="…">`. Log lines, thrown errors and the product name stay unwrapped. Call `t` where the string is shown, never at module load. `pnpm i18n:extract` rewrites the committed `src/i18n/locales/en.po`, which `pnpm check` compares with the source. Lint catches a bare JSX text child and a literal `aria-label`, `title`, `alt` or `placeholder`; strings main passes to a dialog or a menu are for review.
 
 ## Builds
 

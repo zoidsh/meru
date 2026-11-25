@@ -220,7 +220,7 @@ msgstr "{told}, in split view, maximized"
 msgid "{unreadCount, plural, one {{name}: the newest {listed} of # unread} other {{name}: the newest {listed} of # unread}}"
 msgstr "{unreadCount, plural, one {{name}: the newest {listed} of # unread} other {{name}: the newest {listed} of # unread}}"
 
-#. Second line of a download in the Downloads card that was interrupted, such as Failed · 2 hours ago, Failed in the destructive colour; {when} is when it started, such as 2 hours ago or yesterday
+#. Second line of a download in the Downloads card that was interrupted, such as Failed · 2 hours ago, Failed in the destructive color; {when} is when it started, such as 2 hours ago or yesterday
 #: src/shell/downloads.tsx
 msgid "<0>Failed</0> · {when}"
 msgstr "<0>Failed</0> · {when}"
@@ -301,7 +301,7 @@ msgstr "All profiles"
 msgid "Along the whole view"
 msgstr "Along the whole view"
 
-#. Name of a profile's colour
+#. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Amber"
 msgstr "Amber"
@@ -369,7 +369,7 @@ msgstr "Below the focused pane"
 msgid "Beside the focused pane"
 msgstr "Beside the focused pane"
 
-#. Name of a profile's colour
+#. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Blue"
 msgstr "Blue"
@@ -444,10 +444,10 @@ msgstr "Cancel"
 msgid "Cancel download"
 msgstr "Cancel download"
 
-#. Second line of a download in the Downloads card that was cancelled, such as Cancelled · 2 hours ago; {when} is when it started, such as 2 hours ago or yesterday
+#. Second line of a download in the Downloads card that was canceled, such as Canceled · 2 hours ago; {when} is when it started, such as 2 hours ago or yesterday
 #: src/shell/downloads.tsx
-msgid "Cancelled · {when}"
-msgstr "Cancelled · {when}"
+msgid "Canceled · {when}"
+msgstr "Canceled · {when}"
 
 #. Line under the Settings scope switcher while one profile's scope is chosen; {chosenName} is the profile's name
 #: src/settings/scope-tabs.tsx
@@ -469,10 +469,10 @@ msgstr "Check mail"
 msgid "Chime"
 msgstr "Chime"
 
-#. Shown in the Colour menu on a profile's page in Settings while the profile's stored colour is one this version does not know
+#. Shown in the Color menu on a profile's page in Settings while the profile's stored color is one this version does not know
 #: src/settings/profile-page.tsx
-msgid "Choose a colour"
-msgstr "Choose a colour"
+msgid "Choose a color"
+msgstr "Choose a color"
 
 #. Segment of the Settings scope switcher that opens the list of profiles when their names do not fit
 #: src/settings/scope-tabs.tsx
@@ -526,10 +526,10 @@ msgstr "Closes its pages until it is selected again."
 msgid "Collapse sidebar"
 msgstr "Collapse sidebar"
 
-#. Label of a profile's colour on its page in Settings
+#. Label of a profile's color on its page in Settings
 #: src/settings/profile-page.tsx
-msgid "Colour"
-msgstr "Colour"
+msgid "Color"
+msgstr "Color"
 
 #. Menu item in the Mail menu that opens a new message in the selected profile's Gmail
 #: src/main/commands.ts
@@ -608,7 +608,7 @@ msgstr "Count unread in the badge"
 msgid "Cut"
 msgstr "Cut"
 
-#. Name of a profile's colour
+#. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Cyan"
 msgstr "Cyan"
@@ -849,7 +849,7 @@ msgstr "Gmail's page"
 msgid "Google's offers above the message list, such as Workspace upgrades."
 msgstr "Google's offers above the message list, such as Workspace upgrades."
 
-#. Name of a profile's colour
+#. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Green"
 msgstr "Green"
@@ -949,7 +949,7 @@ msgstr "Instead of marking it read. A wrong guess can move a real email."
 msgid "It’s back in the list."
 msgstr "It’s back in the list."
 
-#. Description of a profile's colour on its page in Settings
+#. Description of a profile's color on its page in Settings
 #: src/settings/profile-page.tsx
 msgid "Its dot, and the titlebar's and sidebar's tint while it is selected."
 msgstr "Its dot, and the titlebar's and sidebar's tint while it is selected."
@@ -1004,7 +1004,7 @@ msgstr "label:receipts is:unread"
 msgid "Left pane {percent}"
 msgstr "Left pane {percent}"
 
-#. Name of a profile's colour
+#. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Lime"
 msgstr "Lime"
@@ -1367,7 +1367,7 @@ msgstr "Open in split"
 msgid "Optional"
 msgstr "Optional"
 
-#. Name of a profile's colour
+#. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Orange"
 msgstr "Orange"
@@ -1392,7 +1392,7 @@ msgstr "Pin"
 msgid "Pin Tab"
 msgstr "Pin Tab"
 
-#. Name of a profile's colour
+#. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Pink"
 msgstr "Pink"
@@ -2089,7 +2089,7 @@ msgstr "Verification codes"
 msgid "View"
 msgstr "View"
 
-#. Name of a profile's colour
+#. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Violet"
 msgstr "Violet"

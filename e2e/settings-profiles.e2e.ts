@@ -177,7 +177,7 @@ test("a typed name is saved when the page is left without leaving the field, by 
     .toStrictEqual(["Family", "Office"]);
 });
 
-test("a colour chosen changes the titlebar's dot, and a restart keeps it", async ({
+test("a color chosen changes the titlebar's dot, and a restart keeps it", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -191,14 +191,14 @@ test("a colour chosen changes the titlebar's dot, and a restart keeps it", async
   await openProfiles(page);
   await profileRow(page, "Work").click();
 
-  const colour = page.getByRole("combobox", { name: "Colour" });
+  const color = page.getByRole("combobox", { name: "Color" });
 
-  await expect(colour).toContainText("Orange");
+  await expect(color).toContainText("Orange");
 
-  await colour.click();
+  await color.click();
   await page.getByRole("option", { name: "Violet" }).click();
 
-  await expect(colour).toContainText("Violet");
+  await expect(color).toContainText("Violet");
   await expect
     .poll(() => titlebarDot(shell, "Work"))
     .toBe("oklch(0.58 0.2 285)");
@@ -212,7 +212,7 @@ test("a colour chosen changes the titlebar's dot, and a restart keeps it", async
     .toBe("oklch(0.58 0.2 285)");
 });
 
-test("a colour stored that this build does not know shows none chosen, and choosing one writes it", async ({
+test("a color stored that this build does not know shows none chosen, and choosing one writes it", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -236,14 +236,14 @@ test("a colour stored that this build does not know shows none chosen, and choos
   await openProfiles(page);
   await profileRow(page, "Work").click();
 
-  const colour = page.getByRole("combobox", { name: "Colour" });
+  const color = page.getByRole("combobox", { name: "Color" });
 
-  await expect(colour).toContainText("Choose a colour");
-  await colour.click();
+  await expect(color).toContainText("Choose a color");
+  await color.click();
   await expect(page.getByRole("option", { selected: true })).toHaveCount(0);
   await page.getByRole("option", { name: "Cyan" }).click();
 
-  await expect(colour).toContainText("Cyan");
+  await expect(color).toContainText("Cyan");
   await expect
     .poll(() => storedProfiles(userDataDir, "color"))
     .toStrictEqual(["cyan"]);
@@ -444,7 +444,7 @@ test.describe("shots", () => {
       });
     }
 
-    await page.getByRole("combobox", { name: "Colour" }).click();
+    await page.getByRole("combobox", { name: "Color" }).click();
     await expect(page.getByRole("option", { name: "Orange" })).toBeVisible();
 
     for (const theme of THEMES) {
@@ -452,7 +452,7 @@ test.describe("shots", () => {
       await emulateTheme(app, theme);
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await page.screenshot({
-        path: shotPath("settings-profile-page-colour", theme),
+        path: shotPath("settings-profile-page-color", theme),
       });
     }
 
