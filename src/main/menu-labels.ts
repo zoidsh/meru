@@ -1,8 +1,6 @@
 import { t } from "@lingui/core/macro";
 import type { MenuItemConstructorOptions } from "electron";
 
-import type { Platform } from "#core/platform.ts";
-
 /**
  * The labels a command and a native context menu item share, so the menu
  * bar and a tab's menu name it the same way: Title Case, as every native
@@ -84,30 +82,15 @@ export const MENU_LABELS = {
 };
 
 /**
- * A menu item disabled for the Meru Pro it needs: on macOS the label with a
- * Pro badge at its right, which macOS 14 and later draw; elsewhere, where
- * menus have no badge, the label with Pro after it.
+ * A menu item disabled for the Meru Pro it needs, with Pro after its label
+ * on every platform: a menu item's badge needs macOS 14, and Meru runs on 13.
  */
 export const proMenuItem = (
-  label: string,
-  platform: Platform
-): Pick<MenuItemConstructorOptions, "label" | "badge"> =>
-  platform === "darwin"
-    ? {
-        label,
-        badge: {
-          type: "none",
-          content: t({
-            message: "Pro",
-            comment:
-              "Badge at the right of a disabled menu item on macOS on the free version, saying the item needs Meru Pro",
-          }),
-        },
-      }
-    : {
-        label: t({
-          message: `${label} (Pro)`,
-          comment:
-            "Label of a disabled menu item on Windows and Linux on the free version, saying it needs Meru Pro; {label} is the item's own label, such as Split Right",
-        }),
-      };
+  label: string
+): Pick<MenuItemConstructorOptions, "label"> => ({
+  label: t({
+    message: `${label} (Pro)`,
+    comment:
+      "Label of a disabled menu item on the free version, saying it needs Meru Pro; {label} is the item's own label, such as Split Right",
+  }),
+});

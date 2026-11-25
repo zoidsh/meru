@@ -162,7 +162,7 @@ const activate = async (page: Page) => {
   ).toHaveCount(0);
 };
 
-/** The application menu's item: its label, its badge where macOS has one, and whether it is enabled. */
+/** The application menu's item: its label, any badge, which no item may carry, and whether it is enabled. */
 const menuItem = (app: ElectronApplication, id: string) =>
   app.evaluate(({ Menu }, itemId) => {
     const item = Menu.getApplicationMenu()?.getMenuItemById(itemId);
@@ -174,11 +174,12 @@ const menuItem = (app: ElectronApplication, id: string) =>
     };
   }, id);
 
-/** How a disabled item says Pro on this platform. */
-const proItem = (label: string) =>
-  process.platform === "darwin"
-    ? { label, badge: "Pro", enabled: false }
-    : { label: `${label} (Pro)`, badge: undefined, enabled: false };
+/** How a disabled item says Pro, on every platform. */
+const proItem = (label: string) => ({
+  label: `${label} (Pro)`,
+  badge: undefined,
+  enabled: false,
+});
 
 const titlebar = (shell: Page) =>
   shell.getByRole("banner", { name: "Title bar" });

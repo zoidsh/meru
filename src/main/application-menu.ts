@@ -303,9 +303,7 @@ export const buildMenuTemplate = ({
 
     return {
       id: command.id,
-      ...(needsPro(command, context)
-        ? proMenuItem(label, platform)
-        : { label }),
+      ...(needsPro(command, context) ? proMenuItem(label) : { label }),
       ...(command.shortcut?.[platform] && {
         accelerator: command.shortcut[platform],
       }),
@@ -341,7 +339,7 @@ export const buildMenuTemplate = ({
   const doNotDisturb: MenuItemConstructorOptions = {
     ...(context.can("notificationGates")
       ? { label: doNotDisturbLabel }
-      : { ...proMenuItem(doNotDisturbLabel, platform), enabled: false }),
+      : { ...proMenuItem(doNotDisturbLabel), enabled: false }),
     submenu: doNotDisturbItems(commands, context, locale, run),
   };
 

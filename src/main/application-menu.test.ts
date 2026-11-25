@@ -73,28 +73,20 @@ const submenuOf = (platform: Platform, can: () => boolean) =>
     .find((item) => item.submenu && String(item.label).startsWith("Do"));
 
 describe(buildMenuTemplate, () => {
-  it.each([
-    [
-      "darwin",
-      { label: "Unified Inbox", badge: { type: "none", content: "Pro" } },
-    ],
-    ["win32", { label: "Unified Inbox (Pro)", badge: undefined }],
-    ["linux", { label: "Unified Inbox (Pro)", badge: undefined }],
-  ] as const)(
-    "on %s disables an item whose Meru Pro is refused and says Pro",
-    (platform, shown) => {
+  it.each(["darwin", "win32", "linux"] as const)(
+    "on %s disables an item whose Meru Pro is refused and says Pro after its label",
+    (platform) => {
       const item = itemOf(
         template(platform, { ...contextOf(), can: () => false }),
         "inbox.toggle"
       );
       const granted = itemOf(template(platform), "inbox.toggle");
 
-      expect([
-        { label: item?.label, badge: item?.badge },
-        item?.enabled,
-        granted?.label,
-        granted?.badge,
-      ]).toStrictEqual([shown, false, "Unified Inbox", undefined]);
+      expect([item?.label, item?.enabled, granted?.label]).toStrictEqual([
+        "Unified Inbox (Pro)",
+        false,
+        "Unified Inbox",
+      ]);
     }
   );
 
@@ -103,11 +95,11 @@ describe(buildMenuTemplate, () => {
       (["darwin", "linux"] as const).map((platform) => {
         const item = submenuOf(platform, () => false);
 
-        return [item?.label, item?.badge?.content, item?.enabled];
+        return [item?.label, item?.enabled];
       })
     ).toStrictEqual([
-      ["Do Not Disturb", "Pro", false],
-      ["Do Not Disturb (Pro)", undefined, false],
+      ["Do Not Disturb (Pro)", false],
+      ["Do Not Disturb (Pro)", false],
     ]);
     expect(submenuOf("darwin", () => true)?.enabled).toBeUndefined();
   });
