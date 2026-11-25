@@ -30,6 +30,7 @@ import {
   createDownloadFiles,
   createDownloadSignals,
 } from "#platform/downloads.ts";
+import type { EntitlementServer } from "#platform/entitlement-server.ts";
 import {
   createCapturedFolderPicker,
   createFolderPicker,
@@ -63,6 +64,7 @@ import {
   captureSounds,
   exposeTestEntitlement,
   exposeTestSettings,
+  holdEntitlementServer,
 } from "../test-hooks.ts";
 
 /**
@@ -163,12 +165,16 @@ export const exposeSettingsToSuite = (settings: SettingsStore) => {
   }
 };
 
-/** The suite reads what the entitlement answers, which no window shows yet. */
+/** The suite reads what the entitlement answers. */
 export const exposeEntitlementToSuite = (entitlement: Entitlement) => {
   if (MERU_E2E_BUILD) {
     exposeTestEntitlement(entitlement);
   }
 };
+
+/** The suite's build lets a test hold the server's answers. */
+export const suiteEntitlementServer = (server: EntitlementServer) =>
+  MERU_E2E_BUILD ? holdEntitlementServer(server) : server;
 
 /** What Gmail's pages report, recorded for the suite. */
 export const gmailPageCapture = () => MERU_E2E_BUILD && captureGmailPage();

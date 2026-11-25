@@ -9,6 +9,7 @@ import type {
   SettingValue,
 } from "#core/settings.ts";
 import type { TabKey } from "#core/tabs.ts";
+import type { EntitlementServer } from "#platform/entitlement-server.ts";
 
 import type { Entitlement } from "./entitlement.ts";
 import type { SettingsStore } from "./settings.ts";
@@ -56,6 +57,40 @@ export const exposeTestEntitlement = (entitlement: Entitlement) => {
     can: entitlement.can,
     activate: entitlement.activate,
   });
+};
+
+/**
+ * The server with each call held while the suite says, under
+ * `meruTestEntitlementServer`, so a test sees a request that is still out.
+ */
+export const holdEntitlementServer = (
+  server: EntitlementServer
+): EntitlementServer => {
+  let held: PromiseWithResolvers<void> | undefined;
+
+  Reflect.set(globalThis, "meruTestEntitlementServer", {
+    hold: () => {
+      held ??= Promise.withResolvers();
+    },
+    release: () => {
+      held?.resolve();
+      held = undefined;
+    },
+  });
+
+  const after =
+    <Request, Answer>(call: (request: Request) => Promise<Answer>) =>
+    async (request: Request) => {
+      await held?.promise;
+
+      return call(request);
+    };
+
+  return {
+    refresh: after(server.refresh),
+    activate: after(server.activate),
+    setDeviceLabel: after(server.setDeviceLabel),
+  };
 };
 
 /**

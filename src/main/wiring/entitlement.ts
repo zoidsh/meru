@@ -15,7 +15,10 @@ import {
 } from "../entitlement-stub.ts";
 import { publicKeyFromRaw } from "../entitlement-token.ts";
 import { createEntitlement, saveEntitlementFile } from "../entitlement.ts";
-import { exposeEntitlementToSuite } from "./test-build.ts";
+import {
+  exposeEntitlementToSuite,
+  suiteEntitlementServer,
+} from "./test-build.ts";
 
 /**
  * The server and the key its tokens verify with. Development and the suite
@@ -25,11 +28,15 @@ import { exposeEntitlementToSuite } from "./test-build.ts";
 const entitlementSource = (userDataPath: string) => {
   if (MERU_BUILD_MODE === "dev" || MERU_E2E_BUILD) {
     return {
-      server: createStubEntitlementServer({
-        file: createTextFile(path.join(userDataPath, "entitlement-stub.json")),
-        now: Date.now,
-        offline: () => process.env.MERU_STUB_OFFLINE === "1",
-      }),
+      server: suiteEntitlementServer(
+        createStubEntitlementServer({
+          file: createTextFile(
+            path.join(userDataPath, "entitlement-stub.json")
+          ),
+          now: Date.now,
+          offline: () => process.env.MERU_STUB_OFFLINE === "1",
+        })
+      ),
       publicKey: publicKeyFromRaw(DEV_PUBLIC_KEY),
     };
   }
