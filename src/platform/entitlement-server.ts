@@ -9,7 +9,9 @@ export type ServerAnswer = { token: string } | { error: ServerRefusal };
  * reads that as no answer, so an adapter need not catch. A thrown error's
  * message never carries the license key, a token or the device id, so a
  * request puts none of them in its URL: the service logs the error's name
- * and message.
+ * and message. Every call settles within a bound of the adapter's own, a
+ * timeout that rejects: Settings sends one license request at a time, so a
+ * call that never settled would hold every other until Meru restarts.
  */
 export interface EntitlementServer {
   /** A trial sends the device's id alone; a license, its key too. */
