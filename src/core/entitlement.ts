@@ -72,6 +72,8 @@ export const ENTITLEMENT_ERRORS = [
   "noLicense",
   /** This device's id could not be read, so the server cannot be asked. */
   "noDeviceId",
+  /** The entitlement file could not be written, so nothing changed. */
+  "notSaved",
   ...SERVER_REFUSALS,
 ] as const;
 

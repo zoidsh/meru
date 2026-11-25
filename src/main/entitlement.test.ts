@@ -93,10 +93,15 @@ const setup = (initial?: EntitlementFile, deviceId = DEVICE) => {
   const saved: EntitlementFile[] = [];
   const logs: string[] = [];
   const copied: string[] = [];
+  const disk = { full: false };
   const create = (file: EntitlementFile) =>
     createEntitlement({
       initial: file,
       save: (next) => {
+        if (disk.full) {
+          return Promise.reject(new Error("ENOSPC: no space left on device"));
+        }
+
         saved.push(next);
 
         return Promise.resolve();
@@ -121,6 +126,7 @@ const setup = (initial?: EntitlementFile, deviceId = DEVICE) => {
     saved,
     logs,
     copied,
+    disk,
     entitlement: create(initial ?? { version: 1 }),
     create,
   };
@@ -879,6 +885,91 @@ describe("the choice after a trial ends", () => {
     await entitlement.continueFree();
 
     expect(saved).toStrictEqual([]);
+    entitlement.dispose();
+  });
+});
+
+describe("the entitlement when its file cannot be written", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: START });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const NOT_SAVED = {
+    ok: false,
+    error: "notSaved",
+    message:
+      "Meru couldn't save your license. Check that your disk isn't full, then try again.",
+  };
+  const LOGGED =
+    "Could not save the entitlement: Error: ENOSPC: no space left on device";
+
+  it("answers an activation it could not save as not saved, and keeps the key before it", async () => {
+    const { entitlement, answerWith, disk, logs } = setupLicensed();
+
+    answerWith(() => ({ token: signToken({ deviceLabel: "Device 4F2A" }) }));
+    disk.full = true;
+
+    await expect(entitlement.activate("MERU-NEW-0001")).resolves.toStrictEqual(
+      NOT_SAVED
+    );
+    expect(entitlement.snapshot()).toMatchObject({
+      deviceName: "Studio",
+      licenseKey: "MERU-•••-0000",
+    });
+    expect(logs).toContain(LOGGED);
+    entitlement.dispose();
+  });
+
+  it("answers a rename it could not save as not saved, the old name kept", async () => {
+    const { entitlement, answerWith, disk, logs } = setupLicensed();
+
+    answerWith(() => ({ token: signToken({ deviceLabel: "Office" }) }));
+    disk.full = true;
+
+    await expect(entitlement.setDeviceName("Office")).resolves.toStrictEqual(
+      NOT_SAVED
+    );
+    expect(entitlement.snapshot().deviceName).toBe("Studio");
+    expect(logs).toContain(LOGGED);
+    entitlement.dispose();
+  });
+
+  it("answers the choice of the free version it could not save as not saved, and asks again", async () => {
+    const { entitlement, disk, logs } = setup({
+      version: 1,
+      token: signToken({ tier: "free", reason: "trialEnded" }),
+    });
+
+    disk.full = true;
+
+    await expect(entitlement.continueFree()).resolves.toStrictEqual(NOT_SAVED);
+    expect(entitlement.snapshot().trialChoicePending).toBeTruthy();
+    expect(logs).toContain(LOGGED);
+    entitlement.dispose();
+  });
+
+  it("keeps a refresh it could not save out of the state, and takes the next one", async () => {
+    const { entitlement, answerWith, disk, saved, logs } = setup();
+    const trial = signToken({ tier: "trial", trialEndsAt: START + 5 * DAY });
+    const before = entitlement.snapshot();
+
+    answerWith(() => ({ token: trial }));
+    disk.full = true;
+    await entitlement.retry();
+
+    expect(entitlement.snapshot()).toStrictEqual(before);
+    expect(saved).toStrictEqual([]);
+    expect(logs).toContain(LOGGED);
+
+    disk.full = false;
+    await entitlement.retry();
+
+    expect(saved).toStrictEqual([expect.objectContaining({ token: trial })]);
+    expect(entitlement.snapshot().status).toBe("trial");
     entitlement.dispose();
   });
 });

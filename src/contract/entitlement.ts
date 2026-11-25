@@ -55,7 +55,7 @@ export const ENTITLEMENT_CALLS = {
   /** The ended trial's Continue with Free Version: the screen does not show again. */
   continueFree: {
     request: z.undefined(),
-    response: z.undefined(),
+    response: result,
   },
 } as const satisfies Record<
   EntitlementCallName,

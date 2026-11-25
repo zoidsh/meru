@@ -83,6 +83,9 @@ export const entitlementErrorMessage = (error: EntitlementError) => {
     case "noDeviceId": {
       return t`Meru couldn't identify this computer, so it can't check your license. Restart Meru and try again.`;
     }
+    case "notSaved": {
+      return t`Meru couldn't save your license. Check that your disk isn't full, then try again.`;
+    }
     case "invalidKey": {
       return t`There's no license with this key. Check it and try again, or contact support.`;
     }
@@ -100,6 +103,10 @@ export const entitlementErrorMessage = (error: EntitlementError) => {
     }
   }
 };
+
+/** An error's name and message alone, never its stack or what it carries. */
+const describeError = (error: unknown) =>
+  error instanceof Error ? `${error.name}: ${error.message}` : typeof error;
 
 const failed = (error: EntitlementError): EntitlementResult => ({
   ok: false,
@@ -244,10 +251,20 @@ export const createEntitlement = ({
 
   scheduleChange(announce);
 
-  const store = async (next: EntitlementFile) => {
-    await save(next);
+  /** Writes `next` and only then holds it, so a failed write changes nothing. */
+  const store = async (next: EntitlementFile): Promise<boolean> => {
+    try {
+      await save(next);
+    } catch (error) {
+      log(`Could not save the entitlement: ${describeError(error)}`);
+
+      return false;
+    }
+
     file = next;
     announce();
+
+    return true;
   };
 
   let sequences = 0;
@@ -297,7 +314,7 @@ export const createEntitlement = ({
     try {
       return await request();
     } catch (error) {
-      log(`The entitlement server's call failed: ${String(error)}`);
+      log(`The entitlement server's call failed: ${describeError(error)}`);
 
       return { error: "offline" } as const;
     }
@@ -340,12 +357,18 @@ export const createEntitlement = ({
       }
 
       verified = { text: answer.token, token };
-      await store(
+
+      const saved = await store(
         withToken(file, answer.token, {
           tier: token.tier,
           licenseKey: made.kind === "activation" ? made.key : undefined,
         })
       );
+
+      if (!saved) {
+        return failed("notSaved");
+      }
+
       appliedAny = Math.max(appliedAny, made.sequence);
 
       if (made.kind === "activation") {
@@ -381,20 +404,15 @@ export const createEntitlement = ({
     lastAttemptAt = now();
 
     const made = call("refresh", storedLicenseKey(file));
-    const answer = await ask(() =>
-      server.refresh({
-        deviceId,
-        ...(made.key !== undefined && { licenseKey: made.key }),
-      })
+    const result = await take(
+      await ask(() =>
+        server.refresh({
+          deviceId,
+          ...(made.key !== undefined && { licenseKey: made.key }),
+        })
+      ),
+      made
     );
-
-    // A refresh runs on a timer with no one to tell, so a file that cannot
-    // be written is logged, and the token before it kept.
-    const result = await take(answer, made).catch((error: unknown) => {
-      log(`Could not save the refreshed entitlement: ${String(error)}`);
-
-      return { ok: true } as const;
-    });
 
     if (!result.ok) {
       log(
@@ -510,16 +528,19 @@ export const createEntitlement = ({
      * Records that the person chose the free version after a trial, so the
      * launch stops asking until a license or a trial lapses again.
      */
-    continueFree: async () => {
+    continueFree: async (): Promise<EntitlementResult> => {
       await writes.acquire();
 
       try {
-        if (
+        const pending =
           !disposed &&
-          entitlementAt(record(), now(), timeZone).trialChoicePending
-        ) {
-          await store(withContinuedFree(file, now()));
+          entitlementAt(record(), now(), timeZone).trialChoicePending;
+
+        if (pending && !(await store(withContinuedFree(file, now())))) {
+          return failed("notSaved");
         }
+
+        return { ok: true };
       } finally {
         writes.release();
       }
