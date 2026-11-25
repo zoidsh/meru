@@ -1,5 +1,4 @@
 import { useLingui } from "@lingui/react/macro";
-import { noop } from "es-toolkit";
 import { XIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 
@@ -131,7 +130,10 @@ export const TrustedSitesDialog = ({
                             removed.current = index;
                             settingsCalls()
                               .removeTrustedSite({ site })
-                              .catch(noop);
+                              .catch(() => {
+                                // The list stays, so a later change must not move focus.
+                                removed.current = undefined;
+                              });
                           }}
                         >
                           <XIcon />
