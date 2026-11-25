@@ -94,9 +94,9 @@ describe(shownUrl, () => {
   });
 
   it("cuts between characters, never inside one written with two code units", () => {
-    const cut = shownUrl(`https://example.com/${"😀".repeat(300)}`);
-
-    expect([[...cut].length, cut.at(-2)]).toStrictEqual([256, "😀".at(-1)]);
+    expect(shownUrl(`https://example.com/${"😀".repeat(300)}`)).toBe(
+      `https://example.com/${"😀".repeat(235)}…`
+    );
   });
 });
 

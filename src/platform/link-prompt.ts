@@ -51,7 +51,7 @@ export const createLinkPrompt = (): LinkPrompt => ({
 
     return {
       choice: CHOICES[response] ?? "cancel",
-      trust: trustLabel !== undefined && checkboxChecked,
+      trust: checkboxChecked,
     };
   },
 });
