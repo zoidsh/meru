@@ -153,18 +153,32 @@ const keep = async (what: string, save: () => Promise<unknown>) => {
   }
 };
 
+/** At most this much of main's log is kept, should an app log in a loop. */
+const MAIN_LOG_LINES = 5000;
+
 /**
  * What a failed test's app showed: the whole window drawn as a person sees
  * it, each view over the shell, and the accessibility tree of the shell and
  * of the overlay's document, which holds the toast and the cards;
- * Playwright's own report has the shell's tree alone. `name` tells a
- * test's second app from its first.
+ * Playwright's own report has the shell's tree alone; and what main logged,
+ * as when a profile's mail check settled, which shows an order a slower
+ * runner took that none of the pictures does. `name` tells a test's second
+ * app from its first.
  */
 const saveFailure = async (
   app: ElectronApplication,
   testInfo: TestInfo,
-  name: string
+  name: string,
+  log: readonly string[]
 ) => {
+  await keep("main's log", async () => {
+    await writeFile(testInfo.outputPath(`${name}-main.log`), log.join("\n"));
+    await testInfo.attach(`${name} main log`, {
+      path: testInfo.outputPath(`${name}-main.log`),
+      contentType: "text/plain",
+    });
+  });
+
   const pages = app.windows().filter((page) => !page.isClosed());
   const shell = pages.find((page) => page.url().startsWith(SHELL_URL));
   const names = await Promise.all(
@@ -646,7 +660,7 @@ export const test = base.extend<AppFixtures>({
     }
   },
   launchApp: async ({ userDataDir, launched, standIn }, use, testInfo) => {
-    const apps: ElectronApplication[] = [];
+    const apps: { app: ElectronApplication; log: string[] }[] = [];
     // Every request the app's build refused for leaving this machine.
     const refused: string[] = [];
 
@@ -658,10 +672,17 @@ export const test = base.extend<AppFixtures>({
           env: { ...env, ...added, MERU_TEST_APP_URLS: standIn.appUrls },
         });
 
+        const log: string[] = [];
+        const started = Date.now();
+
         app.process().stderr?.on("data", (chunk: Buffer) => {
           for (const line of String(chunk).split("\n")) {
             if (line.startsWith(REFUSED_MARKER)) {
               refused.push(line.slice(REFUSED_MARKER.length + 1));
+            }
+
+            if (line !== "" && log.length < MAIN_LOG_LINES) {
+              log.push(`${Date.now() - started} ms ${line}`);
             }
           }
         });
@@ -672,22 +693,22 @@ export const test = base.extend<AppFixtures>({
           launched.push(pid);
         }
 
-        apps.push(app);
+        apps.push({ app, log });
 
         return app;
       });
     } finally {
       if (testInfo.status !== testInfo.expectedStatus) {
-        for (const [index, app] of apps.entries()) {
+        for (const [index, { app, log }] of apps.entries()) {
           // oxlint-disable-next-line no-await-in-loop -- one app's pictures at a time
-          await saveFailure(app, testInfo, `app-${index + 1}`);
+          await saveFailure(app, testInfo, `app-${index + 1}`, log);
         }
       }
 
       // A close that hangs, as on a blocking dialog, is not waited out: the
       // user data directory's teardown kills whatever is left.
       await Promise.all(
-        apps.map((app) =>
+        apps.map(({ app }) =>
           withTimeout(() => app.close(), 10_000).catch(() => false)
         )
       );

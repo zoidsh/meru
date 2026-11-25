@@ -74,10 +74,15 @@ export const createOpenApp = ({
   };
 
   const fits = (profile: Profile, direction: PaneDirection) => {
-    if (splitFits(profile, direction, pageSize())) {
+    const size = pageSize();
+
+    if (splitFits(profile, direction, size)) {
       return true;
     }
 
+    log(
+      `Refused a split, ${direction}, with no room in a page area of ${size.width} by ${size.height}`
+    );
     overlays.open({ kind: "toast", message: "no-room" });
 
     return false;
