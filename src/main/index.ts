@@ -29,6 +29,7 @@ import { createShellWindow } from "./shell-window.ts";
 import { createSpellcheck } from "./spellcheck.ts";
 import { createTabViews } from "./tab-views.ts";
 import { followThemeSetting } from "./theme.ts";
+import { wireAddProfile } from "./wiring/add-profile.ts";
 import { wireContentBlocker } from "./wiring/content-blocker.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
 import { wireFind } from "./wiring/find.ts";
@@ -324,16 +325,13 @@ const start = async () => {
   const preloads = new Map([
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
   ]);
-  // A new profile is selected, so an open unified inbox would stand over it;
-  // a page's Add another account and Settings' Add profile both close it.
-  const addProfile = async () => {
-    const profileId = await profiles.add();
-
+  const { addProfile, addProfileFromPage } = wireAddProfile({
+    profiles,
+    entitlement,
+    overlays,
     // oxlint-disable-next-line no-use-before-define -- no profile is added before the inbox exists
-    inbox.setOpen(false);
-
-    return profileId;
-  };
+    closeInbox: () => inbox.setOpen(false),
+  });
   const views = createTabViews({
     sidebar: sidebar.current,
     platform,
@@ -350,16 +348,7 @@ const start = async () => {
     selectTab: profiles.selectTab,
     closeTab: profiles.closeTab,
     newId,
-    // A page's Add another account; the free version adds none and says so.
-    addProfile: () => {
-      if (entitlement.can("profiles")) {
-        return addProfile();
-      }
-
-      overlays.open({ kind: "toast", message: "one-profile" });
-
-      return Promise.resolve(undefined);
-    },
+    addProfile: addProfileFromPage,
     // No key reaches a view before the menu below exists, as nothing between
     // them awaits.
     // oxlint-disable-next-line no-use-before-define -- the menu runs the views' commands
