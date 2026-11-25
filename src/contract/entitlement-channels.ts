@@ -15,3 +15,11 @@ export const ENTITLEMENT_CALL_NAMES = [
 ] as const;
 
 export type EntitlementCallName = (typeof ENTITLEMENT_CALL_NAMES)[number];
+
+/** The calls of the main window's trial-ended screen and license notice. */
+export const SHELL_ENTITLEMENT_CALL_NAMES = [
+  "activateLicense",
+  "retryEntitlement",
+  "continueFree",
+  "openMeruPro",
+] as const satisfies readonly EntitlementCallName[];

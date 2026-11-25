@@ -32,7 +32,14 @@ const expectSidebar = async (
 
       return [
         bounds?.x,
-        isEqual(bounds, contentViewBounds(area, state, platform)),
+        isEqual(
+          bounds,
+          contentViewBounds(
+            area,
+            { sidebar: state, trialFooter: true },
+            platform
+          )
+        ),
       ];
     })
     .toStrictEqual([left, true]);

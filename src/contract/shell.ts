@@ -1,3 +1,4 @@
+import { pick } from "es-toolkit";
 import { z } from "zod/mini";
 
 import { APP_IDS } from "#core/apps.ts";
@@ -15,6 +16,8 @@ import type {
   ContractState,
   SyncMessage,
 } from "./contract.ts";
+import { SHELL_ENTITLEMENT_CALL_NAMES } from "./entitlement-channels.ts";
+import { ENTITLEMENT_CALLS, licenseStanding } from "./entitlement.ts";
 import { NAVIGATE_ACTIONS } from "./shell-channels.ts";
 import type { ShellCallName } from "./shell-channels.ts";
 
@@ -301,6 +304,7 @@ export const SHELL_CALLS = {
     request: z.object({ profileId, x: coordinate, y: coordinate }),
     response: z.undefined(),
   },
+  ...pick(ENTITLEMENT_CALLS, SHELL_ENTITLEMENT_CALL_NAMES),
 } as const satisfies Record<
   ShellCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -310,6 +314,25 @@ export const SHELL_CALLS = {
 export const SHELL_STATE = {
   /** The language Meru shows, as a catalog's tag. */
   language: z.string(),
+  /** What the main window shows of Meru Pro, as main decides it. */
+  pro: z.object({
+    /**
+     * The launch waits for the person's choice after the trial ended: the
+     * window shows only the trial-ended screen, and no profile has started.
+     */
+    trialChoice: z.boolean(),
+    /**
+     * The profile the free version uses, by the name the title bar shows,
+     * while others are kept for a license to bring back; else `null`.
+     */
+    firstProfile: z.nullable(z.string()),
+    /** Days to a running trial's last day, which the trial footer counts; `null` with no footer. */
+    trialFooterDays: z.nullable(z.number()),
+    /** A license request is out, from any window; no second one is sent. */
+    licenseRequest: z.boolean(),
+    /** What the license notice is worded from. */
+    standing: licenseStanding,
+  }),
   profiles: z.object({
     profiles: z.array(
       z.object({
@@ -549,6 +572,8 @@ export const SHELL_STATE = {
     z.object({ kind: z.literal("none") }),
     z.object({ kind: z.literal("inbox") }),
     z.object({ kind: z.literal("downloads") }),
+    /** Meru Pro ends at the next launch, or the license could not be confirmed. */
+    z.object({ kind: z.literal("license") }),
     z.object({
       kind: z.literal("open-app"),
       profileId,

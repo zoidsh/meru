@@ -1,10 +1,10 @@
+import type { ShellState } from "#contract/shell.ts";
 import type { App } from "#core/apps.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import type { Platform } from "#core/platform.ts";
 import { findTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { createClipboard } from "#platform/clipboard.ts";
-import type { createIpc } from "#platform/ipc.ts";
 import type { createSystemBrowser } from "#platform/system-browser.ts";
 
 import type { createApplicationMenu } from "../application-menu.ts";
@@ -24,7 +24,6 @@ import type { OwnWindows } from "../own-windows.ts";
 import { createPaneResize } from "../pane-resize.ts";
 import { createProfileMenu } from "../profile-menu.ts";
 import type { Profiles } from "../profiles.ts";
-import type { SenderRegistry } from "../senders.ts";
 import type { SettingsStore } from "../settings.ts";
 import {
   createShellHandlers,
@@ -32,7 +31,7 @@ import {
   shellState,
   shellTabStatus,
 } from "../shell-handlers.ts";
-import { serveShellContract } from "../shell-ipc.ts";
+import type { LaunchHandlers, ShellSource } from "../shell-ipc.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import type { createShowGmail } from "../show-gmail.ts";
 import type { Sidebar } from "../sidebar.ts";
@@ -46,9 +45,11 @@ import type { createTabViews } from "../tab-views.ts";
 export const wireShellContract = ({
   platform,
   apps,
-  ipc,
-  senders,
-  shellOrigin,
+  shellContract,
+  launchHandlers,
+  pro,
+  onProChange,
+  trialFooter,
   shell,
   profiles,
   views,
@@ -78,9 +79,14 @@ export const wireShellContract = ({
   /** The language Meru shows, which the shell shows too. */
   language: Pick<Language, "current" | "onChange">;
   apps: readonly App[];
-  ipc: ReturnType<typeof createIpc>;
-  senders: SenderRegistry;
-  shellOrigin: string;
+  /** Served since the window opened, answering from the app's state from here on. */
+  shellContract: ShellSource;
+  /** Meru Pro's calls, which the trial-ended screen made before the app started. */
+  launchHandlers: LaunchHandlers;
+  pro: () => ShellState["pro"];
+  onProChange: (listener: () => void) => void;
+  /** Whether the trial footer shows below the page. */
+  trialFooter: () => boolean;
   shell: ReturnType<typeof createShellWindow>;
   profiles: Profiles;
   views: ReturnType<typeof createTabViews>;
@@ -144,56 +150,57 @@ export const wireShellContract = ({
     log: console.error,
   });
 
-  serveShellContract({
-    ipc,
-    senders,
-    shellOrigin,
-    handlers: createShellHandlers({
-      profiles,
-      overlays,
-      find,
-      tabs: views,
-      revealOwnWindow: showOwnWindow,
-      navigateTab: async (key, action) => {
-        switch (action) {
-          case "back": {
-            views.goBack(key);
-            break;
+  shellContract.start({
+    handlers: {
+      ...createShellHandlers({
+        profiles,
+        overlays,
+        find,
+        tabs: views,
+        revealOwnWindow: showOwnWindow,
+        navigateTab: async (key, action) => {
+          switch (action) {
+            case "back": {
+              views.goBack(key);
+              break;
+            }
+            case "forward": {
+              views.goForward(key);
+              break;
+            }
+            case "stop": {
+              views.stopFront(key);
+              break;
+            }
+            default: {
+              await views.reload(key);
+            }
           }
-          case "forward": {
-            views.goForward(key);
-            break;
-          }
-          case "stop": {
-            views.stopFront(key);
-            break;
-          }
-          default: {
-            await views.reload(key);
-          }
-        }
-      },
-      inbox,
-      downloads,
-      openApp,
-      bookmarks,
-      tabMenu,
-      panes: paneResize,
-      pageSize: () =>
-        contentViewBounds(
-          shell.window.getContentAreaSize(),
-          sidebar.current(),
-          platform
-        ),
-      profileMenu,
-      openGmail: showGmail.jumpTo,
-      window: shell.window,
-      sidebar,
-      focus,
-      runCommand: menu.runCommand,
-      doNotDisturbItems: menu.doNotDisturbItems,
-      log: console.error,
-    }),
+        },
+        inbox,
+        downloads,
+        openApp,
+        bookmarks,
+        tabMenu,
+        panes: paneResize,
+        pageSize: () =>
+          contentViewBounds(
+            shell.window.getContentAreaSize(),
+            { sidebar: sidebar.current(), trialFooter: trialFooter() },
+            platform
+          ),
+        profileMenu,
+        openGmail: showGmail.jumpTo,
+        window: shell.window,
+        sidebar,
+        trialFooter,
+        focus,
+        runCommand: menu.runCommand,
+        doNotDisturbItems: menu.doNotDisturbItems,
+        log: console.error,
+      }),
+      ...launchHandlers,
+    },
     state: {
       read: () =>
         shellState(
@@ -213,6 +220,7 @@ export const wireShellContract = ({
           inbox.shellSlice(),
           {
             language: language.current(),
+            pro: pro(),
             sidebar: { state: sidebar.current() },
             appearance: {
               tint: settings.get("profileTint"),
@@ -261,6 +269,7 @@ export const wireShellContract = ({
         ),
       onChange: (listener) => {
         language.onChange(listener);
+        onProChange(listener);
         profiles.onChange(listener);
         mail.onChange(listener);
         views.onChange(listener);
@@ -280,6 +289,5 @@ export const wireShellContract = ({
         }
       },
     },
-    log: console.error,
   });
 };

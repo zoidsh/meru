@@ -6,6 +6,7 @@ import {
   entitledProfiles,
   entitlementAt,
   isDowngradePending,
+  lapseNotice,
   maskLicenseKey,
   nextChangeAt,
   normalizeLicenseKey,
@@ -212,6 +213,32 @@ describe(sessionTier, () => {
     expect(isDowngradePending("pro", "free")).toBeTruthy();
     expect(isDowngradePending("trial", "pro")).toBeFalsy();
     expect(isDowngradePending("free", "free")).toBeFalsy();
+  });
+});
+
+describe(lapseNotice, () => {
+  it("announces a license or trial that could not be confirmed, a downgrade pending or not", () => {
+    expect([
+      lapseNotice({ status: "unconfirmed", downgradePending: false }),
+      lapseNotice({ status: "unconfirmed", downgradePending: true }),
+    ]).toStrictEqual(["unconfirmed", "unconfirmed"]);
+  });
+
+  it("announces a trial ended or a license refused only while this run still has Pro", () => {
+    expect([
+      lapseNotice({ status: "trialEnded", downgradePending: true }),
+      lapseNotice({ status: "refused", downgradePending: true }),
+      lapseNotice({ status: "trialEnded", downgradePending: false }),
+      lapseNotice({ status: "refused", downgradePending: false }),
+    ]).toStrictEqual(["downgrade", "downgrade", undefined, undefined]);
+  });
+
+  it("announces nothing for a trial, a license or none", () => {
+    expect(
+      (["trial", "licensed", "provisional", "none"] as const).map((status) =>
+        lapseNotice({ status, downgradePending: false })
+      )
+    ).toStrictEqual([undefined, undefined, undefined, undefined]);
   });
 });
 

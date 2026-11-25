@@ -52,6 +52,225 @@ const ZOOM_KEYS: readonly (readonly [string, ZoomChange])[] = [
   ["CommandOrControl+-", "out"],
 ];
 
+/** The app menu's items that are the system's own. */
+const appRoles = (appName: string, isMacOS: boolean) => {
+  const quit: MenuItemConstructorOptions = {
+    label: t({
+      message: `Quit ${appName}`,
+      comment:
+        "Menu item that quits the app; {appName} is the app's name, such as Meru",
+    }),
+    role: "quit",
+    // The role has no key on Windows; v3 gives Quit this one everywhere.
+    ...(!isMacOS && { accelerator: "CommandOrControl+Q" }),
+  };
+
+  return {
+    about: {
+      label: t({
+        message: `About ${appName}`,
+        comment:
+          "Menu item in the macOS app menu that shows the app's version; {appName} is the app's name",
+      }),
+      role: "about",
+    } satisfies MenuItemConstructorOptions,
+    services: {
+      label: t({
+        message: "Services",
+        comment:
+          "The macOS app menu's submenu of system services, named as macOS names it",
+      }),
+      role: "services",
+    } satisfies MenuItemConstructorOptions,
+    hide: [
+      {
+        label: t({
+          message: `Hide ${appName}`,
+          comment:
+            "Menu item in the macOS app menu that hides the app; {appName} is the app's name",
+        }),
+        role: "hide",
+      },
+      {
+        label: t({
+          message: "Hide Others",
+          comment: "Menu item in the macOS app menu that hides every other app",
+        }),
+        role: "hideOthers",
+      },
+      {
+        label: t({
+          message: "Show All",
+          comment:
+            "Menu item in the macOS app menu that shows every hidden app again",
+        }),
+        role: "unhide",
+      },
+    ] satisfies MenuItemConstructorOptions[],
+    quit,
+  };
+};
+
+const editLabel = () =>
+  t({ message: "Edit", comment: "Name of the Edit menu" });
+
+/** The Edit menu's items that are the system's roles, which keep text editing working. */
+const editRoles = (): MenuItemConstructorOptions[] => [
+  {
+    label: t({ message: "Undo", comment: "Menu item in the Edit menu" }),
+    role: "undo",
+    id: "edit.undo",
+  },
+  {
+    label: t({ message: "Redo", comment: "Menu item in the Edit menu" }),
+    role: "redo",
+    id: "edit.redo",
+  },
+  separator,
+  {
+    label: t({ message: "Cut", comment: "Menu item in the Edit menu" }),
+    role: "cut",
+    id: "edit.cut",
+  },
+  {
+    label: t({ message: "Copy", comment: "Menu item in the Edit menu" }),
+    role: "copy",
+    id: "edit.copy",
+  },
+  {
+    label: t({ message: "Paste", comment: "Menu item in the Edit menu" }),
+    role: "paste",
+    id: "edit.paste",
+  },
+  {
+    label: t({
+      message: "Paste and Match Style",
+      comment:
+        "Menu item in the Edit menu that pastes text without its formatting",
+    }),
+    role: "pasteAndMatchStyle",
+    id: "edit.pasteAndMatchStyle",
+  },
+  {
+    label: t({
+      message: "Delete",
+      comment: "Menu item in the Edit menu that deletes the selected text",
+    }),
+    role: "delete",
+    id: "edit.delete",
+  },
+  {
+    label: t({
+      message: "Select All",
+      comment: "Menu item in the Edit menu",
+    }),
+    role: "selectAll",
+    id: "edit.selectAll",
+  },
+];
+
+const windowLabel = () =>
+  t({ message: "Window", comment: "Name of the Window menu" });
+
+/** The Window menu's items for the window itself. */
+const windowRoles = (isMacOS: boolean) => {
+  const minimize: MenuItemConstructorOptions = {
+    label: t({
+      message: "Minimize",
+      comment: "Menu item in the Window menu",
+    }),
+    role: "minimize",
+  };
+
+  return {
+    minimize,
+    zoom: {
+      label: t({
+        message: "Zoom",
+        comment:
+          "Menu item in the macOS Window menu that toggles the window between its size and filling the screen",
+      }),
+      role: "zoom",
+    } satisfies MenuItemConstructorOptions,
+    // Elsewhere not the role, whose Ctrl+W would close the window, and so
+    // quit Meru, from a page where people press it to close a tab or a
+    // draft; Alt+F4 still closes it.
+    close: (isMacOS
+      ? {
+          label: t({
+            message: "Close Window",
+            comment: "Menu item in the macOS Window menu",
+          }),
+          role: "close",
+          id: "window.close",
+        }
+      : {
+          label: t({
+            message: "Close",
+            comment: "Menu item in the Window menu that closes the window",
+          }),
+          id: "window.close",
+          click: (_item, window) => {
+            window?.close();
+          },
+        }) satisfies MenuItemConstructorOptions,
+    front: {
+      label: t({
+        message: "Bring All to Front",
+        comment: "Menu item in the macOS Window menu",
+      }),
+      role: "front",
+    } satisfies MenuItemConstructorOptions,
+  };
+};
+
+/**
+ * The menu while the launch waits for a choice after the trial: the app's
+ * and the window's own items, and editing for the license key's field.
+ */
+export const buildLaunchMenuTemplate = ({
+  platform,
+  appName,
+}: {
+  platform: Platform;
+  appName: string;
+}): MenuItemConstructorOptions[] => {
+  const isMacOS = platform === "darwin";
+  const roles = appRoles(appName, isMacOS);
+  const windowItems = windowRoles(isMacOS);
+
+  return [
+    {
+      label: appName,
+      submenu: isMacOS
+        ? [
+            roles.about,
+            separator,
+            roles.services,
+            separator,
+            ...roles.hide,
+            separator,
+            roles.quit,
+          ]
+        : [roles.quit],
+    },
+    { label: editLabel(), submenu: editRoles() },
+    {
+      label: windowLabel(),
+      ...(isMacOS ? { role: "windowMenu" as const } : {}),
+      submenu: isMacOS
+        ? [
+            windowItems.minimize,
+            windowItems.zoom,
+            windowItems.close,
+            separator,
+            windowItems.front,
+          ]
+        : [windowItems.minimize, windowItems.close],
+    },
+  ];
+};
+
 /**
  * Meru's application menu: its own items from the registry, which a platform
  * without a command simply leaves out, and the standard roles, which keep
@@ -106,17 +325,6 @@ export const buildMenuTemplate = ({
     return [commandItem(command, type)];
   };
 
-  const quit: MenuItemConstructorOptions = {
-    label: t({
-      message: `Quit ${appName}`,
-      comment:
-        "Menu item that quits the app; {appName} is the app's name, such as Meru",
-    }),
-    role: "quit",
-    // The role has no key on Windows; v3 gives Quit this one everywhere.
-    ...(!isMacOS && { accelerator: "CommandOrControl+Q" }),
-  };
-
   const doNotDisturb: MenuItemConstructorOptions = {
     label: t({
       message: "Do Not Disturb",
@@ -126,116 +334,36 @@ export const buildMenuTemplate = ({
     submenu: doNotDisturbItems(commands, context, locale, run),
   };
 
+  const roles = appRoles(appName, isMacOS);
   const appMenu: MenuItemConstructorOptions = {
     label: appName,
     submenu: isMacOS
       ? [
-          {
-            label: t({
-              message: `About ${appName}`,
-              comment:
-                "Menu item in the macOS app menu that shows the app's version; {appName} is the app's name",
-            }),
-            role: "about",
-          },
+          roles.about,
           separator,
           ...item("app.settings"),
           separator,
           doNotDisturb,
           separator,
-          {
-            label: t({
-              message: "Services",
-              comment:
-                "The macOS app menu's submenu of system services, named as macOS names it",
-            }),
-            role: "services",
-          },
+          roles.services,
           separator,
-          {
-            label: t({
-              message: `Hide ${appName}`,
-              comment:
-                "Menu item in the macOS app menu that hides the app; {appName} is the app's name",
-            }),
-            role: "hide",
-          },
-          {
-            label: t({
-              message: "Hide Others",
-              comment:
-                "Menu item in the macOS app menu that hides every other app",
-            }),
-            role: "hideOthers",
-          },
-          {
-            label: t({
-              message: "Show All",
-              comment:
-                "Menu item in the macOS app menu that shows every hidden app again",
-            }),
-            role: "unhide",
-          },
+          ...roles.hide,
           separator,
-          quit,
+          roles.quit,
         ]
-      : [...item("app.settings"), separator, doNotDisturb, separator, quit],
+      : [
+          ...item("app.settings"),
+          separator,
+          doNotDisturb,
+          separator,
+          roles.quit,
+        ],
   };
 
   const editMenu: MenuItemConstructorOptions = {
-    label: t({ message: "Edit", comment: "Name of the Edit menu" }),
+    label: editLabel(),
     submenu: [
-      {
-        label: t({ message: "Undo", comment: "Menu item in the Edit menu" }),
-        role: "undo",
-        id: "edit.undo",
-      },
-      {
-        label: t({ message: "Redo", comment: "Menu item in the Edit menu" }),
-        role: "redo",
-        id: "edit.redo",
-      },
-      separator,
-      {
-        label: t({ message: "Cut", comment: "Menu item in the Edit menu" }),
-        role: "cut",
-        id: "edit.cut",
-      },
-      {
-        label: t({ message: "Copy", comment: "Menu item in the Edit menu" }),
-        role: "copy",
-        id: "edit.copy",
-      },
-      {
-        label: t({ message: "Paste", comment: "Menu item in the Edit menu" }),
-        role: "paste",
-        id: "edit.paste",
-      },
-      {
-        label: t({
-          message: "Paste and Match Style",
-          comment:
-            "Menu item in the Edit menu that pastes text without its formatting",
-        }),
-        role: "pasteAndMatchStyle",
-        id: "edit.pasteAndMatchStyle",
-      },
-      {
-        label: t({
-          message: "Delete",
-          comment: "Menu item in the Edit menu that deletes the selected text",
-        }),
-        role: "delete",
-        id: "edit.delete",
-      },
-      {
-        label: t({
-          message: "Select All",
-          comment: "Menu item in the Edit menu",
-        }),
-        role: "selectAll",
-        id: "edit.selectAll",
-      },
+      ...editRoles(),
       separator,
       ...item("tab.find"),
       ...item("tab.findNext"),
@@ -395,14 +523,6 @@ export const buildMenuTemplate = ({
     ],
   };
 
-  const minimize: MenuItemConstructorOptions = {
-    label: t({
-      message: "Minimize",
-      comment: "Menu item in the Window menu",
-    }),
-    role: "minimize",
-  };
-
   // Each profile with a shortcut, by the name the title bar shows.
   const profileSelectItems = enabledProfiles(context.state).flatMap(
     (profile, index) =>
@@ -421,57 +541,21 @@ export const buildMenuTemplate = ({
     ...item("profile.sleep"),
   ];
 
+  const windowItems = windowRoles(isMacOS);
   const windowMenu: MenuItemConstructorOptions = {
-    label: t({ message: "Window", comment: "Name of the Window menu" }),
+    label: windowLabel(),
     ...(isMacOS ? { role: "windowMenu" as const } : {}),
     submenu: isMacOS
       ? [
-          minimize,
-          {
-            label: t({
-              message: "Zoom",
-              comment:
-                "Menu item in the macOS Window menu that toggles the window between its size and filling the screen",
-            }),
-            role: "zoom",
-          },
-          {
-            label: t({
-              message: "Close Window",
-              comment: "Menu item in the macOS Window menu",
-            }),
-            role: "close",
-            id: "window.close",
-          },
+          windowItems.minimize,
+          windowItems.zoom,
+          windowItems.close,
           separator,
           ...profileItems,
           separator,
-          {
-            label: t({
-              message: "Bring All to Front",
-              comment: "Menu item in the macOS Window menu",
-            }),
-            role: "front",
-          },
+          windowItems.front,
         ]
-      : [
-          minimize,
-          // Not the role, whose Ctrl+W would close the window, and so quit
-          // Meru, from a page where people press it to close a tab or a
-          // draft; Alt+F4 still closes it.
-          {
-            label: t({
-              message: "Close",
-              comment: "Menu item in the Window menu that closes the window",
-            }),
-            id: "window.close",
-            click: (_item, window) => {
-              window?.close();
-            },
-          },
-          separator,
-          ...profileItems,
-        ],
+      : [windowItems.minimize, windowItems.close, separator, ...profileItems],
   };
 
   // On macOS the role gives the menu its search field; elsewhere a Help

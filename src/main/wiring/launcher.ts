@@ -1,5 +1,6 @@
 import type { App } from "#core/apps.ts";
 import { contentViewBounds } from "#core/layout.ts";
+import type { ShellFrame } from "#core/layout.ts";
 import type { Platform } from "#core/platform.ts";
 import type { TabKey } from "#core/tabs.ts";
 
@@ -8,7 +9,6 @@ import { createOpenApp } from "../open-app.ts";
 import type { Overlays } from "../overlay.ts";
 import type { Profiles } from "../profiles.ts";
 import type { createShellWindow } from "../shell-window.ts";
-import type { Sidebar } from "../sidebar.ts";
 import type { createTabViews } from "../tab-views.ts";
 
 /** New tab and Open in split, and the bookmarks they list. */
@@ -16,7 +16,7 @@ export const wireLauncher = ({
   platform,
   apps,
   shell,
-  sidebar,
+  frame,
   profiles,
   views,
   overlays,
@@ -25,7 +25,8 @@ export const wireLauncher = ({
   platform: Platform;
   apps: readonly App[];
   shell: ReturnType<typeof createShellWindow>;
-  sidebar: Sidebar;
+  /** The sidebar and the trial footer as they are now. */
+  frame: () => ShellFrame;
   profiles: Profiles;
   views: ReturnType<typeof createTabViews>;
   overlays: Overlays;
@@ -46,11 +47,7 @@ export const wireLauncher = ({
     removeBookmark: profiles.removeBookmark,
     pageUrl: livePageUrl,
     pageSize: () =>
-      contentViewBounds(
-        shell.window.getContentAreaSize(),
-        sidebar.current(),
-        platform
-      ),
+      contentViewBounds(shell.window.getContentAreaSize(), frame(), platform),
     log: console.error,
   });
 

@@ -10,7 +10,9 @@ import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
 
 import {
   NO_TRIAL,
+  SHELL_URL,
   expect,
+  findPage,
   readOpenedExternally,
   stubSystemBrowser,
   test,
@@ -396,7 +398,12 @@ test("a trial that ends while Meru runs ends Pro at the next launch, then reads 
   await second.close();
 
   const third = await launchApp();
+  const shell = await findPage(third, SHELL_URL);
 
+  // The launch after the trial ended asks first.
+  await shell
+    .getByRole("button", { name: "Continue with Free Version" })
+    .click();
   await expectStatus(
     await openPro(third),
     "Your trial has ended",

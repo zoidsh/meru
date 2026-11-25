@@ -77,6 +77,7 @@ const MAIN_HOST = 1;
 const setup = async ({ state = initial }: { state?: State } = {}) => {
   let size: Size = { width: 1280, height: 800 };
   let sidebar: SidebarState = "wide";
+  let trialFooter = false;
   let resize: (() => void) | undefined;
   let online: (() => void) | undefined;
   const views: FakeView[] = [];
@@ -238,7 +239,7 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     },
     senders,
     state: profiles.get,
-    sidebar: () => sidebar,
+    frame: () => ({ sidebar, trialFooter }),
     platform: "linux",
     openTab: profiles.openTab,
     selectTab: profiles.selectTab,
@@ -332,6 +333,10 @@ const setup = async ({ state = initial }: { state?: State } = {}) => {
     found,
     setSidebar: (next: SidebarState) => {
       sidebar = next;
+      tabs.relayout();
+    },
+    setTrialFooter: (shown: boolean) => {
+      trialFooter = shown;
       tabs.relayout();
     },
     resizeTo: (next: Size) => {
@@ -1697,5 +1702,22 @@ describe(createTabViews, () => {
     }
 
     expect(window.views.map((view) => view.loaded.length)).toStrictEqual(loads);
+  });
+
+  it("ends every view at the trial footer, with no inset toward it, and fills the room again once it goes", async () => {
+    const window = await setup();
+
+    window.setSidebar("hidden");
+    window.setTrialFooter(true);
+
+    expect(window.views.map((view) => view.bounds.at(-1))).toStrictEqual(
+      window.views.map(() => ({ x: 8, y: 40, width: 1264, height: 720 }))
+    );
+
+    window.setTrialFooter(false);
+
+    expect(window.views.map((view) => view.bounds.at(-1))).toStrictEqual(
+      window.views.map(() => ({ x: 8, y: 40, width: 1264, height: 752 }))
+    );
   });
 });

@@ -48,6 +48,11 @@ msgstr "{count, plural, one {Links to # site open without asking.} other {Links 
 msgid "{count, plural, one {Set differently for # profile:} other {Set differently for # profiles:}}"
 msgstr "{count, plural, one {Set differently for # profile:} other {Set differently for # profiles:}}"
 
+#. In the footer of the main window during the Meru Pro trial; # counts the calendar days left, two or more
+#: src/shell/trial-footer.tsx
+msgid "{days, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
+msgstr "{days, plural, one {Pro trial ends in # day} other {Pro trial ends in # days}}"
+
 #. About Meru Pro (in Settings and in the main window's notice) during the trial; # counts the calendar days left, two or more
 #: src/shared/license-status.ts
 msgid "{days, plural, one {Your trial ends in # day.} other {Your trial ends in # days.}}"
@@ -625,6 +630,16 @@ msgstr "Content"
 msgid "Content blocker"
 msgstr "Content blocker"
 
+#. Button of the main window's notice that the license or trial could not be confirmed; it closes the notice and Meru goes on as the free version
+#: src/shell/license-notice.tsx
+msgid "Continue with free version"
+msgstr "Continue with free version"
+
+#. Button of the trial-ended screen at launch that goes on with the free version, which is never asked again; in Title Case as the screen's buttons are
+#: src/shell/trial-ended.tsx
+msgid "Continue with Free Version"
+msgstr "Continue with Free Version"
+
 #. Title of the group of Settings for how Gmail shows an open conversation
 #: src/settings/gmail-page.tsx
 msgid "Conversations"
@@ -898,6 +913,11 @@ msgstr "Enter license key"
 #: src/settings/pro-page.tsx
 msgid "Enter license key…"
 msgstr "Enter license key…"
+
+#. Button of the trial-ended screen at launch that opens the license key dialog; in Title Case as the screen's buttons are
+#: src/shell/trial-ended.tsx
+msgid "Enter License Key…"
+msgstr "Enter License Key…"
 
 #. Days of a window of quiet hours, in the Settings caption naming the value under All profiles, as in 22:00–07:00 every day
 #: src/settings/scope.ts
@@ -1288,6 +1308,11 @@ msgstr "Meru holds notifications until quiet hours end."
 msgid "Meru is checking your license."
 msgstr "Meru is checking your license."
 
+#. Description under Your Meru Pro trial has ended, at the launch after the trial
+#: src/shell/trial-ended.tsx
+msgid "Meru is free to use with one profile. Everything from your trial is kept, and it comes back when you upgrade."
+msgstr "Meru is free to use with one profile. Everything from your trial is kept, and it comes back when you upgrade."
+
 #. Title of the alert Meru shows in place of opening a link in the default browser, since Meru itself is the system's default browser
 #: src/main/default-browser-guard.ts
 msgid "Meru is your default browser"
@@ -1314,8 +1339,10 @@ msgstr "Meru keeps trying by itself."
 msgid "Meru Pro"
 msgstr "Meru Pro"
 
+#. Accessible name of the footer of the main window that counts the days left of the Meru Pro trial
 #. Status about Meru Pro (in Settings and in the main window's notice) during the trial
 #: src/shared/license-status.ts
+#: src/shell/trial-footer.tsx
 msgid "Meru Pro trial"
 msgstr "Meru Pro trial"
 
@@ -1486,6 +1513,11 @@ msgstr "Not enough room"
 msgid "Not enough room to split"
 msgstr "Not enough room to split"
 
+#. Button of the main window's notice about Meru Pro that closes it, changing nothing
+#: src/shell/license-notice.tsx
+msgid "Not now"
+msgstr "Not now"
+
 #. Under a profile's name in Settings' list of profiles, when its Google account is signed out
 #: src/settings/signed-in.tsx
 msgid "Not signed in"
@@ -1512,6 +1544,11 @@ msgstr "OK"
 #: src/settings/scope.ts
 msgid "On"
 msgstr "On"
+
+#. Second description under Your Meru Pro trial has ended when there are several profiles; {name} is the first profile's name
+#: src/shell/trial-ended.tsx
+msgid "On the free version, Meru uses your first profile, {name}."
+msgstr "On the free version, Meru uses your first profile, {name}."
 
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications; {time} is the time of day it ends, such as 14:30
 #: src/main/do-not-disturb.ts
@@ -1667,6 +1704,16 @@ msgstr "Privacy & Security"
 #: src/shared/license-status.ts
 msgid "Pro features turn off when you quit Meru."
 msgstr "Pro features turn off when you quit Meru."
+
+#. In the footer of the main window on the Meru Pro trial's last day
+#: src/shell/trial-footer.tsx
+msgid "Pro trial ends today"
+msgstr "Pro trial ends today"
+
+#. In the footer of the main window on the Meru Pro trial's last day but one
+#: src/shell/trial-footer.tsx
+msgid "Pro trial ends tomorrow"
+msgstr "Pro trial ends tomorrow"
 
 #. Name given to a newly added profile, where {n} is a number from 2 up; the person can rename it later
 #: src/main/profile-copy.ts
@@ -2444,8 +2491,10 @@ msgid "Trusted sites"
 msgstr "Trusted sites"
 
 #. Button in place of a tab's page that could not load, which tries to load it again now
+#. Button of the main window's notice that the license or trial could not be confirmed; it asks Meru's license server again now
 #. Button on the Meru Pro page of Settings that asks Meru's license server again now
 #: src/settings/pro-page.tsx
+#: src/shell/license-notice.tsx
 #: src/shell/tab-problem.tsx
 msgid "Try again"
 msgstr "Try again"
@@ -2560,11 +2609,20 @@ msgid "Until Turned Off"
 msgstr "Until Turned Off"
 
 #. Button in the popover a Meru Pro badge opens in Settings, which opens Meru Pro's page in the default browser
+#. Button of the main window's notice that Meru Pro ends when Meru quits; it opens Meru Pro's page in the default browser
+#. Button of the trial-ended screen at launch that opens Meru Pro's page in the default browser
 #. Button on the Meru Pro page of Settings that opens Meru Pro's page in the default browser
 #: src/settings/pro-badge.tsx
 #: src/settings/pro-page.tsx
+#: src/shell/license-notice.tsx
+#: src/shell/trial-ended.tsx
 msgid "Upgrade"
 msgstr "Upgrade"
+
+#. Button in the trial footer of the main window that opens Meru Pro's page in the default browser
+#: src/shell/trial-footer.tsx
+msgid "Upgrade now"
+msgstr "Upgrade now"
 
 #. Second sentence about Meru Pro (in Settings and in the main window's notice) during the trial, beside the Upgrade button
 #: src/shared/license-status.ts
@@ -2749,6 +2807,11 @@ msgstr "Your computer's date looks wrong"
 #: src/shared/license-status.ts
 msgid "Your license can't be used"
 msgstr "Your license can't be used"
+
+#. Heading of the main window at the launch after the Meru Pro trial ended, before any profile starts
+#: src/shell/trial-ended.tsx
+msgid "Your Meru Pro trial has ended"
+msgstr "Your Meru Pro trial has ended"
 
 #. Unavailable first item of the Spelling menu in Settings when there is no dictionary for the system's language and none was chosen in its place
 #: src/settings/language-group.tsx

@@ -2,6 +2,7 @@
 // these names, carries no zod.
 
 import { contractChannels } from "./channels.ts";
+import { SHELL_ENTITLEMENT_CALL_NAMES } from "./entitlement-channels.ts";
 
 export const SHELL_CALL_NAMES = [
   "selectProfile",
@@ -45,6 +46,7 @@ export const SHELL_CALL_NAMES = [
   "openTabMenu",
   "openOwnWindowMenu",
   "openProfileMenu",
+  ...SHELL_ENTITLEMENT_CALL_NAMES,
 ] as const;
 
 /** What the titlebar's navigation buttons ask of the front tab. */

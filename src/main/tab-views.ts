@@ -5,11 +5,11 @@ import { findApp, restoreUrl } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import type { FoundInPage } from "#core/find.ts";
 import { contentViewBounds, viewFrame } from "#core/layout.ts";
+import type { ShellFrame } from "#core/layout.ts";
 import { OWN_WINDOW_RADIUS } from "#core/own-window.ts";
 import { FOCUS_RING, paneHandles, paneTabs } from "#core/pane-tree.ts";
 import type { PaneDirection, PaneHandle, PaneTree } from "#core/pane-tree.ts";
 import type { Platform } from "#core/platform.ts";
-import type { SidebarState } from "#core/sidebar.ts";
 import {
   inOwnWindow,
   hasNoPages,
@@ -63,8 +63,8 @@ export interface TabViewsDeps {
   senders: Pick<SenderRegistry, "register">;
   /** Reads main's state as it is now. */
   state: () => State;
-  /** The sidebar as it is now; `relayout` follows a change. */
-  sidebar: () => SidebarState;
+  /** The sidebar and the trial footer as they are now; `relayout` follows a change. */
+  frame: () => ShellFrame;
   /** Where the narrow sidebar's width comes from. */
   platform: Platform;
   /** Opens the tab, under `tabId` when it is a new one, after the tab `after` names. */
@@ -171,7 +171,7 @@ export const createTabViews = ({
   network,
   senders,
   state,
-  sidebar,
+  frame,
   platform,
   openTab,
   selectTab,
@@ -234,7 +234,7 @@ export const createTabViews = ({
   const pageArea = (): Rectangle => {
     const { width, height } = contentViewBounds(
       window.getContentAreaSize(),
-      sidebar(),
+      frame(),
       platform
     );
 
@@ -257,10 +257,10 @@ export const createTabViews = ({
 
     const area = contentViewBounds(
       window.getContentAreaSize(),
-      sidebar(),
+      frame(),
       platform
     );
-    const { radius } = viewFrame(sidebar());
+    const { radius } = viewFrame(frame());
     const profileId = onScreen.shown[0]?.profileId;
     const pane = onScreen.panes
       ? placeShown(laidOut(), area).find(
@@ -1116,7 +1116,7 @@ export const createTabViews = ({
         ? tab.view.focus
         : undefined;
     },
-    /** Places every view again, as the sidebar now has it, loading nothing. */
+    /** Places every view again, as the sidebar and the footer now have it, loading nothing. */
     relayout,
     /** What focuses the front tab's view; nothing unless it is showing. */
     focuser: () => {

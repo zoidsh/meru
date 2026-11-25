@@ -44,7 +44,11 @@ export interface ContractIpcDeps<
   slices: Slices;
   channels: ContractChannels<keyof Calls & string>;
   handlers: ContractHandlers<Calls>;
-  state: ContractStateSource<ContractState<Slices>>;
+  /**
+   * A slice it leaves out reads as not known yet, as a renderer's does until
+   * the first snapshot; the shell's, while the launch waits, has only a few.
+   */
+  state: ContractStateSource<Partial<ContractState<Slices>>>;
   log: (message: string) => void;
 }
 

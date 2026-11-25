@@ -280,6 +280,19 @@ describe("an end no date holds", () => {
           { open: false, profiles: [], rows: [], notice: null },
           {
             language: "en",
+            pro: {
+              trialChoice: false,
+              firstProfile: null,
+              trialFooterDays: null,
+              licenseRequest: false,
+              standing: {
+                status: "licensed",
+                unconfirmedReason: null,
+                trialDaysLeft: null,
+                downgradePending: false,
+                hasLicenseKey: true,
+              },
+            },
             sidebar: { state: "hidden" },
             appearance: {
               tint: true,

@@ -228,6 +228,7 @@ const setup = ({
         menuPoints.push(at);
       },
     },
+    trialFooter: () => false,
     sidebar: {
       current: () => sidebar,
       toggleWidth: () => {
@@ -451,6 +452,19 @@ const CLOSED_INBOX = { open: false, profiles: [], rows: [], notice: null };
 
 const CHROME = {
   language: "en",
+  pro: {
+    trialChoice: false,
+    firstProfile: null,
+    trialFooterDays: null,
+    licenseRequest: false,
+    standing: {
+      status: "licensed",
+      unconfirmedReason: null,
+      trialDaysLeft: null,
+      downgradePending: false,
+      hasLicenseKey: true,
+    },
+  } as ShellState["pro"],
   sidebar: { state: "hidden" },
   appearance: {
     tint: true,

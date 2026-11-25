@@ -41,7 +41,7 @@ test("shows the stand-in in the content rectangle below the titlebar and 8px fro
 
   const bounds = contentViewBounds(
     area,
-    "hidden",
+    { sidebar: "hidden", trialFooter: true },
     process.platform as Platform
   );
 
@@ -67,10 +67,10 @@ test("shows the stand-in in the content rectangle below the titlebar and 8px fro
 
       return layout.views.map((each) => each.bounds);
     })
-    .toStrictEqual([{ x: 8, y: 40, width: 884, height: 592 }]);
+    .toStrictEqual([{ x: 8, y: 40, width: 884, height: 560 }]);
   await expect
     .poll(() => view.evaluate(() => [window.innerWidth, window.innerHeight]))
-    .toStrictEqual([884, 592]);
+    .toStrictEqual([884, 560]);
 });
 
 test("a second launch keeps the profile and its session's cookie", async ({

@@ -120,7 +120,7 @@ test("adding a profile draws the profile row, the new one selected, and a view i
       profileId: first,
       bounds: contentViewBounds(
         content,
-        "hidden",
+        { sidebar: "hidden", trialFooter: true },
         process.platform as Platform
       ),
       visible: false,
@@ -129,7 +129,7 @@ test("adding a profile draws the profile row, the new one selected, and a view i
       profileId: second,
       bounds: contentViewBounds(
         content,
-        "hidden",
+        { sidebar: "hidden", trialFooter: true },
         process.platform as Platform
       ),
       visible: true,
@@ -166,7 +166,11 @@ test("switching back shows the first view in the content rectangle and hides the
         ...view,
         inContent: isEqual(
           view.bounds,
-          contentViewBounds(content, "hidden", process.platform as Platform)
+          contentViewBounds(
+            content,
+            { sidebar: "hidden", trialFooter: true },
+            process.platform as Platform
+          )
         ),
       }));
     })

@@ -244,6 +244,27 @@ export const entitlementAt = (
 };
 
 /**
+ * What the main window announces of the entitlement: that it could not be
+ * confirmed, or that Meru Pro, still granted to this run, ends at the next
+ * launch.
+ */
+export const lapseNotice = ({
+  status,
+  downgradePending,
+}: {
+  status: EntitlementStatus;
+  downgradePending: boolean;
+}): "unconfirmed" | "downgrade" | undefined => {
+  if (status === "unconfirmed") {
+    return "unconfirmed";
+  }
+
+  return downgradePending && (status === "trialEnded" || status === "refused")
+    ? "downgrade"
+    : undefined;
+};
+
+/**
  * The next instant after `now` at which `entitlementAt` can answer
  * differently with the record unchanged, or `undefined` for none.
  */

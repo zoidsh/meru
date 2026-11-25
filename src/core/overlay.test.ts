@@ -121,20 +121,35 @@ describe(transitionOverlay, () => {
 describe(overlayRectangle, () => {
   it("puts a card's view over the page area", () => {
     expect(
-      overlayRectangle({ width: 1000, height: 700 }, "narrow", "linux", {
-        kind: "open-app",
-      })
+      overlayRectangle(
+        { width: 1000, height: 700 },
+        { sidebar: "narrow", trialFooter: false },
+        "linux",
+        {
+          kind: "open-app",
+        }
+      )
     ).toStrictEqual({ x: 64, y: 40, width: 928, height: 652 });
   });
 
   it("puts a toast's view in the page area's bottom right corner, no larger than the area", () => {
     expect([
-      overlayRectangle({ width: 1000, height: 700 }, "narrow", "linux", {
-        kind: "toast",
-      }),
-      overlayRectangle({ width: 300, height: 100 }, "hidden", "linux", {
-        kind: "toast",
-      }),
+      overlayRectangle(
+        { width: 1000, height: 700 },
+        { sidebar: "narrow", trialFooter: false },
+        "linux",
+        {
+          kind: "toast",
+        }
+      ),
+      overlayRectangle(
+        { width: 300, height: 100 },
+        { sidebar: "hidden", trialFooter: false },
+        "linux",
+        {
+          kind: "toast",
+        }
+      ),
     ]).toStrictEqual([
       { x: 576, y: 604, width: 416, height: 88 },
       { x: 8, y: 40, width: 284, height: 52 },
@@ -145,10 +160,15 @@ describe(overlayRectangle, () => {
     const size = { width: 1000, height: 700 };
 
     expect([
-      overlayRectangle(size, "narrow", "linux", { kind: "find" }),
       overlayRectangle(
         size,
-        "narrow",
+        { sidebar: "narrow", trialFooter: false },
+        "linux",
+        { kind: "find" }
+      ),
+      overlayRectangle(
+        size,
+        { sidebar: "narrow", trialFooter: false },
         "linux",
         { kind: "find" },
         { x: 0, y: 326, width: 928, height: 326 }

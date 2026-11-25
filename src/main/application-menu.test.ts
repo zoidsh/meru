@@ -6,6 +6,7 @@ import { decodeState, gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import {
+  buildLaunchMenuTemplate,
   buildMenuTemplate,
   createApplicationMenu,
 } from "./application-menu.ts";
@@ -458,6 +459,46 @@ const setup = () => {
     },
   };
 };
+
+/** Each menu's items, by role or id, separators left out. */
+const launchOutline = (platform: Platform) =>
+  buildLaunchMenuTemplate({ platform, appName: "Meru" }).map((menu) => [
+    menu.label,
+    (menu.submenu as MenuItemConstructorOptions[])
+      .filter((item) => item.type !== "separator")
+      .map((item) => item.role ?? item.id),
+  ]);
+
+describe(buildLaunchMenuTemplate, () => {
+  it("offers only the app's and the window's own items and editing while the launch waits, with nothing that reaches a profile", () => {
+    expect(launchOutline("darwin")).toStrictEqual([
+      ["Meru", ["about", "services", "hide", "hideOthers", "unhide", "quit"]],
+      [
+        "Edit",
+        [
+          "undo",
+          "redo",
+          "cut",
+          "copy",
+          "paste",
+          "pasteAndMatchStyle",
+          "delete",
+          "selectAll",
+        ],
+      ],
+      ["Window", ["minimize", "zoom", "close", "front"]],
+    ]);
+    expect(launchOutline("linux").map(([label]) => label)).toStrictEqual([
+      "Meru",
+      "Edit",
+      "Window",
+    ]);
+    expect(launchOutline("win32")[2]).toStrictEqual([
+      "Window",
+      ["minimize", "window.close"],
+    ]);
+  });
+});
 
 describe(createApplicationMenu, () => {
   it("sets the menu at once, and again only when what it offers changes", () => {

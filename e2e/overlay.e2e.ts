@@ -173,7 +173,7 @@ test("at launch the page has focus; New tab from the menu shows its card over it
   expect(view.bounds).toStrictEqual(
     overlayRectangle(
       view.area ?? { width: 0, height: 0 },
-      "hidden",
+      { sidebar: "hidden", trialFooter: true },
       process.platform as Platform,
       {
         kind: "open-app",

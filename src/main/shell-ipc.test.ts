@@ -6,7 +6,7 @@ import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
 import { RefusedCallError } from "./contract-ipc.ts";
 import { createSenderRegistry } from "./senders.ts";
-import { serveShellContract } from "./shell-ipc.ts";
+import { createShellSource, serveShellContract } from "./shell-ipc.ts";
 import type { ShellHandlers } from "./shell-ipc.ts";
 
 const SHELL = 1;
@@ -80,6 +80,19 @@ const setup = () => {
   const changeListeners: (() => void)[] = [];
   let state: ShellState = {
     language: "en",
+    pro: {
+      trialChoice: false,
+      firstProfile: null,
+      trialFooterDays: null,
+      licenseRequest: false,
+      standing: {
+        status: "licensed",
+        unconfirmedReason: null,
+        trialDaysLeft: null,
+        downgradePending: false,
+        hasLicenseKey: true,
+      },
+    },
     profiles: profilesSlice("a"),
     tabs: TABS,
     sidebar: { state: "hidden" },
@@ -133,6 +146,14 @@ const setup = () => {
   senders.register(OVERLAY, { role: "overlay" });
 
   const handlers: ShellHandlers = {
+    activateLicense: (request) => {
+      calls.push(["activateLicense", request]);
+
+      return Promise.resolve({ ok: true } as const);
+    },
+    retryEntitlement: () => Promise.resolve(),
+    continueFree: () => Promise.resolve({ ok: true } as const),
+    openMeruPro: () => Promise.resolve(),
     navigateTab: (request) => {
       calls.push(["navigateTab", request]);
 
@@ -689,5 +710,129 @@ describe(serveShellContract, () => {
     expect(shell.sentTo(4)).toStrictEqual([
       { kind: "snapshot", slices: { profiles: profilesSlice("a") } },
     ]);
+  });
+});
+
+describe(createShellSource, () => {
+  const PRO: ShellState["pro"] = {
+    trialChoice: true,
+    firstProfile: null,
+    trialFooterDays: null,
+    licenseRequest: false,
+    standing: {
+      status: "trialEnded",
+      unconfirmedReason: null,
+      trialDaysLeft: null,
+      downgradePending: false,
+      hasLicenseKey: false,
+    },
+  };
+
+  const sourceSetup = () => {
+    const launched: unknown[] = [];
+    const launchListeners: (() => void)[] = [];
+    let launchState = { language: "en", pro: PRO };
+    const source = createShellSource({
+      handlers: {
+        activateLicense: (request) => {
+          launched.push(["activateLicense", request]);
+
+          return Promise.resolve({ ok: true } as const);
+        },
+        retryEntitlement: () => Promise.resolve(),
+        continueFree: () => {
+          launched.push(["continueFree"]);
+
+          return Promise.resolve({ ok: true } as const);
+        },
+        openMeruPro: () => Promise.resolve(),
+      },
+      state: {
+        read: () => launchState,
+        onChange: (listener) => {
+          launchListeners.push(listener);
+        },
+      },
+    });
+    let told = 0;
+
+    source.state.onChange(() => {
+      told += 1;
+    });
+
+    return {
+      source,
+      launched,
+      told: () => told,
+      moveLaunch: (pro: ShellState["pro"]) => {
+        launchState = { ...launchState, pro };
+
+        for (const listener of launchListeners) {
+          listener();
+        }
+      },
+    };
+  };
+
+  it("answers the trial-ended screen's calls and slices before the app starts, and refuses every other call", async () => {
+    const { source, launched, told, moveLaunch } = sourceSetup();
+
+    await source.handlers.continueFree(undefined);
+
+    expect(launched).toStrictEqual([["continueFree"]]);
+    expect(() =>
+      source.handlers.selectTab({ profileId: "a", tabId: "gmail" })
+    ).toThrow(RefusedCallError);
+    expect(source.state.read()).toStrictEqual({ language: "en", pro: PRO });
+
+    moveLaunch({ ...PRO, licenseRequest: true });
+
+    expect([told(), source.state.read().pro?.licenseRequest]).toStrictEqual([
+      1,
+      true,
+    ]);
+  });
+
+  it("answers from the app's once started, telling the change, and only once", async () => {
+    const { source, told, moveLaunch } = sourceSetup();
+    const appCalls: unknown[] = [];
+    const appListeners: (() => void)[] = [];
+    const appState = { language: "de", pro: { ...PRO, trialChoice: false } };
+    const app = {
+      handlers: {
+        selectTab: (request: unknown) => {
+          appCalls.push(request);
+
+          return Promise.resolve();
+        },
+      } as unknown as ShellHandlers,
+      state: {
+        read: () => appState as unknown as ShellState,
+        onChange: (listener: () => void) => {
+          appListeners.push(listener);
+        },
+      },
+    };
+
+    source.start(app);
+    await source.handlers.selectTab({ profileId: "a", tabId: "gmail" });
+
+    expect([told(), appCalls, source.state.read()]).toStrictEqual([
+      1,
+      [{ profileId: "a", tabId: "gmail" }],
+      appState,
+    ]);
+
+    // The launch's own changes no longer tell; the app's do.
+    moveLaunch(PRO);
+
+    for (const listener of appListeners) {
+      listener();
+    }
+
+    expect(told()).toBe(2);
+    expect(() => {
+      source.start(app);
+    }).toThrow("started already");
   });
 });

@@ -55,9 +55,13 @@ test("the view sits as the shell draws it, on the shell grey the window has too 
   expect(menuBarVisible).toBe(process.platform === "darwin");
   expect(area).toStrictEqual(content);
   expect(views.map((view) => view.bounds)).toStrictEqual([
-    contentViewBounds(area, "hidden", process.platform as Platform),
+    contentViewBounds(
+      area,
+      { sidebar: "hidden", trialFooter: true },
+      process.platform as Platform
+    ),
   ]);
-  await expect.poll(() => drawnPadding(shell)).toBe("0px 8px 8px");
+  await expect.poll(() => drawnPadding(shell)).toBe("0px 8px");
   // Playwright emulates the light theme in the page, not in main. The first
   // profile's colour is the palette's first.
   const [drawn, tinted] = await shell

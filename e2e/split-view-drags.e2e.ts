@@ -308,10 +308,11 @@ test("near the view's outer edge a tab goes along it with a third of the view; a
   const [, height] = await areaSize(shell);
   const area = await rectOf(shell, AREA);
 
-  // In the window's inset below the view, which counts as its edge.
+  // In the window's inset beside the view, which counts as its edge; the
+  // trial's footer takes the one below.
   await holdOver(shell, "o", {
-    x: area.x + area.width / 2,
-    y: area.y + area.height + 4,
+    x: area.x + area.width + 4,
+    y: area.y + area.height / 2,
   });
   await expect
     .poll(() => zoneShown(overlay).then((zone) => zone !== "none" && zone.kind))

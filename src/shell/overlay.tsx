@@ -9,6 +9,7 @@ import { Downloads } from "./downloads.tsx";
 import { DropZone } from "./drop-zone.tsx";
 import { FindBar } from "./find-bar.tsx";
 import { Inbox } from "./inbox.tsx";
+import { LicenseNotice } from "./license-notice.tsx";
 import { OpenAppOverlay } from "./open-app.tsx";
 import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
@@ -91,6 +92,7 @@ export const OverlayLayer = () => {
   const overlay = useShellState("overlay");
   const inbox = useShellState("inbox");
   const downloads = useShellState("downloads");
+  const pro = useShellState("pro");
   const target = openOverlayDocument();
   const open = overlay && overlay.kind !== "none" ? overlay : undefined;
 
@@ -110,6 +112,10 @@ export const OverlayLayer = () => {
     }
     case "downloads": {
       drawn = downloads?.open && <Downloads downloads={downloads} />;
+      break;
+    }
+    case "license": {
+      drawn = pro && <LicenseNotice pro={pro} />;
       break;
     }
     case "open-app": {

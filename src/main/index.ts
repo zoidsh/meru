@@ -1,5 +1,8 @@
 import path from "node:path";
 
+import { pick } from "es-toolkit";
+
+import { SHELL_ENTITLEMENT_CALL_NAMES } from "#contract/entitlement-channels.ts";
 import { launchWindow } from "#core/launch-window.ts";
 import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
@@ -13,22 +16,33 @@ import { createAppLifecycle } from "#platform/app.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
+import { setApplicationMenu } from "#platform/menu.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSpellChecker } from "#platform/spellcheck.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createTheme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
+import { buildLaunchMenuTemplate } from "./application-menu.ts";
 import { createDeleteBrowsingData } from "./browsing-data.ts";
+import { entitlementHandlers } from "./entitlement-handlers.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
 import { createLanguage } from "./language.ts";
 import { createOverlays } from "./overlay.ts";
 import { createSenderRegistry } from "./senders.ts";
+import { createShellSource, serveShellContract } from "./shell-ipc.ts";
+import {
+  createTrialChoice,
+  followLicenseNotice,
+  readShellPro,
+  showsTrialFooter,
+} from "./shell-pro.ts";
 import { createShellWindow } from "./shell-window.ts";
 import { createSpellcheck } from "./spellcheck.ts";
 import { createTabViews } from "./tab-views.ts";
 import { followThemeSetting } from "./theme.ts";
+import { revealWindow } from "./windows.ts";
 import { wireAddProfile } from "./wiring/add-profile.ts";
 import { wireContentBlocker } from "./wiring/content-blocker.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
@@ -131,6 +145,9 @@ const start = async () => {
     licenseRequests,
   } = await wireStores({ lifecycle, newId, clipboard });
 
+  // Decided once, from the entitlement read at launch.
+  const trialChoice = createTrialChoice({ entitlement });
+
   // Before anything that shows a string, as the entitlement's launch prompt.
   const language = createLanguage({
     settings,
@@ -163,11 +180,15 @@ const start = async () => {
 
   const displays = createDisplays();
   const shell = createShellWindow({
-    atLaunch: launchWindow({
-      openInBackground: settings.get("openInBackground"),
-      platform,
-      trayShown: settings.get("tray"),
-    }),
+    // The trial-ended screen shows whatever Open in the background says:
+    // until the person chooses, no tray or Dock item of Meru's can bring it.
+    atLaunch: trialChoice.waiting()
+      ? "shown"
+      : launchWindow({
+          openInBackground: settings.get("openInBackground"),
+          platform,
+          trayShown: settings.get("tray"),
+        }),
     windows: createWindowFactory(contextMenus),
     displays,
     title: lifecycle.name,
@@ -182,6 +203,85 @@ const start = async () => {
 
   senders.register(shell.window.webContentsId, { role: "shell" });
   wireShellRecovery({ lifecycle, errorDialog, shell });
+
+  // A page's links leave through the opener, which asks first; Meru's own, as
+  // Open in Browser, through `systemBrowser`, which asks nothing. Both show
+  // the default-browser alert while Meru is the default browser.
+  const {
+    linkOpener,
+    ownLinks: systemBrowser,
+    trustedSites,
+  } = wireLinks({
+    platform,
+    settings,
+    systemBrowser: createSystemBrowser(),
+    clipboard,
+  });
+  const launchHandlers = pick(
+    entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
+    SHELL_ENTITLEMENT_CALL_NAMES
+  );
+  const pro = () =>
+    readShellPro({ entitlement, licenseRequests, trialChoice, profiles });
+  const onProChange = (listener: () => void) => {
+    entitlement.onChange(listener);
+    licenseRequests.onChange(listener);
+    trialChoice.onChange(listener);
+    profiles.onChange(listener);
+  };
+  // Served from the first paint, so the trial-ended screen can draw before
+  // anything of a profile exists.
+  const shellContract = createShellSource({
+    handlers: launchHandlers,
+    state: {
+      read: () => ({ language: language.current(), pro: pro() }),
+      onChange: (listener) => {
+        language.onChange(listener);
+        onProChange(listener);
+      },
+    },
+  });
+
+  serveShellContract({
+    ipc,
+    senders,
+    shellOrigin,
+    ...shellContract,
+    log: console.error,
+  });
+
+  let shellLoaded = false;
+
+  if (trialChoice.waiting()) {
+    // Nothing of a profile runs until the person chooses: no view, session,
+    // mail check, notification, tray or unified inbox, and no command that
+    // would reach one.
+    setApplicationMenu(
+      buildLaunchMenuTemplate({ platform, appName: lifecycle.name })
+    );
+
+    const reveal = () => {
+      if (trialChoice.waiting()) {
+        revealWindow(shell.window, background);
+      }
+    };
+
+    lifecycle.onActivate(reveal);
+    lifecycle.onSecondInstance(reveal);
+    await shell.load();
+    shellLoaded = true;
+
+    if (!background) {
+      shell.window.focusPage();
+    }
+
+    await trialChoice.chosen;
+  }
+
+  const frame = () => ({
+    sidebar: sidebar.current(),
+    trialFooter: showsTrialFooter(entitlement),
+  });
 
   const focus = createFocus({
     window: shell.window,
@@ -233,7 +333,7 @@ const start = async () => {
     bounds: (overlay) =>
       overlayRectangle(
         shell.window.getContentAreaSize(),
-        sidebar.current(),
+        frame(),
         platform,
         overlay,
         overlay.kind === "find"
@@ -309,19 +409,6 @@ const start = async () => {
         settings,
         log: console.error,
       });
-  // A page's links leave through the opener, which asks first; Meru's own, as
-  // Open in Browser, through `systemBrowser`, which asks nothing. Both show
-  // the default-browser alert while Meru is the default browser.
-  const {
-    linkOpener,
-    ownLinks: systemBrowser,
-    trustedSites,
-  } = wireLinks({
-    platform,
-    settings,
-    systemBrowser: createSystemBrowser(),
-    clipboard,
-  });
   const preloads = new Map([
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
   ]);
@@ -333,7 +420,7 @@ const start = async () => {
     closeInbox: () => inbox.setOpen(false),
   });
   const views = createTabViews({
-    sidebar: sidebar.current,
+    frame,
     platform,
     window: shell.window,
     ownWindows,
@@ -427,7 +514,7 @@ const start = async () => {
     platform,
     apps,
     shell,
-    sidebar,
+    frame,
     profiles,
     views,
     overlays,
@@ -478,6 +565,9 @@ const start = async () => {
   });
   sidebar.onChange(views.relayout);
   sidebar.onChange(overlays.relayout);
+  // The trial footer, coming or going, moves the pages as the sidebar does.
+  entitlement.onChange(views.relayout);
+  entitlement.onChange(overlays.relayout);
 
   const {
     openSettings,
@@ -549,9 +639,11 @@ const start = async () => {
     platform,
     language,
     apps,
-    ipc,
-    senders,
-    shellOrigin,
+    shellContract,
+    launchHandlers,
+    pro,
+    onProChange,
+    trialFooter: () => showsTrialFooter(entitlement),
     shell,
     profiles,
     views,
@@ -593,7 +685,12 @@ const start = async () => {
     doNotDisturb,
   });
 
-  await shell.load();
+  followLicenseNotice({ entitlement, overlays });
+
+  // Loaded already for the trial-ended screen, which then gave way.
+  if (!shellLoaded) {
+    await shell.load();
+  }
 
   failures.markStarted();
 };

@@ -30,6 +30,7 @@ const connect = () => {
     "downloads",
     "windows",
     "language",
+    "pro",
   ]);
 
   return connection;

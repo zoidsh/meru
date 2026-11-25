@@ -17,6 +17,8 @@ import { useShellState } from "./sync.ts";
 import { TabProblem } from "./tab-problem.tsx";
 import { Sidebar } from "./tab-strip.tsx";
 import { Titlebar } from "./titlebar.tsx";
+import { TrialEnded } from "./trial-ended.tsx";
+import { TrialFooter } from "./trial-footer.tsx";
 
 type Tabs = ShellState["tabs"];
 
@@ -104,13 +106,18 @@ const Panes = ({
   </div>
 );
 
-export const App = () => {
+/** The main window as drawn once the launch has gone on. */
+const MainWindow = ({ pro }: { pro: ShellState["pro"] | undefined }) => {
   const { t } = useLingui();
   const tabs = useShellState("tabs");
   const profiles = useShellState("profiles");
   const sidebar = useShellState("sidebar")?.state ?? "hidden";
   const tint = useShellState("appearance")?.tint ?? true;
-  const { inset, radius } = viewFrame(sidebar);
+  const footerDays = pro?.trialFooterDays ?? null;
+  const { inset, radius } = viewFrame({
+    sidebar,
+    trialFooter: footerDays !== null,
+  });
   const selected = profiles?.profiles.find(
     (profile) => profile.id === profiles.selectedProfileId
   );
@@ -164,9 +171,18 @@ export const App = () => {
             )}
           </main>
         </div>
+        {footerDays !== null && <TrialFooter days={footerDays} />}
         <OverlayLayer />
       </div>
       <OwnWindows />
     </>
   );
+};
+
+export const App = () => {
+  const pro = useShellState("pro");
+
+  // Until the person chooses, no profile has started, so there is nothing
+  // else to draw and no overlay document to open.
+  return pro?.trialChoice ? <TrialEnded pro={pro} /> : <MainWindow pro={pro} />;
 };

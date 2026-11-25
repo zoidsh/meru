@@ -1,5 +1,6 @@
 import { findRectangle } from "./find.ts";
 import { contentViewBounds } from "./layout.ts";
+import type { ShellFrame } from "./layout.ts";
 import {
   ownWindowDownloadsOfFrame,
   ownWindowFindOfFrame,
@@ -7,7 +8,6 @@ import {
 } from "./own-window.ts";
 import type { PaneDirection } from "./pane-tree.ts";
 import type { Platform } from "./platform.ts";
-import type { SidebarState } from "./sidebar.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
@@ -43,6 +43,11 @@ export type Overlay =
   | { kind: "inbox" }
   | { kind: "downloads" }
   /**
+   * The notice that Meru Pro ends at the next launch or could not be
+   * confirmed, which only its own buttons and Escape close.
+   */
+  | { kind: "license" }
+  /**
    * The find bar over a tab's page, the focused pane's in a split, which
    * takes focus but stays while the page is pressed or the window loses it.
    */
@@ -55,10 +60,10 @@ export const takesNoFocus = (overlay: Pick<Overlay, "kind"> | undefined) =>
 /**
  * Whether an overlay stays open when the person presses outside it or the
  * window loses focus: the find bar, beside which the page's matches are
- * clicked.
+ * clicked, and the license notice, which says something to read once.
  */
 export const staysOpenOutside = (overlay: Pick<Overlay, "kind"> | undefined) =>
-  overlay?.kind === "find";
+  overlay?.kind === "find" || overlay?.kind === "license";
 
 /**
  * Whether an overlay is a card over the page, which takes the keys a page's
@@ -95,12 +100,12 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth =>
  */
 export const overlayRectangle = (
   contentSize: Size,
-  sidebar: SidebarState,
+  frame: ShellFrame,
   platform: Platform,
   overlay: Pick<Overlay, "kind">,
   pane?: Rectangle
 ): Rectangle => {
-  const area = contentViewBounds(contentSize, sidebar, platform);
+  const area = contentViewBounds(contentSize, frame, platform);
 
   if (overlay.kind === "find") {
     return findRectangle(area, pane);
@@ -155,6 +160,7 @@ export const transitionOverlay = (
       if (
         current?.kind === "inbox" ||
         current?.kind === "downloads" ||
+        current?.kind === "license" ||
         current?.kind === "toast" ||
         current?.kind === "drop"
       ) {

@@ -39,7 +39,7 @@ import type { PaneResizer } from "./pane-resize.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { ProfileMenu } from "./profile-menu.ts";
 import type { Profiles } from "./profiles.ts";
-import type { ShellHandlers } from "./shell-ipc.ts";
+import type { LaunchHandlers, ShellHandlers } from "./shell-ipc.ts";
 import type { Sidebar } from "./sidebar.ts";
 import type { TabMenu } from "./tab-menu.ts";
 
@@ -91,6 +91,8 @@ export interface ShellHandlersDeps {
   openGmail: (profileId: string) => Promise<unknown>;
   window: Pick<AppWindow, "showContextMenu" | "getContentAreaSize">;
   sidebar: Pick<Sidebar, "current" | "toggleWidth">;
+  /** Whether the trial footer shows below the page. */
+  trialFooter: () => boolean;
   focus: Pick<Focus, "focus">;
   /** Runs a command of the registry, as its menu item would. */
   runCommand: (id: string) => void;
@@ -148,7 +150,11 @@ const shellOverlay = (
   find: FindBar | undefined,
   bookmarkRows: (profileId: string) => BookmarkRows
 ): ShellState["overlay"] => {
-  if (overlay?.kind === "inbox" || overlay?.kind === "downloads") {
+  if (
+    overlay?.kind === "inbox" ||
+    overlay?.kind === "downloads" ||
+    overlay?.kind === "license"
+  ) {
     return { kind: overlay.kind };
   }
 
@@ -266,6 +272,7 @@ export const shellState = (
     | "navigation"
     | "windows"
     | "downloads"
+    | "pro"
   >,
   /** The registry, or the suite's stand-ins for it, which New tab lists. */
   apps: readonly App[]
@@ -338,270 +345,276 @@ export const createShellHandlers = ({
   openGmail,
   window,
   sidebar,
+  trialFooter,
   focus,
   runCommand,
   doNotDisturbItems,
   log,
-}: ShellHandlersDeps): ShellHandlers => ({
-  // Each that selects closes the unified inbox, even when what it asks for
-  // is selected already, since the person asked to see it.
-  selectProfile: async ({ profileId }) => {
-    await profiles.select(profileId);
-    inbox.setOpen(false);
-  },
-  // A tab in its own window selects nothing in the main window.
-  selectTab: async (key) => {
-    const tab = findTab(profiles.get(), key);
+}: ShellHandlersDeps): Omit<ShellHandlers, keyof LaunchHandlers> => {
+  const inset = () =>
+    viewFrame({ sidebar: sidebar.current(), trialFooter: trialFooter() }).inset;
 
-    if (tab && inOwnWindow(tab)) {
-      revealOwnWindow(key);
+  return {
+    // Each that selects closes the unified inbox, even when what it asks for
+    // is selected already, since the person asked to see it.
+    selectProfile: async ({ profileId }) => {
+      await profiles.select(profileId);
+      inbox.setOpen(false);
+    },
+    // A tab in its own window selects nothing in the main window.
+    selectTab: async (key) => {
+      const tab = findTab(profiles.get(), key);
 
-      return;
-    }
+      if (tab && inOwnWindow(tab)) {
+        revealOwnWindow(key);
 
-    await tabs.select(key);
-    inbox.setOpen(false);
-  },
-  moveTab: async ({ profileId, tabId, before }) => {
-    if (profileId === profiles.get().selectedProfileId) {
-      await profiles.moveTab({ profileId, tabId }, before);
-    } else {
-      log(
-        `Refused to move tab ${profileId}/${tabId} of a profile not selected`
-      );
-    }
-  },
-  moveInBox: async ({ profileId, tabId, before }) => {
-    if (profileId === profiles.get().selectedProfileId) {
-      await profiles.moveInBox({ profileId, tabId }, before);
-    } else {
-      log(
-        `Refused to move tab ${profileId}/${tabId} of a profile not selected`
-      );
-    }
-  },
-  aimTab: ({ profileId, tabId, point }) => {
-    const state = profiles.get();
-    const size = pageSize();
-    const drop =
-      point &&
-      profileId === state.selectedProfileId &&
-      isMainWindowTab(selectedProfile(state), tabId) &&
-      inViewReach(size, viewFrame(sidebar.current()).inset, point)
-        ? viewDrop(selectedProfile(state), size, point, tabId)
-        : undefined;
+        return;
+      }
 
-    if (drop) {
-      overlays.open({
-        kind: "drop",
-        zone: drop.zone,
-        along: drop.kind,
-        fits: drop.fits,
-      });
-    } else if (overlays.current()?.kind === "drop") {
-      overlays.close();
-    }
+      await tabs.select(key);
+      inbox.setOpen(false);
+    },
+    moveTab: async ({ profileId, tabId, before }) => {
+      if (profileId === profiles.get().selectedProfileId) {
+        await profiles.moveTab({ profileId, tabId }, before);
+      } else {
+        log(
+          `Refused to move tab ${profileId}/${tabId} of a profile not selected`
+        );
+      }
+    },
+    moveInBox: async ({ profileId, tabId, before }) => {
+      if (profileId === profiles.get().selectedProfileId) {
+        await profiles.moveInBox({ profileId, tabId }, before);
+      } else {
+        log(
+          `Refused to move tab ${profileId}/${tabId} of a profile not selected`
+        );
+      }
+    },
+    aimTab: ({ profileId, tabId, point }) => {
+      const state = profiles.get();
+      const size = pageSize();
+      const drop =
+        point &&
+        profileId === state.selectedProfileId &&
+        isMainWindowTab(selectedProfile(state), tabId) &&
+        inViewReach(size, inset(), point)
+          ? viewDrop(selectedProfile(state), size, point, tabId)
+          : undefined;
 
-    return Promise.resolve();
-  },
-  dropTab: async ({ profileId, tabId, x, y }) => {
-    if (overlays.current()?.kind === "drop") {
-      overlays.close();
-    }
+      if (drop) {
+        overlays.open({
+          kind: "drop",
+          zone: drop.zone,
+          along: drop.kind,
+          fits: drop.fits,
+        });
+      } else if (overlays.current()?.kind === "drop") {
+        overlays.close();
+      }
 
-    const size = pageSize();
+      return Promise.resolve();
+    },
+    dropTab: async ({ profileId, tabId, x, y }) => {
+      if (overlays.current()?.kind === "drop") {
+        overlays.close();
+      }
 
-    if (!inViewReach(size, viewFrame(sidebar.current()).inset, { x, y })) {
-      log(`Refused to drop tab ${profileId}/${tabId} outside the page area`);
-    } else if (profileId === profiles.get().selectedProfileId) {
-      await profiles.dropInView({ profileId, tabId }, size, { x, y });
-    } else {
-      log(
-        `Refused to drop tab ${profileId}/${tabId} of a profile not selected`
-      );
-    }
-  },
-  splitOntoTab: async ({ profileId, tabId, target }) => {
-    const state = profiles.get();
+      const size = pageSize();
 
-    if (profileId !== state.selectedProfileId) {
-      log(
-        `Refused to split tab ${profileId}/${tabId} of a profile not selected`
-      );
+      if (!inViewReach(size, inset(), { x, y })) {
+        log(`Refused to drop tab ${profileId}/${tabId} outside the page area`);
+      } else if (profileId === profiles.get().selectedProfileId) {
+        await profiles.dropInView({ profileId, tabId }, size, { x, y });
+      } else {
+        log(
+          `Refused to drop tab ${profileId}/${tabId} of a profile not selected`
+        );
+      }
+    },
+    splitOntoTab: async ({ profileId, tabId, target }) => {
+      const state = profiles.get();
 
-      return;
-    }
+      if (profileId !== state.selectedProfileId) {
+        log(
+          `Refused to split tab ${profileId}/${tabId} of a profile not selected`
+        );
 
-    const next = splitOntoTab(state, { profileId, tabId }, target);
+        return;
+      }
 
-    if (next && !splitRoomy(selectedProfile(next), pageSize())) {
-      overlays.open({ kind: "toast", message: "no-room" });
+      const next = splitOntoTab(state, { profileId, tabId }, target);
 
-      return;
-    }
+      if (next && !splitRoomy(selectedProfile(next), pageSize())) {
+        overlays.open({ kind: "toast", message: "no-room" });
 
-    await profiles.splitOntoTab({ profileId, tabId }, target);
-  },
-  closeTab: async (key) => {
-    await profiles.closeTab(key);
+        return;
+      }
 
-    // The sidebar, and the tab that had focus in it, is gone.
-    if (sidebar.current() === "hidden") {
-      focus.focus([{ kind: "front" }, { kind: "shell" }]);
-    }
-  },
-  resizePanes: async (request) => {
-    await panes.resize(request);
-  },
-  evenOutPanes: async (request) => {
-    await panes.evenOut(request);
-  },
-  maximizePane: async ({ profileId, tabId, on }) => {
-    await profiles.maximizePane({ profileId, tabId }, on);
-  },
-  retryTab: (key) => {
-    tabs.retry(key);
+      await profiles.splitOntoTab({ profileId, tabId }, target);
+    },
+    closeTab: async (key) => {
+      await profiles.closeTab(key);
 
-    return Promise.resolve();
-  },
-  closeOverlay: () => {
-    if (overlays.current()?.kind === "find") {
-      find.close();
-    } else {
-      overlays.close();
-    }
+      // The sidebar, and the tab that had focus in it, is gone.
+      if (sidebar.current() === "hidden") {
+        focus.focus([{ kind: "front" }, { kind: "shell" }]);
+      }
+    },
+    resizePanes: async (request) => {
+      await panes.resize(request);
+    },
+    evenOutPanes: async (request) => {
+      await panes.evenOut(request);
+    },
+    maximizePane: async ({ profileId, tabId, on }) => {
+      await profiles.maximizePane({ profileId, tabId }, on);
+    },
+    retryTab: (key) => {
+      tabs.retry(key);
 
-    return Promise.resolve();
-  },
-  findInPage: ({ term, tab }) => {
-    find.type(term, tab);
+      return Promise.resolve();
+    },
+    closeOverlay: () => {
+      if (overlays.current()?.kind === "find") {
+        find.close();
+      } else {
+        overlays.close();
+      }
 
-    return Promise.resolve();
-  },
-  findStep: ({ forward, tab }) => {
-    find.step(forward, tab);
+      return Promise.resolve();
+    },
+    findInPage: ({ term, tab }) => {
+      find.type(term, tab);
 
-    return Promise.resolve();
-  },
-  closeFind: (key) => {
-    find.close(key);
+      return Promise.resolve();
+    },
+    findStep: ({ forward, tab }) => {
+      find.step(forward, tab);
 
-    return Promise.resolve();
-  },
-  toggleSidebar: () => {
-    runCommand("sidebar.toggle");
+      return Promise.resolve();
+    },
+    closeFind: (key) => {
+      find.close(key);
 
-    return Promise.resolve();
-  },
-  navigate: ({ action }) => {
-    runCommand(`tab.${action}`);
+      return Promise.resolve();
+    },
+    toggleSidebar: () => {
+      runCommand("sidebar.toggle");
 
-    return Promise.resolve();
-  },
-  navigateTab: async ({ profileId, tabId, action }) => {
-    await navigateTab({ profileId, tabId }, action);
-  },
-  toggleSidebarWidth: () => {
-    sidebar.toggleWidth();
+      return Promise.resolve();
+    },
+    navigate: ({ action }) => {
+      runCommand(`tab.${action}`);
 
-    return Promise.resolve();
-  },
-  toggleDoNotDisturb: () => {
-    runCommand("doNotDisturb.toggle");
+      return Promise.resolve();
+    },
+    navigateTab: async ({ profileId, tabId, action }) => {
+      await navigateTab({ profileId, tabId }, action);
+    },
+    toggleSidebarWidth: () => {
+      sidebar.toggleWidth();
 
-    return Promise.resolve();
-  },
-  openDoNotDisturbMenu: (point) => {
-    if (menuPointInside(point, window.getContentAreaSize())) {
-      window.showContextMenu(doNotDisturbItems(), point);
-    } else {
-      log(`Refused the Do Not Disturb menu at ${point.x},${point.y}`);
-    }
+      return Promise.resolve();
+    },
+    toggleDoNotDisturb: () => {
+      runCommand("doNotDisturb.toggle");
 
-    return Promise.resolve();
-  },
-  setInboxOpen: ({ open }) => {
-    inbox.setOpen(open);
+      return Promise.resolve();
+    },
+    openDoNotDisturbMenu: (point) => {
+      if (menuPointInside(point, window.getContentAreaSize())) {
+        window.showContextMenu(doNotDisturbItems(), point);
+      } else {
+        log(`Refused the Do Not Disturb menu at ${point.x},${point.y}`);
+      }
 
-    return Promise.resolve();
-  },
-  openInboxMessage: async ({ profileId, messageId }) => {
-    await inbox.openMessage(profileId, messageId);
-  },
-  runInboxAction: async ({ profileId, messageId, action }) => {
-    await inbox.runAction(profileId, messageId, action);
-  },
-  setDownloadsOpen: ({ open, window: ownWindow }) => {
-    downloads.setOpen(open, ownWindow);
+      return Promise.resolve();
+    },
+    setInboxOpen: ({ open }) => {
+      inbox.setOpen(open);
 
-    return Promise.resolve();
-  },
-  openDownload: async ({ id }) => {
-    await downloads.openFile(id);
-  },
-  showDownload: async ({ id }) => {
-    await downloads.showInFolder(id);
-  },
-  dragDownload: ({ id }) => {
-    downloads.drag(id);
+      return Promise.resolve();
+    },
+    openInboxMessage: async ({ profileId, messageId }) => {
+      await inbox.openMessage(profileId, messageId);
+    },
+    runInboxAction: async ({ profileId, messageId, action }) => {
+      await inbox.runAction(profileId, messageId, action);
+    },
+    setDownloadsOpen: ({ open, window: ownWindow }) => {
+      downloads.setOpen(open, ownWindow);
 
-    return Promise.resolve();
-  },
-  cancelDownload: ({ id }) => {
-    downloads.cancel(id);
+      return Promise.resolve();
+    },
+    openDownload: async ({ id }) => {
+      await downloads.openFile(id);
+    },
+    showDownload: async ({ id }) => {
+      await downloads.showInFolder(id);
+    },
+    dragDownload: ({ id }) => {
+      downloads.drag(id);
 
-    return Promise.resolve();
-  },
-  removeDownload: async ({ id }) => {
-    await downloads.remove(id);
-  },
-  clearDownloads: async () => {
-    await downloads.clear();
-  },
-  toggleOpenApp: () => {
-    runCommand("app.open");
+      return Promise.resolve();
+    },
+    cancelDownload: ({ id }) => {
+      downloads.cancel(id);
 
-    return Promise.resolve();
-  },
-  openApp: async ({ appId }) => {
-    await openApp.choose(appId);
-  },
-  openBookmark: async ({ id }) => {
-    await openApp.chooseBookmark(id);
-  },
-  removeBookmark: async ({ id }) => {
-    await openApp.removeBookmark(id);
-  },
-  // Only the main window's row announces it; a tab's own window shows its star.
-  toggleTabBookmark: async (key) => {
-    const tab = findTab(profiles.get(), key);
+      return Promise.resolve();
+    },
+    removeDownload: async ({ id }) => {
+      await downloads.remove(id);
+    },
+    clearDownloads: async () => {
+      await downloads.clear();
+    },
+    toggleOpenApp: () => {
+      runCommand("app.open");
 
-    if (!tab) {
-      log(
-        `Refused to bookmark tab ${key.profileId}/${key.tabId}, which is gone`
-      );
+      return Promise.resolve();
+    },
+    openApp: async ({ appId }) => {
+      await openApp.choose(appId);
+    },
+    openBookmark: async ({ id }) => {
+      await openApp.chooseBookmark(id);
+    },
+    removeBookmark: async ({ id }) => {
+      await openApp.removeBookmark(id);
+    },
+    // Only the main window's row announces it; a tab's own window shows its star.
+    toggleTabBookmark: async (key) => {
+      const tab = findTab(profiles.get(), key);
 
-      return;
-    }
+      if (!tab) {
+        log(
+          `Refused to bookmark tab ${key.profileId}/${key.tabId}, which is gone`
+        );
 
-    await bookmarks.toggle(key, !inOwnWindow(tab));
-  },
-  openGmail: async ({ profileId }) => {
-    await openGmail(profileId);
-  },
-  openTabMenu: (request) => {
-    tabMenu.open(request);
+        return;
+      }
 
-    return Promise.resolve();
-  },
-  openOwnWindowMenu: (request) => {
-    tabMenu.openOwnWindow(request);
+      await bookmarks.toggle(key, !inOwnWindow(tab));
+    },
+    openGmail: async ({ profileId }) => {
+      await openGmail(profileId);
+    },
+    openTabMenu: (request) => {
+      tabMenu.open(request);
 
-    return Promise.resolve();
-  },
-  openProfileMenu: (request) => {
-    profileMenu.open(request);
+      return Promise.resolve();
+    },
+    openOwnWindowMenu: (request) => {
+      tabMenu.openOwnWindow(request);
 
-    return Promise.resolve();
-  },
-});
+      return Promise.resolve();
+    },
+    openProfileMenu: (request) => {
+      profileMenu.open(request);
+
+      return Promise.resolve();
+    },
+  };
+};
