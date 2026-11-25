@@ -4,6 +4,15 @@ export const DEV_IDENTITY = {
   appId: "sh.zoid.meru.dev",
 } as const;
 
+const RELEASE_IDENTITY = { productName: "Meru", appId: "sh.zoid.meru" };
+
+/**
+ * Whether a build of this id is the installed Meru, a release or a beta: the
+ * only build that may change what the system does for Meru, as its login item.
+ */
+export const isReleaseAppId = (appId: string) =>
+  appId === RELEASE_IDENTITY.appId;
+
 const isDevVersion = (version: string) =>
   /^\d+\.\d+\.\d+-dev(?:[.+]|$)/iu.test(version);
 
@@ -22,6 +31,4 @@ export const appIdentity = ({
   version: string;
   isRelease: boolean;
 }) =>
-  isRelease && !isDevVersion(version)
-    ? { productName: "Meru", appId: "sh.zoid.meru" }
-    : DEV_IDENTITY;
+  isRelease && !isDevVersion(version) ? { ...RELEASE_IDENTITY } : DEV_IDENTITY;

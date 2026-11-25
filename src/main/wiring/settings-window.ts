@@ -6,6 +6,7 @@ import {
   SETTINGS_STATE,
 } from "#contract/settings.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
+import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { ContextMenus } from "#platform/context-menu.ts";
@@ -16,6 +17,7 @@ import { createWindowFactory } from "#platform/window.ts";
 
 import { serveContract } from "../contract-ipc.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
+import { createGeneralPage } from "../general-page.ts";
 import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
 import { createRemoveProfile } from "../remove-profile.ts";
@@ -31,6 +33,7 @@ import type { SettingsStore } from "../settings.ts";
 import { createRendererRecovery } from "../shell-recovery.ts";
 import type { SoundOutput } from "../sounds.ts";
 import { openingOptions } from "../windows.ts";
+import { systemLoginItem } from "./test-build.ts";
 
 /** As the approved prototype draws it. */
 const SETTINGS_SIZE = { width: 800, height: 600 };
@@ -41,6 +44,7 @@ const SETTINGS_SIZE = { width: 800, height: 600 };
  * through.
  */
 export const wireSettingsWindow = ({
+  platform,
   isMacOS,
   background,
   lifecycle,
@@ -61,6 +65,7 @@ export const wireSettingsWindow = ({
   deleteBrowsingData,
   signIn,
 }: {
+  platform: Platform;
   isMacOS: boolean;
   background: boolean;
   lifecycle: ReturnType<typeof createAppLifecycle>;
@@ -88,6 +93,10 @@ export const wireSettingsWindow = ({
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
+  const general = createGeneralPage({
+    platform,
+    loginItem: systemLoginItem(),
+  });
 
   const settingsWindow = createSettingsWindow({
     create: () =>
@@ -152,6 +161,7 @@ export const wireSettingsWindow = ({
       showTestNotification,
       deleteBrowsingData,
       signIn,
+      general,
       // The system's confirmation shows as a sheet on the window that asked.
       removeProfile: async (profileId) => {
         const window = settingsWindow.current();
@@ -165,9 +175,19 @@ export const wireSettingsWindow = ({
     }),
     state: {
       read: () =>
-        readSettingsState({ settings, profiles, mail, doNotDisturb, pages }),
+        readSettingsState({
+          settings,
+          profiles,
+          mail,
+          doNotDisturb,
+          pages,
+          general,
+        }),
       onChange: (listener) => {
-        onSettingsStateChange({ settings, profiles, mail, pages }, listener);
+        onSettingsStateChange(
+          { settings, profiles, mail, pages, general },
+          listener
+        );
       },
     },
     log: console.error,

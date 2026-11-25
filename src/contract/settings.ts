@@ -288,6 +288,11 @@ export const SETTINGS_CALLS = {
     request: z.object({ profileId }),
     response: z.undefined(),
   },
+  /** Makes Meru one of the system's login items, or not; refused on Linux. */
+  setOpenAtLogin: {
+    request: z.object({ on: z.boolean() }),
+    response: z.undefined(),
+  },
 } as const satisfies Record<
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
@@ -342,6 +347,15 @@ export const SETTINGS_STATE = {
       overrides: pageOverrides,
     })
   ),
+  /** What the General page shows that is not a setting. */
+  general: z.object({
+    /**
+     * Whether the system opens Meru at login, `null` on Linux, which has no
+     * login item here; `real` is false in every build but a release's,
+     * which only pretends.
+     */
+    openAtLogin: z.nullable(z.object({ on: z.boolean(), real: z.boolean() })),
+  }),
   /** The page shown, and whether Back and Forward have one to go to. */
   page: z.object({
     ...page.shape,

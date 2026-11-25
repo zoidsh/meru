@@ -33,6 +33,7 @@ import type { State } from "#core/state.ts";
 import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
 import { checkedDockChange } from "./dock.ts";
+import type { GeneralPage } from "./general-page.ts";
 import type { MailPoller } from "./mail.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
@@ -86,6 +87,7 @@ export interface SettingsContractDeps {
   >;
   /** For a profile, or the app with none. */
   showTestNotification: (profileId: string | undefined) => void;
+  general: Pick<GeneralPage, "read" | "onChange" | "setOpenAtLogin">;
 }
 
 /** The checks keep each key's value to its own type, which a loop over keys loses. */
@@ -147,6 +149,7 @@ export const settingsHandlers = ({
   removeProfile,
   deleteBrowsingData,
   signIn,
+  general,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
 
@@ -351,6 +354,10 @@ export const settingsHandlers = ({
 
       await signIn(profileId);
     },
+    setOpenAtLogin: ({ on }) =>
+      Promise.try(() => {
+        general.setOpenAtLogin(on);
+      }),
   };
 };
 
@@ -361,9 +368,10 @@ export const readSettingsState = ({
   mail,
   doNotDisturb,
   pages,
+  general,
 }: Pick<
   SettingsContractDeps,
-  "settings" | "profiles" | "mail" | "doNotDisturb" | "pages"
+  "settings" | "profiles" | "mail" | "doNotDisturb" | "pages" | "general"
 >): SettingsState => {
   const store = settings as unknown as LooseStore;
   const state = profiles.get();
@@ -402,6 +410,7 @@ export const readSettingsState = ({
         ).map((key) => [key, store.get(key, profile.id)])
       ) as PageOverrides,
     })),
+    general: general.read(),
     page: {
       ...pages.current(),
       canGoBack: pages.canGoBack(),
@@ -414,7 +423,7 @@ export const readSettingsState = ({
  * Calls `listener` on every change to what `readSettingsState` reads, so
  * the Settings window is sent the state again: each setting it shows, which
  * the store announces by key, Do Not Disturb through the profiles' state,
- * and the mail check and the page shown.
+ * the mail check, the General page's own values and the page shown.
  */
 export const onSettingsStateChange = (
   {
@@ -422,11 +431,13 @@ export const onSettingsStateChange = (
     profiles,
     mail,
     pages,
+    general,
   }: {
     settings: Pick<SettingsStore, "onChange">;
     profiles: Pick<Profiles, "onChange">;
     mail: Pick<MailPoller, "onChange">;
     pages: Pick<SettingsPages, "onChange">;
+    general: Pick<GeneralPage, "onChange">;
   },
   listener: () => void
 ) => {
@@ -437,4 +448,5 @@ export const onSettingsStateChange = (
   profiles.onChange(listener);
   mail.onChange(listener);
   pages.onChange(listener);
+  general.onChange(listener);
 };

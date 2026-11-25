@@ -78,6 +78,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may capture the Dock icon's hiding in place of hiding it",
     },
     {
+      marker: "meruTestLoginItem",
+      why: "only the end-to-end build may record the login item in place of setting it",
+    },
+    {
       marker: "meruTestGmailPage",
       why: "only the end-to-end build may capture what Gmail's pages report",
     },

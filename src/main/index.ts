@@ -430,6 +430,7 @@ const start = async () => {
     onSettingsFocusChange,
     settingsPages,
   } = wireSettingsWindow({
+    platform,
     isMacOS,
     background,
     lifecycle,

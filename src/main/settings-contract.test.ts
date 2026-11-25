@@ -8,11 +8,13 @@ import {
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import type { FeedOutcome } from "#core/feed.ts";
+import type { Platform } from "#core/platform.ts";
 import type { Settings } from "#core/settings.ts";
 import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createDoNotDisturb } from "./do-not-disturb.ts";
+import { createGeneralPage } from "./general-page.ts";
 import { createMailPoller } from "./mail.ts";
 import { createProfiles } from "./profiles.ts";
 import { createRemoveProfile } from "./remove-profile.ts";
@@ -30,7 +32,11 @@ const stateOf = (...names: string[]): State => ({
   selectedProfileId: names[0]?.toLowerCase() ?? "",
 });
 
-const setup = (state: State, initial?: Settings) => {
+const setup = (
+  state: State,
+  initial?: Settings,
+  platform: Platform = "darwin"
+) => {
   const saved: unknown[] = [];
   const announced: string[] = [];
   const settings = createSettingsStore({
@@ -78,6 +84,20 @@ const setup = (state: State, initial?: Settings) => {
   let confirms = true;
   const deleted: [string, BrowsingDataKinds][] = [];
   const signedIn: string[] = [];
+  // The system's login item as a build that only pretends holds it.
+  const loginCalls: boolean[] = [];
+  let loginOn = false;
+  const general = createGeneralPage({
+    platform,
+    loginItem: {
+      real: false,
+      isOn: () => loginOn,
+      set: (on) => {
+        loginCalls.push(on);
+        loginOn = on;
+      },
+    },
+  });
   const deps = {
     settings,
     profiles,
@@ -120,6 +140,7 @@ const setup = (state: State, initial?: Settings) => {
 
       return Promise.resolve();
     },
+    general,
   };
 
   settings.onChange("notificationSender", () =>
@@ -147,6 +168,7 @@ const setup = (state: State, initial?: Settings) => {
     addedBy,
     deleted,
     signedIn,
+    loginCalls,
     confirming: (next: boolean) => {
       confirms = next;
     },
@@ -634,6 +656,42 @@ describe("the Settings window's Menu Bar & Dock page", () => {
       { version: 1, tray: true },
       { version: 1, tray: true, dockIcon: false },
       { version: 1, tray: true, dockIcon: true },
+    ]);
+    app.dispose();
+  });
+
+  it("sets the login item, never a setting, and sends the page its state again", async () => {
+    const app = setup(stateOf("Work"));
+    const sends = app.sends();
+    const before = app.read().general.openAtLogin;
+
+    await app.handlers.setOpenAtLogin({ on: true });
+
+    expect([
+      before,
+      app.read().general.openAtLogin,
+      app.loginCalls,
+      app.saved,
+      sends(),
+    ]).toStrictEqual([
+      { on: false, real: false },
+      { on: true, real: false },
+      [true],
+      [],
+      1,
+    ]);
+    app.dispose();
+  });
+
+  it("has no login item on Linux, as v3, and refuses to set one", async () => {
+    const app = setup(stateOf("Work"), undefined, "linux");
+
+    await expect(app.handlers.setOpenAtLogin({ on: true })).rejects.toThrow(
+      "Meru has no login item on Linux"
+    );
+    expect([app.read().general.openAtLogin, app.loginCalls]).toStrictEqual([
+      null,
+      [],
     ]);
     app.dispose();
   });

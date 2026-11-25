@@ -2,6 +2,7 @@
 // `MERU_E2E_BUILD` directly, so a release bundle drops the test side.
 import path from "node:path";
 
+import { isReleaseAppId } from "#core/app-identity.ts";
 import { APPS, isAppId, standInApps } from "#core/apps.ts";
 import type { AppId } from "#core/apps.ts";
 import { KEEP_ALIVE_TIMING, KEEP_ALIVE_URL } from "#core/keep-alive.ts";
@@ -23,6 +24,11 @@ import {
   createDownloadFiles,
   createDownloadSignals,
 } from "#platform/downloads.ts";
+import {
+  createCapturedLoginItem,
+  createHeldLoginItem,
+  createLoginItem,
+} from "#platform/login-item.ts";
 import { keepToLoopback } from "#platform/loopback-only.ts";
 import {
   createCapturedNotifier,
@@ -188,3 +194,18 @@ export const downloadSignals = (
   MERU_E2E_BUILD
     ? createCapturedDownloadSignals()
     : createDownloadSignals(window);
+
+/**
+ * The system's login item for the installed Meru alone; every other build
+ * holds the switch for the run, and the suite's records each call, so no
+ * development build ever opens at login.
+ */
+export const systemLoginItem = () => {
+  if (MERU_E2E_BUILD) {
+    return createCapturedLoginItem();
+  }
+
+  return isReleaseAppId(MERU_APP_ID)
+    ? createLoginItem()
+    : createHeldLoginItem();
+};
