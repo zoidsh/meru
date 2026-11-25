@@ -23,6 +23,7 @@ const createFakeDirectory = (contents: Record<string, string>) => {
       loadStores({
         stateFile: fileAt("state.json"),
         settingsFile: fileAt("settings.json"),
+        entitlementFile: fileAt("entitlement.json"),
         newId: () => "new-id",
         now: () => 1_763_290_000_000,
         log: () => {},
@@ -59,15 +60,57 @@ describe(loadStores, () => {
     });
   });
 
-  it("creates both files when there are none", async () => {
+  it("writes no state or settings when the entitlement is newer", async () => {
+    const directory = createFakeDirectory({
+      "state.json": "{ not json",
+      "settings.json": "{ not json",
+      "entitlement.json": NEWER,
+    });
+
+    await expect(directory.load()).rejects.toBeInstanceOf(StartupError);
+    expect(Object.fromEntries(directory.files)).toStrictEqual({
+      [path.join(DIR, "state.json")]: "{ not json",
+      [path.join(DIR, "settings.json")]: "{ not json",
+      [path.join(DIR, "entitlement.json")]: NEWER,
+    });
+  });
+
+  it("creates every file when there are none", async () => {
     const directory = createFakeDirectory({});
-    const { state, settings } = await directory.load();
+    const { state, settings, entitlement } = await directory.load();
 
     expect(state.selectedProfileId).toBe("new-id");
     expect(settings).toStrictEqual({ version: 1 });
+    expect(entitlement).toStrictEqual({ version: 1 });
     expect([...directory.files.keys()].toSorted()).toStrictEqual([
+      path.join(DIR, "entitlement.json"),
       path.join(DIR, "settings.json"),
       path.join(DIR, "state.json"),
     ]);
+  });
+
+  it("keeps an unreadable entitlement aside and starts it afresh", async () => {
+    const directory = createFakeDirectory({
+      "entitlement.json": "{ not json",
+    });
+    const { entitlement } = await directory.load();
+
+    expect(entitlement).toStrictEqual({ version: 1 });
+    expect(
+      directory.files.get(
+        path.join(DIR, "entitlement.corrupt-1763290000000.json")
+      )
+    ).toBe("{ not json");
+  });
+
+  it("reads an entitlement with keys it does not know, keeping them", async () => {
+    const found = { version: 1, token: 7, later: { kept: true } };
+    const directory = createFakeDirectory({
+      "entitlement.json": JSON.stringify(found),
+    });
+
+    const { entitlement } = await directory.load();
+
+    expect(entitlement).toStrictEqual(found);
   });
 });

@@ -10,6 +10,7 @@ import type {
 } from "#core/settings.ts";
 import type { TabKey } from "#core/tabs.ts";
 
+import type { Entitlement } from "./entitlement.ts";
 import type { SettingsStore } from "./settings.ts";
 
 /**
@@ -52,6 +53,15 @@ export const captureSounds = () => {
  * Sets a setting, or a profile's own value of one, as a settings page would,
  * under `meruTestSettings`.
  */
+/** What the entitlement answers, on the main process's global under `meruTestEntitlement`. */
+export const exposeTestEntitlement = (entitlement: Entitlement) => {
+  Reflect.set(globalThis, "meruTestEntitlement", {
+    snapshot: entitlement.snapshot,
+    can: entitlement.can,
+    activate: entitlement.activate,
+  });
+};
+
 export const exposeTestSettings = (settings: SettingsStore) => {
   Reflect.set(globalThis, "meruTestSettings", {
     set: <Key extends SettingKey>(key: Key, value: SettingValue<Key>) =>

@@ -6,6 +6,7 @@ import { createSessions } from "#platform/sessions.ts";
 import { createTextFile } from "#platform/text-file.ts";
 
 import { createDoNotDisturb } from "../do-not-disturb.ts";
+import { ENTITLEMENT_FILE_NAME } from "../entitlement.ts";
 import { automaticProfileName } from "../profile-copy.ts";
 import { createProfiles } from "../profiles.ts";
 import {
@@ -19,8 +20,9 @@ import { STATE_FILE_NAME, saveState } from "../state-store.ts";
 import { loadStores } from "../stores.ts";
 
 /**
- * The two stores read, and the profiles, the sidebar, Do Not Disturb and the
- * settings that hold them from then on.
+ * The stores read, and the profiles, the sidebar, Do Not Disturb and the
+ * settings that hold them from then on, with the entitlement as found for
+ * its own wiring.
  */
 export const wireStores = async ({
   lifecycle,
@@ -38,9 +40,13 @@ export const wireStores = async ({
   const settingsFile = createTextFile(
     path.join(lifecycle.userDataPath, SETTINGS_FILE_NAME)
   );
+  const entitlementFile = createTextFile(
+    path.join(lifecycle.userDataPath, ENTITLEMENT_FILE_NAME)
+  );
   const stores = await loadStores({
     stateFile,
     settingsFile,
+    entitlementFile,
     newId,
     now: Date.now,
     log: console.error,
@@ -84,5 +90,7 @@ export const wireStores = async ({
     sidebar,
     doNotDisturb,
     settings,
+    entitlementFile,
+    entitlementStore: stores.entitlement,
   };
 };

@@ -24,6 +24,7 @@ import { createTabViews } from "./tab-views.ts";
 import { followThemeSetting } from "./theme.ts";
 import { wireContentBlocker } from "./wiring/content-blocker.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
+import { wireEntitlement } from "./wiring/entitlement.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
@@ -119,7 +120,15 @@ const start = async () => {
     sidebar,
     doNotDisturb,
     settings,
+    entitlementFile,
+    entitlementStore,
   } = await wireStores({ lifecycle, newId });
+
+  await wireEntitlement({
+    lifecycle,
+    file: entitlementFile,
+    initial: entitlementStore,
+  });
 
   const shellUrl = new URL(shellSource.url);
 

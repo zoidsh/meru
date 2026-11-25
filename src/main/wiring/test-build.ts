@@ -48,12 +48,14 @@ import {
   createTrayFactory,
 } from "#platform/tray.ts";
 
+import type { Entitlement } from "../entitlement.ts";
 import type { SettingsStore } from "../settings.ts";
 import { createSoundOutput } from "../sounds.ts";
 import type { SoundOutput } from "../sounds.ts";
 import {
   captureGmailPage,
   captureSounds,
+  exposeTestEntitlement,
   exposeTestSettings,
 } from "../test-hooks.ts";
 
@@ -149,6 +151,13 @@ export const soundOutput = (
 export const exposeSettingsToSuite = (settings: SettingsStore) => {
   if (MERU_E2E_BUILD) {
     exposeTestSettings(settings);
+  }
+};
+
+/** The suite reads what the entitlement answers, which no window shows yet. */
+export const exposeEntitlementToSuite = (entitlement: Entitlement) => {
+  if (MERU_E2E_BUILD) {
+    exposeTestEntitlement(entitlement);
   }
 };
 

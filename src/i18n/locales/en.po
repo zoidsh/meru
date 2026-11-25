@@ -1081,6 +1081,10 @@ msgstr "Menu bar"
 msgid "Menu Bar & Dock"
 msgstr "Menu Bar & Dock"
 
+#: src/main/entitlement.ts
+msgid "Meru can't reach its license server. Check your connection and try again."
+msgstr "Meru can't reach its license server. Check your connection and try again."
+
 #. Description of Quiet hours in Settings
 #: src/settings/quiet-hours-field.tsx
 msgid "Meru holds notifications until quiet hours end."
@@ -2006,6 +2010,10 @@ msgstr "The window stopped drawing several times in a row, so {productName} will
 msgid "Theme"
 msgstr "Theme"
 
+#: src/main/entitlement.ts
+msgid "There's no license with this key. Check it and try again, or contact support."
+msgstr "There's no license with this key. Check it and try again, or contact support."
+
 #. Line under the Settings scope switcher while All profiles is chosen
 #: src/settings/scope-tabs.tsx
 msgid "These apply to every profile unless you change them for one."
@@ -2035,6 +2043,18 @@ msgstr "This folder isn't available, so downloads are saved to Downloads until i
 #: src/main/notifications.ts
 msgid "This is what a new email notification looks like."
 msgstr "This is what a new email notification looks like."
+
+#: src/main/entitlement.ts
+msgid "This isn't a valid license key. Check it and try again."
+msgstr "This isn't a valid license key. Check it and try again."
+
+#: src/main/entitlement.ts
+msgid "This key is already in use on as many devices as it allows."
+msgstr "This key is already in use on as many devices as it allows."
+
+#: src/main/entitlement.ts
+msgid "This license key can't be used anymore. Contact support if you need help."
+msgstr "This license key can't be used anymore. Contact support if you need help."
 
 #. Shown under the Search field in Settings when the profile cannot keep another saved search; {most} is how many a profile can keep
 #: src/settings/saved-searches-card.tsx

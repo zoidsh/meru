@@ -30,6 +30,22 @@ export const FORBIDDEN_IN_PROD: readonly { marker: string; why: string }[] = [
 export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
   [
     {
+      marker: "meru development entitlement key",
+      why: "only development and the end-to-end build may sign with the development key, whose seed is public",
+    },
+    {
+      marker: "ubpt7-KnQIvden48nE3Ku1XnK8_6Xi0CqcSn1yvF-MI",
+      why: "a release must trust no token the development key signs",
+    },
+    {
+      marker: "MERU_STUB_OFFLINE",
+      why: "only development and the end-to-end build hold the entitlement API's stand-in",
+    },
+    {
+      marker: "meruTestEntitlement",
+      why: "only the end-to-end build may expose the entitlement to the suite",
+    },
+    {
       marker: "MERU_TEST_BACKGROUND",
       why: "only the end-to-end build may be kept from ever activating",
     },
