@@ -39,6 +39,8 @@ const NEEDS_THE_FOCUS = [
   // It opens New tab and toasts, which the window's blur closes, and checks
   // that a page keeps the real focus.
   "**/trial.e2e.ts",
+  // Its free version's Add another account shows a toast the blur closes.
+  "**/gate-profiles.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 
