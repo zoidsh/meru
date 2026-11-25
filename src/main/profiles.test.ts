@@ -360,7 +360,10 @@ describe("Do Not Disturb in the profiles' state", () => {
 });
 
 /** Profiles whose run lacks `refused` until `license`. */
-const setupGated = (initial: State, refused: Capability) => {
+const setupGated = (
+  initial: State,
+  refused: Capability | readonly Capability[]
+) => {
   let granted = false;
   const saved: State[] = [];
   const heard: State[] = [];
@@ -376,7 +379,7 @@ const setupGated = (initial: State, refused: Capability) => {
     clearSession: () => Promise.resolve(),
     now: () => 2000,
     log: () => false,
-    can: (capability) => granted || capability !== refused,
+    can: (capability) => granted || ![refused].flat().includes(capability),
   });
 
   profiles.onChange((state) => heard.push(state));
@@ -484,6 +487,163 @@ describe("saved searches without Meru Pro", () => {
     expect(
       profiles.get().profiles.map((profile) => profile.savedSearches)
     ).toStrictEqual(withSearches.profiles.map((p) => p.savedSearches));
+  });
+});
+
+describe("tabs, splits and bookmarks without Meru Pro", () => {
+  const decoded = decodeState({
+    version: 1,
+    profiles: [
+      {
+        id: "a",
+        name: "Default",
+        tabs: [
+          {
+            id: "gmail",
+            app: "gmail",
+            url: "https://mail.google.com/",
+            title: "",
+            pinned: true,
+          },
+          {
+            id: "c",
+            app: "calendar",
+            url: "https://calendar.google.com/",
+            title: "",
+            pinned: true,
+          },
+          {
+            id: "d1",
+            app: "drive",
+            url: "https://drive.google.com/",
+            title: "",
+          },
+          {
+            id: "d2",
+            app: "drive",
+            url: "https://drive.google.com/2",
+            title: "",
+          },
+        ],
+        selectedTabId: "d1",
+        splits: [
+          {
+            root: {
+              direction: "row",
+              children: [
+                { size: 0.5, pane: "d1" },
+                { size: 0.5, pane: "d2" },
+              ],
+            },
+          },
+        ],
+        bookmarks: [
+          {
+            id: "b",
+            url: "https://docs.google.com/x",
+            title: "Doc",
+            app: "docs",
+          },
+        ],
+      },
+    ],
+    selectedProfileId: "a",
+  });
+
+  if (decoded.kind !== "read") {
+    throw new Error("The fixture does not decode");
+  }
+
+  const stored = decoded.value;
+  const refused = ["workspaceApps", "splitView", "bookmarks"] as const;
+  const gmailKey = { profileId: "a", tabId: "gmail" };
+  const calendar = APPS.find((app) => app.id === "calendar");
+  const gmail = APPS.find((app) => app.id === "gmail");
+
+  it("opens, closes, moves, pins, splits and bookmarks nothing, and writes nothing", async () => {
+    const { profiles, saved } = setupGated(stored, refused);
+
+    if (!calendar || !gmail) {
+      throw new Error("The registry lacks an app");
+    }
+
+    const answers = await Promise.all([
+      profiles.openTab("a", calendar, calendar.home, "new"),
+      profiles.openTab("a", gmail, gmail.home, "gmail", undefined, "row"),
+      profiles.setPinned(gmailKey, false),
+      profiles.closeTab(gmailKey),
+      profiles.moveToOwnWindow(gmailKey),
+      profiles.splitTab(gmailKey, "row"),
+      profiles.dropInView(
+        gmailKey,
+        { width: 800, height: 600 },
+        { x: 790, y: 300 }
+      ),
+      profiles.toggleBookmark("a", {
+        url: "https://docs.google.com/y",
+        title: "Y",
+        app: "docs",
+      }),
+      profiles.removeBookmark("a", "b"),
+    ]);
+
+    expect([answers, saved]).toStrictEqual([
+      [
+        undefined,
+        undefined,
+        false,
+        false,
+        false,
+        false,
+        false,
+        undefined,
+        false,
+      ],
+      [],
+    ]);
+  });
+
+  it("still opens a link in the Gmail tab, writing every hidden tab, the split and the bookmark back as stored", async () => {
+    const { profiles, saved } = setupGated(stored, refused);
+
+    if (!gmail) {
+      throw new Error("The registry lacks Gmail");
+    }
+
+    const opened = await profiles.openTab(
+      "a",
+      gmail,
+      "https://mail.google.com/#starred",
+      "gmail"
+    );
+    const [written] = saved;
+
+    expect([
+      opened?.tabId,
+      profiles.get().profiles[0]?.tabs.length,
+      written?.profiles[0]?.tabs.length,
+      written?.profiles[0]?.selectedTabId,
+      written?.profiles[0]?.splits,
+      written?.profiles[0]?.bookmarks,
+    ]).toStrictEqual([
+      "gmail",
+      1,
+      4,
+      "d1",
+      stored.profiles[0]?.splits,
+      stored.profiles[0]?.bookmarks,
+    ]);
+  });
+
+  it("brings the tabs, the split and the bookmark back at once with a license", () => {
+    const { profiles, heard, license } = setupGated(stored, refused);
+
+    license();
+
+    expect([profiles.get().profiles[0], heard.length]).toStrictEqual([
+      stored.profiles[0],
+      1,
+    ]);
   });
 });
 

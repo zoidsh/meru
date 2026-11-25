@@ -24,6 +24,7 @@ import {
   addProfile,
   forgetEndedDoNotDisturb,
   forgetProfilesToClear,
+  knownTabs,
   newProfile,
   nextProfileName,
   profilePartition,
@@ -225,6 +226,20 @@ export const createProfiles = ({
     await clearAndForget(clear);
   };
 
+  /**
+   * Whether the run holds `grant`; a change that needs it is refused into
+   * the log, whichever window or key asked.
+   */
+  const allows = (grant: keyof StateGrants, what: string) => {
+    if (grants[grant]) {
+      return true;
+    }
+
+    log(`Refused to ${what}, which needs Meru Pro`);
+
+    return false;
+  };
+
   /** Throws while the run holds no saved searches, which stay stored. */
   const assertSavedSearches = () => {
     if (!grants.savedSearches) {
@@ -241,6 +256,20 @@ export const createProfiles = ({
       mutex.release();
     }
   };
+
+  /** A change that needs `grant`, refused as one that changed nothing without it. */
+  const gated =
+    <Args extends unknown[]>(
+      grant: keyof StateGrants,
+      what: string,
+      change: (current: State, ...args: Args) => State | undefined
+    ) =>
+    (...args: Args) =>
+      exclusive(() =>
+        allows(grant, what)
+          ? commit(change(state, ...args))
+          : Promise.resolve(false)
+      );
 
   return {
     get: () => state,
@@ -327,6 +356,20 @@ export const createProfiles = ({
       split?: PaneDirection
     ) =>
       exclusive(async (): Promise<OpenedTab | undefined> => {
+        const profile = state.profiles.find(({ id }) => id === profileId);
+        // A single-instance app's tab takes the URL, so no tab opens.
+        const opensNone =
+          app.singleInstance &&
+          profile !== undefined &&
+          knownTabs(profile).some((tab) => tab.app === app.id);
+
+        if (
+          (!opensNone && !allows("workspaceApps", "open a tab")) ||
+          (split !== undefined && !allows("splitView", "split a tab"))
+        ) {
+          return undefined;
+        }
+
         const opened = openTab(
           state,
           profileId,
@@ -340,37 +383,90 @@ export const createProfiles = ({
         return opened && (await commit(opened.state)) ? opened : undefined;
       }),
     selectTab: (key: TabKey) => exclusive(() => commit(selectTab(state, key))),
-    closeTab: (key: TabKey) => exclusive(() => commit(closeTab(state, key))),
-    splitTab: (key: TabKey, direction: PaneDirection) =>
-      exclusive(() => commit(splitTab(state, key, direction))),
-    separateTab: (key: TabKey) =>
-      exclusive(() => commit(separateTab(state, key))),
-    moveToOwnWindow: (key: TabKey) =>
-      exclusive(() => commit(moveToOwnWindow(state, key))),
-    moveToMainWindow: (key: TabKey, select: boolean) =>
-      exclusive(() => commit(moveToMainWindow(state, key, select))),
-    setOwnWindowBounds: (key: TabKey, bounds: Rectangle) =>
-      exclusive(() => commit(setOwnWindowBounds(state, key, bounds))),
-    maximizePane: (key: TabKey, on: boolean) =>
-      exclusive(() => commit(maximizePane(state, key, on))),
-    resizeSplit: (profileId: string, split: Split) =>
-      exclusive(() => commit(resizeSplit(state, profileId, split))),
-    moveTab: (key: TabKey, before?: string) =>
-      exclusive(() => commit(moveTab(state, key, before))),
-    moveInBox: (key: TabKey, before?: string) =>
-      exclusive(() => commit(moveInBox(state, key, before))),
-    splitOntoTab: (key: TabKey, target: string) =>
-      exclusive(() => commit(splitOntoTab(state, key, target))),
-    dropInView: (key: TabKey, size: Size, point: { x: number; y: number }) =>
-      exclusive(() => commit(dropInView(state, key, size, point))),
-    closeOtherTabs: (key: TabKey) =>
-      exclusive(() => commit(closeOtherTabs(state, key))),
-    closeTabsBelow: (key: TabKey) =>
-      exclusive(() => commit(closeTabsBelow(state, key))),
-    setPinned: (key: TabKey, pinned: boolean) =>
-      exclusive(() => commit(setPinned(state, key, pinned))),
-    setOpenAtLaunch: (key: TabKey, on: boolean) =>
-      exclusive(() => commit(setOpenAtLaunch(state, key, on))),
+    closeTab: gated("workspaceApps", "close a tab", (current, key: TabKey) =>
+      closeTab(current, key)
+    ),
+    splitTab: gated(
+      "splitView",
+      "split a tab",
+      (current, key: TabKey, direction: PaneDirection) =>
+        splitTab(current, key, direction)
+    ),
+    separateTab: gated(
+      "splitView",
+      "take a tab out of its split",
+      (current, key: TabKey) => separateTab(current, key)
+    ),
+    moveToOwnWindow: gated(
+      "workspaceApps",
+      "move a tab to a window of its own",
+      (current, key: TabKey) => moveToOwnWindow(current, key)
+    ),
+    moveToMainWindow: gated(
+      "workspaceApps",
+      "move a tab to the main window",
+      (current, key: TabKey, select: boolean) =>
+        moveToMainWindow(current, key, select)
+    ),
+    setOwnWindowBounds: gated(
+      "workspaceApps",
+      "place a tab's own window",
+      (current, key: TabKey, bounds: Rectangle) =>
+        setOwnWindowBounds(current, key, bounds)
+    ),
+    maximizePane: gated(
+      "splitView",
+      "maximize a pane",
+      (current, key: TabKey, on: boolean) => maximizePane(current, key, on)
+    ),
+    resizeSplit: gated(
+      "splitView",
+      "resize a split",
+      (current, profileId: string, split: Split) =>
+        resizeSplit(current, profileId, split)
+    ),
+    moveTab: gated(
+      "workspaceApps",
+      "move a tab",
+      (current, key: TabKey, before?: string) => moveTab(current, key, before)
+    ),
+    moveInBox: gated(
+      "splitView",
+      "move a tab in its split",
+      (current, key: TabKey, before?: string) => moveInBox(current, key, before)
+    ),
+    splitOntoTab: gated(
+      "splitView",
+      "split a tab onto another",
+      (current, key: TabKey, target: string) =>
+        splitOntoTab(current, key, target)
+    ),
+    dropInView: gated(
+      "splitView",
+      "drop a tab into the page",
+      (current, key: TabKey, size: Size, point: { x: number; y: number }) =>
+        dropInView(current, key, size, point)
+    ),
+    closeOtherTabs: gated(
+      "workspaceApps",
+      "close other tabs",
+      (current, key: TabKey) => closeOtherTabs(current, key)
+    ),
+    closeTabsBelow: gated(
+      "workspaceApps",
+      "close the tabs below a tab",
+      (current, key: TabKey) => closeTabsBelow(current, key)
+    ),
+    setPinned: gated(
+      "workspaceApps",
+      "pin or unpin a tab",
+      (current, key: TabKey, pinned: boolean) => setPinned(current, key, pinned)
+    ),
+    setOpenAtLaunch: gated(
+      "workspaceApps",
+      "set a tab to open at launch",
+      (current, key: TabKey, on: boolean) => setOpenAtLaunch(current, key, on)
+    ),
     updatePages: (updates: PageUpdate[]) =>
       exclusive(() => commit(updatePages(state, updates))),
     /**
@@ -435,14 +531,22 @@ export const createProfiles = ({
      */
     toggleBookmark: (profileId: string, page: BookmarkedPage) =>
       exclusive(async () => {
+        if (!allows("bookmarks", "bookmark a page")) {
+          return;
+        }
+
         const toggled = toggleBookmark(state, profileId, page, newId);
 
         return toggled && (await commit(toggled.state))
           ? toggled.bookmarked
           : undefined;
       }),
-    removeBookmark: (profileId: string, id: string) =>
-      exclusive(() => commit(removeBookmark(state, profileId, id))),
+    removeBookmark: gated(
+      "bookmarks",
+      "remove a bookmark",
+      (current, profileId: string, id: string) =>
+        removeBookmark(current, profileId, id)
+    ),
     /** Saves the change one returns; nothing for none. */
     change: (next: (current: State) => State | undefined) =>
       exclusive(() => commit(next(state))),

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "./apps.ts";
+import { bookmarks } from "./bookmarks.ts";
 import {
   entitledState,
   entitledView,
@@ -15,12 +16,14 @@ import {
   encodeState,
   isAsleep,
   isDisabled,
+  isTab,
   newProfile,
   renameProfile,
   selectProfile,
+  setCheckMail,
 } from "./state.ts";
 import type { State } from "./state.ts";
-import { openTab } from "./tabs.ts";
+import { openTab, updatePages } from "./tabs.ts";
 
 const stored = (): State => {
   const decoded = decodeState({
@@ -129,7 +132,222 @@ const ALL: StateGrants = {
   profiles: true,
   notificationGates: true,
   savedSearches: true,
+  workspaceApps: true,
+  splitView: true,
+  bookmarks: true,
 };
+
+const FREE: StateGrants = {
+  profiles: false,
+  notificationGates: false,
+  savedSearches: false,
+  workspaceApps: false,
+  splitView: false,
+  bookmarks: false,
+};
+
+const half = (a: string, b: string) => ({
+  root: {
+    direction: "row",
+    children: [
+      { size: 0.5, pane: a },
+      { size: 0.5, pane: b },
+    ],
+  },
+});
+
+/** A profile of a trial's: several tabs, a pin, a split, a bookmark and an entry this build cannot read. */
+const workspace = (gmail: Record<string, unknown> | null = {}) => {
+  const decoded = decodeState({
+    version: 1,
+    profiles: [
+      {
+        id: "p",
+        name: "Personal",
+        tabs: [
+          {
+            id: "cal",
+            app: "calendar",
+            url: "https://calendar.google.com/",
+            title: "Calendar",
+            pinned: true,
+          },
+          ...(gmail
+            ? [
+                {
+                  id: "gmail",
+                  app: "gmail",
+                  url: "https://mail.google.com/mail/u/0/",
+                  title: "Inbox",
+                  pinned: true,
+                  ...gmail,
+                },
+              ]
+            : []),
+          {
+            id: "d1",
+            app: "drive",
+            url: "https://drive.google.com/",
+            title: "Drive",
+          },
+          {
+            id: "d2",
+            app: "drive",
+            url: "https://drive.google.com/2",
+            title: "Drive 2",
+          },
+          "not a tab",
+        ],
+        selectedTabId: "d1",
+        splits: [half("d1", "d2")],
+        bookmarks: [
+          {
+            id: "b",
+            url: "https://docs.google.com/x",
+            title: "Doc",
+            app: "docs",
+          },
+        ],
+      },
+      newProfile("work", "Work"),
+    ],
+    selectedProfileId: "p",
+  });
+
+  if (decoded.kind !== "read") {
+    throw new Error("The fixture does not decode");
+  }
+
+  return decoded.value;
+};
+
+describe("the free version's tabs", () => {
+  it("shows each profile's Gmail tab alone, selected and in the main window, with no split or bookmark", () => {
+    const view = entitledView(
+      workspace({ pinned: false, ownWindow: true }),
+      FREE
+    );
+    const [profile] = view.profiles;
+
+    expect(view.profiles).toHaveLength(1);
+    expect(profile?.tabs).toStrictEqual([
+      {
+        id: "gmail",
+        app: "gmail",
+        url: "https://mail.google.com/mail/u/0/",
+        title: "Inbox",
+        pinned: false,
+      },
+    ]);
+    expect(profile?.selectedTabId).toBe("gmail");
+    expect(profile?.splits).toStrictEqual([]);
+    expect(view && bookmarks(view, "p")).toStrictEqual([]);
+  });
+
+  it("writes back every hidden tab, pin, split and bookmark as stored through a Gmail navigation, a rename and Check mail", () => {
+    const state = workspace();
+    const view = entitledView(state, FREE);
+    const navigated = updatePages(view, [
+      {
+        profileId: "p",
+        tabId: "gmail",
+        url: "https://mail.google.com/mail/u/0/#starred",
+        title: "Starred",
+      },
+    ]);
+    const renamed = navigated && renameProfile(navigated, "p", "Mine");
+    const unchecked = renamed && setCheckMail(renamed, "p", false);
+
+    if (!unchecked) {
+      throw new Error("A change did nothing");
+    }
+
+    const written = storedAfterView(state, FREE, unchecked);
+    const expected = setCheckMail(
+      renameProfile(
+        updatePages(state, [
+          {
+            profileId: "p",
+            tabId: "gmail",
+            url: "https://mail.google.com/mail/u/0/#starred",
+            title: "Starred",
+          },
+        ]) ?? state,
+        "p",
+        "Mine"
+      ) ?? state,
+      "p",
+      false
+    );
+
+    expect(JSON.stringify(encodeState(written))).toBe(
+      JSON.stringify(expected && encodeState(expected))
+    );
+  });
+
+  it("keeps the Gmail tab's stored own window through a write", () => {
+    const state = workspace({ pinned: false, ownWindow: true });
+    const next = updatePages(entitledView(state, FREE), [
+      { profileId: "p", tabId: "gmail", title: "Starred" },
+    ]);
+    const written = next && storedAfterView(state, FREE, next);
+
+    expect(written?.profiles[0]?.tabs[1]).toMatchObject({
+      title: "Starred",
+      ownWindow: true,
+    });
+  });
+
+  it("shows a new Gmail tab for a profile with none, and never writes it", () => {
+    const state = workspace(null);
+    const view = entitledView(state, FREE);
+    const next = updatePages(view, [
+      { profileId: "p", tabId: "gmail", title: "Inbox" },
+    ]);
+    const written = next && storedAfterView(state, FREE, next);
+
+    expect(
+      view.profiles[0]?.tabs.map((tab) => isTab(tab) && tab.app)
+    ).toStrictEqual(["gmail"]);
+    expect(written && JSON.stringify(encodeState(written))).toBe(
+      JSON.stringify(encodeState(state))
+    );
+  });
+
+  it("brings back the tabs in their order, the selection, the split and the bookmark once raised", () => {
+    const state = workspace();
+    const next = updatePages(entitledView(state, FREE), [
+      { profileId: "p", tabId: "gmail", title: "Starred" },
+    ]);
+    const written = next && storedAfterView(state, FREE, next);
+    const raised = written && entitledView(written, ALL);
+    const [profile] = raised?.profiles ?? [];
+
+    expect(
+      profile?.tabs.map((tab) => (isTab(tab) ? tab.id : "unread"))
+    ).toStrictEqual(["cal", "gmail", "d1", "d2", "unread"]);
+    expect(profile?.selectedTabId).toBe("d1");
+    expect(profile?.splits).toHaveLength(1);
+    expect(raised && bookmarks(raised, "p").map(({ id }) => id)).toStrictEqual([
+      "b",
+    ]);
+    expect(raised?.profiles.map(({ id }) => id)).toStrictEqual(["p", "work"]);
+  });
+
+  it("hides only the splits without splitView, written back as stored", () => {
+    const grants = { ...ALL, splitView: false };
+    const state = workspace();
+    const view = entitledView(state, grants);
+    const next = renameProfile(view, "p", "Mine");
+    const written = next && storedAfterView(state, grants, next);
+
+    expect(view.profiles[0]?.tabs).toHaveLength(5);
+    expect(view.profiles[0]?.splits).toStrictEqual([]);
+    expect(written?.profiles[0]?.splits).toStrictEqual(
+      state.profiles[0]?.splits
+    );
+  });
+});
 
 describe(entitledView, () => {
   it("is the stored state itself with every grant", () => {

@@ -1,13 +1,21 @@
 import { entitledProfiles } from "./entitlement.ts";
 import type { Capability } from "./entitlement.ts";
-import { switchDoNotDisturb, withDoNotDisturbOf } from "./state.ts";
-import type { Profile, State } from "./state.ts";
+import {
+  gmailTab,
+  knownTabs,
+  switchDoNotDisturb,
+  withDoNotDisturbOf,
+} from "./state.ts";
+import type { Profile, State, Tab } from "./state.ts";
 
 /** The capabilities that shape the state a run may use. */
 export const STATE_CAPABILITIES = [
   "profiles",
   "notificationGates",
   "savedSearches",
+  "workspaceApps",
+  "splitView",
+  "bookmarks",
 ] as const satisfies readonly Capability[];
 
 /** Whether the run holds each of `STATE_CAPABILITIES`. */
@@ -19,41 +27,121 @@ export const stateGrants = (
   profiles: can("profiles"),
   notificationGates: can("notificationGates"),
   savedSearches: can("savedSearches"),
+  workspaceApps: can("workspaceApps"),
+  splitView: can("splitView"),
+  bookmarks: can("bookmarks"),
 });
 
 /**
- * What a profile's saved searches read as while hidden, in their key's
- * place, so the stored ones go back where they were found.
+ * What a profile's splits, bookmarks or saved searches read as while
+ * hidden, in their key's place, so the stored ones go back where they were
+ * found.
  */
-const HIDDEN_SEARCHES: readonly never[] = Object.freeze([]);
+const HIDDEN: never[] = Object.freeze([]) as never[];
 
-/** Each profile with its saved searches, if any, hidden. */
-const withoutSavedSearches = (state: State): State => ({
-  ...state,
-  profiles: state.profiles.map((profile) =>
-    Object.hasOwn(profile, "savedSearches")
-      ? { ...profile, savedSearches: HIDDEN_SEARCHES }
-      : profile
-  ),
-});
+/** The profile's Gmail tab, in the main window, or a new profile's when it has none. */
+const gmailOf = (profile: Profile): Tab => {
+  const gmail = knownTabs(profile).find((tab) => tab.app === "gmail");
 
-/** Each profile whose saved searches were hidden with them as `stored` holds them. */
-const withSavedSearchesOf = (state: State, stored: State): State => ({
-  ...state,
-  profiles: state.profiles.map((profile) => {
-    const found = stored.profiles.find(({ id }) => id === profile.id);
+  if (!gmail) {
+    return gmailTab();
+  }
 
-    return found && profile.savedSearches === HIDDEN_SEARCHES
-      ? { ...profile, savedSearches: found.savedSearches }
-      : profile;
-  }),
-});
+  const { ownWindow: _ownWindow, ...shown } = gmail;
+
+  return shown as Tab;
+};
 
 /**
- * The state a run may use: `entitledState`'s profiles; without
- * `notificationGates` no Do Not Disturb, so nothing holds a notification
- * with no control on screen to end it; and without `savedSearches` none of
- * any profile's. What it leaves out stays stored.
+ * Each profile as `grants` let a run use it: without `workspaceApps` its
+ * Gmail tab alone, selected; without that or `splitView` no split; without
+ * `bookmarks` none, and without `savedSearches` no saved search.
+ */
+const profileView = (profile: Profile, grants: StateGrants): Profile => {
+  let view = profile;
+
+  if (!grants.workspaceApps) {
+    const gmail = gmailOf(profile);
+
+    view = { ...view, tabs: [gmail], selectedTabId: gmail.id };
+  }
+
+  if (
+    (!grants.workspaceApps || !grants.splitView) &&
+    Object.hasOwn(view, "splits")
+  ) {
+    view = { ...view, splits: HIDDEN };
+  }
+
+  if (!grants.bookmarks && Object.hasOwn(view, "bookmarks")) {
+    view = { ...view, bookmarks: HIDDEN };
+  }
+
+  if (!grants.savedSearches && Object.hasOwn(view, "savedSearches")) {
+    view = { ...view, savedSearches: HIDDEN };
+  }
+
+  return view;
+};
+
+/** The stored tab with the view's change to it, its own window as stored. */
+const withChangesOf = (stored: Tab, changed: Tab): Tab => {
+  const { ownWindow: _ownWindow, ...rest } = changed;
+
+  return { ...stored, ...rest };
+};
+
+/**
+ * The profile after `next`, a change made to `profileView` of `stored`,
+ * with what the view left out as `stored` holds it: its tabs but the Gmail
+ * tab, which takes the change but keeps where its window was stored, the
+ * selection, the splits, the bookmarks and the saved searches. A Gmail tab
+ * the view made for a profile with none is never written.
+ */
+const profileAfterView = (
+  stored: Profile,
+  grants: StateGrants,
+  next: Profile
+): Profile => {
+  let written = next;
+
+  if (!grants.workspaceApps) {
+    const storedGmail = knownTabs(stored).find((tab) => tab.app === "gmail");
+    const changed = knownTabs(next).find((tab) => tab.app === "gmail");
+    written = {
+      ...written,
+      tabs:
+        storedGmail && changed
+          ? stored.tabs.map((entry) =>
+              entry === storedGmail
+                ? withChangesOf(storedGmail, changed)
+                : entry
+            )
+          : stored.tabs,
+      selectedTabId: stored.selectedTabId,
+    };
+  }
+
+  if (written.splits === HIDDEN) {
+    written = { ...written, splits: stored.splits ?? [] };
+  }
+
+  if (written.bookmarks === HIDDEN) {
+    written = { ...written, bookmarks: stored.bookmarks };
+  }
+
+  if (written.savedSearches === HIDDEN) {
+    written = { ...written, savedSearches: stored.savedSearches };
+  }
+
+  return written;
+};
+
+/**
+ * The state a run may use: `entitledState`'s profiles, each as
+ * `profileView` has it; and without `notificationGates` no Do Not Disturb,
+ * so nothing holds a notification with no control on screen to end it.
+ * What it leaves out stays stored.
  */
 export const entitledView = (stored: State, grants: StateGrants): State => {
   const view = entitledState(stored, grants.profiles);
@@ -61,7 +149,12 @@ export const entitledView = (stored: State, grants: StateGrants): State => {
     ? view
     : switchDoNotDisturb(view, undefined);
 
-  return grants.savedSearches ? held : withoutSavedSearches(held);
+  return Object.values(grants).every(Boolean)
+    ? held
+    : {
+        ...held,
+        profiles: held.profiles.map((profile) => profileView(profile, grants)),
+      };
 };
 
 /**
@@ -84,7 +177,16 @@ export const storedAfterView = (
     ? written
     : withDoNotDisturbOf(written, stored);
 
-  return grants.savedSearches ? held : withSavedSearchesOf(held, stored);
+  return Object.values(grants).every(Boolean)
+    ? held
+    : {
+        ...held,
+        profiles: held.profiles.map((profile) => {
+          const found = stored.profiles.find(({ id }) => id === profile.id);
+
+          return found ? profileAfterView(found, grants, profile) : profile;
+        }),
+      };
 };
 
 /**
