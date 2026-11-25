@@ -36,6 +36,9 @@ const NEEDS_THE_FOCUS = [
   // Its shots picture overlays, which another app taking the focus would
   // close unseen, since a shot asserts nothing.
   "**/screens.e2e.ts",
+  // It opens New tab and toasts, which the window's blur closes, and checks
+  // that a page keeps the real focus.
+  "**/trial.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 
