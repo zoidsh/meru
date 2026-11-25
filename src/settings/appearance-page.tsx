@@ -14,6 +14,7 @@ import {
 } from "#ui/select.tsx";
 import { Switch } from "#ui/switch.tsx";
 
+import { useNeedsPro } from "./pro-badge.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
@@ -32,6 +33,7 @@ type SwitchKey =
 export const AppearancePage = () => {
   const { t } = useLingui();
   const settings = useSettingsState("settings");
+  const needsPro = useNeedsPro();
 
   if (!settings) {
     return null;
@@ -51,10 +53,17 @@ export const AppearancePage = () => {
     label: string;
     description?: string | undefined;
   }) => (
-    <SettingRow key={key} label={label} description={description}>
+    <SettingRow
+      key={key}
+      label={label}
+      description={description}
+      pro={needsPro(key)}
+      disabled={needsPro(key)}
+    >
       {(ids) => (
         <Switch
           checked={settings[key]}
+          disabled={needsPro(key)}
           aria-labelledby={ids.label}
           aria-describedby={ids.description || undefined}
           onCheckedChange={(on) => {

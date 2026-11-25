@@ -25,6 +25,7 @@ const contextOf = (): CommandContext => ({
   settingsFocused: false,
   settingsHistory: undefined,
   doNotDisturb: undefined,
+  can: () => true,
   inboxOpen: false,
   downloadsOpen: false,
   openAppOpen: false,
@@ -66,6 +67,31 @@ const labels = (menus: MenuItemConstructorOptions[]) =>
   menus.map((menu) => menu.label);
 
 describe(buildMenuTemplate, () => {
+  it.each([
+    [
+      "darwin",
+      { label: "Unified Inbox", badge: { type: "none", content: "Pro" } },
+    ],
+    ["win32", { label: "Unified Inbox (Pro)", badge: undefined }],
+    ["linux", { label: "Unified Inbox (Pro)", badge: undefined }],
+  ] as const)(
+    "on %s disables an item whose Meru Pro is refused and says Pro",
+    (platform, shown) => {
+      const item = itemOf(
+        template(platform, { ...contextOf(), can: () => false }),
+        "inbox.toggle"
+      );
+      const granted = itemOf(template(platform), "inbox.toggle");
+
+      expect([
+        { label: item?.label, badge: item?.badge },
+        item?.enabled,
+        granted?.label,
+        granted?.badge,
+      ]).toStrictEqual([shown, false, "Unified Inbox", undefined]);
+    }
+  );
+
   it("on macOS keeps the roles' own keys and has Help", () => {
     const menus = template("darwin");
 
@@ -430,6 +456,7 @@ const setup = () => {
       settingsFocused: false,
       settingsHistory: undefined,
       doNotDisturb: undefined,
+      can: () => true,
       navigation: { canGoBack: false, canGoForward: false, loading: false },
       inboxOpen,
       downloadsOpen: false,

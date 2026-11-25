@@ -78,6 +78,11 @@ msgstr "{hours, plural, one {For # Hour} other {For # Hours}}"
 msgid "{label} ({shortcut})"
 msgstr "{label} ({shortcut})"
 
+#. Label of a disabled menu item on Windows and Linux on the free version, saying it needs Meru Pro; {label} is the item's own label, such as Split Right
+#: src/main/menu-labels.ts
+msgid "{label} (Pro)"
+msgstr "{label} (Pro)"
+
 #. Shown on an unread badge when more messages are unread than the number before the plus
 #. Shown on an unread badge, on a profile's tab in the title bar or on Gmail's tab, when more messages are unread than the number before the plus
 #: src/main/badge.ts
@@ -1704,6 +1709,11 @@ msgstr "Previous match"
 #: src/settings/app.tsx
 msgid "Privacy & Security"
 msgstr "Privacy & Security"
+
+#. Badge at the right of a disabled menu item on macOS on the free version, saying the item needs Meru Pro
+#: src/main/menu-labels.ts
+msgid "Pro"
+msgstr "Pro"
 
 #. First sentence about Meru Pro (in Settings) when the trial or license ended while Meru was running; what Pro unlocked stays on until Meru is quit
 #: src/shared/license-status.ts

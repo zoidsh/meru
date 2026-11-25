@@ -12,6 +12,7 @@ import type { Bookmarks } from "../bookmarks.ts";
 import { COMMANDS, NO_PAGE } from "../commands.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Downloads } from "../downloads.ts";
+import type { Entitlement } from "../entitlement.ts";
 import type { Find } from "../find.ts";
 import type { Focus } from "../focus.ts";
 import type { createGmailNavigation } from "../gmail-navigation.ts";
@@ -60,7 +61,10 @@ export const wireMenu = ({
   settingsFocused,
   onSettingsFocusChange,
   settingsPages,
+  entitlement,
 }: {
+  /** What the commands may do, which an activation raises at once. */
+  entitlement: Pick<Entitlement, "can" | "onChange">;
   platform: Platform;
   /** The menu is set again in each language chosen. */
   language: Pick<Language, "onChange">;
@@ -143,6 +147,7 @@ export const wireMenu = ({
             }
           : undefined,
         doNotDisturb: doNotDisturb.current(),
+        can: entitlement.can,
         inboxOpen: inbox.isOpen(),
         downloadsOpen: downloads.isOpen(),
         openAppOpen: openApp.isOpen(),
@@ -240,6 +245,7 @@ export const wireMenu = ({
   });
 
   language.onChange(menu.refresh);
+  entitlement.onChange(menu.refresh);
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);
   // Opening and closing the inbox, which Back, Forward and Reload follow.

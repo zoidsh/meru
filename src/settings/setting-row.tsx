@@ -12,11 +12,40 @@ import {
   FieldSeparator,
 } from "#ui/field.tsx";
 
+import { ProBadge } from "./pro-badge.tsx";
 import { OverrideBar } from "./row-scope.tsx";
 import type { RowScope } from "./row-scope.tsx";
 
 /** A row's scope while its page has none. */
 const NO_SCOPE: RowScope = {};
+
+/** A row's label, with the Meru Pro badge beside it on a Pro row. */
+export const RowLabel = ({
+  id,
+  label,
+  pro,
+  className,
+}: {
+  id: string;
+  label: string;
+  pro?: boolean | undefined;
+  className?: string | undefined;
+}) => {
+  const fieldLabel = (
+    <FieldLabel id={id} className={className}>
+      {label}
+    </FieldLabel>
+  );
+
+  return pro ? (
+    <div className="flex items-center gap-2">
+      {fieldLabel}
+      <ProBadge labelledBy={id} />
+    </div>
+  ) : (
+    fieldLabel
+  );
+};
 
 /**
  * A row of the page: its label and descriptions, and its control. While Do
@@ -32,9 +61,15 @@ export const SettingRow = ({
   error,
   scope = NO_SCOPE,
   disabled = false,
+  pro,
   center = false,
   children,
 }: {
+  /**
+   * A Pro row on the free version, which shows the Meru Pro badge beside
+   * the label; its caller disables the row and its control.
+   */
+  pro?: boolean | undefined;
   label: string;
   /** A path or another value that may be long, broken anywhere to fit. */
   description?: ReactNode;
@@ -81,12 +116,15 @@ export const SettingRow = ({
       {/* A label alone is the field's own child, which Field centers on the
           controls; content under it aligns the row to its top. */}
       {centered ? (
-        <FieldLabel id={labelId}>{label}</FieldLabel>
+        <RowLabel id={labelId} label={label} pro={pro} />
       ) : (
         <FieldContent>
-          <FieldLabel id={labelId} className={cn(dims && "opacity-50")}>
-            {label}
-          </FieldLabel>
+          <RowLabel
+            id={labelId}
+            label={label}
+            pro={pro}
+            className={cn(dims && "opacity-50")}
+          />
           {description && (
             <FieldDescription
               id={descriptionId}

@@ -1,6 +1,7 @@
 import { describe, expect, it, onTestFinished } from "vitest";
 
 import { matchesAccelerator } from "#core/accelerator.ts";
+import type { Capability } from "#core/entitlement.ts";
 import { savedSearches } from "#core/saved-searches.ts";
 import { gmailTab, isAsleep, isTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -58,6 +59,7 @@ const setup = (initial: State = twoProfiles) => {
   let navigation: Navigation | null = null;
   let selectedTabAsleep = false;
   let ownWindow: TabKey | undefined;
+  const refused = new Set<Capability>();
   let settingsFocused = false;
   let settingsHistory = { canGoBack: false, canGoForward: false };
   const moves: string[] = [];
@@ -152,6 +154,7 @@ const setup = (initial: State = twoProfiles) => {
       settingsFocused,
       settingsHistory: settingsFocused ? settingsHistory : undefined,
       doNotDisturb: doNotDisturb.current(),
+      can: (capability: Capability) => !refused.has(capability),
       inboxOpen,
       downloadsOpen: false,
       openAppOpen,
@@ -174,6 +177,10 @@ const setup = (initial: State = twoProfiles) => {
 
   return {
     profiles,
+    /** As the free version's entitlement refuses it. */
+    refuse: (capability: Capability) => {
+      refused.add(capability);
+    },
     reloads: () => reloads,
     moves,
     sleeps,
@@ -680,6 +687,14 @@ describe("the command registry", () => {
     await app.run("inbox.toggle");
 
     expect(app.isChecked("inbox.toggle")).toBeFalsy();
+  });
+
+  it("offers no unified inbox without Meru Pro, whatever the profiles", () => {
+    const app = setup();
+
+    app.refuse("unifiedInbox");
+
+    expect(app.isAvailable("inbox.toggle")).toBeFalsy();
   });
 
   it("selects the first nine profiles by place, on v3's keys, offering each only while it exists", async () => {

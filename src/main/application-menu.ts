@@ -19,9 +19,14 @@ import {
 import { menuText } from "#core/tray.ts";
 import type { ZoomChange } from "#platform/zoom.ts";
 
-import { isCommandAvailable, savedSearchCommands } from "./commands.ts";
+import {
+  isCommandAvailable,
+  needsPro,
+  savedSearchCommands,
+} from "./commands.ts";
 import type { Command, CommandActions, CommandContext } from "./commands.ts";
 import { doNotDisturbItems } from "./do-not-disturb.ts";
+import { proMenuItem } from "./menu-labels.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 
 export interface MenuTemplateInput {
@@ -294,10 +299,13 @@ export const buildMenuTemplate = ({
     asText = false
   ): MenuItemConstructorOptions => {
     const title = command.label?.(context) ?? command.title();
+    const label = asText ? menuText(title, platform) : title;
 
     return {
       id: command.id,
-      label: asText ? menuText(title, platform) : title,
+      ...(needsPro(command, context)
+        ? proMenuItem(label, platform)
+        : { label }),
       ...(command.shortcut?.[platform] && {
         accelerator: command.shortcut[platform],
       }),

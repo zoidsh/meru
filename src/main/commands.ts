@@ -2,6 +2,7 @@ import { plural, t } from "@lingui/core/macro";
 
 import { APPS, findApp } from "#core/apps.ts";
 import { drawnTabs } from "#core/drawn-tabs.ts";
+import type { Capability } from "#core/entitlement.ts";
 import {
   COMPOSE_HASH,
   SETTINGS_HASH,
@@ -74,6 +75,8 @@ export interface CommandContext {
   settingsHistory: { canGoBack: boolean; canGoForward: boolean } | undefined;
   /** Do Not Disturb while it holds, else `undefined`. */
   doNotDisturb: DoNotDisturb | undefined;
+  /** What this run may use, the entitlement's `can`. */
+  can: (capability: Capability) => boolean;
   /** Whether the unified inbox is open over the page. */
   inboxOpen: boolean;
   /** Whether the Downloads card is open over the page. */
@@ -174,6 +177,11 @@ export interface Command {
   /** An Electron accelerator per platform; none where the platform has no key. */
   shortcut?: Partial<Record<Platform, string>>;
   isAvailable?: (context: CommandContext) => boolean;
+  /**
+   * What it needs of Meru Pro: while refused it is unavailable, and its menu
+   * item says Pro.
+   */
+  capability?: Capability;
   /** A command with this is a choice that is on or off. */
   isChecked?: (context: CommandContext) => boolean;
   /**
@@ -200,12 +208,19 @@ export const NO_PAGE = {
 
 /** Whether the command can run now, in the window that has focus. */
 export const isCommandAvailable = (
-  command: Pick<Command, "isAvailable" | "inOwnWindow">,
+  command: Pick<Command, "isAvailable" | "inOwnWindow" | "capability">,
   context: CommandContext
 ) =>
+  !needsPro(command, context) &&
   (command.inOwnWindow === true ||
     (context.ownWindow === undefined && !context.settingsFocused)) &&
   (command.isAvailable?.(context) ?? true);
+
+/** Whether the command is unavailable for the Meru Pro it needs. */
+export const needsPro = (
+  command: Pick<Command, "capability">,
+  context: Pick<CommandContext, "can">
+) => command.capability !== undefined && !context.can(command.capability);
 
 const selectedTab = (state: State): TabKey => {
   const profile = selectedProfile(state);
@@ -409,6 +424,7 @@ export const COMMANDS: readonly Command[] = [
       win32: "CommandOrControl+Shift+I",
       linux: "CommandOrControl+Shift+I",
     },
+    capability: "unifiedInbox",
     // Available while open too, so its key and item close it.
     isAvailable: ({ state, inboxOpen }) =>
       inboxOpen || enabledProfiles(state).length > 1,

@@ -1,5 +1,11 @@
 import { Mutex, isEqual } from "es-toolkit";
 
+import {
+  GATED_SETTINGS,
+  entitledSetting,
+  settingWritable,
+} from "#core/entitled-settings.ts";
+import type { Capability } from "#core/entitlement.ts";
 import type { Platform } from "#core/platform.ts";
 import {
   OVERRIDABLE_SETTING_KEYS,
@@ -58,7 +64,15 @@ export interface SettingsStoreDeps {
    * as unset and stays stored. Always when absent.
    */
   profileValues?: () => boolean;
+  /**
+   * The entitlement's `can`, asked at each read of a setting a capability
+   * gates and again at each `recheck`; while it refuses, the setting reads
+   * its free value, stays stored and is not written. Everything when absent.
+   */
+  can?: (capability: Capability) => boolean;
 }
+
+const GATED_KEYS = Object.keys(GATED_SETTINGS) as SettingKey[];
 
 const overridable = new Set<SettingKey>(OVERRIDABLE_SETTING_KEYS);
 
@@ -80,15 +94,35 @@ export const createSettingsStore = ({
   platform,
   log,
   profileValues = () => true,
+  can = () => true,
 }: SettingsStoreDeps) => {
   const mutex = new Mutex();
   const listeners = new Map<SettingKey, Set<() => void>>();
   let settings = initial;
   let applied = profileValues();
+  const grantsOf = () =>
+    new Map(GATED_KEYS.map((key) => [key, settingWritable(key, can)]));
+  let granted = grantsOf();
 
-  /** The app value, or the profile's where it holds one that applies. */
+  /**
+   * The app value, or the profile's where it holds one that applies; the
+   * free value of either while its capability is refused.
+   */
   const get = <Key extends SettingKey>(key: Key, profileId?: string) =>
-    readSetting(settings, key, platform, applied ? profileId : undefined);
+    entitledSetting(
+      key,
+      readSetting(settings, key, platform, applied ? profileId : undefined),
+      can
+    );
+
+  /**
+   * Queues the write at once unless the key's capability is refused, so
+   * nothing writes a value the run would not read.
+   */
+  const writing = (key: SettingKey, write: () => Promise<void>) =>
+    settingWritable(key, can)
+      ? write()
+      : Promise.reject(new Error(`Setting ${key} needs Meru Pro`));
 
   const tell = (key: SettingKey) => {
     for (const listener of listeners.get(key) ?? []) {
@@ -162,18 +196,29 @@ export const createSettingsStore = ({
       key: Key,
       change: (value: SettingValue<Key>) => SettingValue<Key>
     ) =>
-      commit((current) =>
-        writeSetting(current, key, change(readSetting(current, key, platform)))
+      writing(key, () =>
+        commit((current) =>
+          writeSetting(
+            current,
+            key,
+            change(readSetting(current, key, platform))
+          )
+        )
       ),
     /** Sets the profile's own value, even one equal to the app's. */
     setOverride: <Key extends OverridableSettingKey>(
       profileId: string,
       key: Key,
       value: SettingValue<Key>
-    ) => commit((current) => writeOverride(current, profileId, key, value)),
+    ) =>
+      writing(key, () =>
+        commit((current) => writeOverride(current, profileId, key, value))
+      ),
     /** The profile reads the app value again. */
     clearOverride: (profileId: string, key: OverridableSettingKey) =>
-      commit((current) => clearOverride(current, profileId, key)),
+      writing(key, () =>
+        commit((current) => clearOverride(current, profileId, key))
+      ),
     /** Deletes every value of the profile's own, as it is removed. */
     removeProfile: (profileId: string) =>
       commit((current) => clearProfileOverrides(current, profileId)),
@@ -184,19 +229,28 @@ export const createSettingsStore = ({
     overridingProfiles: (key: OverridableSettingKey) =>
       applied ? overridingProfiles(settings, key) : [],
     /**
-     * Asks `profileValues` again, for a change of the entitlement, and tells
-     * the listeners of every key a profile may hold when its answer changed.
+     * Asks `profileValues` and `can` again, for a change of the entitlement,
+     * and tells the listeners of every key a profile may hold when the first
+     * answer changed, and of each gated key whose capability's answer did.
      */
     recheck: () => {
       const next = profileValues();
+      const nextGranted = grantsOf();
+      const told = new Set(
+        GATED_KEYS.filter((key) => nextGranted.get(key) !== granted.get(key))
+      );
 
-      if (next === applied) {
-        return;
+      granted = nextGranted;
+
+      if (next !== applied) {
+        applied = next;
+
+        for (const key of OVERRIDABLE_SETTING_KEYS) {
+          told.add(key);
+        }
       }
 
-      applied = next;
-
-      for (const key of OVERRIDABLE_SETTING_KEYS) {
+      for (const key of told) {
         tell(key);
       }
     },

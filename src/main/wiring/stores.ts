@@ -88,6 +88,7 @@ export const wireStores = async ({
     platform,
     log: console.error,
     profileValues: multipleProfiles,
+    can: entitlement.can,
   });
 
   // The settings first, so a profile coming back reads its own values.

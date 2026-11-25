@@ -32,6 +32,8 @@ export interface InboxDeps {
     open: () => void;
     close: () => void;
   };
+  /** The entitlement's `can("unifiedInbox")`, asked at each open and change; always when absent. */
+  allowed?: () => boolean;
   now?: () => number;
   log: (message: string) => void;
 }
@@ -46,7 +48,7 @@ const CLOSED: ShellState["inbox"] = {
 };
 
 /** The inbox is for more than one profile, as v3's is. */
-const inboxAvailable = (state: State) => enabledProfiles(state).length > 1;
+const hasProfilesToUnify = (state: State) => enabledProfiles(state).length > 1;
 
 /**
  * The unified inbox, an overlay: the rows it shows,
@@ -64,9 +66,12 @@ export const createInbox = ({
   includes,
   initial,
   overlay,
+  allowed = () => true,
   now = Date.now,
   log,
 }: InboxDeps) => {
+  const inboxAvailable = (state: State) =>
+    allowed() && hasProfilesToUnify(state);
   const listeners = new Set<() => void>();
   let state = initial;
   let notice: Notice = null;
@@ -107,6 +112,12 @@ export const createInbox = ({
       }
 
       if (isOpen()) {
+        return;
+      }
+
+      if (!allowed()) {
+        log("Refused to open the unified inbox, which needs Meru Pro");
+
         return;
       }
 

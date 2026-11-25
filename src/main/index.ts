@@ -521,6 +521,7 @@ const start = async () => {
     gmailOrigin,
     showOwnWindow,
     revealGmail,
+    entitlement,
   });
 
   const { livePageUrl, openApp, bookmarks } = wireLauncher({
@@ -646,6 +647,7 @@ const start = async () => {
     settingsFocused,
     onSettingsFocusChange,
     settingsPages,
+    entitlement,
   });
 
   wireShellContract({

@@ -327,6 +327,67 @@ describe(createSettingsStore, () => {
     expect(heard).toStrictEqual(["notifications"]);
     expect(read()).toStrictEqual([false, false, ["a"]]);
   });
+
+  it("reads a gated setting as its free value without its capability, refuses to write it, keeps it stored, and announces it once granted", async () => {
+    let granted = false;
+    const saved: unknown[] = [];
+    const initial = {
+      version: 1,
+      titlebarUnifiedInbox: true,
+      unifiedInbox: true,
+    };
+    const settings = createSettingsStore({
+      initial,
+      save: (next) => {
+        saved.push(structuredClone(next));
+
+        return Promise.resolve();
+      },
+      platform: "darwin",
+      log: () => {},
+      can: (capability) => granted || capability === "profiles",
+    });
+    const heard: string[] = [];
+
+    settings.onChange("titlebarUnifiedInbox", () =>
+      heard.push("titlebarUnifiedInbox")
+    );
+    settings.onChange("tray", () => heard.push("tray"));
+
+    const read = () => [
+      settings.get("titlebarUnifiedInbox"),
+      settings.get("unifiedInbox", "a"),
+    ];
+    const free = read();
+    const refused = await Promise.allSettled([
+      settings.update("titlebarUnifiedInbox", () => false),
+      settings.setOverride("a", "unifiedInbox", false),
+      settings.clearOverride("a", "unifiedInbox"),
+    ]);
+
+    settings.recheck();
+
+    const heardWhileFree = [...heard];
+
+    granted = true;
+    settings.recheck();
+
+    expect([
+      free,
+      refused.map((result) => result.status),
+      saved,
+      heardWhileFree,
+      heard,
+      read(),
+    ]).toStrictEqual([
+      [false, false],
+      ["rejected", "rejected", "rejected"],
+      [],
+      [],
+      ["titlebarUnifiedInbox"],
+      [true, true],
+    ]);
+  });
 });
 
 describe(followRemovedProfiles, () => {

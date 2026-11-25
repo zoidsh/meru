@@ -202,6 +202,7 @@ const labels = (context: Partial<CommandContext>) =>
       settingsFocused: false,
       settingsHistory: undefined,
       doNotDisturb: undefined,
+      can: () => true,
       navigation: null,
       inboxOpen: false,
       downloadsOpen: false,

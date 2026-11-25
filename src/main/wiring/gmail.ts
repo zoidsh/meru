@@ -12,6 +12,7 @@ import type { createSessions } from "#platform/sessions.ts";
 import { readTextUpTo } from "#platform/text-file.ts";
 
 import { createCatchUp } from "../catch-up.ts";
+import type { Entitlement } from "../entitlement.ts";
 import type { Focus } from "../focus.ts";
 import { createGmailNavigation } from "../gmail-navigation.ts";
 import { serveGmailContract } from "../gmail-page.ts";
@@ -98,7 +99,9 @@ export const wireGmail = ({
   gmailOrigin,
   showOwnWindow,
   revealGmail,
+  entitlement,
 }: {
+  entitlement: Pick<Entitlement, "can">;
   lifecycle: ReturnType<typeof createAppLifecycle>;
   sessions: ReturnType<typeof createSessions>;
   power: ReturnType<typeof createPower>;
@@ -209,6 +212,7 @@ export const wireGmail = ({
         overlays.close();
       },
     },
+    allowed: () => entitlement.can("unifiedInbox"),
     log: console.error,
   });
 

@@ -38,7 +38,7 @@ const feedOf = (entries: FeedEntry[]): FeedOutcome => ({
   feed: { unreadCount: entries.length, entries },
 });
 
-const setup = (initial: State = two) => {
+const setup = (initial: State = two, allowed = () => true) => {
   const feeds: Record<string, { status: MailStatus; entries: FeedEntry[] }> = {
     a: { status: "ok", entries: [entry("a1", 30), entry("a2", 10)] },
     b: { status: "ok", entries: [entry("b1", 20)] },
@@ -95,6 +95,7 @@ const setup = (initial: State = two) => {
         overlay.closes += 1;
       },
     },
+    allowed,
     now: () => clock,
     log: (message) => logs.push(message),
   });
@@ -206,6 +207,32 @@ describe(createInbox, () => {
     app.inbox.follow({ ...two, profiles: [newProfile("a", "Default")] });
 
     expect(app.inbox.isOpen()).toBeFalsy();
+  });
+
+  it("opens without Meru Pro neither the overlay nor anything of any mail, and opens once it is granted", async () => {
+    let granted = false;
+    const app = setup(two, () => granted);
+
+    app.inbox.setOpen(true);
+    await app.inbox.openMessage("a", "a1");
+    await app.inbox.runAction("a", "a1", "markAsRead");
+
+    const free = [
+      app.inbox.isOpen(),
+      app.overlay.opens,
+      app.inbox.shellSlice().rows,
+      app.opened,
+      app.runs.length,
+      app.changes(),
+    ];
+
+    granted = true;
+    app.inbox.setOpen(true);
+
+    expect([free, app.inbox.isOpen()]).toStrictEqual([
+      [false, 0, [], [], 0, 0],
+      true,
+    ]);
   });
 
   it("stays open when another profile or tab is selected, which closes it through the request that selected", () => {
