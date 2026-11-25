@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GMAIL_PAGE_KEYS } from "#contract/settings.ts";
+import { GMAIL_PAGE_KEYS, MENU_BAR_PAGE_KEYS } from "#contract/settings.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import type { FeedOutcome } from "#core/feed.ts";
@@ -530,6 +530,52 @@ describe("the Settings window's Gmail page", () => {
       },
       false,
       "immediately",
+    ]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Menu Bar & Dock page", () => {
+  it("sends each of the page's settings, the platform's default where none is stored", () => {
+    const app = setup(stateOf("Work"), { version: 1, trayJumpsToUnread: true });
+
+    expect(
+      Object.fromEntries(
+        MENU_BAR_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
+      )
+    ).toStrictEqual({
+      dockIcon: true,
+      tray: false,
+      trayUnreadCount: true,
+      trayIconColor: "system",
+      trayJumpsToUnread: true,
+    });
+    app.dispose();
+  });
+
+  it("refuses to hide the Dock icon while the menu bar icon is off, writing nothing", async () => {
+    const app = setup(stateOf("Work"));
+
+    await expect(
+      app.handlers.update({ key: "dockIcon", value: false })
+    ).rejects.toThrow(
+      "The Dock icon cannot hide while the menu bar icon is off"
+    );
+    expect(app.saved).toStrictEqual([]);
+    app.dispose();
+  });
+
+  it("hides the Dock icon once the menu bar icon shows, and shows it again", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.update({ key: "tray", value: true });
+    await app.handlers.update({ key: "dockIcon", value: false });
+    await app.handlers.update({ key: "dockIcon", value: true });
+
+    expect(app.saved).toStrictEqual([
+      { version: 1, tray: true },
+      { version: 1, tray: true, dockIcon: false },
+      { version: 1, tray: true, dockIcon: true },
     ]);
     app.dispose();
   });

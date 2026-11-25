@@ -35,6 +35,19 @@ export const GMAIL_PAGE_KEYS = [
 ] as const;
 
 /**
+ * The Menu Bar & Dock page's settings, in its order on macOS; the app holds
+ * them, never a profile. `dockIcon` and `trayUnreadCount` are read on macOS
+ * alone, `trayIconColor` on Windows and Linux.
+ */
+export const MENU_BAR_PAGE_KEYS = [
+  "dockIcon",
+  "tray",
+  "trayUnreadCount",
+  "trayIconColor",
+  "trayJumpsToUnread",
+] as const;
+
+/**
  * The settings a profile may hold a value of its own for, as the
  * Notifications page shows them. `unifiedInbox` is a profile's own switch on
  * its page instead, so it never counts as one of this page's overrides.
@@ -49,6 +62,7 @@ export const PAGE_OVERRIDABLE_KEYS = OVERRIDABLE_SETTING_KEYS.filter(
 const APP_ONLY_PAGE_KEYS = [
   "notificationSoundVolume",
   ...GMAIL_PAGE_KEYS,
+  ...MENU_BAR_PAGE_KEYS,
 ] as const;
 
 /**

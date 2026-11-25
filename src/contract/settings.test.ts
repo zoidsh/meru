@@ -39,6 +39,21 @@ describe("the settings contract", () => {
     ]).toStrictEqual([true, true, true, true, true, true, false, false, false]);
   });
 
+  it("takes the Menu Bar & Dock page's settings, checked by each one's schema", () => {
+    const update = accepts(SETTINGS_CALLS.update.request);
+
+    expect([
+      update({ key: "dockIcon", value: false }),
+      update({ key: "tray", value: true }),
+      update({ key: "trayUnreadCount", value: false }),
+      update({ key: "trayIconColor", value: "light" }),
+      update({ key: "trayJumpsToUnread", value: true }),
+      update({ key: "dockIcon", value: "hidden" }),
+      update({ key: "trayIconColor", value: "blue" }),
+      update({ key: "tray", value: 0 }),
+    ]).toStrictEqual([true, true, true, true, true, false, false, false]);
+  });
+
   it("refuses a value of the wrong kind, a setting off the page and anything malformed", () => {
     const update = accepts(SETTINGS_CALLS.update.request);
 
@@ -316,6 +331,11 @@ describe("the settings contract", () => {
       verificationCodeCopyMode: "notificationClick",
       verificationCodeMarkRead: false,
       verificationCodeTrash: false,
+      dockIcon: false,
+      tray: true,
+      trayUnreadCount: true,
+      trayIconColor: "dark",
+      trayJumpsToUnread: false,
     };
 
     expect([

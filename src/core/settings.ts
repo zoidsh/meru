@@ -145,6 +145,14 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: false,
   }),
+  /**
+   * The Dock icon, read on macOS alone. It hides only while the menu bar icon
+   * shows (`dockShown`), so Meru is never out of reach.
+   */
+  dockIcon: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
   /** The Dock badge, the taskbar overlay or the launcher's count. */
   unreadBadge: overridable<boolean>({
     schema: z.boolean(),

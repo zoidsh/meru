@@ -46,40 +46,47 @@ export const createUnreadBadge = ({
   let shownCount = 0;
   let closed = false;
 
-  return {
-    /** Called whenever the count or the setting may have changed. */
-    update: () => {
-      if (closed) {
-        return;
-      }
+  /** Called whenever the count or the setting may have changed. */
+  const update = () => {
+    if (closed) {
+      return;
+    }
 
-      const count = totalUnread(profiles().filter(counted).map(unread));
+    const count = totalUnread(profiles().filter(counted).map(unread));
 
-      if (count === shownCount) {
-        return;
-      }
+    if (count === shownCount) {
+      return;
+    }
 
-      shownCount = count;
-      badge.show(
-        count > 0
-          ? {
-              count,
-              text: unreadText(count),
-              overlay:
-                platform === "win32"
-                  ? OVERLAY_SIZES.map((size) => drawUnreadBadge(count, size))
-                  : [],
-              description: t({
-                message: plural(count, {
-                  one: "# unread message",
-                  other: "# unread messages",
-                }),
-                comment:
-                  "Read out by a screen reader for the unread badge on Meru's taskbar button on Windows",
+    shownCount = count;
+    badge.show(
+      count > 0
+        ? {
+            count,
+            text: unreadText(count),
+            overlay:
+              platform === "win32"
+                ? OVERLAY_SIZES.map((size) => drawUnreadBadge(count, size))
+                : [],
+            description: t({
+              message: plural(count, {
+                one: "# unread message",
+                other: "# unread messages",
               }),
-            }
-          : undefined
-      );
+              comment:
+                "Read out by a screen reader for the unread badge on Meru's taskbar button on Windows",
+            }),
+          }
+        : undefined
+    );
+  };
+
+  return {
+    update,
+    /** Draws the count again, as on a Dock icon just put back. */
+    redraw: () => {
+      shownCount = 0;
+      update();
     },
     /**
      * On quit: clears the badge for good, so no late poll sets it again and

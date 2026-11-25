@@ -4,6 +4,7 @@ import type { createTheme } from "#platform/theme.ts";
 
 import { createUnreadBadge } from "../badge.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
+import { createDockIcon } from "../dock.ts";
 import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
 import type { SettingsStore } from "../settings.ts";
@@ -12,11 +13,12 @@ import type { createShellWindow } from "../shell-window.ts";
 import type { createShowGmail } from "../show-gmail.ts";
 import { createTray } from "../tray.ts";
 import { revealWindow } from "../windows.ts";
-import { systemBadge, systemTrays } from "./test-build.ts";
+import { systemBadge, systemDock, systemTrays } from "./test-build.ts";
 
 /**
- * The tray and the dock's or taskbar's unread badge, both following the
- * count, and what brings the window back or quits.
+ * The tray, the Dock icon on macOS, and the Dock's or taskbar's unread badge,
+ * the tray and badge following the count, and what brings the window back or
+ * quits.
  */
 export const wireTray = ({
   platform,
@@ -76,6 +78,15 @@ export const wireTray = ({
     unread,
     counted: (profileId) => settings.get("unreadBadge", profileId),
   });
+  if (isMacOS) {
+    createDockIcon({
+      dock: systemDock(),
+      settings,
+      onShown: badge.redraw,
+      log: console.error,
+    });
+  }
+
   const showUnread = () => {
     tray.update();
     badge.update();

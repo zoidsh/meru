@@ -48,6 +48,17 @@ describe(unreadText, () => {
 });
 
 describe(createUnreadBadge, () => {
+  it("draws the same count again when asked, as on a Dock icon just put back, and nothing at zero", () => {
+    const app = setup();
+
+    app.setTotal(4);
+    app.badge.redraw();
+    app.setTotal(0);
+    app.badge.redraw();
+
+    expect(app.texts()).toStrictEqual(["4", "4", undefined]);
+  });
+
   it("follows the count, capped, and clears at zero", () => {
     const app = setup();
 

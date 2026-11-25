@@ -32,6 +32,7 @@ import type { State } from "#core/state.ts";
 
 import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
+import { assertDockChange } from "./dock.ts";
 import type { MailPoller } from "./mail.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
@@ -152,6 +153,10 @@ export const settingsHandlers = ({
   return {
     update: async (change) => {
       const { key, value } = change as SettingChange;
+
+      if (key === "dockIcon") {
+        assertDockChange(settings, value as boolean);
+      }
 
       await store.update(key, () => value);
     },

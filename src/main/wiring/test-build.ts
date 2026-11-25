@@ -16,6 +16,7 @@ import {
   createCapturedContextMenus,
   createContextMenus,
 } from "#platform/context-menu.ts";
+import { createCapturedDock, createDock } from "#platform/dock.ts";
 import {
   createCapturedDownloadFiles,
   createCapturedDownloadSignals,
@@ -161,6 +162,13 @@ export const systemTrays = () =>
   MERU_E2E_BUILD
     ? createCapturedTrayFactory()
     : createTrayFactory(path.join(import.meta.dirname, "tray"));
+
+/**
+ * The suite's build records the Dock icon's showing and hiding, so a test
+ * never changes the Dock of the desktop it shares.
+ */
+export const systemDock = () =>
+  MERU_E2E_BUILD ? createCapturedDock() : createDock();
 
 /** The suite's build records the badge in place of drawing it. */
 export const systemBadge = (window: Parameters<typeof createBadge>[0]) =>

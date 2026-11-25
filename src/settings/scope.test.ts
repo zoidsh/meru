@@ -64,6 +64,11 @@ const APP: PageSettings = {
   verificationCodeCopyMode: "notificationClick",
   verificationCodeMarkRead: false,
   verificationCodeTrash: false,
+  dockIcon: true,
+  tray: false,
+  trayUnreadCount: true,
+  trayIconColor: "system",
+  trayJumpsToUnread: false,
 };
 
 describe(isScoped, () => {
