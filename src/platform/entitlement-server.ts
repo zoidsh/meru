@@ -10,10 +10,13 @@ export interface EntitlementServer {
     deviceId: string;
     licenseKey?: string;
   }) => Promise<ServerAnswer>;
+  /**
+   * Sends nothing of the machine but its id: the server names the device
+   * itself, and only a name the person types ever leaves the machine.
+   */
   activate: (request: {
     deviceId: string;
     licenseKey: string;
-    deviceLabel: string;
   }) => Promise<ServerAnswer>;
   setDeviceLabel: (request: {
     deviceId: string;

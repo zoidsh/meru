@@ -101,10 +101,12 @@ describe(createStubEntitlementServer, () => {
         await server.activate({
           deviceId: "device",
           licenseKey: "MERU-ABCD-0001",
-          deviceLabel: "Studio",
         })
       )
-    ).toMatchObject({ tier: "pro", deviceLabel: "Studio" });
+    ).toMatchObject({
+      tier: "pro",
+      deviceLabel: expect.stringMatching(/^Device [0-9A-F]{4}$/u),
+    });
     expect(
       read(
         await server.refresh({
@@ -126,11 +128,7 @@ describe(createStubEntitlementServer, () => {
   it("answers a used key with the device limit, a key of no license as invalid, and nothing offline", async () => {
     const { server, goOffline } = setup();
     const activate = (licenseKey: string) =>
-      server.activate({
-        deviceId: "device",
-        licenseKey,
-        deviceLabel: "Studio",
-      });
+      server.activate({ deviceId: "device", licenseKey });
 
     await expect(activate("MERU-USED-0001")).resolves.toStrictEqual({
       error: "deviceLimit",

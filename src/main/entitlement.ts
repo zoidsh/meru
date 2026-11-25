@@ -98,8 +98,6 @@ export interface EntitlementDeps {
   /** `undefined` where the build trusts no key, so no token verifies. */
   publicKey: KeyObject | undefined;
   deviceId: string;
-  /** Sent as the device's label when a key is activated. */
-  defaultDeviceName: () => string;
   now: () => number;
   /** Where trial days are counted; the device's own zone when absent. */
   timeZone?: string;
@@ -117,7 +115,6 @@ export const createEntitlement = ({
   server,
   publicKey,
   deviceId,
-  defaultDeviceName,
   now,
   timeZone,
   log,
@@ -295,14 +292,7 @@ export const createEntitlement = ({
         };
       }
 
-      return take(
-        await server.activate({
-          deviceId,
-          licenseKey,
-          deviceLabel: defaultDeviceName(),
-        }),
-        licenseKey
-      );
+      return take(await server.activate({ deviceId, licenseKey }), licenseKey);
     },
     /** Renames this device on its license. */
     setDeviceName: async (name: string): Promise<EntitlementResult> => {

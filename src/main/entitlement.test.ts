@@ -82,7 +82,6 @@ const setup = (initial?: EntitlementFile) => {
       server: fake.server,
       publicKey: keys.publicKey,
       deviceId: DEVICE,
-      defaultDeviceName: () => "Studio",
       now: Date.now,
       timeZone: "UTC",
       log: (message) => logs.push(message),
@@ -335,7 +334,7 @@ describe(createEntitlement, () => {
       }
     );
 
-    answerWith(() => ({ token: signToken({ deviceLabel: "Studio" }) }));
+    answerWith(() => ({ token: signToken({ deviceLabel: "Device 4F2A" }) }));
 
     await expect(
       entitlement.activate(" MERU-GOOD-0001 ")
@@ -343,18 +342,8 @@ describe(createEntitlement, () => {
       ok: true,
     });
     expect(requests).toStrictEqual([
-      {
-        call: "activate",
-        deviceId: DEVICE,
-        licenseKey: "MERU-USED-0001",
-        deviceLabel: "Studio",
-      },
-      {
-        call: "activate",
-        deviceId: DEVICE,
-        licenseKey: "MERU-GOOD-0001",
-        deviceLabel: "Studio",
-      },
+      { call: "activate", deviceId: DEVICE, licenseKey: "MERU-USED-0001" },
+      { call: "activate", deviceId: DEVICE, licenseKey: "MERU-GOOD-0001" },
     ]);
     expect(saved).toStrictEqual([
       expect.objectContaining({ licenseKey: "MERU-GOOD-0001" }),
@@ -362,8 +351,20 @@ describe(createEntitlement, () => {
     expect(entitlement.snapshot()).toMatchObject({
       status: "licensed",
       tier: "pro",
-      deviceName: "Studio",
+      deviceName: "Device 4F2A",
     });
+    entitlement.dispose();
+  });
+
+  it("sends nothing at activation but the key and the device's id", async () => {
+    const { entitlement, answerWith, requests } = setup();
+
+    answerWith(() => ({ token: signToken({}) }));
+    await entitlement.activate("MERU-GOOD-0001");
+
+    expect(requests).toStrictEqual([
+      { call: "activate", deviceId: DEVICE, licenseKey: "MERU-GOOD-0001" },
+    ]);
     entitlement.dispose();
   });
 
@@ -439,7 +440,6 @@ describe(createEntitlement, () => {
       server: fake.server,
       publicKey: undefined,
       deviceId: DEVICE,
-      defaultDeviceName: () => "Studio",
       now: Date.now,
       log: () => {},
     });

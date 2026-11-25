@@ -56,6 +56,3 @@ export const readDeviceId = async () =>
   createHash("sha256")
     .update(await readPlatformId())
     .digest("hex");
-
-/** The name a license shows this computer by until it is renamed. */
-export const deviceName = () => hostname().replace(/\.local$/u, "");

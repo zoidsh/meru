@@ -2,7 +2,7 @@ import path from "node:path";
 
 import type { EntitlementFile } from "#core/entitlement-file.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
-import { deviceName, readDeviceId } from "#platform/device-id.ts";
+import { readDeviceId } from "#platform/device-id.ts";
 import { createUnreachableEntitlementServer } from "#platform/entitlement-server.ts";
 import { createTextFile } from "#platform/text-file.ts";
 import type { TextFile } from "#platform/text-file.ts";
@@ -59,7 +59,6 @@ export const wireEntitlement = async ({
     save: (next) => saveEntitlementFile(file, next),
     ...entitlementSource(lifecycle.userDataPath),
     deviceId,
-    defaultDeviceName: deviceName,
     now: Date.now,
     log: console.error,
   });

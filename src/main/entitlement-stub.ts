@@ -4,7 +4,7 @@
 // here in the open: it signs nothing a release would accept, so it is no
 // secret, and the build fails if the seed or the public key reaches a
 // release.
-import { createHash, createPrivateKey, sign } from "node:crypto";
+import { createHash, createPrivateKey, randomBytes, sign } from "node:crypto";
 
 import { DAY, OFFLINE_GRACE } from "#core/entitlement.ts";
 import type { Entitlement } from "#core/entitlement.ts";
@@ -40,6 +40,10 @@ export const signDevToken = (payload: Entitlement) => {
 };
 
 const TRIAL_LENGTH = 14 * DAY;
+
+/** A name of no meaning, as the server gives a device it activates. */
+export const generatedDeviceName = () =>
+  `Device ${randomBytes(2).toString("hex").toUpperCase()}`;
 
 /** What the stand-in remembers, as the server would: the trial's start and the keys activated here. */
 interface StubRecord {
@@ -137,7 +141,7 @@ export const createStubEntitlementServer = ({
           ? token(deviceId, { tier: "trial", trialEndsAt })
           : token(deviceId, { tier: "free", reason: "trialEnded" });
       }),
-    activate: ({ deviceId, licenseKey, deviceLabel }) =>
+    activate: ({ deviceId, licenseKey }) =>
       answer((record) => {
         if (licenseKey.startsWith("MERU-USED-")) {
           return { error: "deviceLimit" };
@@ -146,6 +150,8 @@ export const createStubEntitlementServer = ({
         if (licenseKey.startsWith("MERU-0000-")) {
           return { error: "invalidKey" };
         }
+
+        const deviceLabel = generatedDeviceName();
 
         record.licenses[licenseKey] = { deviceLabel };
 
