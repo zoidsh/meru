@@ -199,33 +199,37 @@ const readDefaultBrowser = (app: ElectronApplication) =>
       ) as CapturedDefaultBrowser
   );
 
-test("while Meru is the default browser a page's link shows the alert in place of asking, opens nothing, and opens the system's settings from it", async ({
+// Only macOS has a settings pane to offer, so elsewhere the alert's last
+// button, OK, is the answer.
+const isMac = process.platform === "darwin";
+
+test("while Meru is the default browser a page's link shows the alert in place of asking, opens nothing, and on macOS opens the system's settings from it", async ({
   app,
   standIn,
 }) => {
   await stubSystemBrowser(app);
-  await makeMeruDefault(app, "settings");
+  await makeMeruDefault(app, isMac ? "settings" : "cancel");
   await clickAnotherSite(app, standIn.url);
 
   await expect
     .poll(async () => {
-      const { settingsOpened } = await readDefaultBrowser(app);
+      const { asked, settingsOpened } = await readDefaultBrowser(app);
 
-      return settingsOpened;
+      return [asked.length, settingsOpened];
     })
-    .toBe(1);
+    .toStrictEqual([1, isMac ? 1 : 0]);
 
   const { asked } = await readDefaultBrowser(app);
 
-  expect(asked).toHaveLength(1);
   expect(asked[0]?.message).toBe("Meru is your default browser");
   expect(asked[0]?.buttons.map(({ label }) => label)).toStrictEqual(
-    process.platform === "darwin"
+    isMac
       ? ["Open System Settings", "Copy Link", "Cancel"]
       : ["Copy Link", "OK"]
   );
   expect(await readAsked(app)).toStrictEqual([]);
   expect(await readOpenedExternally(app)).toStrictEqual([]);
+  expect(await readCopied(app)).toStrictEqual([]);
 });
 
 test("while Meru is the default browser a tab's Open in Default Browser shows the alert too, and copies the link from it", async ({
