@@ -947,12 +947,18 @@ describe("the Settings window's Privacy & Security page", () => {
       app.handlers.removeTrustedSite({ site: "https://a.example" }),
       app.handlers.removeTrustedSite({ site: "https://c.example" }),
     ]);
+
+    const written = app.saved.length;
+    const sent = sends();
+
     await app.handlers.removeTrustedSite({ site: "https://elsewhere.example" });
 
-    expect([app.read().trustedSites, sends() > 0]).toStrictEqual([
-      ["https://b.example"],
-      true,
-    ]);
+    expect([
+      app.read().trustedSites,
+      written > 0 && sent > 0,
+      app.saved.length - written,
+      sends() - sent,
+    ]).toStrictEqual([["https://b.example"], true, 0, 0]);
     app.dispose();
   });
 

@@ -14,8 +14,16 @@ export const createTrustedSites = (
   list: () => settings.get("trustedSites"),
   add: (site: string) =>
     settings.update("trustedSites", (trusted) => withSite(trusted, site)),
-  remove: (site: string) =>
-    settings.update("trustedSites", (trusted) => withoutSite(trusted, site)),
+  /** Writes nothing for a site not listed, as one pressed twice is. */
+  remove: async (site: string) => {
+    if (!settings.get("trustedSites").includes(site)) {
+      return;
+    }
+
+    await settings.update("trustedSites", (trusted) =>
+      withoutSite(trusted, site)
+    );
+  },
 });
 
 export type TrustedSites = ReturnType<typeof createTrustedSites>;
