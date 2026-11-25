@@ -172,7 +172,7 @@ test("with the chosen folder gone, a download is saved to the system's Downloads
   const gmail = await downloadsPage(app, standIn);
   const toast = overlay
     .getByRole("region", { name: "Notifications" })
-    .getByText("Saved to Downloads because your folder isn't available.", {
+    .getByText("Saved to Downloads because your folder isn't available", {
       exact: true,
     });
 
