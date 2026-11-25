@@ -14,7 +14,9 @@ import {
   readState,
   test,
   writeSettings,
+  writeState,
 } from "./lib/app.ts";
+import { findTitlebar } from "./lib/own-window.ts";
 import {
   openSection,
   openSettings,
@@ -150,6 +152,59 @@ test("each title bar button switch hides and returns its button, its command sti
     // oxlint-disable-next-line no-await-in-loop -- one button after another
     await expect(button).toBeVisible();
   }
+});
+
+test("the Downloads switch hides the button in a tab's own window too, the only one of the switches' buttons its title bar has", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          { id: "c", app: "calendar", url: standIn.calendarUrl, title: "" },
+        ],
+        selectedTabId: "c",
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
+  const app = await launchApp();
+
+  await findPage(app, standIn.calendarUrl);
+  await clickMenuItem(app, "tab.moveToNewWindow");
+
+  const ownTitlebar = await findTitlebar(app);
+  const titlebar = ownTitlebar.getByRole("banner", { name: "Title bar" });
+  const downloads = titlebar.getByRole("button", {
+    name: "Downloads",
+    exact: true,
+  });
+
+  await expect(downloads).toBeVisible();
+
+  const buttons = await titlebar.getByRole("button").count();
+
+  for (const key of [
+    "titlebarNewTab",
+    "titlebarUnifiedInbox",
+    "titlebarDoNotDisturb",
+    "titlebarDownloads",
+  ]) {
+    // oxlint-disable-next-line no-await-in-loop -- one switch after another
+    await setSetting(app, key, false);
+  }
+
+  await expect(downloads).toHaveCount(0);
+  await expect(titlebar.getByRole("button")).toHaveCount(buttons - 1);
+
+  await setSetting(app, "titlebarDownloads", true);
+  await expect(downloads).toBeVisible();
 });
 
 test("the Do Not Disturb switch hides the moon only while Do Not Disturb is off, and never changes Do Not Disturb", async ({

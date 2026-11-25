@@ -83,7 +83,9 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
   const profiles = useShellState("profiles");
   const shortcuts = useShellState("shortcuts");
   const downloads = useShellState("downloads");
-  const tint = useShellState("appearance")?.tint ?? true;
+  const appearance = useShellState("appearance");
+  const tint = appearance?.tint ?? true;
+  const downloadsShown = appearance?.buttons.downloads ?? true;
   const profile = profiles?.profiles.find(({ id }) => id === own.profileId);
   const title = tabTitle(own);
 
@@ -145,10 +147,12 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
             tabId={own.tabId}
             bookmarked={own.bookmarked}
           />
-          <DownloadsButton
-            downloads={downloads}
-            window={{ profileId: own.profileId, tabId: own.tabId }}
-          />
+          {downloadsShown && (
+            <DownloadsButton
+              downloads={downloads}
+              window={{ profileId: own.profileId, tabId: own.tabId }}
+            />
+          )}
           <MoreOptionsButton profileId={own.profileId} tabId={own.tabId} />
         </div>
       </header>
