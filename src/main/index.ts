@@ -28,6 +28,7 @@ import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
 import { wireLauncher } from "./wiring/launcher.ts";
+import { wireLinks } from "./wiring/links.ts";
 import { wireMailFeed } from "./wiring/mail-feed.ts";
 import { wireMenu } from "./wiring/menu.ts";
 import { wireNotifications } from "./wiring/notifications.ts";
@@ -279,6 +280,8 @@ const start = async () => {
   const systemBrowser = createSystemBrowser();
   const contentBlocker = wireContentBlocker({ settings, signInOrigins });
   const clipboard = systemClipboard();
+  // A page's links leave through it; Meru's own, as Open in Browser, do not.
+  const { linkOpener } = wireLinks({ settings, systemBrowser, clipboard });
   const preloads = new Map([
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
   ]);
@@ -300,7 +303,7 @@ const start = async () => {
     apps,
     signInOrigins,
     background,
-    systemBrowser,
+    systemBrowser: linkOpener,
     network,
     senders,
     state: profiles.get,

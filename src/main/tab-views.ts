@@ -57,6 +57,7 @@ export interface TabViewsDeps {
   /** Google's sign-in, or the suite's stand-in for it. */
   signInOrigins: readonly string[];
   background: boolean;
+  /** Where a page's links leave Meru, asking first where it should. */
   systemBrowser: SystemBrowser;
   network: Pick<Network, "onOnline">;
   senders: Pick<SenderRegistry, "register">;

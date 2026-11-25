@@ -303,6 +303,19 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: true,
   }),
+  /** Asks before a link opens in the default browser, unless its site is trusted. */
+  confirmLinks: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /**
+   * The sites whose links open without asking, each an origin such as
+   * `https://example.com`, as v3's trusted hosts are.
+   */
+  trustedSites: setting<string[]>({
+    schema: z.array(z.string()),
+    default: [],
+  }),
 } satisfies SettingDeclarations;
 
 export type SettingKey = keyof typeof SETTINGS;

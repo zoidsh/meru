@@ -285,6 +285,11 @@ msgstr "Allow notifications"
 msgid "Along the whole view"
 msgstr "Along the whole view"
 
+#. Checkbox in the dialog that asks before a link opens in the default browser; {name} is the site, such as example.com, which is then listed under Trusted sites in Settings
+#: src/main/link-opener.ts
+msgid "Always open links to {name} without asking"
+msgstr "Always open links to {name} without asking"
+
 #. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Amber"
@@ -426,7 +431,9 @@ msgstr "Cached images and files"
 
 #. Button in Settings that closes the fields of a new saved search without adding it
 #. Button in the Delete browsing data dialog in Settings that closes it, deleting nothing
+#. Button in the dialog that asks before a link opens in the default browser, which opens nothing
 #. Button in the dialog that confirms removing a profile, which keeps it
+#: src/main/link-opener.ts
 #: src/main/profile-copy.ts
 #: src/settings/delete-browsing-data.tsx
 #: src/settings/saved-searches-card.tsx
@@ -571,6 +578,11 @@ msgstr "Copy"
 #: src/settings/gmail-page.tsx
 msgid "Copy code"
 msgstr "Copy code"
+
+#. Button in the dialog that asks before a link opens in the default browser, which copies it and opens nothing
+#: src/main/link-opener.ts
+msgid "Copy Link"
+msgstr "Copy Link"
 
 #. Item of a tab's context menu that copies its page's address
 #: src/main/tab-menu.ts
@@ -1336,10 +1348,20 @@ msgstr "Open in split"
 msgid "Open in the background"
 msgstr "Open in the background"
 
+#. Button in the dialog that asks before a link opens in the default browser, which opens it there
+#: src/main/link-opener.ts
+msgid "Open Link"
+msgstr "Open Link"
+
 #. Description of the Saved searches card on a profile's page in Settings; Saved Searches and Mail name the menus as the app's menu bar shows them
 #: src/settings/saved-searches-card.tsx
 msgid "Open these from Saved Searches in the Mail menu."
 msgstr "Open these from Saved Searches in the Mail menu."
+
+#. Question in the dialog Meru shows before a link from a page opens in the person's web browser; the link shows below it
+#: src/main/link-opener.ts
+msgid "Open this link in your default browser?"
+msgstr "Open this link in your default browser?"
 
 #. Placeholder of the Name field of a new saved search in Settings, which may stay empty
 #: src/settings/saved-searches-card.tsx

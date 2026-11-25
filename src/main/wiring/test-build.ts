@@ -30,6 +30,10 @@ import {
   createFolderPicker,
 } from "#platform/folder-picker.ts";
 import {
+  createCapturedLinkPrompt,
+  createLinkPrompt,
+} from "#platform/link-prompt.ts";
+import {
   createCapturedLoginItem,
   createHeldLoginItem,
   createLoginItem,
@@ -191,6 +195,13 @@ export const systemBadge = (window: Parameters<typeof createBadge>[0]) =>
  */
 export const downloadFiles = () =>
   MERU_E2E_BUILD ? createCapturedDownloadFiles() : createDownloadFiles();
+
+/**
+ * The suite's build answers each prompt before a link leaves Meru itself,
+ * so a test never puts the system's alert on the desktop.
+ */
+export const linkPrompt = () =>
+  MERU_E2E_BUILD ? createCapturedLinkPrompt() : createLinkPrompt();
 
 /** The suite's build records the Dock's and taskbar's progress and bounce. */
 export const downloadSignals = (
