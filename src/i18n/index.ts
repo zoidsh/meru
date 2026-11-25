@@ -9,12 +9,7 @@ import {
   pseudoMessages,
 } from "./pseudo.ts";
 
-export {
-  appLanguage,
-  type Language,
-  LANGUAGES,
-  resolveLanguage,
-} from "./languages.ts";
+export { type Language, LANGUAGES, resolveLanguage } from "./languages.ts";
 
 const CATALOGS: Record<string, Messages> = {
   en,
