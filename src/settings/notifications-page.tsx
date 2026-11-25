@@ -429,12 +429,11 @@ export const NotificationsPage = () => {
                             comment:
                               "Accessible name of the Show button of the Test notification row in Settings; it starts with the button's visible label, Show",
                           })}
-                          aria-describedby={[
-                            ids.description,
-                            doNotDisturb.on && testBlockedId,
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
+                          aria-describedby={
+                            [ids.description, doNotDisturb.on && testBlockedId]
+                              .filter(Boolean)
+                              .join(" ") || undefined
+                          }
                           onClick={() => {
                             // Refused when Do Not Disturb turned on just
                             // before the click, which the button then shows.

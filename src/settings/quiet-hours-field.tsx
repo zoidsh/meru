@@ -230,7 +230,7 @@ export const QuietHoursField = ({
           {t({
             message: "Add",
             comment:
-              "Button under the Settings list of quiet hours that adds quiet hours, a window a window from 22:00 to 07:00 every day",
+              "Button under the Settings list of quiet hours that adds quiet hours, a window from 22:00 to 07:00 every day",
           })}
         </Button>
       </div>
