@@ -12,7 +12,11 @@ import { createDoNotDisturb } from "./do-not-disturb.ts";
 import { createMailPoller } from "./mail.ts";
 import { createProfiles } from "./profiles.ts";
 import { createRemoveProfile } from "./remove-profile.ts";
-import { readSettingsState, settingsHandlers } from "./settings-contract.ts";
+import {
+  onSettingsStateChange,
+  readSettingsState,
+  settingsHandlers,
+} from "./settings-contract.ts";
 import { createSettingsPages } from "./settings-pages.ts";
 import { createSettingsStore } from "./settings.ts";
 
@@ -121,6 +125,16 @@ const setup = (state: State, initial?: Settings) => {
   return {
     handlers: settingsHandlers(deps),
     read: () => readSettingsState(deps),
+    /** How many times the Settings window would be sent its state again. */
+    sends: () => {
+      let count = 0;
+
+      onSettingsStateChange(deps, () => {
+        count += 1;
+      });
+
+      return () => count;
+    },
     saved,
     announced,
     played,
@@ -714,6 +728,20 @@ describe("the Settings window's Show in Unified inbox", () => {
       [true, true],
       { version: 1 },
     ]);
+    app.dispose();
+  });
+
+  it("sends the Settings window its state again when a profile's value is set and when it is cleared", async () => {
+    const app = setup(stateOf("Home", "Work"));
+    const sent = app.sends();
+
+    await app.handlers.setUnifiedInbox({ profileId: "work", on: false });
+
+    const afterSet = sent();
+
+    await app.handlers.setUnifiedInbox({ profileId: "work", on: true });
+
+    expect([afterSet > 0, sent() > afterSet]).toStrictEqual([true, true]);
     app.dispose();
   });
 

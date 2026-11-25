@@ -1,7 +1,6 @@
 import path from "node:path";
 
 import {
-  PAGE_SETTING_KEYS,
   SETTINGS_CALLS,
   SETTINGS_CHANNELS,
   SETTINGS_STATE,
@@ -21,7 +20,11 @@ import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
 import { createRemoveProfile } from "../remove-profile.ts";
 import type { SenderRegistry } from "../senders.ts";
-import { readSettingsState, settingsHandlers } from "../settings-contract.ts";
+import {
+  onSettingsStateChange,
+  readSettingsState,
+  settingsHandlers,
+} from "../settings-contract.ts";
 import { createSettingsPages } from "../settings-pages.ts";
 import { createSettingsWindow } from "../settings-window.ts";
 import type { SettingsStore } from "../settings.ts";
@@ -164,13 +167,7 @@ export const wireSettingsWindow = ({
       read: () =>
         readSettingsState({ settings, profiles, mail, doNotDisturb, pages }),
       onChange: (listener) => {
-        for (const key of [...PAGE_SETTING_KEYS, "unifiedInbox"] as const) {
-          settings.onChange(key, listener);
-        }
-
-        profiles.onChange(listener);
-        mail.onChange(listener);
-        pages.onChange(listener);
+        onSettingsStateChange({ settings, profiles, mail, pages }, listener);
       },
     },
     log: console.error,

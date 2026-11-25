@@ -403,3 +403,32 @@ export const readSettingsState = ({
     },
   };
 };
+
+/**
+ * Calls `listener` on every change to what `readSettingsState` reads, so
+ * the Settings window is sent the state again: each setting it shows, which
+ * the store announces by key, Do Not Disturb through the profiles' state,
+ * and the mail check and the page shown.
+ */
+export const onSettingsStateChange = (
+  {
+    settings,
+    profiles,
+    mail,
+    pages,
+  }: {
+    settings: Pick<SettingsStore, "onChange">;
+    profiles: Pick<Profiles, "onChange">;
+    mail: Pick<MailPoller, "onChange">;
+    pages: Pick<SettingsPages, "onChange">;
+  },
+  listener: () => void
+) => {
+  for (const key of [...PAGE_SETTING_KEYS, "unifiedInbox"] as const) {
+    settings.onChange(key, listener);
+  }
+
+  profiles.onChange(listener);
+  mail.onChange(listener);
+  pages.onChange(listener);
+};
