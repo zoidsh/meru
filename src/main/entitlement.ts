@@ -281,9 +281,9 @@ export const createEntitlement = ({
   /**
    * Whether an answer landing now would undo one sent later and already
    * taken. A refresh gives way to any later answer and to a key changed
-   * since; a rename to a later activation, a later answer for its key and a
-   * key changed since; an activation only to a later activation or a later
-   * answer for its own key.
+   * since; a rename to a later answer for its key and a key changed since,
+   * which a later activation of another key is; an activation only to a later
+   * activation or a later answer for its own key.
    */
   const isStale = ({ sequence, kind, key }: Call) => {
     const laterForKey =
@@ -294,11 +294,7 @@ export const createEntitlement = ({
         return sequence < appliedAny || key !== storedLicenseKey(file);
       }
       case "rename": {
-        return (
-          key !== storedLicenseKey(file) ||
-          sequence < appliedActivation ||
-          laterForKey
-        );
+        return key !== storedLicenseKey(file) || laterForKey;
       }
       case "activation": {
         return sequence < appliedActivation || laterForKey;
