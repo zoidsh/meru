@@ -140,6 +140,7 @@ const setup = ({
   let showWhenDone = false;
   const files: DownloadFiles = {
     folder: () => FOLDER,
+    systemFolder: () => FOLDER,
     usable: (folder) => folders.includes(folder),
     // As the volumes macOS and Windows format by default, which ignore case.
     taken: (file) =>

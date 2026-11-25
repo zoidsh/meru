@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import type { SettingsState } from "#contract/settings.ts";
-import { shownFolder } from "#core/downloads-folder.ts";
+import { downloadsFolder, shownFolder } from "#core/downloads-folder.ts";
 import type { Platform } from "#core/platform.ts";
 import type { DownloadFiles } from "#platform/downloads.ts";
 import type { LoginItem } from "#platform/login-item.ts";
@@ -12,8 +12,11 @@ export interface GeneralPageDeps {
   platform: Platform;
   loginItem: LoginItem;
   settings: Pick<SettingsStore, "get" | "update" | "onChange">;
-  /** The system's Downloads folder, and whether a chosen one is there. */
-  files: Pick<DownloadFiles, "folder" | "usable">;
+  /**
+   * The system's Downloads folder, never made by a page that only shows it,
+   * and whether a chosen one is there.
+   */
+  files: Pick<DownloadFiles, "systemFolder" | "usable">;
   /** The home folder, which macOS shows a folder under as `~`. */
   home: string;
   /** The system's folder picker on the Settings window, at `defaultPath`. */
@@ -44,11 +47,11 @@ export const createGeneralPage = ({
   settings.onChange("downloadsFolder", notify);
 
   /** Where the next download goes: the chosen folder while it is usable. */
-  const saveFolder = () => {
-    const chosen = settings.get("downloadsFolder");
-
-    return chosen !== null && files.usable(chosen) ? chosen : files.folder();
-  };
+  const saveFolder = () =>
+    downloadsFolder(settings.get("downloadsFolder"), {
+      usable: files.usable,
+      system: files.systemFolder,
+    }).folder;
 
   return {
     read: (): SettingsState["general"] => {
@@ -60,7 +63,10 @@ export const createGeneralPage = ({
             ? null
             : { on: loginItem.isOn(), real: loginItem.real },
         downloadsFolder: {
-          path: shownFolder(chosen ?? files.folder(), { home, platform }),
+          path: shownFolder(chosen ?? files.systemFolder(), {
+            home,
+            platform,
+          }),
           available: chosen === null || files.usable(chosen),
         },
       };

@@ -70,7 +70,7 @@ export const wireSettingsWindow = ({
 }: {
   platform: Platform;
   /** The downloads' own, for the folder they are saved to. */
-  downloadFiles: Pick<DownloadFiles, "folder" | "usable">;
+  downloadFiles: Pick<DownloadFiles, "systemFolder" | "usable">;
   isMacOS: boolean;
   background: boolean;
   lifecycle: ReturnType<typeof createAppLifecycle>;

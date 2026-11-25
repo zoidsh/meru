@@ -1,6 +1,25 @@
 import { describe, expect, it } from "vitest";
 
-import { shownFolder } from "./downloads-folder.ts";
+import { downloadsFolder, shownFolder } from "./downloads-folder.ts";
+
+describe(downloadsFolder, () => {
+  it("is the chosen folder while it is usable, else the system's, saying when it passed one over", () => {
+    const deps = {
+      usable: (folder: string) => folder === "/Chosen",
+      system: () => "/Downloads",
+    };
+
+    expect([
+      downloadsFolder(null, deps),
+      downloadsFolder("/Chosen", deps),
+      downloadsFolder("/Gone", deps),
+    ]).toStrictEqual([
+      { folder: "/Downloads", fallback: false },
+      { folder: "/Chosen", fallback: false },
+      { folder: "/Downloads", fallback: true },
+    ]);
+  });
+});
 
 describe(shownFolder, () => {
   it("shows a folder under the home folder from ~ on macOS, and every other whole", () => {

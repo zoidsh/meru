@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import type { ShellState } from "#contract/shell.ts";
+import { downloadsFolder } from "#core/downloads-folder.ts";
 import {
   addDownload,
   clearable,
@@ -267,17 +268,17 @@ export const createDownloads = ({
    */
   const saveFolder = (announce: boolean) => {
     const chosen = choices.folder();
+    const { folder, fallback } = downloadsFolder(chosen, {
+      usable: files.usable,
+      system: files.folder,
+    });
 
-    if (chosen === null || files.usable(chosen)) {
-      return chosen ?? files.folder();
-    }
-
-    if (announce && !missing.has(chosen)) {
+    if (fallback && announce && chosen !== null && !missing.has(chosen)) {
       missing.add(chosen);
       onFolderMissing(chosen);
     }
 
-    return files.folder();
+    return folder;
   };
 
   /** Runs and lists the download, saving to `filePath`. */

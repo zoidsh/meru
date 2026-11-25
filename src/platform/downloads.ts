@@ -217,6 +217,8 @@ export interface DownloadFiles {
    * takes a download's path in the turn it starts.
    */
   folder: () => string;
+  /** The system's Downloads folder, as `folder` names it, never made. */
+  systemFolder: () => string;
   /**
    * Whether a folder the person chose is there and can be written, read at
    * once as `folder` is.
@@ -288,6 +290,7 @@ const sharedFiles = (folder: string) => ({
 
     return folder;
   },
+  systemFolder: () => folder,
   usable,
   taken: existsSync,
   exists,

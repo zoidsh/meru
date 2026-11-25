@@ -439,7 +439,12 @@ test.describe("the General page", () => {
 
     const asked = await folderPickerAsked(app);
 
-    expect(asked.map((folder) => canonical(folder))).toStrictEqual([
+    // The system's folder is not made until a download goes there.
+    expect(
+      asked.map((folder) =>
+        path.join(canonical(path.dirname(folder)), path.basename(folder))
+      )
+    ).toStrictEqual([
       systemFolder(userDataDir),
       systemFolder(userDataDir),
       chosen,

@@ -105,7 +105,7 @@ const setup = (
     },
     settings,
     files: {
-      folder: () => "/Users/example/Downloads",
+      systemFolder: () => "/Users/example/Downloads",
       usable: (folder) => folders.has(folder),
     },
     home: "/Users/example",
