@@ -389,6 +389,37 @@ describe(createSettingsStore, () => {
     ]);
   });
 
+  it("tells a listener of several gated keys once when a license arrives, not once per key", () => {
+    let licensed = false;
+    const settings = createSettingsStore({
+      initial: { version: 1 },
+      save: () => Promise.resolve(),
+      platform: "darwin",
+      log: () => {},
+      can: () => licensed,
+    });
+    let pushes = 0;
+    const push = () => {
+      pushes += 1;
+    };
+
+    for (const key of [
+      "hidePromoBanner",
+      "hideUpgradeButton",
+      "extendDarkTheme",
+      "reverseConversation",
+      "moveAttachmentsToTop",
+      "showTrimmedContent",
+    ] as const) {
+      settings.onChange(key, push);
+    }
+
+    licensed = true;
+    settings.recheck();
+
+    expect(pushes).toBe(1);
+  });
+
   it("writes an ungated setting changed without Meru Pro with every gated one as stored, not as read", async () => {
     const saved: Record<string, unknown>[] = [];
     const gated = {

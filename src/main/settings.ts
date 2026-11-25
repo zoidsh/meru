@@ -124,12 +124,23 @@ export const createSettingsStore = ({
       ? write()
       : Promise.reject(new Error(`Setting ${key} needs Meru Pro`));
 
-  const tell = (key: SettingKey) => {
-    for (const listener of listeners.get(key) ?? []) {
-      try {
-        listener();
-      } catch (error) {
-        log(`A listener of setting ${key} failed: ${describe(error)}`);
+  /** Calls each listener of the keys once, however many of them it listens to. */
+  const tell = (keys: Iterable<SettingKey>) => {
+    const called = new Set<() => void>();
+
+    for (const key of keys) {
+      for (const listener of listeners.get(key) ?? []) {
+        if (called.has(listener)) {
+          continue;
+        }
+
+        called.add(listener);
+
+        try {
+          listener();
+        } catch (error) {
+          log(`A listener of setting ${key} failed: ${describe(error)}`);
+        }
       }
     }
   };
@@ -179,7 +190,7 @@ export const createSettingsStore = ({
       settings = next;
 
       for (const changedKey of changed) {
-        tell(changedKey);
+        tell([changedKey]);
       }
     } finally {
       mutex.release();
@@ -231,7 +242,8 @@ export const createSettingsStore = ({
     /**
      * Asks `profileValues` and `can` again, for a change of the entitlement,
      * and tells the listeners of every key a profile may hold when the first
-     * answer changed, and of each gated key whose capability's answer did.
+     * answer changed, and of each gated key whose capability's answer did,
+     * each listener once.
      */
     recheck: () => {
       const next = profileValues();
@@ -250,9 +262,7 @@ export const createSettingsStore = ({
         }
       }
 
-      for (const key of told) {
-        tell(key);
-      }
+      tell(told);
     },
     /** Called after each change of the key's app value or a profile's. */
     onChange: (key: SettingKey, listener: () => void) => {
