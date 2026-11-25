@@ -5,18 +5,26 @@ const LONGEST_DAY = 25 * 60 * 60 * 1000;
 
 const formats = new Map<string, Intl.DateTimeFormat>();
 
+const createFormat = (timeZone: string | undefined) =>
+  new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
+
+// A format made for the device's zone keeps the zone it was made in, so it
+// is made afresh each time and follows a person who travels.
 const formatFor = (timeZone: string | undefined) => {
-  const key = timeZone ?? "";
-  let format = formats.get(key);
+  if (timeZone === undefined) {
+    return createFormat(undefined);
+  }
+
+  let format = formats.get(timeZone);
 
   if (!format) {
-    format = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-    });
-    formats.set(key, format);
+    format = createFormat(timeZone);
+    formats.set(timeZone, format);
   }
 
   return format;

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { localDay, nextLocalDay, trialDaysLeft } from "./trial-days.ts";
 
@@ -7,7 +7,7 @@ const DAY = 24 * HOUR;
 const NEW_YORK = "America/New_York";
 
 describe(trialDaysLeft, () => {
-  it("reads 14 for a fresh 14-day trial, whatever the hour it starts", () => {
+  it("reads 14 for a fresh 14-day trial started at any hour but midnight", () => {
     // 15:00 in New York, and 23:30, half an hour before midnight.
     for (const start of [
       Date.UTC(2026, 10, 10, 20),
@@ -15,6 +15,18 @@ describe(trialDaysLeft, () => {
     ]) {
       expect(trialDaysLeft(start + 14 * DAY, start, NEW_YORK)).toBe(14);
     }
+  });
+
+  it("reads 13 for one started at midnight or ending on the day after clocks go back", () => {
+    const midnight = Date.UTC(2026, 10, 11, 5);
+    // New York's clocks go back on 1 November, so 14 days of 24 hours from
+    // 00:30 on 19 October end at 23:30 on 1 November, a day short. Accepted.
+    const beforeClocksGoBack = Date.UTC(2026, 9, 19, 4, 30);
+
+    expect(trialDaysLeft(midnight + 14 * DAY, midnight, NEW_YORK)).toBe(13);
+    expect(
+      trialDaysLeft(beforeClocksGoBack + 14 * DAY, beforeClocksGoBack, NEW_YORK)
+    ).toBe(13);
   });
 
   it("is 1 the day before the last day and 0 from the midnight that starts it", () => {
@@ -58,6 +70,25 @@ describe(trialDaysLeft, () => {
 
     expect(trialDaysLeft(end, earlier, "UTC")).toBe(2);
     expect(trialDaysLeft(end, earlier, "Pacific/Honolulu")).toBe(3);
+  });
+});
+
+describe(localDay, () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("follows the device's zone when it changes while running", () => {
+    // 11:00 UTC on 18 November: the 19th in Auckland, the 18th in Honolulu.
+    const instant = Date.UTC(2026, 10, 18, 11);
+
+    vi.stubEnv("TZ", "Pacific/Auckland");
+
+    const there = localDay(instant);
+
+    vi.stubEnv("TZ", "Pacific/Honolulu");
+
+    expect(there - localDay(instant)).toBe(1);
   });
 });
 
