@@ -34,8 +34,13 @@ export const createIdleSleep = ({
 }: IdleSleepDeps) => {
   let idleSince = new Map<string, number>();
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let disposed = false;
 
   const follow = () => {
+    if (disposed) {
+      return;
+    }
+
     const current = state();
     const at = now();
 
@@ -62,9 +67,10 @@ export const createIdleSleep = ({
 
   return {
     follow,
+    /** Clears the timer and sets none again, as the app quits. */
     dispose: () => {
+      disposed = true;
       clearTimeout(timer);
-      timer = undefined;
     },
   };
 };

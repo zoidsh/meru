@@ -201,11 +201,18 @@ describe(createIdleSleep, () => {
     expect(slept).toStrictEqual(["p/c"]);
   });
 
-  it("sets no timer once disposed", () => {
-    const { idle } = setup();
+  it("sets no timer once disposed, and puts nothing to sleep after, whatever it hears", async () => {
+    const { idle, slept, set } = setup();
 
     idle.dispose();
 
     expect(vi.getTimerCount()).toBe(0);
+
+    set({ which: "all" });
+    vi.setSystemTime(START + 2 * HOUR);
+    idle.follow();
+    await vi.advanceTimersByTimeAsync(2 * HOUR);
+
+    expect([slept, vi.getTimerCount()]).toStrictEqual([[], 0]);
   });
 });
