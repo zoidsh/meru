@@ -179,7 +179,11 @@ test("Tabs you choose brings Sleep When Idle to a tab's menu after Sleep, whose 
   const app = await launchApp();
 
   await findPage(app, standIn.url);
-  expect(await calendarMenu(app)).not.toContain(`${SLEEP_WHEN_IDLE} [ ]`);
+  const unpinned = await calendarMenu(app);
+
+  expect(
+    unpinned.filter((item) => item.startsWith(SLEEP_WHEN_IDLE))
+  ).toStrictEqual([]);
 
   const page = await openSettings(app);
 
