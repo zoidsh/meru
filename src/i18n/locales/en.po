@@ -33,7 +33,7 @@ msgstr "{count, plural, one {# Google app} other {# Google apps}}"
 msgid "{count, plural, one {# new message} other {# new messages}}"
 msgstr "{count, plural, one {# new message} other {# new messages}}"
 
-#. How many settings a profile sets for itself, beside its name in the Settings scope switcher's menu
+#. How many of this Settings page's settings a profile sets for itself, beside its name in the page's scope switcher menu
 #: src/settings/scope-tabs.tsx
 msgid "{count, plural, one {# override} other {# overrides}}"
 msgstr "{count, plural, one {# override} other {# overrides}}"

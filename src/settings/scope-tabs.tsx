@@ -185,7 +185,7 @@ export const ScopeTabs = ({
                                   other: "# overrides",
                                 }),
                                 comment:
-                                  "How many settings a profile sets for itself, beside its name in the Settings scope switcher's menu",
+                                  "How many of this Settings page's settings a profile sets for itself, beside its name in the page's scope switcher menu",
                               })}
                             </span>
                           )}
