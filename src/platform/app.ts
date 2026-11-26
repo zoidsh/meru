@@ -19,7 +19,8 @@ export interface AppLifecycle {
   onBeforeQuit: (listener: () => void) => void;
   /**
    * Holds a quit, once its windows have closed, until `work` settles or
-   * `limitMs` passes, then quits; the quit's listeners run again then.
+   * `limitMs` passes, then quits, or calls what `quitThen` was given in its
+   * place; the quit's listeners run again then.
    */
   holdQuitFor: (work: () => Promise<unknown>, limitMs: number) => void;
   /**
