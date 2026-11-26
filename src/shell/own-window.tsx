@@ -15,9 +15,9 @@ import {
   ownWindowFrameName,
 } from "#core/own-window.ts";
 import { titlebarStart } from "#core/titlebar.ts";
+import { AppIcon } from "#shared/app-icon.tsx";
 import { Badge } from "#ui/badge.tsx";
 
-import { AppIcon } from "./app-icon.tsx";
 import { OwnWindowBookmarkButton } from "./bookmarks.tsx";
 import { wholePoint } from "./context-menu.ts";
 import { Downloads, DownloadsButton } from "./downloads.tsx";

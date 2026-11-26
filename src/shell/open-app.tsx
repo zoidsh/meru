@@ -11,6 +11,7 @@ import {
   bookmarkValue,
   launcherItems,
 } from "#core/open-app.ts";
+import { AppIcon } from "#shared/app-icon.tsx";
 import { Button } from "#ui/button.tsx";
 import {
   Command,
@@ -24,7 +25,6 @@ import {
 } from "#ui/command.tsx";
 import { Kbd } from "#ui/kbd.tsx";
 
-import { AppIcon } from "./app-icon.tsx";
 import { keepFocus } from "./keep-focus.ts";
 import { OverlayCard } from "./overlay-card.tsx";
 import { useShortcutTitle } from "./shortcut-title.ts";

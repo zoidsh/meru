@@ -27,10 +27,10 @@ import {
 } from "#core/drawn-tabs.ts";
 import type { SidebarItem } from "#core/drawn-tabs.ts";
 import { NARROW_TILE, sidebarWidth } from "#core/sidebar.ts";
+import { AppIcon } from "#shared/app-icon.tsx";
 import { Button, buttonVariants } from "#ui/button.tsx";
 import { ScrollArea } from "#ui/scroll-area.tsx";
 
-import { AppIcon } from "./app-icon.tsx";
 import { isKeyMadeMenu, isMenuKey, wholePoint } from "./context-menu.ts";
 import { keepFocus } from "./keep-focus.ts";
 import { keepInView } from "./keep-in-view.ts";

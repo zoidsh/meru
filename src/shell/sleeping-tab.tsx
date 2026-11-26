@@ -3,6 +3,7 @@ import { useId } from "react";
 
 import type { ShellState } from "#contract/shell.ts";
 import { isAppId } from "#core/apps.ts";
+import { AppIcon } from "#shared/app-icon.tsx";
 import { Button } from "#ui/button.tsx";
 import {
   Empty,
@@ -12,7 +13,6 @@ import {
   EmptyTitle,
 } from "#ui/empty.tsx";
 
-import { AppIcon } from "./app-icon.tsx";
 import { shellCalls } from "./sync.ts";
 import { tabTitle } from "./tab-strip.tsx";
 
