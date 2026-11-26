@@ -172,6 +172,10 @@ export const createSessions = (): Sessions => {
 
   const setDisplayMedia = (partition: string, guarding: Electron.Session) => {
     guardedPartitions.set(partition, guarding);
+
+    const useSystemPicker =
+      streams?.systemPicker(partition, systemPicker) ?? false;
+
     guarding.setDisplayMediaRequestHandler(
       (request, respond) => {
         const { frame } = request;
@@ -195,9 +199,8 @@ export const createSessions = (): Sessions => {
           }
         );
       },
-      { useSystemPicker: systemPicker }
+      { useSystemPicker }
     );
-    streams?.applied(partition, systemPicker);
   };
 
   return {
@@ -245,8 +248,8 @@ export const createSessions = (): Sessions => {
       handler = next;
       streams = nextStreams;
 
-      for (const partition of guardedPartitions.keys()) {
-        nextStreams.applied(partition, systemPicker);
+      for (const [partition, guarding] of guardedPartitions) {
+        setDisplayMedia(partition, guarding);
       }
     },
     useSystemPicker: (on) => {

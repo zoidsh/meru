@@ -385,6 +385,7 @@ describe("the settings contract", () => {
       sleepIdleTabs: "chosen",
       sleepAfter: "6h",
       hardwareAcceleration: false,
+      systemScreenPicker: false,
       autoUpdate: false,
       updateChannel: "beta",
     };

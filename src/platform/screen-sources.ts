@@ -4,7 +4,6 @@ import {
   shell,
   systemPreferences,
 } from "electron";
-import { noop } from "es-toolkit";
 
 import type { Platform } from "#core/platform.ts";
 import { THUMBNAIL_SIZE } from "#core/screen-picker.ts";
@@ -28,8 +27,11 @@ export interface DisplayMediaStreams {
     source: Pick<ScreenSource, "id" | "name">,
     frame: Electron.WebFrameMain | null
   ) => Electron.Video | Electron.WebFrameMain;
-  /** Told each time a session's handler is set, with its `useSystemPicker`. */
-  applied: (partition: string, useSystemPicker: boolean) => void;
+  /**
+   * The `useSystemPicker` a session's handler is set with, given the one
+   * the setting asks for; asked each time the handler is set.
+   */
+  systemPicker: (partition: string, asked: boolean) => boolean;
 }
 
 const MACOS_SCREEN_RECORDING_URL =
@@ -91,7 +93,7 @@ export const createScreenSources = (
   },
   streams: {
     video: ({ id, name }) => ({ id, name }),
-    applied: noop,
+    systemPicker: (_partition, asked) => asked,
   },
 });
 
@@ -184,8 +186,12 @@ export const createCapturedScreenSources = (): {
 
         return frame ?? source;
       },
-      applied: (partition, useSystemPicker) => {
-        captured.systemPicker[partition] = useSystemPicker;
+      // Recorded, never given: macOS's own picker would show on the desktop
+      // and leave the stand-in unasked.
+      systemPicker: (partition, asked) => {
+        captured.systemPicker[partition] = asked;
+
+        return false;
       },
     },
   };

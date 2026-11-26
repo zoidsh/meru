@@ -404,6 +404,14 @@ export const SETTINGS = {
     schema: z.boolean(),
     default: true,
   }),
+  /**
+   * On macOS, whether a page asking to share a screen gets the system's own
+   * picker in place of Meru's; macOS before 15 has none, and shows Meru's.
+   */
+  systemScreenPicker: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
   /** Checks for a new version at launch and every three hours. */
   autoUpdate: setting<boolean>({
     schema: z.boolean(),

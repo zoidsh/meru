@@ -112,7 +112,10 @@ export type AboutItem = (typeof ABOUT_ITEMS)[number];
 export const ABOUT_PAGE_KEYS = ["autoUpdate", "updateChannel"] as const;
 
 /** The Advanced page's settings; the app holds them, never a profile. */
-export const ADVANCED_PAGE_KEYS = ["hardwareAcceleration"] as const;
+export const ADVANCED_PAGE_KEYS = [
+  "hardwareAcceleration",
+  "systemScreenPicker",
+] as const;
 
 /**
  * The settings a profile may hold a value of its own for, as the pages show

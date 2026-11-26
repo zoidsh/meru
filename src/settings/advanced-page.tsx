@@ -7,6 +7,8 @@ import { Button } from "#ui/button.tsx";
 import { Switch } from "#ui/switch.tsx";
 
 import { useDoneBriefly } from "./done-briefly.ts";
+import { onMacOS } from "./menu-bar-page.tsx";
+import { useNeedsPro } from "./pro-badge.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
@@ -67,15 +69,16 @@ const ClearCache = ({
 };
 
 /**
- * Hardware acceleration, which applies at the next launch, and the
- * troubleshooting that needs no setting: app-wide alone, so the page has no
- * scopes, and nothing on it is Pro.
+ * Hardware acceleration, which applies at the next launch, the macOS screen
+ * picker, and the troubleshooting that needs no setting: app-wide alone, so
+ * the page has no scopes.
  */
 export const AdvancedPage = () => {
   const { t } = useLingui();
   const settings = useSettingsState("settings");
   const advanced = useSettingsState("advanced");
   const [clearFailed, setClearFailed] = useState(false);
+  const needsPro = useNeedsPro();
 
   if (!settings || !advanced) {
     return null;
@@ -84,6 +87,7 @@ export const AdvancedPage = () => {
   const calls = settingsCalls();
   const restartPending =
     settings.hardwareAcceleration !== advanced.hardwareAccelerationAtLaunch;
+  const pickerPro = needsPro.setting("systemScreenPicker");
 
   return (
     <SettingGroups>
@@ -126,6 +130,44 @@ export const AdvancedPage = () => {
                 />
               )}
             </SettingRow>,
+            // The row is absent elsewhere, so it draws no separator there.
+            ...(onMacOS()
+              ? [
+                  <SettingRow
+                    key="systemScreenPicker"
+                    label={t({
+                      message: "Use the macOS screen picker",
+                      comment:
+                        "Label of the switch in Settings, on macOS only, that has macOS rather than Meru ask which screen or window a page such as Google Meet shares",
+                    })}
+                    description={t({
+                      message:
+                        "macOS asks which screen or window you want to share.",
+                      comment:
+                        "Description of the Use the macOS screen picker switch in Settings",
+                    })}
+                    disabled={pickerPro}
+                    pro={pickerPro}
+                  >
+                    {(ids) => (
+                      <Switch
+                        checked={settings.systemScreenPicker}
+                        disabled={pickerPro}
+                        aria-labelledby={ids.label}
+                        aria-describedby={ids.description || undefined}
+                        onCheckedChange={(checked) => {
+                          calls
+                            .update({
+                              key: "systemScreenPicker",
+                              value: checked,
+                            })
+                            .catch(noop);
+                        }}
+                      />
+                    )}
+                  </SettingRow>,
+                ]
+              : []),
           ]}
         </Rows>
       </SettingGroup>

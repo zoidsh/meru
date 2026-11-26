@@ -1,5 +1,6 @@
 import type { App } from "#core/apps.ts";
 import type { Platform } from "#core/platform.ts";
+import { usesSystemPicker } from "#core/screen-picker.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { createSessions } from "#platform/sessions.ts";
@@ -11,13 +12,14 @@ import type { OwnWindows } from "../own-windows.ts";
 import type { Profiles } from "../profiles.ts";
 import { createScreenPicker } from "../screen-picker.ts";
 import type { SenderRegistry } from "../senders.ts";
+import type { SettingsStore } from "../settings.ts";
 import type { createTabViews } from "../tab-views.ts";
 import { inOwnWindow } from "./own-windows.ts";
 import { screenSources } from "./test-build.ts";
 
 /**
  * Sharing a screen from Meet: every guarded session's display-media
- * handler and Meru's picker it opens.
+ * handler, Meru's picker it opens, and whether macOS shows its own instead.
  */
 export const wireScreenPicker = ({
   platform,
@@ -30,6 +32,7 @@ export const wireScreenPicker = ({
   overlays,
   downloads,
   focus,
+  settings,
 }: {
   platform: Platform;
   apps: readonly App[];
@@ -41,6 +44,7 @@ export const wireScreenPicker = ({
   overlays: Overlays;
   downloads: Downloads;
   focus: Focus;
+  settings: Pick<SettingsStore, "get" | "onChange">;
 }) => {
   const { sources, streams } = screenSources(platform);
   const picker = createScreenPicker({
@@ -56,6 +60,16 @@ export const wireScreenPicker = ({
   });
 
   sessions.handleDisplayMedia(picker.request, streams);
+
+  // The store tells a gated key's listeners when its capability changes too.
+  const followSetting = () => {
+    sessions.useSystemPicker(
+      usesSystemPicker(platform, settings.get("systemScreenPicker"))
+    );
+  };
+
+  followSetting();
+  settings.onChange("systemScreenPicker", followSetting);
 
   profiles.onChange(picker.follow);
   views.onChange(picker.follow);

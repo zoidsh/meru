@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "./apps.ts";
-import { blocksListing, listedCard, mayShareScreen } from "./screen-picker.ts";
+import {
+  blocksListing,
+  listedCard,
+  mayShareScreen,
+  usesSystemPicker,
+} from "./screen-picker.ts";
 
 const source = (id: string) => ({ id, name: id, thumbnail: "" });
 
@@ -37,6 +42,17 @@ describe(blocksListing, () => {
     ).toStrictEqual([false, true, true, false, false]);
     expect(blocksListing("win32", "denied")).toBeFalsy();
     expect(blocksListing("linux", "restricted")).toBeFalsy();
+  });
+});
+
+describe(usesSystemPicker, () => {
+  it("asks for the system's picker on macOS alone, while the setting is on", () => {
+    expect([
+      usesSystemPicker("darwin", true),
+      usesSystemPicker("darwin", false),
+      usesSystemPicker("win32", true),
+      usesSystemPicker("linux", true),
+    ]).toStrictEqual([true, false, false, false]);
   });
 });
 

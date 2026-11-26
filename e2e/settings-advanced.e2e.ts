@@ -1,9 +1,11 @@
-import { readFile, rm } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { expect, readViews, test } from "./lib/app.ts";
+import { DAY } from "#core/entitlement.ts";
+
+import { NO_TRIAL, expect, readViews, test } from "./lib/app.ts";
 import {
   launchWithMail,
   openProfiles,
@@ -55,6 +57,21 @@ const viewPages = async (app: ElectronApplication) => {
   return views.map(({ url, partition }) => ({ url, partition }));
 };
 
+const SYSTEM_PICKER = "Use the macOS screen picker";
+
+const systemPicker = (page: Page) => switchNamed(page, SYSTEM_PICKER);
+
+/** Whether each guarded session asks macOS for its picker, by partition. */
+const sessionsUseSystemPicker = (app: ElectronApplication) =>
+  app.evaluate(
+    () =>
+      (
+        Reflect.get(globalThis, "meruTestScreenSources") as {
+          systemPicker: Record<string, boolean>;
+        }
+      ).systemPicker
+  );
+
 const openedPaths = (app: ElectronApplication) =>
   app.evaluate(
     () =>
@@ -62,7 +79,7 @@ const openedPaths = (app: ElectronApplication) =>
         .opened
   );
 
-test("sits last in Privacy & Security's group with its two cards, no scopes and nothing Pro", async ({
+test("sits last in Privacy & Security's group with its two cards, no scopes and nothing Pro during the trial", async ({
   app,
 }) => {
   const page = await openAdvanced(app);
@@ -91,6 +108,63 @@ test("sits last in Privacy & Security's group with its two cards, no scopes and 
   ).toHaveAccessibleDescription(
     "Clears saved pages and images for all profiles."
   );
+});
+
+test("on macOS the first card has Use the macOS screen picker, on, whose change reaches every session at once; elsewhere it has no such row", async ({
+  app,
+}) => {
+  const page = await openAdvanced(app);
+
+  if (process.platform !== "darwin") {
+    await expect(page.getByText(SYSTEM_PICKER)).toHaveCount(0);
+    expect(
+      Object.values(await sessionsUseSystemPicker(app)).every((used) => !used)
+    ).toBeTruthy();
+
+    return;
+  }
+
+  await expect(systemPicker(page)).toBeChecked();
+  await expect(systemPicker(page)).toHaveAccessibleDescription(
+    "macOS asks which screen or window you want to share."
+  );
+  await expect
+    .poll(async () => Object.values(await sessionsUseSystemPicker(app)))
+    .toStrictEqual([true]);
+
+  await systemPicker(page).click();
+  await expect(systemPicker(page)).not.toBeChecked();
+  await expect
+    .poll(async () => Object.values(await sessionsUseSystemPicker(app)))
+    .toStrictEqual([false]);
+});
+
+test("on the free version the macOS screen picker is a Pro row, disabled, and every session shows Meru's picker", async ({
+  launchApp,
+  userDataDir,
+}) => {
+  test.skip(process.platform !== "darwin", "the row is on macOS alone");
+
+  // A trial that ended, with no license.
+  await writeFile(
+    path.join(userDataDir, "entitlement-stub.json"),
+    JSON.stringify({ trialStartedAt: Date.now() - 15 * DAY, licenses: {} })
+  );
+
+  const app = await launchApp(NO_TRIAL);
+  const page = await openAdvanced(app);
+
+  await expect(
+    page.getByRole("button", {
+      name: `Meru Pro ${SYSTEM_PICKER}`,
+      exact: true,
+    })
+  ).toBeVisible();
+  await expect(systemPicker(page)).toBeDisabled();
+  await expect(systemPicker(page)).not.toBeChecked();
+  await expect
+    .poll(async () => Object.values(await sessionsUseSystemPicker(app)))
+    .toStrictEqual([false]);
 });
 
 test("turning hardware acceleration off says to restart, and the next launch runs without it", async ({

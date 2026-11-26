@@ -1282,14 +1282,14 @@ describe("the Settings window's About page", () => {
 });
 
 describe("the Settings window's Advanced page", () => {
-  it("sends hardware acceleration on where none is stored, beside what the run started with", () => {
+  it("sends hardware acceleration and the macOS screen picker on where none is stored, beside what the run started with", () => {
     const app = setup(stateOf("Work"));
 
     expect(
       Object.fromEntries(
         ADVANCED_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
       )
-    ).toStrictEqual({ hardwareAcceleration: true });
+    ).toStrictEqual({ hardwareAcceleration: true, systemScreenPicker: true });
     expect(app.read().advanced).toStrictEqual({
       hardwareAccelerationAtLaunch: false,
     });

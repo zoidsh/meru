@@ -47,6 +47,10 @@ export const listedCard = (sources: readonly ScreenSource[]): PickerCard => ({
  * and only once the person said no or a policy does. A status not yet
  * asked lists, which is what has macOS ask.
  */
+/** Whether sessions ask macOS for its picker: only there, and only while the setting reads on. */
+export const usesSystemPicker = (platform: Platform, setting: boolean) =>
+  platform === "darwin" && setting;
+
 export const blocksListing = (
   platform: Platform,
   status: ScreenCaptureStatus

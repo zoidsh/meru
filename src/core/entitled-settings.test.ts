@@ -37,6 +37,14 @@ describe(entitledSetting, () => {
     ]).toStrictEqual([[], false, false]);
   });
 
+  it("shows Meru's own screen picker without Meru Pro, whatever is stored", () => {
+    expect([
+      entitledSetting("systemScreenPicker", true, free),
+      entitledSetting("systemScreenPicker", true, pro),
+      settingWritable("systemScreenPicker", free),
+    ]).toStrictEqual([false, true, false]);
+  });
+
   it("hides the title bar's New tab button without Meru Pro, the free version opening no tab", () => {
     expect([
       entitledSetting("titlebarNewTab", true, free),

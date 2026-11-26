@@ -557,6 +557,7 @@ const start = async () => {
     overlays,
     downloads,
     focus,
+    settings,
   });
 
   const { showGmail, navigateGmail, mailActions, inbox } = wireGmail({

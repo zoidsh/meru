@@ -1454,6 +1454,11 @@ msgstr "Loading"
 msgid "Low"
 msgstr "Low"
 
+#. Description of the Use the macOS screen picker switch in Settings
+#: src/settings/advanced-page.tsx
+msgid "macOS asks which screen or window you want to share."
+msgstr "macOS asks which screen or window you want to share."
+
 #. Name of the menu of commands on the selected profile's Gmail: compose, saved searches and Gmail's settings
 #: src/main/application-menu.ts
 msgid "Mail"
@@ -3238,6 +3243,11 @@ msgstr "Upper pane {percent}"
 #: src/settings/advanced-page.tsx
 msgid "Use hardware acceleration"
 msgstr "Use hardware acceleration"
+
+#. Label of the switch in Settings, on macOS only, that has macOS rather than Meru ask which screen or window a page such as Google Meet shares
+#: src/settings/advanced-page.tsx
+msgid "Use the macOS screen picker"
+msgstr "Use the macOS screen picker"
 
 #. Text of the notification for an email that carries a one-time code, which its Copy button copies. {verificationCode} is the code's digits, such as 482910
 #: src/main/notifications.ts
