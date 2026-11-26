@@ -29,12 +29,14 @@ const ERR_ABORTED = -3;
 export interface ContentViewOptions {
   /** The session's partition, which the page and every window it opens share. */
   partition: string;
-  /**
-   * A preload for the view's own documents. Windows the page opens never get
-   * it, since Electron gives a child only the security preferences it
-   * inherits and the options its open handler names.
-   */
+  /** A preload for the view's own documents. */
   preload?: string;
+  /**
+   * The preload of a window the page, or a window it opened, opens at `url`,
+   * if any: Electron gives a child only the security preferences it inherits
+   * and the options its open handler names, so none of the view's own.
+   */
+  childPreload?: (url: string) => string | undefined;
   /**
    * Answers each window the page asks to open, and each one a window it opened
    * asks for in turn. An allowed one opens in the session as a window of its
@@ -205,12 +207,21 @@ const routeWindowOpens = (
   webContents: WebContents,
   options: Pick<
     ContentViewOptions,
-    "onWindowOpen" | "onChildNavigation" | "background" | "onWebContents"
+    | "onWindowOpen"
+    | "onChildNavigation"
+    | "background"
+    | "onWebContents"
+    | "childPreload"
   >,
   children: Set<BrowserWindow>
 ) => {
-  const { onWindowOpen, onChildNavigation, background, onWebContents } =
-    options;
+  const {
+    onWindowOpen,
+    onChildNavigation,
+    background,
+    onWebContents,
+    childPreload,
+  } = options;
 
   webContents.setWindowOpenHandler(({ url, disposition }) => {
     const answer = onWindowOpen(url, {
@@ -221,12 +232,20 @@ const routeWindowOpens = (
       webContents.downloadURL(url);
     }
 
-    return answer === "allow"
-      ? {
-          action: "allow",
-          overrideBrowserWindowOptions: { show: !background },
-        }
-      : { action: "deny" };
+    if (answer !== "allow") {
+      return { action: "deny" };
+    }
+
+    const preload = childPreload?.(url);
+
+    return {
+      action: "allow",
+      overrideBrowserWindowOptions: {
+        show: !background,
+        // Merged over what the child inherits, which keeps the sandbox.
+        ...(preload !== undefined && { webPreferences: { preload } }),
+      },
+    };
   });
   webContents.on("did-create-window", (child) => {
     children.add(child);
@@ -247,7 +266,12 @@ const routeWindowOpens = (
 
 export type SessionWindowOptions = Pick<
   ContentViewOptions,
-  "partition" | "onWindowOpen" | "onChildNavigation" | "background"
+  | "partition"
+  | "preload"
+  | "childPreload"
+  | "onWindowOpen"
+  | "onChildNavigation"
+  | "background"
 > & {
   url: string;
   /** Told of its webContents and its pop-ups', as a view's windows' are. */
@@ -266,20 +290,21 @@ const SESSION_WINDOW_SIZE = { width: 800, height: 600 };
 /**
  * A window of its own in a profile's session, opened by Meru rather than a
  * page, for a page that needs no tab: the kind a page's pop-out gets, with no
- * preload or menu, its own pop-ups and navigations answered as a view's
- * windows' are. Shown and focused, since the person asked for it, unless
+ * menu, its own pop-ups and navigations answered as a view's windows' are. Shown and focused, since the person asked for it, unless
  * the background flags hold it back.
  */
 export const openSessionWindow = (
   options: SessionWindowOptions
 ): SessionWindow => {
-  const { partition, background, url, onWebContents, onClosed } = options;
+  const { partition, preload, background, url, onWebContents, onClosed } =
+    options;
   const children = new Set<BrowserWindow>();
   const window = new BrowserWindow({
     ...SESSION_WINDOW_SIZE,
     show: !background,
     webPreferences: {
       partition,
+      ...(preload !== undefined && { preload }),
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,

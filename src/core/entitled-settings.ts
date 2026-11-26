@@ -60,6 +60,10 @@ export const GATED_SETTINGS: {
   reverseConversation: { capability: "gmailPageSettings", free: () => false },
   moveAttachmentsToTop: { capability: "gmailPageSettings", free: () => false },
   showTrimmedContent: { capability: "gmailPageSettings", free: () => false },
+  closeComposeWindowAfterSend: {
+    capability: "gmailPageSettings",
+    free: () => false,
+  },
   systemScreenPicker: { capability: "screenSharePicker", free: () => false },
 };
 

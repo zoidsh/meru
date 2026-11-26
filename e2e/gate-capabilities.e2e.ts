@@ -820,6 +820,7 @@ test("the free version applies none of the Pro Gmail page settings but the foote
     "Newest message first",
     "Show attachments first",
     "Show trimmed content",
+    "Close compose window after sending",
   ]) {
     // oxlint-disable-next-line no-await-in-loop -- one row after another
     await expect(switchNamed(page, label)).toBeDisabled();

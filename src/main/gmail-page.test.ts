@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { SentNotice } from "#contract/gmail-channels.ts";
 import { GMAIL_CHANNELS } from "#contract/gmail.ts";
 import type { GmailFeatures, GmailHealth } from "#contract/gmail.ts";
 import {
@@ -53,6 +54,7 @@ const HEALTH: GmailHealth = {
     darkMenuPaint: "matched",
     darkDialog: "matched",
     darkDialogText: "matched",
+    sentNotice: "matched",
   },
   ms: 2,
 };
@@ -84,6 +86,8 @@ const setup = (
   const reports: (TabKey & GmailHealth)[] = [];
   const refused: (string | undefined)[] = [];
   let features = ON;
+  let watching = false;
+  const notices: [number, SentNotice][] = [];
   const senders = createSenderRegistry();
   /** Views whose main frame is off Gmail's origin and has not shaken hands. */
   const away = new Set<number>();
@@ -127,6 +131,8 @@ const setup = (
     gmailOrigin: GMAIL_ORIGIN,
     features: () => features,
     userStyles,
+    watchSent: () => watching,
+    onSent: (webContentsId, notice) => notices.push([webContentsId, notice]),
     onHealth: (key, health) => reports.push({ ...key, ...health }),
     onRefused: (origin) => refused.push(origin),
     log: (message) => logs.push(message),
@@ -150,6 +156,12 @@ const setup = (
       emit(GMAIL_CHANNELS.health, sender, payload),
     setFeatures: (next: GmailFeatures) => {
       features = next;
+    },
+    notices,
+    tellSent: (sender: IpcSender, payload: unknown) =>
+      emit(GMAIL_CHANNELS.sent, sender, payload),
+    setWatching: (next: boolean) => {
+      watching = next;
     },
   };
 };
@@ -175,7 +187,6 @@ describe(serveGmailContract, () => {
 
     for (const sender of [
       from(CALENDAR_VIEW),
-      from(CHILD_WINDOW),
       from(SHELL),
       from(99),
       from(GMAIL_VIEW, { isMainFrame: false }),
@@ -186,7 +197,6 @@ describe(serveGmailContract, () => {
 
     expect(contract.sent).toStrictEqual([]);
     expect(contract.refused).toStrictEqual([
-      GMAIL_ORIGIN,
       GMAIL_ORIGIN,
       GMAIL_ORIGIN,
       GMAIL_ORIGIN,
@@ -448,5 +458,118 @@ describe(serveGmailContract, () => {
       .poll(() => failing.logs)
       .toStrictEqual(["Gmail's user styles were not read"]);
     expect(failing.sent).toHaveLength(1);
+  });
+});
+
+/** The word to a window to watch for the sent notice, or to stop. */
+const watchOf = (to: number, watch: boolean) => ({
+  to,
+  channel: GMAIL_CHANNELS.watchSent,
+  message: watch,
+  options: { mainFrameOrigin: GMAIL_ORIGIN },
+});
+
+describe("a compose window of its own", () => {
+  it("gets nothing at its handshake while the setting is off, and is refused nothing", () => {
+    const contract = setup();
+
+    contract.shake(from(CHILD_WINDOW));
+
+    expect(contract.sent).toStrictEqual([]);
+    expect(contract.refused).toStrictEqual([]);
+  });
+
+  it("is told to watch at its handshake while the setting is on, and gets none of a tab's switches", () => {
+    const contract = setup();
+
+    contract.setWatching(true);
+    contract.shake(from(CHILD_WINDOW));
+
+    expect(contract.sent).toStrictEqual([watchOf(CHILD_WINDOW, true)]);
+  });
+
+  it("is told to start and stop as the setting changes, while a tab is told nothing of it", () => {
+    const contract = setup();
+
+    contract.shake(from(GMAIL_VIEW));
+    contract.shake(from(CHILD_WINDOW));
+    contract.sent.length = 0;
+    contract.setWatching(true);
+    contract.page.pushWatch();
+    contract.setWatching(false);
+    contract.page.pushWatch();
+
+    expect(contract.sent).toStrictEqual([
+      watchOf(CHILD_WINDOW, true),
+      watchOf(CHILD_WINDOW, false),
+    ]);
+  });
+
+  it("is heard telling of the sent notice once it shook hands on Gmail's origin", () => {
+    const contract = setup();
+
+    contract.setWatching(true);
+    contract.shake(from(CHILD_WINDOW));
+    contract.tellSent(from(CHILD_WINDOW), "shown");
+    contract.tellSent(from(CHILD_WINDOW), "gone");
+
+    expect(contract.notices).toStrictEqual([
+      [CHILD_WINDOW, "shown"],
+      [CHILD_WINDOW, "gone"],
+    ]);
+  });
+
+  it("refuses a sent notice from a tab, an unknown sender, a subframe, another origin or a window that never shook hands, logging it", () => {
+    const contract = setup();
+
+    contract.tellSent(from(CHILD_WINDOW), "shown");
+    contract.shake(from(CHILD_WINDOW));
+    contract.shake(from(GMAIL_VIEW));
+
+    for (const sender of [
+      from(GMAIL_VIEW),
+      from(99),
+      from(CHILD_WINDOW, { isMainFrame: false }),
+      from(CHILD_WINDOW, { origin: "https://accounts.google.com" }),
+    ]) {
+      contract.tellSent(sender, "shown");
+    }
+
+    expect(contract.notices).toStrictEqual([]);
+    expect(contract.refused).toHaveLength(5);
+    expect(contract.logs).toContain(
+      "Refused Gmail's sent notice from webContents 99 (main frame, https://mail.google.com)"
+    );
+  });
+
+  it("refuses a malformed notice without logging what it held", () => {
+    const contract = setup();
+
+    contract.shake(from(CHILD_WINDOW));
+    contract.tellSent(from(CHILD_WINDOW), "sent to someone@example.com");
+
+    expect(contract.notices).toStrictEqual([]);
+    expect(contract.logs).toStrictEqual([
+      "Refused a malformed Gmail sent notice",
+    ]);
+  });
+
+  it("forgets a window whose page left Gmail, which is no news, and one destroyed", () => {
+    const contract = setup();
+
+    contract.setWatching(true);
+    contract.shake(from(CHILD_WINDOW));
+    contract.shake(
+      from(CHILD_WINDOW, { origin: "https://accounts.google.com" })
+    );
+    contract.tellSent(
+      from(CHILD_WINDOW, { origin: "https://accounts.google.com" }),
+      "shown"
+    );
+    contract.sent.length = 0;
+    contract.page.pushWatch();
+
+    expect(contract.sent).toStrictEqual([]);
+    expect(contract.refused).toStrictEqual(["https://accounts.google.com"]);
   });
 });

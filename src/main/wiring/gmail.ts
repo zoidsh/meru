@@ -63,6 +63,7 @@ const serveGmailPage = ({
     gmailOrigin,
     features: () => gmailFeatures(settings.get),
     userStyles,
+    watchSent: () => settings.get("closeComposeWindowAfterSend"),
     ...gmailPageCapture(),
     log: console.error,
   });
@@ -70,6 +71,8 @@ const serveGmailPage = ({
   for (const feature of GMAIL_FEATURES) {
     settings.onChange(feature, gmailPage.push);
   }
+
+  settings.onChange("closeComposeWindowAfterSend", gmailPage.pushWatch);
 
   return {
     catchUp: createCatchUp(gmailPage.catchUp),

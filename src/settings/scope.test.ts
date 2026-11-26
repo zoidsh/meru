@@ -64,6 +64,7 @@ const APP: PageSettings = {
   reverseConversation: false,
   moveAttachmentsToTop: false,
   showTrimmedContent: false,
+  closeComposeWindowAfterSend: false,
   verificationCodes: true,
   verificationCodesDuringDoNotDisturb: true,
   verificationCodeCopyMode: "notificationClick",

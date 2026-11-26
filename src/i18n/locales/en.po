@@ -713,6 +713,11 @@ msgstr "Close"
 msgid "Close {title}"
 msgstr "Close {title}"
 
+#. Label of the switch in Settings that closes a compose window, one Meru opened for an email link or Gmail's pop-out, once its email is sent
+#: src/settings/gmail-page.tsx
+msgid "Close compose window after sending"
+msgstr "Close compose window after sending"
+
 #. Item of a tab's context menu that closes every other tab of the profile but pinned ones
 #: src/main/tab-menu.ts
 msgid "Close Other Tabs"
@@ -732,6 +737,11 @@ msgstr "Close Tabs Below"
 #: src/main/application-menu.ts
 msgid "Close Window"
 msgstr "Close Window"
+
+#. Description of the Close compose window after sending switch in Settings; a compose window of its own is a separate window for writing one email, not the one docked in Gmail's page
+#: src/settings/gmail-page.tsx
+msgid "Closes a compose window of its own once Gmail sends the email."
+msgstr "Closes a compose window of its own once Gmail sends the email."
 
 #. Description of Sleep on a profile's page in Settings
 #: src/settings/profile-page.tsx
@@ -759,7 +769,9 @@ msgid "Command"
 msgstr "Command"
 
 #. Menu item in the Mail menu that opens a new message in the selected profile's Gmail
+#. Title of the group of Settings for writing emails in Gmail; Compose is Gmail's own name for writing a new email
 #: src/main/commands.ts
+#: src/settings/gmail-page.tsx
 msgid "Compose"
 msgstr "Compose"
 

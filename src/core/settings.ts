@@ -333,6 +333,14 @@ export const SETTINGS = {
     default: false,
   }),
   /**
+   * A compose window of its own, one Meru opened for an email link or
+   * Gmail's pop-out, watches for Gmail's notice that the email was sent.
+   */
+  closeComposeWindowAfterSend: setting<boolean>({
+    schema: z.boolean(),
+    default: false,
+  }),
+  /**
    * Gmail's own Dark theme carried to the surfaces it leaves white, while
    * Gmail itself is Dark, whatever Meru's theme.
    */

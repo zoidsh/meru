@@ -29,7 +29,23 @@ export const GMAIL_CHANNELS = {
    * in place of what the last one inserted; empty for none.
    */
   userStyles: "gmail:user-styles",
+  /**
+   * Main to the page of a compose window of its own, never a tab's: `true`
+   * to watch for Gmail's sent notice, `false` to stop. Without it the page
+   * does nothing beyond its handshake.
+   */
+  watchSent: "gmail:watch-sent",
+  /** Page to main, from a window told to watch: a `SentNotice`. */
+  sent: "gmail:sent",
 } as const;
+
+export const SENT_NOTICES = ["shown", "gone"] as const;
+
+/** Gmail's notice that the email was sent appeared, or went. */
+export type SentNotice = (typeof SENT_NOTICES)[number];
+
+export const isSentNotice = (value: unknown): value is SentNotice =>
+  SENT_NOTICES.includes(value as SentNotice);
 
 /** What the page found once a view settled. */
 export interface GmailHealth {

@@ -772,6 +772,7 @@ describe("the Settings window's Gmail page", () => {
       reverseConversation: false,
       moveAttachmentsToTop: false,
       showTrimmedContent: false,
+      closeComposeWindowAfterSend: false,
       verificationCodes: true,
       verificationCodesDuringDoNotDisturb: true,
       verificationCodeCopyMode: "immediately",

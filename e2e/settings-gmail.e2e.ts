@@ -34,6 +34,7 @@ const SWITCHES = [
   ["Newest message first", "reverseConversation"],
   ["Show attachments first", "moveAttachmentsToTop"],
   ["Show trimmed content", "showTrimmedContent"],
+  ["Close compose window after sending", "closeComposeWindowAfterSend"],
   ["Find verification codes", "verificationCodes"],
   ["Show during Do Not Disturb", "verificationCodesDuringDoNotDisturb"],
 ] as const;
@@ -116,6 +117,7 @@ test("each switch shows the stored value and writes the one it is turned to", as
     reverseConversation: true,
     moveAttachmentsToTop: false,
     showTrimmedContent: false,
+    closeComposeWindowAfterSend: false,
     verificationCodes: true,
     verificationCodesDuringDoNotDisturb: true,
   };

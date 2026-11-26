@@ -66,6 +66,7 @@ describe(checkHealth, () => {
         darkMenuPaint: "absent",
         darkDialog: "absent",
         darkDialogText: "absent",
+        sentNotice: "absent",
       },
     });
   });

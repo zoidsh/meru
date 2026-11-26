@@ -72,6 +72,7 @@ export const wireComposeWindows = ({
   senders,
   prepareSession,
   gmailHome,
+  preload,
 }: {
   background: boolean;
   profiles: Pick<Profiles, "get" | "onChange">;
@@ -79,6 +80,7 @@ export const wireComposeWindows = ({
   senders: Pick<SenderRegistry, "register">;
   prepareSession: (partition: string) => void;
   gmailHome: string;
+  preload: string | undefined;
 }) => {
   const composeWindows = createComposeWindows({
     openWindow: openSessionWindow,
@@ -87,6 +89,7 @@ export const wireComposeWindows = ({
     senders,
     state: profiles.get,
     gmailHome,
+    ...(preload !== undefined && { preload }),
     background,
     log: console.error,
   });

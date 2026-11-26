@@ -354,6 +354,7 @@ describe("the settings contract", () => {
       reverseConversation: false,
       moveAttachmentsToTop: true,
       showTrimmedContent: false,
+      closeComposeWindowAfterSend: false,
       verificationCodes: true,
       verificationCodesDuringDoNotDisturb: true,
       verificationCodeCopyMode: "notificationClick",

@@ -38,7 +38,7 @@ import {
   shootWindow,
   shotPath,
 } from "./lib/shots.ts";
-import { ELSEWHERE_URL } from "./lib/stand-in.ts";
+import { ELSEWHERE_URL, showSentNotice } from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 
 const LINK =
@@ -210,6 +210,39 @@ test("a link in the compose window leaves for the default browser, as one in Gma
   await expect
     .poll(() => readOpenedExternally(app))
     .toStrictEqual([ELSEWHERE_URL]);
+  expect(compose.isClosed()).toBeFalsy();
+});
+
+test("with Close compose window after sending on, the compose window has Gmail's preload and tells main of Gmail's sent notice", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Personal"]);
+  await writeSettings(userDataDir, { closeComposeWindowAfterSend: true });
+
+  const app = await launchApp();
+  const view = await findPage(app, standIn.url);
+
+  await openUrl(app, LINK);
+
+  const compose = await findPage(app, composeUrl(standIn.url, LINK));
+  const readSent = () =>
+    app.evaluate(() => {
+      const { sent } = Reflect.get(globalThis, "meruTestGmailPage") as {
+        sent: { notice: string }[];
+      };
+
+      return sent.map(({ notice }) => notice);
+    });
+
+  // The tab's own page is never told to watch.
+  await showSentNotice(view, true);
+  await showSentNotice(compose, true);
+  await expect.poll(readSent).toStrictEqual(["shown"]);
+  await showSentNotice(compose, false);
+  await expect.poll(readSent).toStrictEqual(["shown", "gone"]);
+  // Nothing more is done with it, so the window stays.
   expect(compose.isClosed()).toBeFalsy();
 });
 

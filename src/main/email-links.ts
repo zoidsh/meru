@@ -168,6 +168,7 @@ export const createComposeWindows = ({
   senders,
   state,
   gmailHome,
+  preload,
   background,
   log,
 }: {
@@ -185,6 +186,8 @@ export const createComposeWindows = ({
   senders: Pick<SenderRegistry, "register">;
   state: () => State;
   gmailHome: string;
+  /** Gmail's preload, which the compose window's own page gets. */
+  preload?: string;
   background: boolean;
   log: (message: string) => void;
 }) => {
@@ -222,6 +225,7 @@ export const createComposeWindows = ({
 
       const window = openWindow({
         partition,
+        ...(preload !== undefined && { preload }),
         url: composeUrl(gmailHome, mailto),
         background,
         onWindowOpen: (url, asked) =>

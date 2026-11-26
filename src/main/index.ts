@@ -661,6 +661,7 @@ const start = async () => {
     senders,
     prepareSession,
     gmailHome,
+    preload: preloads.get("gmail"),
   });
 
   const {

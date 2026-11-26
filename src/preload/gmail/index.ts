@@ -13,6 +13,7 @@ import type { GmailFeature, GmailFeatures } from "#core/gmail-hooks.ts";
 
 import { pressRefresh } from "./catch-up.ts";
 import { RECHECK_MS, checkHealth } from "./health.ts";
+import { watchSentNotice } from "./sent.ts";
 
 // Gmail draws a view some time after it moves to it, so a check waits for it
 // to settle and looks once more before calling a required hook broken.
@@ -32,6 +33,8 @@ let cardsBroken = false;
 let themeFrame = 0;
 
 let userStylesKey: string | undefined;
+
+let stopWatchingSent: (() => void) | undefined;
 
 let checking = false;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -205,6 +208,25 @@ ipcRenderer.on(GMAIL_CHANNELS.userStyles, (_event, css: unknown) => {
 
   if (css !== "") {
     userStylesKey = webFrame.insertCSS(css, { cssOrigin: "author" });
+  }
+});
+// Main sends this to a compose window of its own alone, which hears nothing
+// else, so a tab's page never watches and a window does nothing more.
+ipcRenderer.on(GMAIL_CHANNELS.watchSent, (_event, watch: unknown) => {
+  stopWatchingSent?.();
+  stopWatchingSent = undefined;
+
+  if (watch === true) {
+    stopWatchingSent = watchSentNotice(
+      {
+        root: document,
+        isVisible: (element) => element.checkVisibility(),
+        beforePaint: requestAnimationFrame,
+      },
+      (notice) => {
+        ipcRenderer.send(GMAIL_CHANNELS.sent, notice);
+      }
+    );
   }
 });
 // A view's first, empty document is no page to ask about.

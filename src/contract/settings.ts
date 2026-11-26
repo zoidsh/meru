@@ -31,6 +31,7 @@ export const GMAIL_PAGE_KEYS = [
   "reverseConversation",
   "moveAttachmentsToTop",
   "showTrimmedContent",
+  "closeComposeWindowAfterSend",
   "verificationCodes",
   "verificationCodesDuringDoNotDisturb",
   "verificationCodeCopyMode",

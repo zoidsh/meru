@@ -1,3 +1,5 @@
+import { isSentNotice } from "#contract/gmail-channels.ts";
+import type { SentNotice } from "#contract/gmail-channels.ts";
 import { GMAIL_CHANNELS, GMAIL_HEALTH_SCHEMA } from "#contract/gmail.ts";
 import type { GmailFeatures, GmailHealth } from "#contract/gmail.ts";
 import { isGmailHash } from "#core/gmail-hash.ts";
@@ -20,6 +22,10 @@ export interface GmailPageDeps {
   features: () => GmailFeatures;
   /** The person's own CSS for the page as it is now, empty for none. */
   userStyles: () => Promise<string>;
+  /** Whether a compose window of its own watches for Gmail's sent notice now. */
+  watchSent: () => boolean;
+  /** Told of each sent notice a watching window's page reports. */
+  onSent?: (webContentsId: number, notice: SentNotice) => void;
   /** Told of each report that differs from the tab's last. */
   onHealth?: (key: TabKey, health: GmailHealth) => void;
   /** Told of each message refused, by the sender's origin alone. */
@@ -43,7 +49,10 @@ const describeHealth = (health: GmailHealth) => {
  * Serves Gmail's page contract: the switches, to a page that shakes hands and
  * again on every change, and its health reports, each only from the main
  * frame of a Gmail tab's view on Gmail's origin. What the page says is a hint
- * for the log, never something main acts on.
+ * for the log, never something main acts on. A window of a profile's session,
+ * Gmail's pop-out or one Meru opened, gets none of that: only, while the
+ * setting holds it, the word to watch for Gmail's sent notice, whose reports
+ * are heard from such a window alone.
  */
 export const serveGmailContract = ({
   ipc,
@@ -52,6 +61,8 @@ export const serveGmailContract = ({
   gmailOrigin,
   features,
   userStyles,
+  watchSent,
+  onSent,
   onHealth,
   onRefused,
   log,
@@ -60,6 +71,8 @@ export const serveGmailContract = ({
   const pages = new Map<number, TabKey>();
   /** The last report heard from each, as it was logged. */
   const reports = new Map<number, string>();
+  /** Each window that shook hands on Gmail's origin, by webContents. */
+  const windows = new Set<number>();
 
   const gmailTabOf = (webContentsId: number): TabKey | undefined => {
     const identity = senders.identify(webContentsId);
@@ -78,9 +91,16 @@ export const serveGmailContract = ({
       ? gmailTabOf(sender.webContentsId)
       : undefined;
 
+  const isWindow = (webContentsId: number) =>
+    senders.identify(webContentsId)?.role === "child-window";
+
+  const onGmail = (sender: IpcSender) =>
+    sender.isMainFrame && sender.origin === gmailOrigin;
+
   const forget = (webContentsId: number) => {
     pages.delete(webContentsId);
     reports.delete(webContentsId);
+    windows.delete(webContentsId);
   };
 
   senders.onDropped(forget);
@@ -119,7 +139,41 @@ export const serveGmailContract = ({
     }
   };
 
+  const sendWatch = (webContentsId: number, watch: boolean) => {
+    ipc.send(webContentsId, GMAIL_CHANNELS.watchSent, watch, {
+      mainFrameOrigin: gmailOrigin,
+    });
+  };
+
+  /**
+   * A window's page on Gmail's origin is told to watch only while the
+   * setting holds it; one elsewhere, as sign-in, is ordinary and forgotten.
+   */
+  const windowSync = (sender: IpcSender) => {
+    if (!onGmail(sender)) {
+      forget(sender.webContentsId);
+
+      if (!sender.isMainFrame) {
+        refuse(sender, "handshake");
+      }
+
+      return;
+    }
+
+    windows.add(sender.webContentsId);
+
+    if (watchSent()) {
+      sendWatch(sender.webContentsId, true);
+    }
+  };
+
   ipc.on(GMAIL_CHANNELS.sync, (sender) => {
+    if (isWindow(sender.webContentsId)) {
+      windowSync(sender);
+
+      return;
+    }
+
     const key = accepted(sender);
 
     if (!key) {
@@ -178,7 +232,37 @@ export const serveGmailContract = ({
     onHealth?.(key, health.data);
   });
 
+  ipc.on(GMAIL_CHANNELS.sent, (sender, payload) => {
+    if (
+      !onGmail(sender) ||
+      !windows.has(sender.webContentsId) ||
+      !isWindow(sender.webContentsId)
+    ) {
+      refuse(sender, "sent notice");
+
+      return;
+    }
+
+    if (!isSentNotice(payload)) {
+      log("Refused a malformed Gmail sent notice");
+
+      return;
+    }
+
+    onSent?.(sender.webContentsId, payload);
+  });
+
   return {
+    /** Tells each window that shook hands whether to watch now. */
+    pushWatch: () => {
+      for (const webContentsId of windows) {
+        if (isWindow(webContentsId)) {
+          sendWatch(webContentsId, watchSent());
+        } else {
+          forget(webContentsId);
+        }
+      }
+    },
     /**
      * Tells each page of the profile that shook hands, while its main frame
      * is still on Gmail's origin, to catch up.

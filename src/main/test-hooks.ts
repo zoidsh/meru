@@ -1,6 +1,7 @@
 // Only the suite's build calls these, behind `MERU_E2E_BUILD`, and a release
 // build fails if any global's name here is in its output.
 
+import type { SentNotice } from "#contract/gmail-channels.ts";
 import type { GmailHealth } from "#contract/gmail.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import {
@@ -30,6 +31,7 @@ export const captureGmailPage = () => {
   const captured = {
     health: [] as (TabKey & GmailHealth)[],
     refused: [] as (string | undefined)[],
+    sent: [] as { webContentsId: number; notice: SentNotice }[],
   };
 
   Reflect.set(globalThis, "meruTestGmailPage", captured);
@@ -40,6 +42,9 @@ export const captureGmailPage = () => {
     },
     onRefused: (origin: string | undefined) => {
       captured.refused.push(origin);
+    },
+    onSent: (webContentsId: number, notice: SentNotice) => {
+      captured.sent.push({ webContentsId, notice });
     },
   };
 };

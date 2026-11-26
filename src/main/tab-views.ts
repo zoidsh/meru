@@ -1,7 +1,7 @@
 import { isEqual } from "es-toolkit";
 
 import type { KeyInput } from "#core/accelerator.ts";
-import { findApp, restoreUrl } from "#core/apps.ts";
+import { appForUrl, findApp, restoreUrl } from "#core/apps.ts";
 import type { App, AppOpening } from "#core/apps.ts";
 import type { FoundInPage } from "#core/find.ts";
 import { contentViewBounds, viewFrame } from "#core/layout.ts";
@@ -95,7 +95,10 @@ export interface TabViewsDeps {
   addProfile: () => Promise<unknown>;
   /** Runs the shortcut a key in a page is, if it is one. */
   handleKey: (input: KeyInput) => boolean;
-  /** The preload an app's view gets, if any. */
+  /**
+   * The preload an app's view gets, if any, and a window its page opens on
+   * that app too, such as Gmail's pop-out.
+   */
   preloadFor: (app: string) => string | undefined;
   /** Readies a profile's session before any page of it loads. */
   prepareSession: (partition: string) => void;
@@ -597,10 +600,15 @@ export const createTabViews = ({
 
     prepareSession(partition);
 
-    const preload = preloadFor(findTab(state(), tabKeyed)?.app ?? "");
+    const app = findTab(state(), tabKeyed)?.app ?? "";
+    const preload = preloadFor(app);
     const view = window.addContentView({
       partition,
-      ...(preload !== undefined && { preload }),
+      ...(preload !== undefined && {
+        preload,
+        childPreload: (url: string) =>
+          appForUrl(apps, url)?.id === app ? preload : undefined,
+      }),
       background,
       onWindowOpen: (url, request) =>
         routing.onWindowOpen(tabKeyed, url, request),

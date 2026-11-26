@@ -64,6 +64,7 @@ describe("the health report's schema", () => {
       darkMenuPaint: "absent",
       darkDialog: "absent",
       darkDialogText: "absent",
+      sentNotice: "absent",
     },
     ms: 2,
   };

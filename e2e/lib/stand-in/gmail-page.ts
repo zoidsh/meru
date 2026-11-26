@@ -108,3 +108,22 @@ export const openThread = (view: Page, count: number) =>
       ?.insertAdjacentHTML("beforeend", markup);
     location.hash = "#inbox/t1";
   }, threadMarkup(count));
+
+/**
+ * Gmail's bar after a send, as its live page has it: the notice, then its
+ * Undo and View message links, in the bar at the top of the window.
+ */
+export const SENT_NOTICE_MARKUP = `<div class="b8 UC"><div class="vh"><span class="aT"><span class="bAq">Message sent</span><span id="link_undo" class="ag a8k" role="link">Undo</span><span id="link_vsm" class="ag a8k" role="link">View message</span></span></div></div>`;
+
+/** Shows Gmail's sent notice in the page, or takes it away. */
+export const showSentNotice = (page: Page, shown: boolean) =>
+  page.evaluate(
+    ([markup, show]) => {
+      document.querySelector(".b8.UC")?.remove();
+
+      if (show) {
+        document.body.insertAdjacentHTML("afterbegin", markup);
+      }
+    },
+    [SENT_NOTICE_MARKUP, shown] as const
+  );

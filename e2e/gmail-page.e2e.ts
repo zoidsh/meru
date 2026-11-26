@@ -1,4 +1,5 @@
 import type { ElectronApplication, Page } from "@playwright/test";
+import { delay } from "es-toolkit";
 
 import type { GmailHealth } from "#contract/gmail.ts";
 import type { GmailFeature } from "#core/gmail-hooks.ts";
@@ -6,16 +7,20 @@ import type { GmailFeature } from "#core/gmail-hooks.ts";
 import { expect, findPage, test, writeSettings } from "./lib/app.ts";
 import {
   GMAIL_PARTS,
+  POPOUT_PATH,
+  POPOUT_TITLE,
   POPUP_TITLE,
   SIGN_IN_TITLE,
   THREAD_PARTS,
   openThread,
+  showSentNotice,
   threadMessage,
 } from "./lib/stand-in.ts";
 
 interface Captured {
   health: (GmailHealth & { profileId: string; tabId: string })[];
   refused: (string | undefined)[];
+  sent: { webContentsId: number; notice: string }[];
 }
 
 const readCaptured = (app: ElectronApplication) =>
@@ -41,7 +46,7 @@ const readRefused = async (app: ElectronApplication) => {
 
 const setSetting = (
   app: ElectronApplication,
-  key: GmailFeature,
+  key: GmailFeature | "closeComposeWindowAfterSend",
   value: boolean
 ) =>
   app.evaluate(
@@ -220,6 +225,7 @@ test("reports a hook broken when the markup it anchors on goes, and absent when 
       darkMenuPaint: "absent",
       darkDialog: "absent",
       darkDialogText: "absent",
+      sentNotice: "absent",
     });
   // A broken hook does nothing: the policy link it no longer reaches shows.
   await expect(parts(view).hideInboxFooter).toBeVisible();
@@ -252,21 +258,9 @@ test("drops the handshake of a document off Gmail's origin in Gmail's view, whic
   expect(await readRefused(app)).toStrictEqual([]);
 });
 
-test("gives Gmail's preload to Gmail's view alone: not to another app's, nor to a window Gmail opens", async ({
-  app,
-  standIn,
-}) => {
-  const view = await findPage(app, standIn.url);
-
-  await view.getByRole("link", { name: "Open a pop-up" }).click();
-
-  const popup = await findPage(app, standIn.popupUrl);
-
-  await expect(popup.getByRole("heading", { name: POPUP_TITLE })).toBeVisible();
-  await view.getByRole("link", { name: "Open Calendar" }).click();
-  await findPage(app, standIn.calendarUrl);
-
-  const preloads = await app.evaluate(({ webContents }) =>
+/** Each webContents' URL and the file name of its preload, if any. */
+const readPreloads = (app: ElectronApplication) =>
+  app.evaluate(({ webContents }) =>
     webContents.getAllWebContents().map((each) => {
       // getLastWebPreferences() leaves the preload out; this is what
       // Electron's own sandbox loader reads it from.
@@ -282,17 +276,95 @@ test("gives Gmail's preload to Gmail's view alone: not to another app's, nor to 
       };
     })
   );
+
+test("gives Gmail's preload to Gmail's view and to Gmail's pop-out, not to another app's view nor to a window on another site", async ({
+  app,
+  standIn,
+}) => {
+  const view = await findPage(app, standIn.url);
+  const popoutUrl = `${standIn.url}${POPOUT_PATH.slice(1)}`;
+
+  await view.getByRole("link", { name: "Open a pop-up" }).click();
+
+  const popup = await findPage(app, standIn.popupUrl);
+
+  await expect(popup.getByRole("heading", { name: POPUP_TITLE })).toBeVisible();
+  await view.getByRole("button", { name: "Pop out compose" }).click();
+
+  const popout = await findPage(app, popoutUrl);
+
+  await expect(
+    popout.getByRole("heading", { name: POPOUT_TITLE })
+  ).toBeVisible();
+  await view.getByRole("link", { name: "Open Calendar" }).click();
+  await findPage(app, standIn.calendarUrl);
+
+  const preloads = await readPreloads(app);
   const preloadOf = (url: string) =>
     preloads
       .filter((each) => each.url.startsWith(url))
       .map((each) => each.preload);
 
-  expect(preloadOf(standIn.url)).toStrictEqual(["preload-gmail.cjs"]);
+  expect(preloadOf(popoutUrl)).toStrictEqual(["preload-gmail.cjs"]);
   expect(preloadOf(standIn.calendarUrl)).toStrictEqual([null]);
   expect(preloadOf(standIn.popupUrl)).toStrictEqual([null]);
   expect(
     preloads.filter((each) => each.preload === "preload-gmail.cjs")
-  ).toHaveLength(1);
+  ).toHaveLength(2);
+});
+
+const readSent = async (app: ElectronApplication) => {
+  const { sent } = await readCaptured(app);
+
+  return sent.map(({ notice }) => notice);
+};
+
+test("keeps Gmail's pop-out inert without Close compose window after sending: its sent notice reaches main only once the setting is on", async ({
+  app,
+  standIn,
+}) => {
+  const view = await findPage(app, standIn.url);
+
+  await view.getByRole("button", { name: "Pop out compose" }).click();
+
+  const popout = await findPage(app, `${standIn.url}${POPOUT_PATH.slice(1)}`);
+
+  await expect(
+    popout.getByRole("heading", { name: POPOUT_TITLE })
+  ).toBeVisible();
+  await showSentNotice(popout, true);
+  await showSentNotice(popout, false);
+  await showSentNotice(popout, true);
+  await delay(500);
+
+  expect(await readSent(app)).toStrictEqual([]);
+  expect(await readRefused(app)).toStrictEqual([]);
+  // The pop-out gets none of a tab's switches, so it never reports health.
+  const health = await readHealth(app);
+
+  expect(health.every(({ tabId }) => tabId === "gmail")).toBeTruthy();
+
+  await setSetting(app, "closeComposeWindowAfterSend", true);
+  await expect.poll(() => readSent(app)).toStrictEqual(["shown"]);
+  await showSentNotice(popout, false);
+  await expect.poll(() => readSent(app)).toStrictEqual(["shown", "gone"]);
+
+  await setSetting(app, "closeComposeWindowAfterSend", false);
+  await showSentNotice(popout, true);
+  await delay(500);
+
+  expect(await readSent(app)).toStrictEqual(["shown", "gone"]);
+
+  // On again, the pop-out tells of the notice it shows; the tab's page is
+  // never told to watch, so its own notice tells nothing.
+  await setSetting(app, "closeComposeWindowAfterSend", true);
+  await showSentNotice(view, true);
+  await expect
+    .poll(() => readSent(app))
+    .toStrictEqual(["shown", "gone", "shown"]);
+  await delay(500);
+
+  expect(await readSent(app)).toHaveLength(3);
 });
 
 const THREAD_FEATURES = [
