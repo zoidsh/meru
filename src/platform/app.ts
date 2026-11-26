@@ -22,6 +22,12 @@ export interface AppLifecycle {
    * `limitMs` passes, then quits; the quit's listeners run again then.
    */
   holdQuitFor: (work: () => Promise<unknown>, limitMs: number) => void;
+  /**
+   * Quits as `quit` does, held as it is, then calls `finish` in place of the
+   * last quit, which `finish` must make; a second call while one is under
+   * way does nothing.
+   */
+  quitThen: (finish: () => void) => void;
   setAppUserModelId: (id: string) => void;
   /** The system's languages, most preferred first. */
   preferredLanguages: () => string[];
@@ -35,61 +41,76 @@ export interface AppLifecycle {
   exit: (code: number) => void;
 }
 
-export const createAppLifecycle = (): AppLifecycle => ({
-  get name() {
-    return app.name;
-  },
-  get userDataPath() {
-    return app.getPath("userData");
-  },
-  appendSwitch: (name, value) => app.commandLine.appendSwitch(name, value),
-  disableHardwareAcceleration: () => {
-    app.disableHardwareAcceleration();
-  },
-  requestSingleInstanceLock: () => app.requestSingleInstanceLock(),
-  whenReady: () => app.whenReady(),
-  onSecondInstance: (listener) => {
-    app.on("second-instance", listener);
-  },
-  onWindowAllClosed: (listener) => {
-    app.on("window-all-closed", listener);
-  },
-  onActivate: (listener) => {
-    app.on("activate", listener);
-  },
-  onBeforeQuit: (listener) => {
-    app.on("before-quit", listener);
-  },
-  holdQuitFor: (work, limitMs) => {
-    let held = false;
+export const createAppLifecycle = (): AppLifecycle => {
+  let finishQuit: (() => void) | undefined;
 
-    app.on("will-quit", (event) => {
-      if (held) {
+  return {
+    get name() {
+      return app.name;
+    },
+    get userDataPath() {
+      return app.getPath("userData");
+    },
+    appendSwitch: (name, value) => app.commandLine.appendSwitch(name, value),
+    disableHardwareAcceleration: () => {
+      app.disableHardwareAcceleration();
+    },
+    requestSingleInstanceLock: () => app.requestSingleInstanceLock(),
+    whenReady: () => app.whenReady(),
+    onSecondInstance: (listener) => {
+      app.on("second-instance", listener);
+    },
+    onWindowAllClosed: (listener) => {
+      app.on("window-all-closed", listener);
+    },
+    onActivate: (listener) => {
+      app.on("activate", listener);
+    },
+    onBeforeQuit: (listener) => {
+      app.on("before-quit", listener);
+    },
+    holdQuitFor: (work, limitMs) => {
+      let held = false;
+
+      app.on("will-quit", (event) => {
+        if (held) {
+          return;
+        }
+
+        held = true;
+        event.preventDefault();
+        void (async () => {
+          await Promise.race([
+            work().catch(() => false),
+            // A write that hangs never keeps Meru from quitting.
+            delay(limitMs),
+          ]);
+          // Electron ignores a quit asked for in the turn whose quit was held.
+          setTimeout(() => {
+            const finish = finishQuit ?? (() => app.quit());
+
+            finishQuit = undefined;
+            finish();
+          }, 0);
+        })();
+      });
+    },
+    setAppUserModelId: (id) => app.setAppUserModelId(id),
+    preferredLanguages: () => app.getPreferredSystemLanguages(),
+    preventActivation: () => {
+      if (process.platform === "darwin") {
+        app.setActivationPolicy("prohibited");
+      }
+    },
+    quitThen: (finish) => {
+      if (finishQuit) {
         return;
       }
 
-      held = true;
-      event.preventDefault();
-      void (async () => {
-        await Promise.race([
-          work().catch(() => false),
-          // A write that hangs never keeps Meru from quitting.
-          delay(limitMs),
-        ]);
-        // Electron ignores a quit asked for in the turn whose quit was held.
-        setTimeout(() => {
-          app.quit();
-        }, 0);
-      })();
-    });
-  },
-  setAppUserModelId: (id) => app.setAppUserModelId(id),
-  preferredLanguages: () => app.getPreferredSystemLanguages(),
-  preventActivation: () => {
-    if (process.platform === "darwin") {
-      app.setActivationPolicy("prohibited");
-    }
-  },
-  quit: () => app.quit(),
-  exit: (code) => app.exit(code),
-});
+      finishQuit = finish;
+      app.quit();
+    },
+    quit: () => app.quit(),
+    exit: (code) => app.exit(code),
+  };
+};
