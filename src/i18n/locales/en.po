@@ -1747,13 +1747,15 @@ msgstr "No trusted sites"
 msgid "No unread messages"
 msgstr "No unread messages"
 
+#. Always open in your default browser under All profiles when no Google app is chosen, in the Settings caption under a profile's own value: For all profiles, it's none.
 #. Quiet hours under All profiles when they have no window, in the Settings caption: For all profiles, it's none.
 #: src/settings/scope.ts
+#: src/settings/tabs-apps-page.tsx
 msgid "none"
 msgstr "none"
 
 #. Choice of the Sound menu in Settings: no sound with a notification
-#. Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser; also the app value in a profile's caption: For all profiles, it's None.
+#. Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser
 #. What a menu's button in Settings reads while none of its checkboxes is checked, as the Spelling menu with no language
 #: src/settings/checked-summary.ts
 #: src/settings/notifications-page.tsx

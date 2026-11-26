@@ -48,24 +48,32 @@ export const TabsAppsPage = () => {
 
   const values = effectiveSettings(settings, profile);
   const excluded = values.appsInDefaultBrowser;
-  const countText = (list: readonly string[]) => {
+  const countText = (list: readonly string[], inCaption = false) => {
     // An id this build does not know stays stored, uncounted.
     const count = OFFERED.filter((app) => list.includes(app.id)).length;
 
-    return count === 0
-      ? t({
-          message: "None",
-          comment:
-            "Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser; also the app value in a profile's caption: For all profiles, it's None.",
-        })
-      : t({
-          message: plural(count, {
-            one: "# Google app",
-            other: "# Google apps",
-          }),
-          comment:
-            "Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser; also the app value in a profile's caption: For all profiles, it's 3 Google apps.",
-        });
+    if (count === 0) {
+      return inCaption
+        ? t({
+            message: "none",
+            comment:
+              "Always open in your default browser under All profiles when no Google app is chosen, in the Settings caption under a profile's own value: For all profiles, it's none.",
+          })
+        : t({
+            message: "None",
+            comment:
+              "Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser",
+          });
+    }
+
+    return t({
+      message: plural(count, {
+        one: "# Google app",
+        other: "# Google apps",
+      }),
+      comment:
+        "Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser; also the app value in a profile's caption: For all profiles, it's 3 Google apps.",
+    });
   };
   const excludedLabel = t({
     message: "Always open in your default browser",
@@ -189,7 +197,7 @@ export const TabsAppsPage = () => {
               label={excludedLabel}
               description={excludedDescription}
               scope={rowScope("appsInDefaultBrowser", excludedLabel, () =>
-                countText(settings.appsInDefaultBrowser)
+                countText(settings.appsInDefaultBrowser, true)
               )}
               disabled={excludedOff || excludedPro}
               pro={excludedPro}
