@@ -5,6 +5,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DockIcon,
+  LayoutGridIcon,
   MailIcon,
   PaletteIcon,
   SettingsIcon,
@@ -30,6 +31,7 @@ import { ProfilePage } from "./profile-page.tsx";
 import { ProfilesPage } from "./profiles-page.tsx";
 import type { RemovedProfile } from "./profiles-page.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
+import { TabsAppsPage } from "./tabs-apps-page.tsx";
 
 /** The sections whose page needs nothing from the window. */
 const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
@@ -38,6 +40,7 @@ const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
   "menu-bar": MenuBarPage,
   notifications: NotificationsPage,
   gmail: GmailPage,
+  "tabs-and-apps": TabsAppsPage,
   privacy: PrivacyPage,
   pro: ProPage,
 };
@@ -61,6 +64,7 @@ const SECTION_GROUPS: readonly (readonly Section[])[] = [
   [
     { id: "notifications", icon: BellIcon },
     { id: "gmail", icon: MailIcon },
+    { id: "tabs-and-apps", icon: LayoutGridIcon },
   ],
   [{ id: "privacy", icon: ShieldIcon }],
   [{ id: "pro", icon: BadgeCheckIcon }],
@@ -107,6 +111,11 @@ const useSectionTitles = (): Record<SettingsSection, string> => {
       message: "Gmail",
       comment:
         "Name of the Settings section for Gmail's page, its conversations and verification codes, in its list and as its title; Gmail is the product's name",
+    }),
+    "tabs-and-apps": t({
+      message: "Tabs & Apps",
+      comment:
+        "Name of the Settings section for how Google apps such as Calendar and Drive open, in Meru's tabs or in the default browser, in its list and as its title",
     }),
     privacy: t({
       message: "Privacy & Security",

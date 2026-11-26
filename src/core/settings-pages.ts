@@ -6,6 +6,7 @@ export const SETTINGS_SECTIONS = [
   "profiles",
   "notifications",
   "gmail",
+  "tabs-and-apps",
   "privacy",
   "pro",
 ] as const;

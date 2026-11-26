@@ -95,8 +95,8 @@ msgstr "{MAX_SHOWN_UNREAD}+"
 msgid "{minutes, plural, one {For # Minute} other {For # Minutes}}"
 msgstr "{minutes, plural, one {For # Minute} other {For # Minutes}}"
 
-#. What the Spelling menu's button in Settings reads with more languages checked than it names; {shownNames} lists the first three, as System language, German, French, and # counts the rest
-#: src/settings/language-group.tsx
+#. What a menu's button in Settings reads with more items checked than it names; {shownNames} lists the first three, as System language, German, French, and # counts the rest
+#: src/settings/checked-summary.ts
 msgid "{more, plural, one {{shownNames} and # more} other {{shownNames} and # more}}"
 msgstr "{more, plural, one {{shownNames} and # more} other {{shownNames} and # more}}"
 
@@ -319,6 +319,11 @@ msgstr "Along the whole view"
 #: src/settings/pro-page.tsx
 msgid "Already bought Meru Pro? Enter your key to unlock it."
 msgstr "Already bought Meru Pro? Enter your key to unlock it."
+
+#. Label of the menu in Settings choosing the Google apps whose links always open in the default browser rather than in Meru
+#: src/settings/tabs-apps-page.tsx
+msgid "Always open in your default browser"
+msgstr "Always open in your default browser"
 
 #. Checkbox in the dialog that asks before a link opens in the default browser; {name} is the site, such as example.com, which is then listed under Trusted sites in Settings
 #: src/main/link-opener.ts
@@ -1030,6 +1035,11 @@ msgstr "Google apps"
 msgid "Google apps and bookmarks"
 msgstr "Google apps and bookmarks"
 
+#. Description of the Open Google apps in Meru switch in Settings while it is off
+#: src/settings/tabs-apps-page.tsx
+msgid "Google apps open in your default browser."
+msgstr "Google apps open in your default browser."
+
 #. Name of a profile's color
 #: src/settings/profile-page.tsx
 msgid "Green"
@@ -1512,8 +1522,8 @@ msgid "none"
 msgstr "none"
 
 #. Choice of the Sound menu in Settings: no sound with a notification
-#. What the Spelling menu's button in Settings reads while spelling is checked in no language
-#: src/settings/language-group.tsx
+#. What a menu's button in Settings reads while none of its checkboxes is checked, as the Spelling menu with no language or Always open in your default browser with no Google app
+#: src/settings/checked-summary.ts
 #: src/settings/notifications-page.tsx
 msgid "None"
 msgstr "None"
@@ -1620,6 +1630,11 @@ msgstr "Open Gmail, Calendar or another Google app in this profile."
 msgid "Open Google app or bookmark"
 msgstr "Open Google app or bookmark"
 
+#. Label of the switch in Settings that has links to Google apps, such as Calendar or Drive, open as tabs in Meru rather than in the default browser
+#: src/settings/tabs-apps-page.tsx
+msgid "Open Google apps in Meru"
+msgstr "Open Google apps in Meru"
+
 #. Item of a tab's context menu that opens its page in the system's web browser
 #: src/main/tab-menu.ts
 msgid "Open in Default Browser"
@@ -1654,6 +1669,11 @@ msgstr "Open these from Saved Searches in the Mail menu."
 #: src/main/link-opener.ts
 msgid "Open this link in your default browser?"
 msgstr "Open this link in your default browser?"
+
+#. Title of the group of Settings for whether links to Google apps, such as Calendar or Drive, open in Meru or in the default browser
+#: src/settings/tabs-apps-page.tsx
+msgid "Opening Google apps"
+msgstr "Opening Google apps"
 
 #. Placeholder of the Name field of a new saved search in Settings, which may stay empty
 #: src/settings/saved-searches-card.tsx
@@ -2352,6 +2372,11 @@ msgstr "System tray"
 msgid "Tabs"
 msgstr "Tabs"
 
+#. Name of the Settings section for how Google apps such as Calendar and Drive open, in Meru's tabs or in the default browser, in its list and as its title
+#: src/settings/app.tsx
+msgid "Tabs & Apps"
+msgstr "Tabs & Apps"
+
 #. Label of the row in Settings whose button shows a sample new mail notification
 #: src/settings/notifications-page.tsx
 msgid "Test notification"
@@ -2549,6 +2574,11 @@ msgstr "Turn on Enabled first."
 #: src/settings/gmail-page.tsx
 msgid "Turn on Find verification codes first."
 msgstr "Turn on Find verification codes first."
+
+#. Description of the Always open in your default browser row in Settings while Open Google apps in Meru, the switch above it, is off; it says what to do to use the row
+#: src/settings/tabs-apps-page.tsx
+msgid "Turn on Open Google apps in Meru first."
+msgstr "Turn on Open Google apps in Meru first."
 
 #. Description of a setting in Settings on macOS while Show in menu bar, the switch it depends on, is off; it says what to do to use the setting
 #: src/settings/menu-bar-page.tsx
