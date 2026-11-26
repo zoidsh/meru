@@ -78,8 +78,8 @@ test("sits first in Privacy & Security's group, a card per menu in the menu bar'
   const nav = page.getByRole("navigation", { name: "Settings sections" });
   const names = await nav.getByRole("button").allTextContents();
 
-  expect(names.slice(names.indexOf("Tabs & Apps"))).toStrictEqual([
-    "Tabs & Apps",
+  expect(names.slice(names.indexOf("Tabs & Google Apps"))).toStrictEqual([
+    "Tabs & Google Apps",
     "Shortcuts",
     "Privacy & Security",
     "Advanced",

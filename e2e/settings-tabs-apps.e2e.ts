@@ -50,9 +50,9 @@ const readStored = async (userDataDir: string) => {
 };
 
 const openTabsApps = async (page: Page) => {
-  await openSection(page, "Tabs & Apps");
+  await openSection(page, "Tabs & Google Apps");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Tabs & Apps"
+    "Tabs & Google Apps"
   );
 };
 
@@ -80,11 +80,11 @@ test("opens from the sidebar after Gmail with no scopes, the menu listing every 
     .getByRole("navigation", { name: "Settings sections" })
     .getByRole("button");
 
-  await expect(sections).toContainText(["Gmail", "Tabs & Apps"]);
+  await expect(sections).toContainText(["Gmail", "Tabs & Google Apps"]);
 
   const names = await sections.allTextContents();
 
-  expect(names.indexOf("Tabs & Apps")).toBe(names.indexOf("Gmail") + 1);
+  expect(names.indexOf("Tabs & Google Apps")).toBe(names.indexOf("Gmail") + 1);
 
   await openTabsApps(page);
   await expect(page.getByRole("tablist")).toHaveCount(0);

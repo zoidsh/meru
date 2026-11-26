@@ -129,9 +129,9 @@ const useSectionTitles = (): Record<SettingsSection, string> => {
         "Name of the Settings section for Gmail's page, its conversations and verification codes, in its list and as its title; Gmail is the product's name",
     }),
     "tabs-and-apps": t({
-      message: "Tabs & Apps",
+      message: "Tabs & Google Apps",
       comment:
-        "Name of the Settings section for how Google apps such as Calendar and Drive open, in Meru's tabs or in the default browser, in its list and as its title",
+        "Name of the Settings section for how Google apps such as Calendar and Drive open, in Meru's tabs or in the default browser, and when idle tabs sleep, in its list and as its title",
     }),
     shortcuts: t({
       message: "Shortcuts",
