@@ -980,6 +980,15 @@ export const createTabViews = ({
   return {
     reconcile,
     /**
+     * Answers a window a page asks to open, and a place a window it opened is
+     * going, as for a page of the tab `key` names, whether that tab has a
+     * view or not.
+     */
+    windowOpening: {
+      onWindowOpen: routing.onWindowOpen,
+      onChildNavigation: routing.onChildNavigation,
+    },
+    /**
      * Closes a tab a link opened whose page started a download before it
      * committed, so it has nothing to show, and selects the tab of the page
      * that opened it again if it was still the one selected.

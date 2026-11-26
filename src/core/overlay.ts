@@ -21,6 +21,7 @@ export const TOAST_MESSAGES = [
   "bookmark-removed",
   "downloads-folder-missing",
   "one-profile",
+  "email-links-pro",
   ...DOWNGRADE_TOASTS,
   "license-refused",
   "trial-ended",

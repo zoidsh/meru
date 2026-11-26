@@ -51,6 +51,7 @@ import { revealWindow } from "./windows.ts";
 import { wireAddProfile } from "./wiring/add-profile.ts";
 import { wireContentBlocker } from "./wiring/content-blocker.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
+import { answerEmailLinks, receiveEmailLinks } from "./wiring/email-links.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireHardwareAcceleration } from "./wiring/hardware-acceleration.ts";
@@ -120,6 +121,9 @@ const start = async () => {
 
     return;
   }
+
+  // Before `ready`, so the link that launches Meru is heard.
+  const emailLinks = receiveEmailLinks(lifecycle);
 
   // Guards a GNOME crash in GTK 4.
   if (process.platform === "linux") {
@@ -459,6 +463,15 @@ const start = async () => {
     openAppsInMeru: settings.get("openAppsInMeru", profileId),
     appsInDefaultBrowser: settings.get("appsInDefaultBrowser", profileId),
   });
+  const prepareSession = (partition: string) => {
+    sessions.guard(partition, (ask) => allowsPermission(apps, ask));
+    contentBlocker.prepare(partition);
+    spellcheck?.prepare(partition);
+    watchDownloads(partition, (webContentsId) => {
+      // oxlint-disable-next-line no-use-before-define -- no download starts before a view exists
+      views.closeIfOnlyDownloading(webContentsId);
+    });
+  };
   const views = createTabViews({
     frame,
     platform,
@@ -483,15 +496,7 @@ const start = async () => {
     // oxlint-disable-next-line no-use-before-define -- the menu runs the views' commands
     handleKey: (input) => menu.handleKey(input),
     preloadFor: (app) => preloads.get(app),
-    prepareSession: (partition) => {
-      sessions.guard(partition, (ask) => allowsPermission(apps, ask));
-      contentBlocker.prepare(partition);
-      spellcheck?.prepare(partition);
-      watchDownloads(partition, (webContentsId) => {
-        // oxlint-disable-next-line no-use-before-define -- no download starts before a view exists
-        views.closeIfOnlyDownloading(webContentsId);
-      });
-    },
+    prepareSession,
     updatePages: profiles.updatePages,
     onFocus: () => {
       focus.frontFocused();
@@ -769,6 +774,19 @@ const start = async () => {
   if (!shellLoaded) {
     await shell.load();
   }
+
+  answerEmailLinks({
+    incoming: emailLinks,
+    background,
+    shell,
+    profiles,
+    entitlement,
+    overlays,
+    views,
+    senders,
+    prepareSession,
+    gmailHome,
+  });
 
   updates.start();
 

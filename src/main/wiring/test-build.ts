@@ -55,6 +55,10 @@ import {
   createPathOpener,
 } from "#platform/path-opener.ts";
 import {
+  createCapturedNativeQuestion,
+  createNativeQuestion,
+} from "#platform/question.ts";
+import {
   createCapturedTrayFactory,
   createTrayFactory,
 } from "#platform/tray.ts";
@@ -291,6 +295,13 @@ export const systemLoginItem = () => {
     ? createLoginItem()
     : createHeldLoginItem();
 };
+
+/**
+ * The suite's build answers each question itself, as its test says, so a
+ * test never puts the system's alert on the desktop.
+ */
+export const nativeQuestion = () =>
+  MERU_E2E_BUILD ? createCapturedNativeQuestion() : createNativeQuestion();
 
 /** The suite's build answers the folder picker as the test says. */
 export const folderPicker = () =>

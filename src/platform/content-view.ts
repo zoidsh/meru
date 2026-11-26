@@ -1,5 +1,5 @@
-import { WebContentsView } from "electron";
-import type { BaseWindow, BrowserWindow, WebContents } from "electron";
+import { BrowserWindow, WebContentsView } from "electron";
+import type { BaseWindow, WebContents } from "electron";
 
 import type { KeyInput } from "#core/accelerator.ts";
 import type { FoundInPage } from "#core/find.ts";
@@ -203,7 +203,10 @@ const guardNavigation = (
 
 const routeWindowOpens = (
   webContents: WebContents,
-  options: ContentViewOptions,
+  options: Pick<
+    ContentViewOptions,
+    "onWindowOpen" | "onChildNavigation" | "background" | "onWebContents"
+  >,
   children: Set<BrowserWindow>
 ) => {
   const { onWindowOpen, onChildNavigation, background, onWebContents } =
@@ -240,6 +243,84 @@ const routeWindowOpens = (
 
     routeWindowOpens(child.webContents, options, children);
   });
+};
+
+export type SessionWindowOptions = Pick<
+  ContentViewOptions,
+  "partition" | "onWindowOpen" | "onChildNavigation" | "background"
+> & {
+  url: string;
+  /** Told of its webContents and its pop-ups', as a view's windows' are. */
+  onWebContents: (webContentsId: number) => () => void;
+  /** Told once it has closed, by the page's own `window.close()` or `close`. */
+  onClosed: () => void;
+};
+
+export interface SessionWindow {
+  /** Closes it and every window it opened. */
+  close: () => void;
+}
+
+const SESSION_WINDOW_SIZE = { width: 800, height: 600 };
+
+/**
+ * A window of its own in a profile's session, opened by Meru rather than a
+ * page, for a page that needs no tab: the kind a page's pop-out gets, with no
+ * preload or menu, its own pop-ups and navigations answered as a view's
+ * windows' are. Shown and focused, since the person asked for it, unless
+ * the background flags hold it back.
+ */
+export const openSessionWindow = (
+  options: SessionWindowOptions
+): SessionWindow => {
+  const { partition, background, url, onWebContents, onClosed } = options;
+  const children = new Set<BrowserWindow>();
+  const window = new BrowserWindow({
+    ...SESSION_WINDOW_SIZE,
+    show: !background,
+    webPreferences: {
+      partition,
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  trackDestroyed(window.webContents, "child-window", onWebContents);
+  guardNavigation(window, options.onChildNavigation);
+  window.removeMenu();
+
+  if (background) {
+    showInactiveOnceReady(window);
+  }
+
+  routeWindowOpens(window.webContents, options, children);
+
+  const closeChildren = () => {
+    for (const child of children) {
+      if (!child.isDestroyed()) {
+        child.destroy();
+      }
+    }
+  };
+
+  window.once("closed", () => {
+    closeChildren();
+    onClosed();
+  });
+  void window.loadURL(url).catch(() => {
+    // A failed load shows Chromium's error page in the window.
+  });
+
+  return {
+    close: () => {
+      closeChildren();
+
+      if (!window.isDestroyed()) {
+        window.destroy();
+      }
+    },
+  };
 };
 
 const reportEvents = (

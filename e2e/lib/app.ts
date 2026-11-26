@@ -662,8 +662,11 @@ interface AppFixtures {
   app: ElectronApplication;
   /** The shell window, once it has loaded. */
   shell: Page;
-  /** Starts a second instance on the test's user data, outside Playwright. */
-  spawnApp: () => { exited: Promise<number | null> };
+  /**
+   * Starts a second instance on the test's user data, outside Playwright,
+   * with `args` after the launch's own, as a link the system hands it.
+   */
+  spawnApp: (args?: readonly string[]) => { exited: Promise<number | null> };
 }
 
 export const test = base.extend<AppFixtures>({
@@ -776,11 +779,15 @@ export const test = base.extend<AppFixtures>({
     await use(await findPage(app, SHELL_URL));
   },
   spawnApp: async ({ userDataDir, launched, standIn }, use) => {
-    await use(() => {
-      const child = spawn(executablePath, launchArgs(userDataDir), {
-        env: { ...env, MERU_TEST_APP_URLS: standIn.appUrls },
-        stdio: "ignore",
-      });
+    await use((args = []) => {
+      const child = spawn(
+        executablePath,
+        [...launchArgs(userDataDir), ...args],
+        {
+          env: { ...env, MERU_TEST_APP_URLS: standIn.appUrls },
+          stdio: "ignore",
+        }
+      );
 
       if (child.pid !== undefined) {
         launched.push(child.pid);

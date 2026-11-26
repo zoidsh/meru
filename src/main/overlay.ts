@@ -171,6 +171,8 @@ export const createOverlays = ({
       }
     },
     current: () => open,
+    /** Whether the shell's overlay document is there to open one in. */
+    hasView: () => view !== undefined,
     /** What focuses the overlay, while one is open. */
     focuser: () => (open && view ? view.focus : undefined),
     onChange: (listener: () => void) => {

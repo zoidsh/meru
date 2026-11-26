@@ -11,7 +11,15 @@ export interface AppLifecycle {
   /** False when another instance already holds this user data directory. */
   requestSingleInstanceLock: () => boolean;
   whenReady: () => Promise<void>;
-  onSecondInstance: (listener: () => void) => void;
+  /** The second launch's arguments, which carry a link it was opened with. */
+  onSecondInstance: (listener: (argv: readonly string[]) => void) => void;
+  /** This launch's arguments, which carry a link it was opened with. */
+  readonly launchArgv: readonly string[];
+  /**
+   * macOS: a link the system hands Meru, the one that launched it included,
+   * so it is listened for before `ready`.
+   */
+  onOpenUrl: (listener: (url: string) => void) => void;
   onWindowAllClosed: (listener: () => void) => void;
   /** macOS: the Dock icon clicked, or Meru opened again while it runs. */
   onActivate: (listener: () => void) => void;
@@ -59,7 +67,16 @@ export const createAppLifecycle = (): AppLifecycle => {
     requestSingleInstanceLock: () => app.requestSingleInstanceLock(),
     whenReady: () => app.whenReady(),
     onSecondInstance: (listener) => {
-      app.on("second-instance", listener);
+      app.on("second-instance", (_event, argv) => {
+        listener(argv);
+      });
+    },
+    launchArgv: process.argv,
+    onOpenUrl: (listener) => {
+      app.on("open-url", (event, url) => {
+        event.preventDefault();
+        listener(url);
+      });
     },
     onWindowAllClosed: (listener) => {
       app.on("window-all-closed", listener);

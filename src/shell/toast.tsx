@@ -84,6 +84,11 @@ export const Toast = ({
       comment:
         "Short notice at the foot of the window when Gmail's Add another account is clicked on the free version, which adds no profile; at most two lines of a narrow notice",
     }),
+    "email-links-pro": t({
+      message: "Opening email links in Meru needs Meru Pro.",
+      comment:
+        "Short notice at the foot of the window when an email link clicked outside Meru is not opened, as the free version opens none; at most two lines of a narrow notice",
+    }),
     "pro-ends-trial-ended": t({
       message:
         "Your trial has ended. Pro features turn off when you quit Meru.",

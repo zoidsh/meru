@@ -558,9 +558,11 @@ msgstr "Cached images and files"
 #. Button in the Delete browsing data dialog in Settings that closes it, deleting nothing
 #. Button in the alert saying Meru is the default browser, which opens nothing
 #. Button in the dialog that asks before a link opens in the default browser, which opens nothing
+#. Button in the dialog that asks which profile writes a new email for an email link, which opens no email
 #. Button in the dialog that confirms removing a profile, which keeps it
 #. Button in the license key dialog that closes it, changing nothing
 #: src/main/default-browser-guard.ts
+#: src/main/email-links.ts
 #: src/main/link-opener.ts
 #: src/main/profile-copy.ts
 #: src/settings/delete-browsing-data.tsx
@@ -1949,6 +1951,11 @@ msgstr "Open these from Saved Searches in the Mail menu."
 msgid "Open this link in your default browser?"
 msgstr "Open this link in your default browser?"
 
+#. Short notice at the foot of the window when an email link clicked outside Meru is not opened, as the free version opens none; at most two lines of a narrow notice
+#: src/shell/toast.tsx
+msgid "Opening email links in Meru needs Meru Pro."
+msgstr "Opening email links in Meru needs Meru Pro."
+
 #. Title of the group of Settings for whether links to Google apps, such as Calendar or Drive, open in Meru or in the default browser
 #: src/settings/tabs-apps-page.tsx
 msgid "Opening Google apps"
@@ -3211,6 +3218,11 @@ msgstr "When hidden, it still shows while Do Not Disturb is on."
 #: src/settings/gmail-page.tsx
 msgid "When you click Copy"
 msgstr "When you click Copy"
+
+#. Question in the dialog that asks which profile opens a new email for an email link clicked outside Meru; each profile's name is a button below it
+#: src/main/email-links.ts
+msgid "Which profile should write this email?"
+msgstr "Which profile should write this email?"
 
 #. Name of the Window menu
 #: src/main/application-menu.ts
