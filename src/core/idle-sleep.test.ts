@@ -78,24 +78,34 @@ const plan = (input: Partial<IdleSleepInput> & { state: State }) =>
 const meet = (url: string, app = "meet") => inMeetCall({ app, url });
 
 describe(inMeetCall, () => {
-  it("is a Meet tab at a meeting's code, never Meet's home, landing or lookup pages, nor another app", () => {
+  it("is a Meet tab on any page but Meet's home and landing pages, whatever their case, trailing slash or query, and never another app", () => {
     expect({
       meeting: meet("https://meet.google.com/abc-defg-hij"),
       withQuery: meet("https://meet.google.com/abc-defg-hij?authuser=1"),
       slash: meet("https://meet.google.com/abc-defg-hij/"),
-      home: meet("https://meet.google.com/"),
-      landing: meet("https://meet.google.com/landing"),
-      lookup: meet("https://meet.google.com/lookup/team-standup"),
+      upperCase: meet("https://meet.google.com/ABC-DEFG-HIJ"),
+      inner: meet("https://meet.google.com/_meet/abc-defg-hij?ijlm=1700000000"),
+      lookup: meet("https://meet.google.com/lookup/abcdefghij"),
+      bareCode: meet("https://meet.google.com/abcdefghij"),
       notAUrl: meet("meet"),
+      home: meet("https://meet.google.com/"),
+      homeWithQuery: meet("https://meet.google.com/?authuser=1"),
+      landing: meet("https://meet.google.com/landing"),
+      landingVariant: meet("https://meet.google.com/Landing/?pli=1"),
       otherApp: meet("https://meet.google.com/abc-defg-hij", "calendar"),
     }).toStrictEqual({
       meeting: true,
       withQuery: true,
       slash: true,
+      upperCase: true,
+      inner: true,
+      lookup: true,
+      bareCode: true,
+      notAUrl: true,
       home: false,
+      homeWithQuery: false,
       landing: false,
-      lookup: false,
-      notAUrl: false,
+      landingVariant: false,
       otherApp: false,
     });
   });
@@ -226,11 +236,7 @@ describe(idleSleepPlan, () => {
       ids(
         plan({
           state: current,
-          // As the views give it: a tab in its own window keeps a page.
-          idleSince: new Map([
-            ...followIdle(new Map(), current, 0),
-            ["p/own", 0],
-          ]),
+          idleSince: followIdle(new Map(), current, 0),
           hasPage: (key) => key.tabId !== "asleep" && key.profileId === "p",
           audible: (key) => key.tabId === "sound",
         }).due

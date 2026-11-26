@@ -24,29 +24,37 @@ export const SOUND_RECHECK_MS = MINUTE;
 /** Whether the tab carries Sleep When Idle; anything but `true` reads as not. */
 export const marksSleepWhenIdle = (tab: Tab) => tab.sleepWhenIdle === true;
 
-/** A meeting's own address on Meet, as `abc-defg-hij`. */
-const MEETING_PATH = /^\/[a-z]{3}-[a-z]{4}-[a-z]{3}\/?$/u;
+/** Meet's pages that hold no call. */
+const MEET_PAGES_WITHOUT_CALL = new Set(["/", "/landing"]);
 
 /**
- * Whether the Meet tab is at a meeting rather than Meet's home, landing or
- * lookup pages. A muted call is silent, so sound alone cannot keep it awake.
+ * Whether the Meet tab may be in a call: on any page but Meet's home and
+ * landing pages, since a call sits on more addresses than one can list, and
+ * a call dropped costs more than a page kept awake. A muted call is silent,
+ * so sound alone cannot keep it awake.
  */
-export const inMeetCall = (tab: Pick<Tab, "app" | "url">) =>
-  tab.app === "meet" &&
-  URL.canParse(tab.url) &&
-  MEETING_PATH.test(new URL(tab.url).pathname);
+export const inMeetCall = (tab: Pick<Tab, "app" | "url">) => {
+  if (tab.app !== "meet") {
+    return false;
+  }
+
+  if (!URL.canParse(tab.url)) {
+    return true;
+  }
+
+  const path = new URL(tab.url).pathname.toLowerCase();
+
+  return (
+    !MEET_PAGES_WITHOUT_CALL.has(path) &&
+    !MEET_PAGES_WITHOUT_CALL.has(path.replace(/\/$/u, ""))
+  );
+};
 
 /**
  * Whether the tab can carry Sleep When Idle: never Gmail's, which never
- * sleeps by itself, as in v3, nor one in its own window, which is a window
- * the person left open.
+ * sleeps by itself, as in v3.
  */
-export const canMarkSleepWhenIdle = (tab: Tab) =>
-  tab.app !== "gmail" && !inOwnWindow(tab);
-
-/** Whether the tab may sleep by itself now: as `canMarkSleepWhenIdle`, and not in a call. */
-export const mayIdleSleep = (tab: Tab) =>
-  canMarkSleepWhenIdle(tab) && !inMeetCall(tab);
+export const canMarkSleepWhenIdle = (tab: Tab) => tab.app !== "gmail";
 
 /** Whether the setting puts the tab to sleep once it is idle. */
 export const coveredByIdleSleep = (tab: Tab, which: SleepIdleTabs) => {
@@ -111,8 +119,8 @@ export interface IdleSleepPlan {
 
 /**
  * The tabs idle for `after` that `which` covers, and when the next one will
- * be. A tab on screen, in its own window, Gmail's, playing sound, or without
- * a page is never due; one playing sound past its time is looked at again
+ * be. A tab on screen, in its own window, Gmail's, playing sound, in a Meet
+ * call, or without a page is never due; one playing sound past its time is looked at again
  * after `SOUND_RECHECK_MS`.
  */
 export const idleSleepPlan = ({
@@ -137,7 +145,8 @@ export const idleSleepPlan = ({
 
       if (
         since === undefined ||
-        !mayIdleSleep(tab) ||
+        !canMarkSleepWhenIdle(tab) ||
+        inMeetCall(tab) ||
         !coveredByIdleSleep(tab, which) ||
         !hasPage(key)
       ) {
