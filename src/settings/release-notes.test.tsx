@@ -44,6 +44,13 @@ describe(ReleaseNotes, () => {
     expect(render(notes)).not.toContain(absent);
   });
 
+  it("gives a footnote none of the ids its notes name, so none can clash with the page's", () => {
+    const html = render("See this[^ids].\n\n[^ids]: The note.");
+
+    expect(html).toContain("The note.");
+    expect(html).not.toContain("id=");
+  });
+
   it("keeps a refused link's text, as text", () => {
     expect(render(`[run](${SCRIPT_URL}) now`)).toContain("<span>run</span>");
   });

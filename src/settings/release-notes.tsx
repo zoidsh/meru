@@ -17,6 +17,14 @@ const NotesSubheading = ({ children }: { children?: ReactNode }) => (
   <h5 className={HEADING}>{children}</h5>
 );
 
+/**
+ * A block with none of the attributes the notes chose: a footnote's block
+ * carries the id its notes named, which could clash with one of the page's.
+ */
+const NotesBlock = ({ children }: { children?: ReactNode }) => (
+  <div>{children}</div>
+);
+
 /** A web link opens in the default browser; any other keeps only its text. */
 const NotesLink = ({
   href,
@@ -72,6 +80,7 @@ const renderRule: MarkdownToJSX.Options["renderRule"] = (
 };
 
 const OVERRIDES: MarkdownToJSX.Overrides = {
+  div: NotesBlock,
   h1: NotesHeading,
   h2: NotesHeading,
   h3: NotesSubheading,
