@@ -817,6 +817,7 @@ export const test = base.extend<AppFixtures, WorkerFixtures>({
     // Every Electron call the build withheld, which a stand-in should have
     // answered.
     const withheld: string[] = [];
+    let unwithheld = false;
 
     try {
       await use(async (added = {}) => {
@@ -868,6 +869,23 @@ export const test = base.extend<AppFixtures, WorkerFixtures>({
         }
       }
 
+      // The withholding itself is there in every app still running, so
+      // taking it out of the build fails every test rather than none.
+      const unguarded = await Promise.all(
+        apps.map(({ app }) =>
+          withTimeout(
+            () =>
+              app.evaluate(
+                () =>
+                  !Array.isArray(Reflect.get(globalThis, "meruTestWithheld"))
+              ),
+            5000
+          ).catch(() => false)
+        )
+      );
+
+      unwithheld = unguarded.includes(true);
+
       // A close that hangs, as on a blocking dialog, is not waited out: the
       // user data directory's teardown kills whatever is left.
       await Promise.all(
@@ -881,6 +899,12 @@ export const test = base.extend<AppFixtures, WorkerFixtures>({
     if (refused.length > 0) {
       throw new Error(
         `The app asked to reach the network, which the suite's build refused: ${[...new Set(refused)].join(", ")}`
+      );
+    }
+
+    if (unwithheld) {
+      throw new Error(
+        "The suite's build withholds none of Electron's openers and dialogs, so a forgotten stand-in would open the real one"
       );
     }
 
