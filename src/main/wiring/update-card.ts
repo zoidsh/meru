@@ -6,11 +6,13 @@ import type { Updates } from "../updates.ts";
 export const wireUpdateCard = ({
   updates,
   overlays,
+  log,
 }: {
   updates: Updates;
   overlays: Overlays;
+  log: (message: string) => void;
 }) => {
-  const card = createUpdateCard({ updates, overlays, log: console.error });
+  const card = createUpdateCard({ updates, overlays, log });
 
   updates.onChange(card.follow);
   overlays.onChange(card.follow);

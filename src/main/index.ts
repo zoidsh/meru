@@ -699,7 +699,11 @@ const start = async () => {
     },
   });
 
-  const updateCard = wireUpdateCard({ updates, overlays });
+  const updateCard = wireUpdateCard({
+    updates,
+    overlays,
+    log: console.error,
+  });
 
   wireShellContract({
     platform,

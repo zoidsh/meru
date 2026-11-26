@@ -279,6 +279,23 @@ describe(createShellHandlers, () => {
     expect([shell.calls, shell.overlays]).toStrictEqual([[["findClose"]], []]);
   });
 
+  it("puts the update card aside on a close, as Later or Close, rather than closing it to come straight back", async () => {
+    const shell = setup({
+      overlay: { kind: "update", card: "ready", version: "4.2.0" },
+    });
+
+    await shell.handlers.closeOverlay({});
+    await shell.handlers.runUpdateCard({ action: "restart" });
+
+    expect([shell.calls, shell.overlays]).toStrictEqual([
+      [
+        ["updateCard", "dismiss"],
+        ["updateCard", "restart"],
+      ],
+      [],
+    ]);
+  });
+
   it("passes the find bar's term and steps to the search", async () => {
     const shell = setup();
 

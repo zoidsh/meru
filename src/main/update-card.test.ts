@@ -9,6 +9,7 @@ import { createOverlays } from "./overlay.ts";
 import { createSettingsStore } from "./settings.ts";
 import { createUpdateCard } from "./update-card.ts";
 import { createUpdates } from "./updates.ts";
+import { wireUpdateCard } from "./wiring/update-card.ts";
 
 const one: State = {
   version: 1,
@@ -81,17 +82,13 @@ const setup = ({ canUpdate = true } = {}) => {
     now: () => 0,
     log: () => false,
   });
-  const card = createUpdateCard({
+  const card = wireUpdateCard({
     updates,
     overlays,
     log: (message) => {
       logs.push(message);
     },
   });
-
-  updates.onChange(card.follow);
-  overlays.onChange(card.follow);
-  card.follow();
   focus.noteFocused({ kind: "front" });
   focused.length = 0;
 
