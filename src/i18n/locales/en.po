@@ -23,7 +23,7 @@ msgstr "{count, plural, one {{name}, # unread message} other {{name}, # unread m
 msgid "{count, plural, one {{name}, asleep, # unread message} other {{name}, asleep, # unread messages}}"
 msgstr "{count, plural, one {{name}, asleep, # unread message} other {{name}, asleep, # unread messages}}"
 
-#. Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser
+#. Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser; also the app value in a profile's caption: For all profiles, it's 3 Google apps.
 #: src/settings/tabs-apps-page.tsx
 msgid "{count, plural, one {# Google app} other {# Google apps}}"
 msgstr "{count, plural, one {# Google app} other {# Google apps}}"
@@ -1753,7 +1753,7 @@ msgid "none"
 msgstr "none"
 
 #. Choice of the Sound menu in Settings: no sound with a notification
-#. Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser
+#. Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser; also the app value in a profile's caption: For all profiles, it's None.
 #. What a menu's button in Settings reads while none of its checkboxes is checked, as the Spelling menu with no language
 #: src/settings/checked-summary.ts
 #: src/settings/notifications-page.tsx

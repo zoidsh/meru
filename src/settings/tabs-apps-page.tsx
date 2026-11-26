@@ -56,7 +56,7 @@ export const TabsAppsPage = () => {
       ? t({
           message: "None",
           comment:
-            "Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser",
+            "Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser; also the app value in a profile's caption: For all profiles, it's None.",
         })
       : t({
           message: plural(count, {
@@ -64,7 +64,7 @@ export const TabsAppsPage = () => {
             other: "# Google apps",
           }),
           comment:
-            "Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser",
+            "Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser; also the app value in a profile's caption: For all profiles, it's 3 Google apps.",
         });
   };
   const excludedLabel = t({
