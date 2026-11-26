@@ -203,6 +203,7 @@ export const TabsAppsPage = () => {
       <SettingGroup
         title={t({
           message: "Sleep",
+          context: "settings group",
           comment:
             "Title of the group of Settings for tabs that sleep by themselves, freeing their memory, once they go unused",
         })}

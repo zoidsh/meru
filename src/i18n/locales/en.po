@@ -2288,11 +2288,15 @@ msgstr "Sites you trust when Meru asks show up here."
 #. Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked
 #. Item of a tab's context menu that frees its page until it is woken, keeping its place
 #. Label of the switch on a profile's page in Settings that puts it to sleep or wakes it
-#. Title of the group of Settings for tabs that sleep by themselves, freeing their memory, once they go unused
 #: src/main/profile-menu.ts
 #: src/main/tab-menu.ts
 #: src/settings/profile-page.tsx
+msgid "Sleep"
+msgstr "Sleep"
+
+#. Title of the group of Settings for tabs that sleep by themselves, freeing their memory, once they go unused
 #: src/settings/tabs-apps-page.tsx
+msgctxt "settings group"
 msgid "Sleep"
 msgstr "Sleep"
 
