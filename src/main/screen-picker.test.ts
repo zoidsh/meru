@@ -43,6 +43,10 @@ const setup = ({
   inWindows = [] as TabKey[],
   overlay = undefined as Overlay | undefined,
   sources = undefined as ScreenSources | undefined,
+  /** Tabs whose page is not on screen: another tab is selected over it. */
+  unseen = [] as TabKey[],
+  /** Whether the main window is on screen, not hidden or minimized. */
+  mainShown = true,
 } = {}) => {
   const fake = fakeScreenSources({ status, sources: [NOTES, SCREEN] });
   const identities = new Map<number, SenderIdentity>([
@@ -85,7 +89,9 @@ const setup = ({
     sources: sources ?? fake.screenSources,
     identify: (id) => identities.get(id),
     inOwnWindow: (key) => owned.has(tabKey(key)),
-    ownWindowOpen: (key) => owned.has(tabKey(key)),
+    pageShown: (key) => !unseen.some((tab) => tabKey(tab) === tabKey(key)),
+    windowShown: (window) =>
+      window === undefined ? mainShown : owned.has(tabKey(window)),
     hasPage: (key) => pages.has(tabKey(key)),
     overlays,
     log: (message) => logged.push(message),
@@ -280,6 +286,21 @@ describe(createScreenPicker, () => {
     ask(CHILD);
 
     expect(picker.windowCard(meetTab)).toStrictEqual({ kind: "loading" });
+    expect(picker.mainCard()).toBeUndefined();
+  });
+
+  it("refuses a Meet child window's request while the tab that opened it is not the one its window shows", () => {
+    const { ask, opened } = setup({ unseen: [meetTab] });
+
+    expect([ask(CHILD), ask(PAGE)]).toStrictEqual([[undefined], [undefined]]);
+    expect(opened).toStrictEqual([]);
+  });
+
+  it("refuses while the window it would show in is hidden or minimized", () => {
+    const { ask, opened, picker } = setup({ mainShown: false });
+
+    expect([ask(CHILD), ask(PAGE)]).toStrictEqual([[undefined], [undefined]]);
+    expect(opened).toStrictEqual([]);
     expect(picker.mainCard()).toBeUndefined();
   });
 

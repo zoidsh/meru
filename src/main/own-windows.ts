@@ -269,6 +269,14 @@ export const createOwnWindows = ({
     close,
     /** Whether the tab's own window is open. */
     isOpen: (key: TabKey) => entries.has(tabKey(key)),
+    /** Whether the tab's own window is open, shown and not minimized. */
+    isShown: (key: TabKey) => {
+      const window = entries.get(tabKey(key))?.window;
+
+      return (
+        window !== undefined && window.isVisible() && !window.isMinimized()
+      );
+    },
     /**
      * Brings the tab's own window forward, as Move to New Window and
      * clicking its tab do; in the background it is only shown, never

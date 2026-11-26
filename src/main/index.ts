@@ -549,6 +549,8 @@ const start = async () => {
   const { screenPicker, hasWindowCard } = wireScreenPicker({
     platform,
     background,
+    mainWindowShown: () =>
+      shell.window.isVisible() && !shell.window.isMinimized(),
     apps,
     sessions,
     senders,

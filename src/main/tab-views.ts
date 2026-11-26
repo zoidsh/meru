@@ -1160,6 +1160,13 @@ export const createTabViews = ({
         ? tab.key
         : undefined;
     },
+    /** Whether the tab's page shows, in the main window or its own. */
+    isShown: (key: TabKey) => {
+      const keyed = tabKey(key);
+      const tab = tabs.get(keyed);
+
+      return tab !== undefined && shows(keyed, tab);
+    },
     /** Whether the tab has a page, shown or hidden; one closed or asleep has none. */
     hasPage: (key: TabKey) => tabs.has(tabKey(key)),
     /** Whether the tab's page is playing sound; one with no page is not. */

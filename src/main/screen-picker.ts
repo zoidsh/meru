@@ -22,8 +22,10 @@ export interface ScreenPickerDeps {
   identify: (webContentsId: number) => SenderIdentity | undefined;
   /** Whether the tab's page is in a window of its own, where its picker shows. */
   inOwnWindow: (key: TabKey) => boolean;
-  /** Whether that window is open to show it in. */
-  ownWindowOpen: (key: TabKey) => boolean;
+  /** Whether the tab's page shows, in the main window or its own. */
+  pageShown: (key: TabKey) => boolean;
+  /** Whether the tab's own window, or with none the main window, is on screen. */
+  windowShown: (window: TabKey | undefined) => boolean;
   /** Whether the tab still has its page: not closed, asleep or gone with its profile. */
   hasPage: (key: TabKey) => boolean;
   overlays: Pick<
@@ -71,7 +73,8 @@ export const createScreenPicker = ({
   sources,
   identify,
   inOwnWindow,
-  ownWindowOpen,
+  pageShown,
+  windowShown,
   hasPage,
   overlays,
   log,
@@ -191,12 +194,15 @@ export const createScreenPicker = ({
       requests.delete(surface);
     }
 
-    // One picker a window; the license notice is read once and not replaced.
+    // One picker a window, over the page that asked or the one that opened
+    // the window that asked, where it can be seen; the license notice is
+    // read once and not replaced.
     if (
       requests.has(surface) ||
-      (window === undefined
-        ? !overlays.hasView() || overlays.current()?.kind === "license"
-        : !ownWindowOpen(window))
+      !pageShown(key) ||
+      !windowShown(window) ||
+      (window === undefined &&
+        (!overlays.hasView() || overlays.current()?.kind === "license"))
     ) {
       answer();
 
