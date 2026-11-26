@@ -66,7 +66,6 @@ const entry = (id: AppId, name: string, claims: readonly Claim[]): App => ({
   permissions: [],
 });
 
-/** Docs, Sheets and Slides share `docs.google.com`, told apart by path. */
 /**
  * The apps a run may open tabs of: every one with `workspaceApps`, else
  * Gmail alone.
@@ -77,6 +76,7 @@ export const entitledApps = (
 ): readonly App[] =>
   workspaceApps ? apps : apps.filter((app) => app.id === "gmail");
 
+/** Docs, Sheets and Slides share `docs.google.com`, told apart by path. */
 export const APPS: readonly App[] = [
   {
     ...entry("gmail", "Gmail", googleSubdomain("mail")),
