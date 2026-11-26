@@ -4,6 +4,8 @@ import { menuOfGroups, menuPointInside } from "./context-menu.ts";
 import type { MenuEntry, MenuItemEntry, MenuPoint } from "./context-menu.ts";
 import { drawnTabs } from "./drawn-tabs.ts";
 import { isWebUrl } from "./google-redirect.ts";
+import { marksSleepWhenIdle, mayIdleSleep } from "./idle-sleep.ts";
+import type { SleepIdleTabs } from "./settings.ts";
 import { isInSplit, isMaximized, splitPanes } from "./split.ts";
 import { inOwnWindow, isPinned, knownTabs } from "./state.ts";
 import type { Profile, State, Tab } from "./state.ts";
@@ -15,6 +17,7 @@ import type { Size } from "./window-bounds.ts";
 export const TAB_MENU_ITEMS = [
   "sleep",
   "wake",
+  "sleepWhenIdle",
   "reload",
   "duplicate",
   "copyUrl",
@@ -104,7 +107,8 @@ const bookmarkItems = (bookmarked: boolean | undefined): Item[] =>
 /**
  * The tab's context menu, in the design's groups; nothing for a tab that is
  * not shown. A tab with a page offers Sleep, one without, asleep, Wake;
- * Reload wakes one asleep. Duplicate needs an app that can have more than
+ * while `sleepIdleTabs` is "chosen", Sleep When Idle follows, a checkbox,
+ * for any tab but Gmail's. Reload wakes one asleep. Duplicate needs an app that can have more than
  * one tab; a pinned tab has Unpin, Open at Launch and no Close tab. Bookmark
  * tab or Remove bookmark is there while the page can be bookmarked. Split
  * right and Split down split beside the tab, starting a split where it is in
@@ -118,7 +122,8 @@ export const tabMenu = (
   state: State,
   key: TabKey,
   apps: readonly App[],
-  page: TabPage
+  page: TabPage,
+  sleepIdleTabs: SleepIdleTabs
 ): MenuEntry<TabMenuItemId>[] | undefined => {
   const profile = profileOf(state, key.profileId);
   const tab = findTab(state, key);
@@ -135,7 +140,18 @@ export const tabMenu = (
   const maximizes = paned && splitPanes(asSelected) !== undefined;
 
   return menuOfGroups<TabMenuItemId>([
-    own ? [] : [item(page.loaded ? "sleep" : "wake", true)],
+    own
+      ? []
+      : [
+          item(page.loaded ? "sleep" : "wake", true),
+          ...(sleepIdleTabs === "chosen" && mayIdleSleep(tab)
+            ? [
+                item("sleepWhenIdle", true, {
+                  checked: marksSleepWhenIdle(tab),
+                }),
+              ]
+            : []),
+        ],
     [
       item("reload", true, { command: "tab.reload" }),
       item("duplicate", app !== undefined && !app.singleInstance),

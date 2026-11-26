@@ -47,6 +47,16 @@ export const THEMES = ["system", "light", "dark"] as const;
 
 export type ThemeChoice = (typeof THEMES)[number];
 
+/** Which tabs sleep once idle, the default first. */
+export const SLEEP_IDLE_TABS = ["unpinned", "chosen", "all"] as const;
+
+export type SleepIdleTabs = (typeof SLEEP_IDLE_TABS)[number];
+
+/** How long a tab stays idle before it sleeps, shortest first. */
+export const SLEEP_AFTER = ["30m", "1h", "3h", "6h"] as const;
+
+export type SleepAfter = (typeof SLEEP_AFTER)[number];
+
 /** The default first. */
 export const VERIFICATION_CODE_COPY_MODES = [
   "notificationClick",
@@ -338,6 +348,16 @@ export const SETTINGS = {
       )
     ),
     default: [],
+  }),
+  /** Which tabs sleep once idle for `sleepAfter`: v3's Hibernate idle tabs. */
+  sleepIdleTabs: setting<SleepIdleTabs>({
+    schema: z.enum(SLEEP_IDLE_TABS),
+    default: "unpinned",
+  }),
+  /** How long a tab is hidden before it sleeps: v3's Hibernate after. */
+  sleepAfter: setting<SleepAfter>({
+    schema: z.enum(SLEEP_AFTER),
+    default: "1h",
   }),
   /**
    * Meru's own language, as a catalog's tag, or `system` for the one the

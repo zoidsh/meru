@@ -113,6 +113,8 @@ export interface ContentView {
   navigation: () => Navigation;
   /** Where the main frame is now. */
   url: () => string;
+  /** Whether the page is playing sound now. */
+  audible: () => boolean;
   /**
    * Runs an expression in the page's own world and answers its value. The
    * page owns that world, so the expression is a constant, never built from
@@ -371,6 +373,7 @@ export const addContentView = (
       loading: webContents.isLoading(),
     }),
     url: () => webContents.getURL(),
+    audible: () => webContents.isCurrentlyAudible(),
     evaluate: (expression) => webContents.executeJavaScript(expression),
     setVisible: (visible) => view.setVisible(visible),
     focus: () => webContents.focus(),

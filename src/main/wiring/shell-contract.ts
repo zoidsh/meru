@@ -137,6 +137,7 @@ export const wireShellContract = ({
     moveToOwnWindow,
     moveToMainWindow,
     isLoaded: (key) => views.status(key).kind !== "unloaded",
+    sleepIdleTabs: () => settings.get("sleepIdleTabs"),
     pageUrl: livePageUrl,
     reload: views.reload,
     sleep: views.sleep,

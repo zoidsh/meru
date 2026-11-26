@@ -109,6 +109,7 @@ const createFakeWindow = () => {
         loading: false,
       }),
       url: () => "",
+      audible: () => false,
       evaluate: () => Promise.resolve(),
       setVisible: () => false,
       close: () => false,

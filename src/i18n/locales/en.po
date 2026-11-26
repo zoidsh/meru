@@ -2279,6 +2279,11 @@ msgstr "Sleep Profile"
 msgid "Sleep Tab"
 msgstr "Sleep Tab"
 
+#. Checkbox item of a tab's context menu, shown while Settings' Sleep idle tabs is Tabs you choose, that has this tab sleep by itself once it has gone unused for the time Settings sets
+#: src/main/tab-menu.ts
+msgid "Sleep When Idle"
+msgstr "Sleep When Idle"
+
 #. Label of the menu in Settings choosing the sound a new mail notification makes
 #: src/settings/notifications-page.tsx
 msgid "Sound"

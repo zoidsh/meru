@@ -75,6 +75,31 @@ export interface ViewPlan {
 }
 
 /**
+ * What the main window shows: the selected profile's selected tab, unless it
+ * is in its own window, and every pane of its split while that shows.
+ */
+export const onScreen = (
+  state: State
+): Pick<ViewPlan, "front" | "shown" | "panes"> => {
+  const profile = selectedProfile(state);
+  const front = knownTabs(profile).some(
+    (tab) => tab.id === profile.selectedTabId && !inOwnWindow(tab)
+  )
+    ? { profileId: profile.id, tabId: profile.selectedTabId }
+    : undefined;
+  const panes = front && shownPanes(profile);
+  const alone = front ? [front] : [];
+
+  return {
+    ...(front && { front }),
+    shown: panes
+      ? paneTabs(panes).map((tabId) => ({ profileId: profile.id, tabId }))
+      : alone,
+    ...(panes && { panes }),
+  };
+};
+
+/**
  * A tab gets its view when it is first on screen, or opened as its profile's
  * Open at Launch tabs are, and keeps it, hidden, while another is on screen,
  * until it is closed or put to sleep, or its profile is removed or put to
@@ -91,18 +116,7 @@ export const planViews = (
   sleeping: ReadonlySet<string> = new Set(),
   waiting = false
 ): ViewPlan => {
-  const profile = selectedProfile(state);
-  const shown = knownTabs(profile);
-  const front = shown.some(
-    (tab) => tab.id === profile.selectedTabId && !inOwnWindow(tab)
-  )
-    ? { profileId: profile.id, tabId: profile.selectedTabId }
-    : undefined;
-  const panes = front && shownPanes(profile);
-  const alone = front ? [front] : [];
-  const onScreen: TabKey[] = panes
-    ? paneTabs(panes).map((tabId) => ({ profileId: profile.id, tabId }))
-    : alone;
+  const { front, shown, panes } = onScreen(state);
   const next = nextLaunch(state, launched, waiting);
   const launching = next ? [next] : [];
   const opening = launching.flatMap((candidate) =>
@@ -120,7 +134,7 @@ export const planViews = (
       : []
   );
   const kept = new Set([
-    ...[...existing, ...opening.map(tabKey), ...onScreen.map(tabKey)].filter(
+    ...[...existing, ...opening.map(tabKey), ...shown.map(tabKey)].filter(
       (key) => !sleeping.has(key)
     ),
     ...windows.map(tabKey),
@@ -133,7 +147,7 @@ export const planViews = (
         .filter((key) => kept.has(tabKey(key)))
     ),
     ...(front && { front }),
-    shown: onScreen,
+    shown,
     ...(panes && { panes }),
     windows,
     opening,

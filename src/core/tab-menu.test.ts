@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { APPS } from "./apps.ts";
 import type { MenuEntry } from "./context-menu.ts";
+import type { SleepIdleTabs } from "./settings.ts";
 import { gmailTab, isTab, newProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
 import {
@@ -48,13 +49,19 @@ const shown = (menu: readonly Entry[] | undefined) =>
       : `${entry.id}${entry.enabled ? "" : " off"}${entry.checked === undefined ? "" : ` ${entry.checked ? "on" : "unchecked"}`}`
   );
 
-const offered = (current: State, tabId: string, page?: TabPage) =>
+const offered = (
+  current: State,
+  tabId: string,
+  page?: TabPage,
+  sleepIdleTabs: SleepIdleTabs = "unpinned"
+) =>
   shown(
     tabMenu(
       current,
       { profileId: "p", tabId },
       APPS,
-      page ?? { loaded: true, bookmarked: false }
+      page ?? { loaded: true, bookmarked: false },
+      sleepIdleTabs
     )
   );
 
@@ -125,6 +132,43 @@ describe(tabMenu, () => {
     ]);
   });
 
+  it("offers Sleep When Idle after Sleep or Wake only under Tabs you choose, checked by the tab's mark, never for Gmail's tab or one in its own window", () => {
+    const current = state([
+      tab("c", "calendar"),
+      { ...tab("m", "drive", true), sleepWhenIdle: true },
+      { ...tab("w", "docs"), ownWindow: true },
+    ]);
+    const first = (
+      tabId: string,
+      sleepIdleTabs: SleepIdleTabs,
+      loaded = true
+    ) =>
+      offered(
+        current,
+        tabId,
+        { loaded, bookmarked: false },
+        sleepIdleTabs
+      )?.slice(0, 3);
+
+    expect({
+      unpinned: first("c", "unpinned"),
+      all: first("c", "all"),
+      chosen: first("c", "chosen"),
+      asleep: first("c", "chosen", false),
+      marked: first("m", "chosen"),
+      gmail: first("gmail", "chosen"),
+      ownWindow: first("w", "chosen"),
+    }).toStrictEqual({
+      unpinned: ["sleep", "|", "reload"],
+      all: ["sleep", "|", "reload"],
+      chosen: ["sleep", "sleepWhenIdle unchecked", "|"],
+      asleep: ["wake", "sleepWhenIdle unchecked", "|"],
+      marked: ["sleep", "sleepWhenIdle on", "|"],
+      gmail: ["sleep", "|", "reload"],
+      ownWindow: ["reload", "duplicate", "copyUrl"],
+    });
+  });
+
   it("offers Bookmark tab for a page not bookmarked, Remove bookmark for one that is, and neither while it cannot be", () => {
     const current = state([tab("c", "calendar")]);
     const bookmarkItems = (bookmarked: boolean | undefined) =>
@@ -146,7 +190,8 @@ describe(tabMenu, () => {
           state([tab("c", "calendar")]),
           { profileId: "p", tabId: "c" },
           APPS,
-          { loaded: true, bookmarked: false }
+          { loaded: true, bookmarked: false },
+          "chosen"
         ) ?? []
       ).flatMap((entry) =>
         entry.kind === "item" ? [[entry.id, entry.command ?? null]] : []
@@ -155,6 +200,7 @@ describe(tabMenu, () => {
 
     expect(commands).toStrictEqual({
       sleep: null,
+      sleepWhenIdle: null,
       reload: "tab.reload",
       duplicate: null,
       copyUrl: null,

@@ -4,7 +4,9 @@ import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { menuItem, menuPointInside } from "#core/context-menu.ts";
 import type { MenuEntry } from "#core/context-menu.ts";
+import { marksSleepWhenIdle } from "#core/idle-sleep.ts";
 import type { PaneDirection } from "#core/pane-tree.ts";
+import type { SleepIdleTabs } from "#core/settings.ts";
 import type { State } from "#core/state.ts";
 import {
   duplicatePlace,
@@ -41,6 +43,7 @@ export interface TabMenuDeps {
     Profiles,
     | "setPinned"
     | "setOpenAtLaunch"
+    | "setSleepWhenIdle"
     | "closeTab"
     | "closeOtherTabs"
     | "closeTabsBelow"
@@ -55,6 +58,8 @@ export interface TabMenuDeps {
   openSplit: (direction: PaneDirection) => void;
   /** Whether the tab has a page, else it sleeps. */
   isLoaded: (key: TabKey) => boolean;
+  /** Which tabs sleep once idle, as the setting is now. */
+  sleepIdleTabs: () => SleepIdleTabs;
   /**
    * The URL the tab's page shows now, where it has a live one: the saved
    * URL is written at most once a second, so it can lag behind.
@@ -93,6 +98,12 @@ const LABELS: Record<TabMenuItemId, () => string> = {
       message: "Wake",
       comment:
         "Item of a sleeping tab's context menu, in place of Sleep, that loads its page again and selects it",
+    }),
+  sleepWhenIdle: () =>
+    t({
+      message: "Sleep When Idle",
+      comment:
+        "Checkbox item of a tab's context menu, shown while Settings' Sleep idle tabs is Tabs you choose, that has this tab sleep by itself once it has gone unused for the time Settings sets",
     }),
   reload: MENU_LABELS.reload,
   duplicate: () =>
@@ -169,6 +180,7 @@ export const createTabMenu = ({
   moveToOwnWindow,
   moveToMainWindow,
   isLoaded,
+  sleepIdleTabs,
   pageUrl,
   reload,
   sleep,
@@ -276,6 +288,10 @@ export const createTabMenu = ({
         await profiles.setOpenAtLaunch(key, tab.openAtLaunch !== true);
         break;
       }
+      case "sleepWhenIdle": {
+        await profiles.setSleepWhenIdle(key, !marksSleepWhenIdle(tab));
+        break;
+      }
       case "close": {
         await profiles.closeTab(key);
         break;
@@ -291,11 +307,17 @@ export const createTabMenu = ({
   };
 
   const menuOf = (key: TabKey) =>
-    tabMenu(state(), key, apps, {
-      loaded: isLoaded(key),
-      url: pageUrl(key),
-      bookmarked: bookmarks.bookmarked(key),
-    });
+    tabMenu(
+      state(),
+      key,
+      apps,
+      {
+        loaded: isLoaded(key),
+        url: pageUrl(key),
+        bookmarked: bookmarks.bookmarked(key),
+      },
+      sleepIdleTabs()
+    );
 
   /** Runs the item if the menu `current` gives now still offers it, enabled. */
   const choose = async <Id extends TabMenuItemId>(

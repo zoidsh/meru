@@ -189,6 +189,7 @@ const workspace = (gmail: Record<string, unknown> | null = {}) => {
             app: "drive",
             url: "https://drive.google.com/",
             title: "Drive",
+            sleepWhenIdle: true,
           },
           {
             id: "d2",
@@ -244,7 +245,7 @@ describe("the free version's tabs", () => {
     expect(view && bookmarks(view, "p")).toStrictEqual([]);
   });
 
-  it("writes back every hidden tab, pin, split and bookmark as stored through a Gmail navigation, a rename and Check mail", () => {
+  it("writes back every hidden tab, pin, Sleep When Idle mark, split and bookmark as stored through a Gmail navigation, a rename and Check mail", () => {
     const state = workspace();
     const view = entitledView(state, FREE);
     const navigated = updatePages(view, [

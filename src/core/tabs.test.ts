@@ -22,6 +22,7 @@ import {
   setOpenAtLaunch,
   setOwnWindowBounds,
   setPinned,
+  setSleepWhenIdle,
   splitTab,
   updatePages,
 } from "./tabs.ts";
@@ -374,6 +375,34 @@ describe(setOpenAtLaunch, () => {
       setOpenAtLaunch(before, { profileId: "p", tabId: "c1" }, true),
     ]).toStrictEqual([
       { ...gmailTab(), openAtLaunch: false },
+      undefined,
+      undefined,
+    ]);
+  });
+});
+
+describe(setSleepWhenIdle, () => {
+  it("marks any tab, pinned or not, takes the mark away leaving no key, and keeps it through a move to its own window and back", () => {
+    const before = state([tab("c1", "calendar")]);
+    const c1 = { profileId: "p", tabId: "c1" };
+    const marked = setSleepWhenIdle(before, c1, true);
+    const moved =
+      marked &&
+      moveToMainWindow(moveToOwnWindow(marked, c1) ?? marked, c1, true);
+
+    expect([
+      tabsOf(setSleepWhenIdle(before, { profileId: "p", tabId: "gmail" }, true))
+        ?.tabs[0],
+      tabsOf(marked)?.tabs[1],
+      tabsOf(moved)?.tabs[1]?.sleepWhenIdle,
+      marked && tabsOf(setSleepWhenIdle(marked, c1, false))?.tabs[1],
+      setSleepWhenIdle(before, c1, false),
+      marked && setSleepWhenIdle(marked, c1, true),
+    ]).toStrictEqual([
+      { ...gmailTab(), sleepWhenIdle: true },
+      { ...tab("c1", "calendar"), sleepWhenIdle: true },
+      true,
+      tab("c1", "calendar"),
       undefined,
       undefined,
     ]);

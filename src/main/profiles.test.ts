@@ -581,11 +581,12 @@ describe("tabs, splits and bookmarks without Meru Pro", () => {
         .openTab("a", gmail, gmail.home, "gmail", undefined, "row")
         .then((opened) => opened !== undefined),
       profiles.setPinned(gmailKey, false),
+      profiles.setSleepWhenIdle(gmailKey, true),
       profiles.toggleBookmark("a", page).then((now) => now !== undefined),
     ]);
   };
 
-  it("opens, unpins, splits and bookmarks nothing on the free version, and writes nothing, where a licensed run makes each change", async () => {
+  it("opens, unpins, marks Sleep When Idle, splits and bookmarks nothing on the free version, and writes nothing, where a licensed run makes each change", async () => {
     const free = setupGated(stored, refused);
     const licensed = setupGated(stored, []);
 
@@ -594,9 +595,9 @@ describe("tabs, splits and bookmarks without Meru Pro", () => {
       free.saved,
       await tryEach(licensed.profiles),
     ]).toStrictEqual([
-      [false, false, false, false],
+      [false, false, false, false, false],
       [],
-      [true, true, true, true],
+      [true, true, true, true, true],
     ]);
   });
 

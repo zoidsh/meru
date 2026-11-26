@@ -65,6 +65,8 @@ interface FakeView {
   finds: string[];
   /** The window it is in: the main window's 1, or a tab's own. */
   host: number;
+  /** Whether its page plays sound, as the test says. */
+  audible: boolean;
   webContentsId: number;
 }
 
@@ -181,6 +183,7 @@ const setup = async ({
           finds: [],
           host: MAIN_HOST,
           webContentsId: 0,
+          audible: false,
         };
 
         webContentsIds += 1;
@@ -225,6 +228,7 @@ const setup = async ({
             view.finds.push(`stop ${keepSelection}`);
           },
           zoom: (change) => view.moves.push(`zoom ${change}`),
+          audible: () => view.audible,
           moveTo: ({ hostId }) => {
             view.host = hostId;
           },
@@ -1466,6 +1470,30 @@ describe(createTabViews, () => {
       ["persist:a", GMAIL, false],
       ["persist:b", GMAIL, false],
       ["persist:a", elsewhere, true],
+    ]);
+  });
+
+  it("says whether a tab's page plays sound, and that one put to sleep, with no page, does not", async () => {
+    const window = await setup();
+    const calendar = { profileId: "a", tabId: "c1" };
+
+    await window.profiles.selectTab(calendar);
+
+    const page = window.viewOf("persist:a", 1);
+
+    if (page) {
+      page.audible = true;
+    }
+
+    await window.profiles.selectTab({ profileId: "a", tabId: "gmail" });
+
+    const playing = window.tabs.audible(calendar);
+
+    window.tabs.sleep(calendar);
+
+    expect([playing, window.tabs.audible(calendar)]).toStrictEqual([
+      true,
+      false,
     ]);
   });
 

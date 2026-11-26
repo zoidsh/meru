@@ -49,6 +49,7 @@ import { wireContentBlocker } from "./wiring/content-blocker.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
+import { wireIdleSleep } from "./wiring/idle-sleep.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
 import { wireLauncher } from "./wiring/launcher.ts";
 import { wireLinks } from "./wiring/links.ts";
@@ -587,6 +588,7 @@ const start = async () => {
     keepAliveUrl,
     keepAliveTiming,
   });
+  wireIdleSleep({ lifecycle, settings, profiles, views, power });
   sidebar.onChange(views.relayout);
   sidebar.onChange(overlays.relayout);
   // The trial footer, coming or going, moves the pages as the sidebar does.

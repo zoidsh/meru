@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
 import type { MenuPoint } from "#core/context-menu.ts";
+import type { SleepIdleTabs } from "#core/settings.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -70,6 +71,7 @@ const setup = ({
   state = initial,
   bookmarked = false,
   pages = {} as Partial<Record<string, string>>,
+  sleepIdleTabs = "unpinned" as SleepIdleTabs,
 } = {}) => {
   const done: unknown[] = [];
   const popups: Popup[] = [];
@@ -102,6 +104,7 @@ const setup = ({
     profiles: {
       setPinned: (each, pinned) => recorded("pinned")(key(each), pinned),
       setOpenAtLaunch: (each, on) => recorded("openAtLaunch")(key(each), on),
+      setSleepWhenIdle: (each, on) => recorded("sleepWhenIdle")(key(each), on),
       closeTab: (each) => recorded("close")(key(each)),
       closeOtherTabs: (each) => recorded("closeOthers")(key(each)),
       closeTabsBelow: (each) => recorded("closeBelow")(key(each)),
@@ -111,6 +114,7 @@ const setup = ({
     moveToOwnWindow: (each) => recorded("moveToOwnWindow")(key(each)),
     moveToMainWindow: (each) => recorded("moveToMainWindow")(key(each)),
     isLoaded: (each) => each.tabId !== "x",
+    sleepIdleTabs: () => sleepIdleTabs,
     pageUrl: (each) => pages[each.tabId],
     reload: (each) => recorded("reload")(key(each)),
     sleep: (each) => {
@@ -216,6 +220,41 @@ describe(createTabMenu, () => {
       "Open at Launch [x]",
     ]);
     expect(labels(popups[0])).not.toContain("Bookmark Tab");
+  });
+
+  it("offers Sleep When Idle under Tabs you choose, checked by the tab's mark, which choosing it turns the other way", async () => {
+    const { menu, popups, choose, setState } = setup({
+      sleepIdleTabs: "chosen",
+    });
+
+    menu.open(at("c"));
+
+    expect(labels(popups.at(-1))?.slice(0, 3)).toStrictEqual([
+      "Sleep",
+      "Sleep When Idle [ ]",
+      "—",
+    ]);
+    await expect(choose("c", "Sleep When Idle")).resolves.toStrictEqual([
+      ["sleepWhenIdle", "p/c", true],
+    ]);
+
+    setState({
+      ...initial,
+      profiles: initial.profiles.map((profile) => ({
+        ...profile,
+        tabs: profile.tabs.map((entry) =>
+          "id" in entry && entry.id === "c"
+            ? { ...entry, sleepWhenIdle: true }
+            : entry
+        ),
+      })),
+    });
+    menu.open(at("c"));
+
+    expect(labels(popups.at(-1))?.[1]).toBe("Sleep When Idle [x]");
+    await expect(choose("c", "Sleep When Idle")).resolves.toStrictEqual([
+      ["sleepWhenIdle", "p/c", false],
+    ]);
   });
 
   it("runs each item on the menu's tab, which need not be selected", async () => {

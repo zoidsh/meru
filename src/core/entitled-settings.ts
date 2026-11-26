@@ -50,6 +50,9 @@ export const GATED_SETTINGS: {
   // No Google app but Gmail opens in Meru without the capability anyway.
   openAppsInMeru: { capability: "workspaceApps", free: () => false },
   appsInDefaultBrowser: { capability: "workspaceApps", free: () => [] },
+  // The free version's one tab is always on screen, so neither does anything.
+  sleepIdleTabs: { capability: "workspaceApps" },
+  sleepAfter: { capability: "workspaceApps" },
   // The footer's hide was never Pro, so it alone of Gmail's page applies.
   hidePromoBanner: { capability: "gmailPageSettings", free: () => false },
   hideUpgradeButton: { capability: "gmailPageSettings", free: () => false },

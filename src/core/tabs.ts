@@ -365,6 +365,21 @@ export const setOpenAtLaunch = (state: State, key: TabKey, on: boolean) =>
       : { ...tab, openAtLaunch: on }
   );
 
+/**
+ * Marks the tab Sleep When Idle, or takes the mark away, leaving no key.
+ * Nothing for a tab not shown, or one that already reads so.
+ */
+export const setSleepWhenIdle = (state: State, key: TabKey, on: boolean) =>
+  updateTab(state, key, (tab) => {
+    const { sleepWhenIdle: _sleepWhenIdle, ...rest } = tab;
+
+    if ((tab.sleepWhenIdle === true) === on) {
+      return;
+    }
+
+    return on ? { ...rest, sleepWhenIdle: true } : rest;
+  });
+
 /** Keeps where the tab's own window is. Nothing when it is there already. */
 export const setOwnWindowBounds = (
   state: State,

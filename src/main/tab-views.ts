@@ -1153,6 +1153,8 @@ export const createTabViews = ({
     },
     /** Whether the tab has a page, shown or hidden; one closed or asleep has none. */
     hasPage: (key: TabKey) => tabs.has(tabKey(key)),
+    /** Whether the tab's page is playing sound; one with no page is not. */
+    audible: (key: TabKey) => tabs.get(tabKey(key))?.view.audible() ?? false,
     /** Searches the tab's page, if it has a view; answers the search's id. */
     findInPage: (key: TabKey, term: string, options: FindOptions) =>
       tabs.get(tabKey(key))?.view.findInPage(term, options),

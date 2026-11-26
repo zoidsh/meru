@@ -57,6 +57,7 @@ import {
   setOpenAtLaunch,
   setOwnWindowBounds,
   setPinned,
+  setSleepWhenIdle,
   splitOntoTab,
   splitTab,
   updatePages,
@@ -466,6 +467,11 @@ export const createProfiles = ({
       "workspaceApps",
       "set a tab to open at launch",
       (current, key: TabKey, on: boolean) => setOpenAtLaunch(current, key, on)
+    ),
+    setSleepWhenIdle: gated(
+      "workspaceApps",
+      "mark a tab to sleep when idle",
+      (current, key: TabKey, on: boolean) => setSleepWhenIdle(current, key, on)
     ),
     updatePages: (updates: PageUpdate[]) =>
       exclusive(() => commit(updatePages(state, updates))),
