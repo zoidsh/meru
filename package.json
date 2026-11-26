@@ -46,6 +46,7 @@
     "@vitejs/plugin-react": "6.3.0",
     "electron": "45.2.3",
     "electron-builder": "26.18.1",
+    "electron-updater": "6.8.12",
     "es-toolkit": "1.53.2",
     "lefthook": "2.2.2",
     "linkedom": "0.18.15",
