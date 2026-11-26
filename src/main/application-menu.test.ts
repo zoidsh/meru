@@ -66,18 +66,24 @@ const itemOf = (menus: MenuItemConstructorOptions[], id: string) =>
   menus.flatMap(submenu).find((item) => (item.role ?? item.id) === id);
 
 /**
- * Each built-in key's item, by its role or, for an item of Meru's own, its
- * id; Close is the role on macOS and an item of ours elsewhere.
+ * Each built-in key's item, by its id or, with none, its role, and the role
+ * that gives its key where the table says it is a role's; Close has its id
+ * on every platform and is the role on macOS alone.
  */
-const BUILT_IN_ITEMS: Record<BuiltInShortcutId, string> = {
-  resetZoom: "view.resetZoom",
-  zoomIn: "view.zoomIn",
-  zoomOut: "view.zoomOut",
-  fullScreen: "togglefullscreen",
-  minimize: "minimize",
-  close: "close",
-  quit: "quit",
-};
+const BUILT_IN_ITEMS: Record<BuiltInShortcutId, [item: string, role: string]> =
+  {
+    resetZoom: ["view.resetZoom", ""],
+    zoomIn: ["view.zoomIn", ""],
+    zoomOut: ["view.zoomOut", ""],
+    fullScreen: ["togglefullscreen", "togglefullscreen"],
+    minimize: ["minimize", "minimize"],
+    close: ["window.close", "close"],
+    quit: ["quit", "quit"],
+  };
+
+/** The item named by its id, or by its role where it has no id. */
+const builtInItem = (menus: MenuItemConstructorOptions[], name: string) =>
+  menus.flatMap(submenu).find((item) => (item.id ?? item.role) === name);
 
 const labels = (menus: MenuItemConstructorOptions[]) =>
   menus.map((menu) => menu.label);
@@ -201,11 +207,15 @@ describe(buildMenuTemplate, () => {
     (platform) => {
       const menus = template(platform);
       const carried = BUILT_IN_SHORTCUTS.map(({ id }) => {
-        const item = itemOf(menus, BUILT_IN_ITEMS[id]);
+        const item = builtInItem(menus, BUILT_IN_ITEMS[id][0]);
+
+        if (!item) {
+          return [id, "missing"];
+        }
 
         return [
           id,
-          item?.accelerator ?? (item?.role ? `role ${item.role}` : "no key"),
+          item.accelerator ?? (item.role ? `role ${item.role}` : "no key"),
         ];
       });
 
@@ -213,7 +223,7 @@ describe(buildMenuTemplate, () => {
         BUILT_IN_SHORTCUTS.map(({ id, shortcut, role }) => [
           id,
           role?.[platform]
-            ? `role ${BUILT_IN_ITEMS[id]}`
+            ? `role ${BUILT_IN_ITEMS[id][1]}`
             : (shortcut[platform] ?? "no key"),
         ])
       );
