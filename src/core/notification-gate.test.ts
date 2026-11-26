@@ -26,14 +26,25 @@ const at = (day: number, time: string, epoch = 0): Moment => ({
   minute: Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5)),
 });
 
-const decide = (gates: Partial<NotificationGates>) =>
+const NOTHING_HOLDS: NotificationGates = {
+  kind: "newMail",
+  notifications: true,
+  quietHours: [],
+  doNotDisturb: undefined,
+  now: at(MONDAY, "12:00"),
+};
+
+type Holds = Partial<Omit<NotificationGates, "kind">>;
+
+const decide = (gates: Holds) =>
+  decideNotification({ ...NOTHING_HOLDS, ...gates });
+
+const decideCode = (codesDuringDoNotDisturb: boolean, gates: Holds = {}) =>
   decideNotification({
-    kind: "newMail",
-    notifications: true,
-    quietHours: [],
-    doNotDisturb: undefined,
-    now: at(MONDAY, "12:00"),
+    ...NOTHING_HOLDS,
     ...gates,
+    kind: "verificationCode",
+    codesDuringDoNotDisturb,
   });
 
 const quietAt = (windows: QuietWindow[], now: Moment) =>
@@ -85,10 +96,8 @@ describe(decideNotification, () => {
 
   it("shows a verification code's through every hold at once while codes pass Do Not Disturb", () => {
     expect(
-      decide({
-        kind: "verificationCode",
+      decideCode(true, {
         notifications: false,
-        codesDuringDoNotDisturb: true,
         doNotDisturb: { until: null },
         quietHours: [{ start: "00:00", end: "00:00" }],
       })
@@ -96,26 +105,15 @@ describe(decideNotification, () => {
   });
 
   it("holds a verification code's in Do Not Disturb and quiet hours while codes do not pass them, but never for notifications being off", () => {
-    const code = {
-      kind: "verificationCode",
-      codesDuringDoNotDisturb: false,
-    } as const;
-
     expect([
-      decide({ ...code, doNotDisturb: { until: null } }),
-      decide({ ...code, quietHours: [{ start: "00:00", end: "00:00" }] }),
-      decide({ ...code, notifications: false }),
+      decideCode(false, { doNotDisturb: { until: null } }),
+      decideCode(false, { quietHours: [{ start: "00:00", end: "00:00" }] }),
+      decideCode(false, { notifications: false }),
     ]).toStrictEqual([
       { show: false, reason: "doNotDisturb" },
       { show: false, reason: "quietHours" },
       { show: true },
     ]);
-  });
-
-  it("holds new mail in Do Not Disturb whatever codes pass", () => {
-    expect(
-      decide({ codesDuringDoNotDisturb: true, doNotDisturb: { until: null } })
-    ).toStrictEqual({ show: false, reason: "doNotDisturb" });
   });
 
   it("names Do Not Disturb before quiet hours when both hold", () => {

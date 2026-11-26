@@ -73,34 +73,40 @@ export type NotificationDecision =
   | { show: true }
   | { show: false; reason: HoldReason };
 
-export interface NotificationGates {
-  kind: NotificationKind;
+interface Holds {
   /** The switch for every notification of its kind; a code passes it. */
   notifications: boolean;
-  /** Whether a code passes Do Not Disturb and quiet hours too. */
-  codesDuringDoNotDisturb?: boolean;
   quietHours: readonly QuietWindow[];
   doNotDisturb: DoNotDisturb | undefined;
   now: Moment;
 }
 
+// Required for a code, so a caller cannot leave it out and hold codes the
+// setting, on by default, lets through.
+export type NotificationGates = Holds &
+  (
+    | {
+        kind: "verificationCode";
+        /** Whether a code passes Do Not Disturb and quiet hours too. */
+        codesDuringDoNotDisturb: boolean;
+      }
+    | { kind: Exclude<NotificationKind, "verificationCode"> }
+  );
+
 /**
  * Whether a notification is shown or held, and why. A held one is not shown
  * later: what it was for still counts as seen and unread.
  */
-export const decideNotification = ({
-  kind,
-  notifications,
-  codesDuringDoNotDisturb = false,
-  quietHours,
-  doNotDisturb,
-  now,
-}: NotificationGates): NotificationDecision => {
+export const decideNotification = (
+  gates: NotificationGates
+): NotificationDecision => {
+  const { notifications, quietHours, doNotDisturb, now } = gates;
+
   // A code arrives while the person is signing in, and in the click-to-copy
   // mode the notification is the only way to it, so only the holds the
   // person lets reach codes hold one.
-  if (kind === "verificationCode") {
-    if (codesDuringDoNotDisturb) {
+  if (gates.kind === "verificationCode") {
+    if (gates.codesDuringDoNotDisturb) {
       return { show: true };
     }
   } else if (!notifications) {
