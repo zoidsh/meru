@@ -75,14 +75,28 @@ const questions = (app: ElectronApplication) =>
       )?.asked ?? []
   );
 
-const answerQuestions = (app: ElectronApplication, answer: number | "cancel") =>
-  app.evaluate((_electron, given) => {
-    (
-      Reflect.get(globalThis, "meruTestQuestions") as {
-        answer: number | "cancel";
-      }
-    ).answer = given;
-  }, answer);
+// The stand-in is made only once the shell has loaded, which can come after
+// the shell's page is found.
+const answerQuestions = async (
+  app: ElectronApplication,
+  answer: number | "cancel"
+) => {
+  await expect
+    .poll(() =>
+      app.evaluate((_electron, given) => {
+        const stand = Reflect.get(globalThis, "meruTestQuestions") as
+          | { answer: number | "cancel" }
+          | undefined;
+
+        if (stand) {
+          stand.answer = given;
+        }
+
+        return stand !== undefined;
+      }, answer)
+    )
+    .toBe(true);
+};
 
 /** How many of the app's documents show the Pro toast's words. */
 const toastsShown = async (app: ElectronApplication) => {
