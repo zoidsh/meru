@@ -245,6 +245,9 @@ importers:
       linkedom:
         specifier: 0.18.15
         version: 0.18.15
+      markdown-to-jsx:
+        specifier: 9.10.6
+        version: 9.10.6(react@19.3.1)
       oxfmt:
         specifier: 0.78.0
         version: 0.78.0
@@ -2854,6 +2857,24 @@ packages:
 
   magicast@0.5.5:
     resolution: {integrity: sha512-UicdXN8zQ3JHlxVq+28afMXPr1z7WNY6+7EJnzTdQWkTAlMLF5fNCCKxJHBQwGaNGR11581EiQmQzx73+MvszA==}
+
+  markdown-to-jsx@9.10.6:
+    resolution: {integrity: sha512-vvd4cMAAK6RDCzklzRYykG8Tos1Wyid8IoxenyiSAnGb1JIX2fTzn6MuU5QBu9Kb4BdjOCnKlbs84NQRVsaaVA==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      react: '>= 16.0.0'
+      react-native: '*'
+      solid-js: '>=1.0.0'
+      vue: '>=3.0.0'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-native:
+        optional: true
+      solid-js:
+        optional: true
+      vue:
+        optional: true
 
   matcher@3.0.0:
     resolution: {integrity: sha512-OkeDaAZ/bQCxeFAozM55PKcKU0yJMPGifLwV4Qgjitu+5MoAfSQN4lsLJeXZ1b8w0x+/Emda6MZgXS1jvsapng==}
@@ -6304,6 +6325,10 @@ snapshots:
       '@babel/parser': 7.29.14
       '@babel/types': 7.29.14
       source-map-js: 1.2.2
+
+  markdown-to-jsx@9.10.6(react@19.3.1):
+    optionalDependencies:
+      react: 19.3.1
 
   matcher@3.0.0:
     dependencies:

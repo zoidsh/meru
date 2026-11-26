@@ -385,7 +385,7 @@ test.describe("updates", () => {
     });
   });
 
-  test("ends with What's new, whose Show opens Meru's releases", async ({
+  test("ends with What's new, whose Show opens its dialog in Settings, not the browser", async ({
     app,
   }) => {
     const page = await openAbout(app);
@@ -400,9 +400,10 @@ test.describe("updates", () => {
     );
     await stubSystemBrowser(app);
     await show.click();
-    await expect
-      .poll(() => readOpenedExternally(app))
-      .toStrictEqual(["https://github.com/zoidsh/meru/releases"]);
+    await expect(
+      page.getByRole("dialog", { name: "What's new" })
+    ).toBeVisible();
+    expect(await readOpenedExternally(app)).toStrictEqual([]);
   });
 
   test("is one line on a build that cannot update itself, which never checks", async ({

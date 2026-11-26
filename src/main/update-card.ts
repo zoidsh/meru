@@ -17,10 +17,13 @@ import type { Updates } from "./updates.ts";
  */
 export const createUpdateCard = ({
   updates,
+  showWhatsNew,
   overlays,
   log,
 }: {
-  updates: Pick<Updates, "read" | "restart" | "openRelease" | "openWhatsNew">;
+  updates: Pick<Updates, "read" | "restart" | "openRelease">;
+  /** Shows What's new in Settings at the version's release. */
+  showWhatsNew: (version: string) => void;
   overlays: Pick<Overlays, "current" | "open" | "close">;
   log: (message: string) => void;
 }) => {
@@ -69,7 +72,7 @@ export const createUpdateCard = ({
           break;
         }
         case "whats-new": {
-          updates.openWhatsNew(open.version);
+          showWhatsNew(open.version);
           break;
         }
         case "download": {

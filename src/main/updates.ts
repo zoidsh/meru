@@ -1,6 +1,5 @@
 import {
   INITIAL_UPDATE_STATUS,
-  RELEASES_URL,
   UPDATE_CHECK_INTERVAL,
   channelOptions,
   nextUpdateStatus,
@@ -188,12 +187,6 @@ export const createUpdates = ({
       if (current.status === "unverified" && current.version !== null) {
         void openExternal(releasePageUrl(current.version));
       }
-    },
-    /** What changed: a version's release page, or with none every release. */
-    openWhatsNew: (version: string | null) => {
-      void openExternal(
-        version === null ? RELEASES_URL : releasePageUrl(version)
-      );
     },
     /** As the app quits, the install's own quit included. */
     dispose: () => {

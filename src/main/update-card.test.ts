@@ -6,6 +6,7 @@ import { fakeUpdater } from "#platform/updater.fake.ts";
 
 import { createFocus } from "./focus.ts";
 import { createOverlays } from "./overlay.ts";
+import { createSettingsPages } from "./settings-pages.ts";
 import { createSettingsStore } from "./settings.ts";
 import { createUpdateCard } from "./update-card.ts";
 import { createUpdates } from "./updates.ts";
@@ -26,6 +27,7 @@ const setup = ({ canUpdate = true } = {}) => {
   const focused: string[] = [];
   const opened: string[] = [];
   const steps: string[] = [];
+  const settingsPages = createSettingsPages();
   const logs: string[] = [];
 
   const focus = createFocus({
@@ -85,6 +87,10 @@ const setup = ({ canUpdate = true } = {}) => {
   const card = wireUpdateCard({
     updates,
     overlays,
+    openSettings: () => {
+      steps.push("openSettings");
+    },
+    settingsPages,
     log: (message) => {
       logs.push(message);
     },
@@ -100,6 +106,7 @@ const setup = ({ canUpdate = true } = {}) => {
     focused,
     opened,
     steps,
+    settingsPages,
     logs,
     ready: async (version: string) => {
       await fake.emit({ kind: "available", version });
@@ -184,17 +191,27 @@ describe(createUpdateCard, () => {
     ]);
   });
 
-  it("opens the ready version's release page for What's new and installs for Restart now", async () => {
+  it("opens What's new in Settings on About at the ready version, opening no browser, and installs for Restart now", async () => {
     const app = setup();
 
     await app.ready("4.2.0");
     app.card.run("whats-new");
+
+    expect([
+      app.steps,
+      app.settingsPages.current(),
+      app.settingsPages.whatsNew(),
+      app.opened,
+    ]).toStrictEqual([
+      ["openSettings"],
+      { section: "about", profileId: null },
+      "v4.2.0",
+      [],
+    ]);
+
     app.card.run("restart");
 
-    expect([app.opened, app.steps]).toStrictEqual([
-      ["https://github.com/zoidsh/meru/releases/tag/v4.2.0"],
-      ["quitThen"],
-    ]);
+    expect(app.steps).toStrictEqual(["openSettings", "quitThen"]);
   });
 
   it("refuses what the open card does not offer, or any button with no card open", async () => {

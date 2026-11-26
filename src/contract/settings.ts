@@ -462,8 +462,27 @@ export const SETTINGS_CALLS = {
    * default browser; nothing while none was refused.
    */
   openUpdateRelease: { request: none, response: z.undefined() },
-  /** Opens the list of Meru's releases, each with its notes, in the default browser. */
-  openWhatsNew: { request: none, response: z.undefined() },
+  /**
+   * Meru's releases What's new lists, newest first, read from GitHub once a
+   * run; rejects when no list came.
+   */
+  listReleases: {
+    request: none,
+    response: z.array(
+      z.object({
+        tag: z.string(),
+        publishedAt: z.number(),
+        /** Markdown, untrusted: rendered with no HTML of its own. */
+        notes: z.string(),
+        current: z.boolean(),
+      })
+    ),
+  },
+  /** Opens a web link in a release's notes in the default browser; nothing for any other. */
+  openReleaseLink: {
+    request: z.object({ url: z.string().check(z.maxLength(4096)) }),
+    response: z.undefined(),
+  },
   /**
    * Opens an email to Meru's support about the license, from the selected
    * profile's Gmail, or the system's mail app while that profile is signed out.
@@ -668,6 +687,11 @@ export const SETTINGS_STATE = {
      * again from its top, as About does for Check for Updates….
      */
     opened: z.number(),
+    /**
+     * The release What's new opens at, by tag, when main opened About for
+     * it, as the update card's What's new does; else `null`.
+     */
+    whatsNew: z.nullable(z.string()),
     canGoBack: z.boolean(),
     canGoForward: z.boolean(),
   }),

@@ -17,6 +17,7 @@ import { withToken } from "#core/entitlement-file.ts";
 import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
 import type { FeedOutcome } from "#core/feed.ts";
 import type { Platform } from "#core/platform.ts";
+import type { Release } from "#core/releases.ts";
 import type { Settings } from "#core/settings.ts";
 import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -78,6 +79,14 @@ const trialFile = () => {
     { tier: "trial" }
   );
 };
+
+/** GitHub's list as main reads it, a beta newest and the one running among them. */
+const RELEASES: Release[] = [
+  { tag: "v4.1.0-beta.1", publishedAt: 4, notes: "Beta", prerelease: true },
+  { tag: "v4.0.1", publishedAt: 3, notes: "Fixes", prerelease: false },
+  { tag: "v4.0.0-dev.0", publishedAt: 2, notes: "", prerelease: true },
+  { tag: "v4.0.0", publishedAt: 1, notes: "", prerelease: false },
+];
 
 const setup = (
   state: State,
@@ -339,6 +348,7 @@ const setup = (
     }),
     about: createAboutPage({ platform, system: system.system, clipboard }),
     shortcuts: () => readShortcuts(platform, "Meru", COMMANDS),
+    releases: { list: () => Promise.resolve(RELEASES) },
     entitlement,
     licenseRequests: createLicenseRequests(),
     systemBrowser: {
@@ -570,6 +580,7 @@ describe("the Settings window's pages", () => {
         section: "profiles",
         profileId: null,
         opened: 2,
+        whatsNew: null,
         canGoBack: true,
         canGoForward: true,
       },
@@ -577,6 +588,7 @@ describe("the Settings window's pages", () => {
         section: "profiles",
         profileId: "work",
         opened: 2,
+        whatsNew: null,
         canGoBack: true,
         canGoForward: false,
       },
@@ -597,6 +609,7 @@ describe("the Settings window's pages", () => {
       section: "notifications",
       profileId: null,
       opened: 0,
+      whatsNew: null,
       canGoBack: false,
       canGoForward: false,
     });
@@ -639,6 +652,7 @@ describe("the Settings window's profile calls", () => {
         section: "profiles",
         profileId: "new",
         opened: 2,
+        whatsNew: null,
         canGoBack: true,
         canGoForward: false,
       },
@@ -2541,6 +2555,49 @@ describe("the Settings window's Updates", () => {
       app.read().settings.autoUpdate,
       app.read().settings.updateChannel,
     ]).toStrictEqual([false, "beta"]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's What's new calls", () => {
+  it("lists the releases the channel shows, marking the running one, and the betas once the channel is Beta", async () => {
+    // The fake system runs 4.0.0-dev.0, a prerelease.
+    const app = setup(stateOf("Home"));
+    const tags = async () => {
+      const releases = await app.handlers.listReleases({});
+
+      return releases.map(({ tag, current }) =>
+        current ? `${tag} (current)` : tag
+      );
+    };
+
+    await expect(tags()).resolves.toStrictEqual([
+      "v4.0.1",
+      "v4.0.0-dev.0 (current)",
+      "v4.0.0",
+    ]);
+
+    await app.handlers.update({ key: "updateChannel", value: "beta" });
+
+    await expect(tags()).resolves.toStrictEqual([
+      "v4.1.0-beta.1",
+      "v4.0.1",
+      "v4.0.0-dev.0 (current)",
+      "v4.0.0",
+    ]);
+    app.dispose();
+  });
+
+  it("opens a web link of the notes in the default browser, and nothing else", async () => {
+    const app = setup(stateOf("Home"));
+
+    await app.handlers.openReleaseLink({ url: "https://example.com/notes" });
+    await app.handlers.openReleaseLink({
+      url: ["javascript", "alert(1)"].join(":"),
+    });
+    await app.handlers.openReleaseLink({ url: "file:///etc/hosts" });
+
+    expect(app.opened).toStrictEqual(["https://example.com/notes"]);
     app.dispose();
   });
 });

@@ -32,6 +32,7 @@ import type { Language } from "../language.ts";
 import type { LicenseRequests } from "../license-requests.ts";
 import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
+import { createReleases } from "../releases.ts";
 import { createRemoveProfile } from "../remove-profile.ts";
 import type { SenderRegistry } from "../senders.ts";
 import {
@@ -52,6 +53,7 @@ import { openingOptions } from "../windows.ts";
 import {
   folderPicker,
   pathOpener,
+  releasesSource,
   systemLoginItem,
   systemMailHandler,
 } from "./test-build.ts";
@@ -226,6 +228,11 @@ export const wireSettingsWindow = ({
 
   const shortcuts = () => readShortcuts(platform, lifecycle.name, COMMANDS);
 
+  const releases = createReleases({
+    source: releasesSource(),
+    log: console.error,
+  });
+
   profiles.onChange(() => {
     pages.follow(profiles.get().profiles.map((profile) => profile.id));
   });
@@ -263,6 +270,7 @@ export const wireSettingsWindow = ({
       advanced,
       about,
       updates,
+      releases,
       shortcuts,
       entitlement,
       licenseRequests,

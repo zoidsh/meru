@@ -17,6 +17,7 @@ import { Switch } from "#ui/switch.tsx";
 import { SettingGroup } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls } from "./sync.ts";
+import { WhatsNewDialog } from "./whats-new-dialog.tsx";
 
 type Updates = SettingsState["updates"];
 
@@ -173,7 +174,7 @@ const StatusRow = ({ updates }: { updates: Updates }) => {
   );
 };
 
-/** What's new, which opens every release's notes in the default browser. */
+/** What's new, whose Show opens every release's notes in a dialog. */
 const WhatsNewRow = () => {
   const { t } = useLingui();
 
@@ -190,22 +191,7 @@ const WhatsNewRow = () => {
           "Description of the What's new row on the About page of Settings",
       })}
     >
-      {(ids) => (
-        <Button
-          variant="outline"
-          size="sm"
-          aria-describedby={ids.description || undefined}
-          onClick={() => {
-            settingsCalls().openWhatsNew({}).catch(noop);
-          }}
-        >
-          {t({
-            message: "Show",
-            comment:
-              "Button of the What's new row on the About page of Settings that opens Meru's releases in the default browser",
-          })}
-        </Button>
-      )}
+      {(ids) => <WhatsNewDialog describedBy={ids.description} />}
     </SettingRow>
   );
 };

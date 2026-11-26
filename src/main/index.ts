@@ -751,6 +751,8 @@ const start = async () => {
   const updateCard = wireUpdateCard({
     updates,
     overlays,
+    openSettings,
+    settingsPages,
     log: console.error,
   });
 

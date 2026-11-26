@@ -61,6 +61,10 @@ import {
   createPathOpener,
 } from "#platform/path-opener.ts";
 import {
+  createCapturedReleases,
+  createGitHubReleases,
+} from "#platform/releases.ts";
+import {
   createCapturedScreenSources,
   createScreenSources,
 } from "#platform/screen-sources.ts";
@@ -362,6 +366,10 @@ export const saveDialog = () =>
  */
 export const pathOpener = () =>
   MERU_E2E_BUILD ? createCapturedPathOpener() : createPathOpener();
+
+/** GitHub's list of releases, or the stand-in the suite's test answers. */
+export const releasesSource = () =>
+  MERU_E2E_BUILD ? createCapturedReleases() : createGitHubReleases();
 
 /**
  * The installed Meru's updater alone, since only a release or a beta is

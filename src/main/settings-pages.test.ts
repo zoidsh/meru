@@ -29,4 +29,22 @@ describe(createSettingsPages, () => {
     expect(pages.canGoForward()).toBeTruthy();
     expect(pages.opened()).toBe(1);
   });
+
+  it("holds the release What's new opens at with the opening that asked for it alone", () => {
+    const pages = createSettingsPages();
+    const seen: (string | null)[] = [];
+
+    pages.open(ABOUT, "v4.2.0");
+    seen.push(pages.whatsNew());
+    pages.open(ABOUT);
+    seen.push(pages.whatsNew());
+    pages.open(ABOUT, "v4.2.0");
+    pages.step(-1);
+    seen.push(pages.whatsNew());
+    pages.open(ABOUT, "v4.2.0");
+    pages.reset();
+    seen.push(pages.whatsNew());
+
+    expect(seen).toStrictEqual(["v4.2.0", null, null, null]);
+  });
 });

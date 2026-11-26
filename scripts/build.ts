@@ -8,6 +8,7 @@ import manifest from "../package.json" with { type: "json" };
 import {
   GMAIL_PRELOAD,
   GMAIL_PRELOAD_BUDGET,
+  SETTINGS_ONLY,
   appBundles,
   cleanOutDir,
   copyTrayImages,
@@ -77,6 +78,24 @@ const preloadProblems = [
     : []),
 ];
 
+const holdsMarkdown = (file: { contents: string }) =>
+  file.contents.includes(SETTINGS_ONLY.marker);
+const inSettings = (file: { path: string }) =>
+  file.path.split(path.sep)[0] === SETTINGS_ONLY.folder;
+const markdownProblems = [
+  ...files
+    .filter((file) => !inSettings(file) && holdsMarkdown(file))
+    .map(
+      (file) =>
+        `${file.path} holds ${SETTINGS_ONLY.library}, which only the Settings window may`
+    ),
+  ...(files.some((file) => inSettings(file) && holdsMarkdown(file))
+    ? []
+    : [
+        `${SETTINGS_ONLY.folder} is missing ${SETTINGS_ONLY.library}'s marker "${SETTINGS_ONLY.marker}", so the check that keeps it there checks nothing`,
+      ]),
+];
+
 const hits = findForbiddenMarkers(
   files,
   target === "prod"
@@ -84,12 +103,14 @@ const hits = findForbiddenMarkers(
     : FORBIDDEN_IN_PROD
 );
 
-if (hits.length > 0 || preloadProblems.length > 0) {
+const problems = [...preloadProblems, ...markdownProblems];
+
+if (hits.length > 0 || problems.length > 0) {
   for (const hit of hits) {
     console.error(`${label}/${hit.path} holds "${hit.marker}": ${hit.why}`);
   }
 
-  for (const problem of preloadProblems) {
+  for (const problem of problems) {
     console.error(`${label}/${problem}`);
   }
 
@@ -100,5 +121,5 @@ if (hits.length > 0 || preloadProblems.length > 0) {
 }
 
 console.log(
-  `Built ${identityFor(target).productName} ${manifest.version} into ${label}; checked ${files.length} files for markers it must not hold, and ${GMAIL_PRELOAD} (${gmailPreloadBytes} bytes) against its budget of ${GMAIL_PRELOAD_BUDGET} and for contextBridge`
+  `Built ${identityFor(target).productName} ${manifest.version} into ${label}; checked ${files.length} files for markers it must not hold and for ${SETTINGS_ONLY.library} outside ${SETTINGS_ONLY.folder}, and ${GMAIL_PRELOAD} (${gmailPreloadBytes} bytes) against its budget of ${GMAIL_PRELOAD_BUDGET} and for contextBridge`
 );

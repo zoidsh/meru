@@ -142,6 +142,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may list stand-in screens and windows to share",
     },
     {
+      marker: "meruTestReleases",
+      why: "only the end-to-end build may stand in for GitHub's list of releases, which a test answers",
+    },
+    {
       marker: "en-XA",
       why: "only the end-to-end build may show its pseudo-language",
     },

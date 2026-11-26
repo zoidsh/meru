@@ -901,6 +901,11 @@ msgstr "Couldn't list your screens and windows."
 msgid "Couldn’t load"
 msgstr "Couldn’t load"
 
+#. Shown in Settings' What's new dialog when Meru's release notes could not be loaded from GitHub
+#: src/settings/whats-new-dialog.tsx
+msgid "Couldn't load what's new."
+msgstr "Couldn't load what's new."
+
 #. Said in the unified inbox when marking a message read failed and the message was put back in the list
 #: src/shell/inbox.tsx
 msgid "Couldn’t mark the message as read."
@@ -915,6 +920,11 @@ msgstr "Couldn’t move the message to Trash."
 #: src/shell/inbox.tsx
 msgid "Couldn’t report the message as spam."
 msgstr "Couldn’t report the message as spam."
+
+#. Badge in Settings' What's new dialog on the release of the version of Meru that is running
+#: src/settings/whats-new-dialog.tsx
+msgid "Current version"
+msgstr "Current version"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -1044,8 +1054,10 @@ msgstr "Dock"
 
 #. Button that closes the Always open in your default browser dialog in Settings
 #. Button that closes the Trusted sites dialog in Settings
+#. Button that closes the What's new dialog in Settings
 #: src/settings/apps-in-browser-dialog.tsx
 #: src/settings/trusted-sites-dialog.tsx
+#: src/settings/whats-new-dialog.tsx
 msgid "Done"
 msgstr "Done"
 
@@ -1480,6 +1492,11 @@ msgstr "Links to these sites open without asking."
 #: src/shell/tab-strip.tsx
 msgid "Loading"
 msgstr "Loading"
+
+#. Accessible name of the placeholder in Settings' What's new dialog while Meru's release notes load from GitHub
+#: src/settings/whats-new-dialog.tsx
+msgid "Loading what's new"
+msgstr "Loading what's new"
 
 #. Accessible name of the placeholders the screen sharing card shows while it lists the windows and screens to share
 #: src/shell/screen-picker.tsx
@@ -2547,9 +2564,9 @@ msgid "Shortcuts"
 msgstr "Shortcuts"
 
 #. Button of the Test notification row in Settings that shows a sample new mail notification, as the settings above would show one
-#. Button of the What's new row on the About page of Settings that opens Meru's releases in the default browser
+#. Button of the What's new row on the About page of Settings that opens the list of Meru's releases and their notes
 #: src/settings/notifications-page.tsx
-#: src/settings/updates-group.tsx
+#: src/settings/whats-new-dialog.tsx
 msgid "Show"
 msgstr "Show"
 
@@ -3097,11 +3114,13 @@ msgstr "Troubleshooting"
 msgid "Trusted sites"
 msgstr "Trusted sites"
 
+#. Button in Settings' What's new dialog that loads the release notes again after they failed to load
 #. Button in place of a tab's page that could not load, which tries to load it again now
 #. Button of the main window's notice at launch that the license or trial could not be confirmed; it asks Meru's license server again now
 #. Button of the screen sharing card that asks for the list of screens and windows again after it could not be had
 #. Button on the Meru Pro page of Settings that asks Meru's license server again now
 #: src/settings/pro-page.tsx
+#: src/settings/whats-new-dialog.tsx
 #: src/shell/license-notice.tsx
 #: src/shell/screen-picker.tsx
 #: src/shell/tab-problem.tsx
@@ -3354,7 +3373,9 @@ msgstr "What notifications show"
 
 #. Button of the main window's update card that opens the new version's release notes in the default browser
 #. Label of the row on the About page of Settings that opens the list of Meru's releases and their notes
+#. Title of the dialog in Settings listing Meru's releases, newest first, with what changed in each
 #: src/settings/updates-group.tsx
+#: src/settings/whats-new-dialog.tsx
 #: src/shell/update-card.tsx
 msgid "What's new"
 msgstr "What's new"

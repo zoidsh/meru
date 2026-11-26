@@ -88,6 +88,18 @@ export const GMAIL_PRELOAD = "preload-gmail.cjs";
  */
 export const GMAIL_PRELOAD_BUDGET = 16 * 1024;
 
+/**
+ * What's new's Markdown renderer belongs to the Settings window alone. Its
+ * bundle is told by the name of one of its options, which survives
+ * minification; a build missing it there fails too, so a renamed option
+ * cannot quietly void the check.
+ */
+export const SETTINGS_ONLY = {
+  library: "markdown-to-jsx",
+  marker: "optimizeForStreaming",
+  folder: "settings",
+} as const;
+
 export const appBundles = (target: BuildTarget): BuildOptions[] => {
   const mode = target === "dev" ? "dev" : "prod";
   const minify = mode === "prod" ? { mangle: { keepNames: true } } : false;

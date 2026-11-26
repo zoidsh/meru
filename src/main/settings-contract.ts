@@ -21,6 +21,7 @@ import {
   profileColor,
   profileColorName,
 } from "#core/profile-color.ts";
+import { isReleaseLink, shownReleases } from "#core/releases.ts";
 import { savedSearches } from "#core/saved-searches.ts";
 import {
   canDisableProfile,
@@ -46,6 +47,7 @@ import type { LicenseRequests } from "./license-requests.ts";
 import type { MailPoller } from "./mail.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { Profiles } from "./profiles.ts";
+import type { Releases } from "./releases.ts";
 import type { SettingsPages } from "./settings-pages.ts";
 import type { SettingsStore } from "./settings.ts";
 import type { SoundOutput } from "./sounds.ts";
@@ -105,7 +107,13 @@ export interface SettingsContractDeps {
   language: Pick<Language, "current">;
   pages: Pick<
     SettingsPages,
-    "current" | "opened" | "canGoBack" | "canGoForward" | "open" | "step"
+    | "current"
+    | "opened"
+    | "whatsNew"
+    | "canGoBack"
+    | "canGoForward"
+    | "open"
+    | "step"
   >;
   /** For a profile, or the app with none. */
   showTestNotification: (profileId: string | undefined) => void;
@@ -123,10 +131,9 @@ export interface SettingsContractDeps {
   trustedSites: Pick<TrustedSites, "list" | "remove">;
   advanced: Pick<AdvancedPage, "read" | "openSettingsFile" | "clearCache">;
   about: Pick<AboutPage, "read" | "copy">;
-  updates: Pick<
-    Updates,
-    "read" | "check" | "restart" | "openRelease" | "openWhatsNew"
-  >;
+  updates: Pick<Updates, "read" | "check" | "restart" | "openRelease">;
+  /** Meru's releases, from GitHub once a run. */
+  releases: Pick<Releases, "list">;
   /** The Shortcuts page's cards, in the language of the moment. */
   shortcuts: () => SettingsState["shortcuts"];
   entitlement: Pick<
@@ -225,6 +232,7 @@ export const settingsHandlers = ({
   advanced,
   about,
   updates,
+  releases,
   entitlement,
   licenseRequests,
   systemBrowser,
@@ -510,10 +518,17 @@ export const settingsHandlers = ({
       Promise.try(() => {
         updates.openRelease();
       }),
-    openWhatsNew: () =>
-      Promise.try(() => {
-        updates.openWhatsNew(null);
-      }),
+    listReleases: async () =>
+      shownReleases(
+        await releases.list(),
+        settings.get("updateChannel"),
+        about.read().version
+      ),
+    openReleaseLink: async ({ url }) => {
+      if (isReleaseLink(url)) {
+        await systemBrowser.open(url);
+      }
+    },
     contactSupport: () => contactSupport(),
     ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };
@@ -614,6 +629,7 @@ export const readSettingsState = ({
     page: {
       ...pages.current(),
       opened: pages.opened(),
+      whatsNew: pages.whatsNew(),
       canGoBack: pages.canGoBack(),
       canGoForward: pages.canGoForward(),
     },

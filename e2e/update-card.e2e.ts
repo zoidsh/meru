@@ -18,6 +18,7 @@ import {
   writeState,
 } from "./lib/app.ts";
 import { findTitlebar, readOwnWindows } from "./lib/own-window.ts";
+import { OLDER_NOTES, answerReleases, githubRelease } from "./lib/releases.ts";
 import { SETTINGS_URL, openSettings } from "./lib/settings.ts";
 import {
   THEMES,
@@ -76,7 +77,44 @@ const launch = async (launchApp: () => Promise<ElectronApplication>) => {
   return { app, shell, overlay };
 };
 
-test("shows a ready version at the page's bottom right without taking the keys; What's new opens its release page, a card opened over it takes its place until it closes, and Later hides it until a newer version", async ({
+test("What's new on the card opens Settings on About with What's new at the ready version's release, opening no browser", async ({
+  launchApp,
+}) => {
+  const { app, overlay } = await launch(launchApp);
+  // The ready version last, below enough newer ones to scroll past.
+  const newer = [8, 7, 6, 5, 4, 3, 2, 1].map((patch) =>
+    githubRelease(patch + 1, `v4.2.${patch}`, "2026-11-20", OLDER_NOTES)
+  );
+
+  await answerReleases(app, [
+    ...newer,
+    githubRelease(1, "v4.2.0", "2026-11-10", "## Fixes\n\n- The one ready."),
+  ]);
+  await ready(app);
+  await overlay.getByRole("button", { name: "What's new" }).click();
+
+  const settings = await findPage(app, SETTINGS_URL);
+  const dialog = settings.getByRole("dialog", { name: "What's new" });
+
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog.getByRole("article", { name: "v4.2.0", exact: true })
+  ).toBeInViewport();
+  await expect(
+    dialog.getByRole("article", { name: "v4.2.8", exact: true })
+  ).not.toBeInViewport();
+  expect(await readOpenedExternally(app)).toStrictEqual([]);
+
+  // Closed, it stays closed as the page's state comes again.
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(dialog).toBeHidden();
+  // The dialog over it hid the page from the accessibility tree until now.
+  await expect(settings.getByRole("heading", { level: 1 })).toHaveText("About");
+  await emitUpdate(app, { kind: "checking" });
+  await expect(dialog).toBeHidden();
+});
+
+test("shows a ready version at the page's bottom right without taking the keys; a card opened over it takes its place until it closes, and Later hides it until a newer version", async ({
   launchApp,
 }) => {
   const { app, overlay } = await launch(launchApp);
@@ -102,12 +140,12 @@ test("shows a ready version at the page's bottom right without taking the keys; 
     view.area.width - 8,
   ]);
 
-  await overlay.getByRole("button", { name: "What's new" }).click();
-  await expect
-    .poll(() => readOpenedExternally(app))
-    .toStrictEqual(["https://github.com/zoidsh/meru/releases/tag/v4.2.0"]);
-
   // Tab moves among its buttons once a click has put the keys in it.
+  await overlay.getByRole("status").click();
+  await overlay.keyboard.press("Tab");
+  await expect(
+    overlay.getByRole("button", { name: "What's new" })
+  ).toBeFocused();
   await overlay.keyboard.press("Tab");
   await expect(overlay.getByRole("button", { name: "Later" })).toBeFocused();
 
