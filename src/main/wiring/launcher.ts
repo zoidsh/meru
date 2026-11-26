@@ -28,8 +28,11 @@ export const wireLauncher = ({
 }: {
   platform: Platform;
   apps: readonly App[];
-  /** Tabs & Google Apps' settings as they are now, which links follow too. */
-  appOpening: () => AppOpening;
+  /**
+   * Tabs & Google Apps' settings as they are now for the profile, which
+   * links follow too.
+   */
+  appOpening: (profileId: string) => AppOpening;
   /** The opener a page's links leave Meru through. */
   systemBrowser: SystemBrowser;
   shell: ReturnType<typeof createShellWindow>;
@@ -46,7 +49,7 @@ export const wireLauncher = ({
       : undefined;
   const openApp = createOpenApp({
     apps,
-    opensInMeru: (app) => opensInMeru(app, appOpening()),
+    opensInMeru: (app, profileId) => opensInMeru(app, appOpening(profileId)),
     systemBrowser,
     state: profiles.get,
     overlays,

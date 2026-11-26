@@ -85,8 +85,8 @@ const setup = async ({
   state?: State;
   /** The apps a link may open a tab of, every one when absent. */
   tabApps?: () => readonly App[];
-  /** Tabs & Google Apps' settings, at their defaults when absent. */
-  appOpening?: () => AppOpening;
+  /** Tabs & Google Apps' settings by profile, at their defaults when absent. */
+  appOpening?: (profileId: string) => AppOpening;
 } = {}) => {
   let size: Size = { width: 1280, height: 800 };
   let sidebar: SidebarState = "wide";
@@ -878,6 +878,33 @@ describe(createTabViews, () => {
       [link, other],
       ["gmail", "c1", "new-1"],
     ]);
+  });
+
+  it("reads Tabs & Google Apps for the profile of the tab a link is opened from", async () => {
+    const asked: string[] = [];
+    const window = await setup({
+      appOpening: (profileId) => {
+        asked.push(profileId);
+
+        return { openAppsInMeru: profileId !== "b", appsInDefaultBrowser: [] };
+      },
+    });
+    const link = "https://drive.google.com/file/d/1";
+
+    await window.profiles.select("b");
+    window.viewOf("persist:b")?.options.onWindowOpen(link);
+    await vi.advanceTimersByTimeAsync(0);
+    window.viewOf("persist:a")?.options.onWindowOpen(link);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const [home, work] = window.profiles.get().profiles;
+
+    expect([
+      asked,
+      window.opened,
+      home && knownTabs(home).map((tab) => tab.id),
+      work && knownTabs(work).map((tab) => tab.id),
+    ]).toStrictEqual([["b", "a"], [link], ["gmail", "c1", "new-1"], ["gmail"]]);
   });
 
   it("opens a claimed link as a tab in the same session, selected, loading the link", async () => {

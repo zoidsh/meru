@@ -8,6 +8,7 @@ import {
   SETTINGS_CALLS,
   MENU_BAR_PAGE_KEYS,
   PRIVACY_PAGE_KEYS,
+  TABS_APPS_OVERRIDABLE_KEYS,
   TABS_APPS_PAGE_KEYS,
 } from "#contract/settings.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
@@ -822,11 +823,11 @@ describe("the Settings window's General page", () => {
     const app = setup(stateOf("Work"));
     const sends = app.sends();
 
-    await app.handlers.chooseDownloadsFolder({});
+    await app.handlers.chooseDownloadsFolder({ profileId: null });
     app.answerPicker("/Users/example/Mail");
-    await app.handlers.chooseDownloadsFolder({});
+    await app.handlers.chooseDownloadsFolder({ profileId: null });
     app.answerPicker(undefined);
-    await app.handlers.chooseDownloadsFolder({});
+    await app.handlers.chooseDownloadsFolder({ profileId: null });
 
     expect([
       app.pickedAt,
@@ -851,9 +852,9 @@ describe("the Settings window's General page", () => {
 
     app.answerPicker("Mail");
 
-    await expect(app.handlers.chooseDownloadsFolder({})).rejects.toThrow(
-      "The folder picker gave a relative path"
-    );
+    await expect(
+      app.handlers.chooseDownloadsFolder({ profileId: null })
+    ).rejects.toThrow("The folder picker gave a relative path");
     expect(app.saved).toStrictEqual([]);
     app.dispose();
   });
@@ -864,7 +865,7 @@ describe("the Settings window's General page", () => {
       downloadsFolder: "/Volumes/Gone/Downloads",
     });
 
-    await app.handlers.chooseDownloadsFolder({});
+    await app.handlers.chooseDownloadsFolder({ profileId: null });
 
     expect([
       app.read().general.downloadsFolder,
@@ -873,19 +874,102 @@ describe("the Settings window's General page", () => {
     ]).toStrictEqual([
       { path: "/Volumes/Gone/Downloads", available: false },
       ["/Users/example/Downloads"],
-      expect.not.objectContaining({ downloadsFolder: expect.anything() }),
+      expect.objectContaining({ downloadsFolder: "/Volumes/Gone/Downloads" }),
     ]);
     expect(app.saved).toStrictEqual([]);
     app.dispose();
   });
 
-  it("never takes the folder as a plain setting from the page", () => {
-    expect(
+  it("never takes the folder as a plain setting or a profile's own value from the page", () => {
+    expect([
       SETTINGS_CALLS.update.request.safeParse({
         key: "downloadsFolder",
         value: "/tmp",
-      }).success
-    ).toBeFalsy();
+      }).success,
+      SETTINGS_CALLS.setOverride.request.safeParse({
+        profileId: "work",
+        key: "downloadsFolder",
+        value: "/tmp",
+      }).success,
+    ]).toStrictEqual([false, false]);
+  });
+
+  it("chooses a profile's own folder through the picker, opened where that profile's downloads go now, leaving the app's and the other profile's", async () => {
+    const app = setup(stateOf("Work", "Home"), {
+      version: 1,
+      downloadsFolder: "/Users/example/Mail",
+    });
+
+    app.folders.add("/Users/example/Work");
+    app.answerPicker("/Users/example/Work");
+    await app.handlers.chooseDownloadsFolder({ profileId: "work" });
+    app.answerPicker(undefined);
+    await app.handlers.chooseDownloadsFolder({ profileId: "work" });
+
+    const { general, profiles } = app.read();
+
+    expect([
+      app.pickedAt,
+      app.saved.at(-1),
+      general.downloadsFolder,
+      general.profileDownloadsFolders,
+      profiles.map((profile) => profile.overrides),
+    ]).toStrictEqual([
+      ["/Users/example/Mail", "/Users/example/Work"],
+      {
+        version: 1,
+        downloadsFolder: "/Users/example/Mail",
+        profiles: { work: { downloadsFolder: "/Users/example/Work" } },
+      },
+      { path: "~/Mail", available: true },
+      { work: { path: "~/Work", available: true } },
+      [{ downloadsFolder: "/Users/example/Work" }, {}],
+    ]);
+    app.dispose();
+  });
+
+  it("says a profile's own folder that is gone is not available, opens its picker at the system's, and resets it to the app's", async () => {
+    const app = setup(stateOf("Work", "Home"), {
+      version: 1,
+      downloadsFolder: "/Users/example/Mail",
+      profiles: { home: { downloadsFolder: "/Volumes/Gone" } },
+    });
+
+    await app.handlers.chooseDownloadsFolder({ profileId: "home" });
+
+    const before = app.read().general;
+
+    await app.handlers.clearOverride({
+      profileId: "home",
+      key: "downloadsFolder",
+    });
+
+    expect([
+      before.downloadsFolder,
+      before.profileDownloadsFolders,
+      app.pickedAt,
+      app.read().general.profileDownloadsFolders,
+      app.saved.at(-1),
+    ]).toStrictEqual([
+      { path: "~/Mail", available: true },
+      { home: { path: "/Volumes/Gone", available: false } },
+      ["/Users/example/Downloads"],
+      {},
+      { version: 1, downloadsFolder: "/Users/example/Mail" },
+    ]);
+    app.dispose();
+  });
+
+  it("refuses a profile's folder for a profile it does not list", async () => {
+    const app = setup(stateOf("Work"));
+
+    app.answerPicker("/Users/example/Mail");
+
+    await expect(
+      app.handlers.chooseDownloadsFolder({ profileId: "gone" })
+    ).rejects.toThrow("gone");
+    expect([app.pickedAt, app.saved]).toStrictEqual([[], []]);
+    app.dispose();
   });
 
   it("sets the login item, never a setting, and sends the page its state again", async () => {
@@ -1117,7 +1201,10 @@ describe("the Settings window's Tabs & Google Apps page", () => {
 
     expect(
       Object.fromEntries(
-        TABS_APPS_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
+        [...TABS_APPS_OVERRIDABLE_KEYS, ...TABS_APPS_PAGE_KEYS].map((key) => [
+          key,
+          app.read().settings[key],
+        ])
       )
     ).toStrictEqual({
       openAppsInMeru: true,
@@ -1135,10 +1222,22 @@ describe("the Settings window's Tabs & Google Apps page", () => {
     });
 
     await Promise.all([
-      app.handlers.setAppInDefaultBrowser({ app: "drive", on: true }),
-      app.handlers.setAppInDefaultBrowser({ app: "meet", on: true }),
+      app.handlers.setAppInDefaultBrowser({
+        profileId: null,
+        app: "drive",
+        on: true,
+      }),
+      app.handlers.setAppInDefaultBrowser({
+        profileId: null,
+        app: "meet",
+        on: true,
+      }),
     ]);
-    await app.handlers.setAppInDefaultBrowser({ app: "drive", on: false });
+    await app.handlers.setAppInDefaultBrowser({
+      profileId: null,
+      app: "drive",
+      on: false,
+    });
 
     expect(app.saved.at(-1)).toStrictEqual({
       version: 1,
@@ -1147,11 +1246,74 @@ describe("the Settings window's Tabs & Google Apps page", () => {
     app.dispose();
   });
 
+  it("starts a profile's own list from the app's at its first check, keeping both of two quick checks, and leaves the app's list", async () => {
+    const app = setup(stateOf("Work", "Home"), {
+      version: 1,
+      appsInDefaultBrowser: ["docs"],
+    });
+
+    await Promise.all([
+      app.handlers.setAppInDefaultBrowser({
+        profileId: "work",
+        app: "drive",
+        on: true,
+      }),
+      app.handlers.setAppInDefaultBrowser({
+        profileId: "work",
+        app: "docs",
+        on: false,
+      }),
+    ]);
+
+    expect([
+      app.saved.at(-1),
+      app.read().settings.appsInDefaultBrowser,
+      app.read().profiles.map((profile) => profile.overrides),
+    ]).toStrictEqual([
+      {
+        version: 1,
+        appsInDefaultBrowser: ["docs"],
+        profiles: { work: { appsInDefaultBrowser: ["drive"] } },
+      },
+      ["docs"],
+      [{ appsInDefaultBrowser: ["drive"] }, {}],
+    ]);
+    app.dispose();
+  });
+
+  it("sets and resets a profile's own Open Google apps in Meru, the app value untouched", async () => {
+    const app = setup(stateOf("Work", "Home"));
+
+    await app.handlers.setOverride({
+      profileId: "work",
+      key: "openAppsInMeru",
+      value: false,
+    });
+
+    const set = app.read().profiles.map((profile) => profile.overrides);
+
+    await app.handlers.clearOverride({
+      profileId: "work",
+      key: "openAppsInMeru",
+    });
+
+    expect([
+      set,
+      app.read().profiles.map((profile) => profile.overrides),
+      app.read().settings.openAppsInMeru,
+    ]).toStrictEqual([[{ openAppsInMeru: false }, {}], [{}, {}], true]);
+    app.dispose();
+  });
+
   it("refuses Gmail, which always opens in Meru", async () => {
     const app = setup(stateOf("Work"));
 
     await expect(
-      app.handlers.setAppInDefaultBrowser({ app: "gmail", on: true })
+      app.handlers.setAppInDefaultBrowser({
+        profileId: null,
+        app: "gmail",
+        on: true,
+      })
     ).rejects.toThrow("Gmail");
     expect(app.saved).toStrictEqual([]);
     app.dispose();
@@ -1170,7 +1332,11 @@ describe("the Settings window's Tabs & Google Apps page", () => {
       app.handlers.update({ key: "openAppsInMeru", value: false })
     ).rejects.toThrow("Meru Pro");
     await expect(
-      app.handlers.setAppInDefaultBrowser({ app: "meet", on: true })
+      app.handlers.setAppInDefaultBrowser({
+        profileId: null,
+        app: "meet",
+        on: true,
+      })
     ).rejects.toThrow("Meru Pro");
 
     expect([
@@ -1178,6 +1344,46 @@ describe("the Settings window's Tabs & Google Apps page", () => {
       app.read().settings.appsInDefaultBrowser,
       app.saved,
     ]).toStrictEqual([false, [], []]);
+    app.dispose();
+  });
+
+  it("sends no profile's own values and writes none on the free version, writing back those stored as found", async () => {
+    const stored = {
+      work: {
+        openAppsInMeru: true,
+        appsInDefaultBrowser: ["meet"],
+        downloadsFolder: "/Users/example/Mail",
+      },
+    };
+    const app = setup(
+      stateOf("Work"),
+      { version: 1, profiles: stored },
+      "darwin",
+      ["en"],
+      true
+    );
+
+    await expect(
+      app.handlers.setAppInDefaultBrowser({
+        profileId: "work",
+        app: "drive",
+        on: true,
+      })
+    ).rejects.toThrow("Meru Pro");
+    await expect(
+      app.handlers.chooseDownloadsFolder({ profileId: "work" })
+    ).rejects.toThrow("Meru Pro");
+    await app.handlers.update({ key: "openInBackground", value: true });
+
+    expect([
+      app.read().profiles.map((profile) => profile.overrides),
+      app.read().general.profileDownloadsFolders,
+      app.saved,
+    ]).toStrictEqual([
+      [{}],
+      {},
+      [{ version: 1, openInBackground: true, profiles: stored }],
+    ]);
     app.dispose();
   });
 });

@@ -136,6 +136,7 @@ const setup = ({
   const calls: string[] = [];
   const progress: (number | null | undefined)[] = [];
   let chosenFolder: string | null = null;
+  const profileFolders = new Map<string, string | null>();
   let saveAs = false;
   let showWhenDone = false;
   const files: DownloadFiles = {
@@ -194,7 +195,10 @@ const setup = ({
     files,
     signals,
     choices: {
-      folder: () => chosenFolder,
+      folder: (profileId) =>
+        profileId !== undefined && profileFolders.has(profileId)
+          ? (profileFolders.get(profileId) ?? null)
+          : chosenFolder,
       saveAs: () => saveAs,
       showWhenDone: () => showWhenDone,
     },
@@ -240,9 +244,16 @@ const setup = ({
 
   return {
     downloads,
-    /** The folder Settings holds, `null` for the system's. */
-    choose: (folder: string | null) => {
-      chosenFolder = folder;
+    /**
+     * The folder Settings holds, `null` for the system's: the app's, or the
+     * profile's own.
+     */
+    choose: (folder: string | null, profileId?: string) => {
+      if (profileId === undefined) {
+        chosenFolder = folder;
+      } else {
+        profileFolders.set(profileId, folder);
+      }
     },
     askEachTime: () => {
       saveAs = true;
@@ -272,7 +283,7 @@ describe("taking a download", () => {
     const { downloads, history } = setup();
     const item = fakeItem();
 
-    downloads.take(item);
+    downloads.take(item, "a");
     await settle();
 
     expect(item.savedTo).toBe("/Downloads/report.pdf");
@@ -296,9 +307,44 @@ describe("taking a download", () => {
     const item = fakeItem();
 
     choose("/Chosen");
-    downloads.take(item);
+    downloads.take(item, "a");
 
     expect(item.savedTo).toBe("/Chosen/report (1).pdf");
+  });
+
+  it("saves it in the folder of the profile whose session started it, its own or else the app's", () => {
+    const { downloads, choose } = setup({ folders: ["/App", "/Work"] });
+    const items = [fakeItem(), fakeItem(), fakeItem()];
+
+    choose("/App");
+    choose("/Work", "b");
+    downloads.take(items[0] ?? fakeItem(), "a");
+    downloads.take(items[1] ?? fakeItem(), "b");
+    downloads.take(items[2] ?? fakeItem(), undefined);
+
+    expect(items.map((item) => item.savedTo)).toStrictEqual([
+      "/App/report.pdf",
+      "/Work/report.pdf",
+      "/App/report (1).pdf",
+    ]);
+  });
+
+  it("saves a profile's download in the system's folder while its own is missing, saying so, whatever the app's folder", () => {
+    const { downloads, choose, calls } = setup({ folders: ["/App"] });
+    const items = [fakeItem(), fakeItem()];
+
+    choose("/App");
+    choose("/Gone", "b");
+    downloads.take(items[0] ?? fakeItem(), "b");
+    downloads.take(items[1] ?? fakeItem(), "a");
+
+    expect([
+      items.map((item) => item.savedTo),
+      calls.filter((call) => call.startsWith("missing")),
+    ]).toStrictEqual([
+      ["/Downloads/report.pdf", "/App/report.pdf"],
+      ["missing /Gone"],
+    ]);
   });
 
   it("saves it in the system's folder while the chosen one is missing or cannot be written, saying so once for each, and the chosen one again once it is back", () => {
@@ -307,12 +353,12 @@ describe("taking a download", () => {
     const items = [fakeItem(), fakeItem(), fakeItem(), fakeItem()];
 
     choose("/Gone");
-    downloads.take(items[0] ?? fakeItem());
-    downloads.take(items[1] ?? fakeItem());
+    downloads.take(items[0] ?? fakeItem(), "a");
+    downloads.take(items[1] ?? fakeItem(), "a");
     choose("/Other");
-    downloads.take(items[2] ?? fakeItem());
+    downloads.take(items[2] ?? fakeItem(), "a");
     folders.push("/Other");
-    downloads.take(items[3] ?? fakeItem());
+    downloads.take(items[3] ?? fakeItem(), "a");
 
     expect([
       items.map((item) => item.savedTo),
@@ -334,7 +380,7 @@ describe("taking a download", () => {
 
     choose("/Gone");
     askEachTime();
-    downloads.take(item);
+    downloads.take(item, "a");
     item.answer("/Elsewhere/report.pdf");
     await settle();
 
@@ -350,12 +396,12 @@ describe("taking a download", () => {
     const finished = fakeItem({ fileName: "minutes.pdf" });
     const failed = fakeItem({ fileName: "agenda.pdf" });
 
-    downloads.take(before);
+    downloads.take(before, "a");
     before.end("completed");
     await settle();
     showEachWhenDone();
-    downloads.take(finished);
-    downloads.take(failed);
+    downloads.take(finished, "a");
+    downloads.take(failed, "a");
     finished.end("completed");
     failed.end("failed");
     await settle();
@@ -378,7 +424,7 @@ describe("taking a download", () => {
     const item = fakeItem();
 
     askEachTime();
-    downloads.take(item);
+    downloads.take(item, "a");
     await settle();
 
     const beforeAnswer = history();
@@ -409,7 +455,7 @@ describe("taking a download", () => {
 
     downloads.onEnded(({ end }) => ended.push(end));
     askEachTime();
-    downloads.take(item);
+    downloads.take(item, "a");
     item.answer(undefined);
     await settle();
 
@@ -426,7 +472,7 @@ describe("taking a download", () => {
     const item = fakeItem();
 
     askEachTime();
-    downloads.take(item);
+    downloads.take(item, "a");
     item.arrive(1000);
     item.answer("/Downloads/report.pdf");
     await settle();
@@ -441,8 +487,8 @@ describe("taking a download", () => {
     const first = fakeItem();
     const second = fakeItem({ fileName: "Report.PDF" });
 
-    downloads.take(first);
-    downloads.take(second);
+    downloads.take(first, "a");
+    downloads.take(second, "a");
 
     expect(first.savedTo).toBe("/Downloads/report (1).pdf");
     expect(second.savedTo).toBe("/Downloads/Report (2).PDF");
@@ -455,7 +501,7 @@ describe("taking a download", () => {
     });
     const item = fakeItem({ fileName: "Report.pdf" });
 
-    downloads.take(item);
+    downloads.take(item, "a");
 
     expect(item.savedTo).toBe("/Downloads/Report.pdf");
   });
@@ -464,7 +510,7 @@ describe("taking a download", () => {
     const { downloads } = setup();
     const item = fakeItem({ fileName: "../x.pdf" });
 
-    downloads.take(item);
+    downloads.take(item, "a");
 
     expect(item.savedTo).toBe("/Downloads/x.pdf");
   });
@@ -473,7 +519,7 @@ describe("taking a download", () => {
     const { downloads } = setup();
     const item = fakeItem({ fileName: "invoice" });
 
-    downloads.take(item);
+    downloads.take(item, "a");
 
     expect(item.savedTo).toBe("/Downloads/invoice.pdf");
   });
@@ -485,8 +531,8 @@ describe("the total and the button", () => {
     const first = fakeItem({ total: 1000 });
     const second = fakeItem({ fileName: "b.pdf", total: 3000 });
 
-    downloads.take(first);
-    downloads.take(second);
+    downloads.take(first, "a");
+    downloads.take(second, "a");
     first.arrive(1000);
     second.arrive(1000);
     beat();
@@ -515,7 +561,7 @@ describe("the total and the button", () => {
     const { downloads, progress, beat, repeating } = setup();
     const item = fakeItem({ total: 1000 });
 
-    downloads.take(item);
+    downloads.take(item, "a");
     item.arrive(250);
     beat();
 
@@ -539,7 +585,7 @@ describe("the total and the button", () => {
     const { downloads, progress } = setup();
     const item = fakeItem({ total: 0 });
 
-    downloads.take(item);
+    downloads.take(item, "a");
     item.arrive(500);
 
     expect(progress.at(-1)).toBeNull();
@@ -553,7 +599,7 @@ describe("the total and the button", () => {
     const { downloads } = setup();
     const item = fakeItem();
 
-    downloads.take(item);
+    downloads.take(item, "a");
     item.end("completed");
     await settle();
 
@@ -573,7 +619,7 @@ describe("the total and the button", () => {
     const item = fakeItem();
 
     downloads.setOpen(true);
-    downloads.take(item);
+    downloads.take(item, "a");
     item.end("completed");
     await settle();
     downloads.setOpen(false);
@@ -586,8 +632,8 @@ describe("the total and the button", () => {
     const failed = fakeItem();
     const cancelled = fakeItem({ fileName: "b.pdf" });
 
-    downloads.take(failed);
-    downloads.take(cancelled);
+    downloads.take(failed, "a");
+    downloads.take(cancelled, "a");
     failed.end("failed");
     downloads.cancel("d2");
     await settle();
@@ -601,7 +647,7 @@ describe("a download ending", () => {
     const { downloads, calls, history } = setup();
     const item = fakeItem();
 
-    downloads.take(item);
+    downloads.take(item, "a");
     item.arrive(1200);
     item.end("completed");
     await settle();
@@ -617,7 +663,7 @@ describe("a download ending", () => {
     const { downloads, calls } = setup({ focused: true });
     const item = fakeItem();
 
-    downloads.take(item);
+    downloads.take(item, "a");
     item.end("completed");
     await settle();
 
@@ -628,7 +674,7 @@ describe("a download ending", () => {
     const { downloads, calls, history } = setup();
     const item = fakeItem();
 
-    downloads.take(item);
+    downloads.take(item, "a");
     downloads.cancel("d1");
     await settle();
 
@@ -641,7 +687,7 @@ describe("a download ending", () => {
     const { downloads, calls, history } = setup();
     const item = fakeItem();
 
-    downloads.take(item);
+    downloads.take(item, "a");
     item.end("failed");
     await settle();
 
@@ -663,8 +709,8 @@ describe("a download ending", () => {
         history().find((listed) => listed.id === id)?.state,
       ]);
     });
-    downloads.take(finished);
-    downloads.take(clashing);
+    downloads.take(finished, "a");
+    downloads.take(clashing, "a");
     finished.end("completed");
     clashing.end("failed");
     await settle();
@@ -684,7 +730,7 @@ describe("the card", () => {
     });
     const item = fakeItem({ total: 4000 });
 
-    downloads.take(item);
+    downloads.take(item, "a");
     item.arrive(1000);
     await settle();
 
@@ -825,7 +871,7 @@ describe("the card", () => {
     const { downloads } = setup();
     const item = fakeItem();
 
-    downloads.take(item);
+    downloads.take(item, "a");
     item.end("completed");
     await settle();
     const before = downloads.shellSlice().button.kind;
@@ -843,7 +889,7 @@ describe("the card", () => {
     const item = fakeItem();
 
     downloads.setOpen(true, { profileId: "p", tabId: "t" });
-    downloads.take(item);
+    downloads.take(item, "a");
     item.end("completed");
     await settle();
     const open = downloads.shellSlice().button.kind;
@@ -925,7 +971,7 @@ describe("the card", () => {
       entries: [entry("a"), entry("b")],
     });
 
-    downloads.take(fakeItem());
+    downloads.take(fakeItem(), "a");
     await settle();
     await downloads.remove("a");
     await downloads.remove("d1");
@@ -942,7 +988,7 @@ describe("the card", () => {
       ],
     });
 
-    downloads.take(fakeItem());
+    downloads.take(fakeItem(), "a");
     await settle();
     await downloads.clear();
 
@@ -964,7 +1010,7 @@ describe("the history over time", () => {
   it("keeps running one that started before startup settled", async () => {
     const { downloads, history } = setup();
 
-    downloads.take(fakeItem());
+    downloads.take(fakeItem(), "a");
     await downloads.start();
     await settle();
 

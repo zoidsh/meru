@@ -51,6 +51,7 @@ const APP: PageSettings = {
   quietHours: [],
   notificationSound: "linen",
   unreadBadge: true,
+  downloadsFolder: null,
   notificationSoundVolume: 1,
   hidePromoBanner: true,
   hideUpgradeButton: true,

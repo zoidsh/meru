@@ -55,7 +55,12 @@ import type { Updates } from "./updates.ts";
 export interface SettingsContractDeps {
   settings: Pick<
     SettingsStore,
-    "get" | "update" | "setOverride" | "clearOverride" | "overridingProfiles"
+    | "get"
+    | "update"
+    | "setOverride"
+    | "updateOverride"
+    | "clearOverride"
+    | "overridingProfiles"
   >;
   profiles: Pick<
     Profiles,
@@ -423,21 +428,40 @@ export const settingsHandlers = ({
       Promise.try(() => {
         general.setOpenAtLogin(on);
       }),
-    chooseDownloadsFolder: () => general.chooseDownloadsFolder(),
+    chooseDownloadsFolder: async ({ profileId }) => {
+      if (profileId !== null) {
+        assertListed(profiles, profileId);
+        assertProfileValues(entitlement);
+      }
+
+      await general.chooseDownloadsFolder(profileId ?? undefined);
+    },
     setSpellcheckLanguage: ({ code, on }) =>
       general.setSpellcheckLanguage(code, on),
     // Applied to the list as stored, so two quick toggles both hold and an
     // id this build does not know stays.
-    setAppInDefaultBrowser: async ({ app, on }) => {
+    setAppInDefaultBrowser: async ({ profileId, app, on }) => {
       if (app === "gmail") {
         throw new Error("Gmail always opens in Meru");
       }
 
-      await settings.update("appsInDefaultBrowser", (apps) => {
+      const toggled = (apps: readonly string[]) => {
         const others = apps.filter((each) => each !== app);
 
         return on ? [...others, app] : others;
-      });
+      };
+
+      if (profileId === null) {
+        await settings.update("appsInDefaultBrowser", toggled);
+
+        return;
+      }
+
+      assertListed(profiles, profileId);
+      assertProfileValues(entitlement);
+      // Read as the store's write queue gets to it, so two quick checks both
+      // hold; with no list of its own yet, the profile's starts from the app's.
+      await settings.updateOverride(profileId, "appsInDefaultBrowser", toggled);
     },
     removeTrustedSite: ({ site }) => trustedSites.remove(site),
     openSettingsFile: () => advanced.openSettingsFile(),
@@ -542,7 +566,7 @@ export const readSettingsState = ({
     proRequired: CAPABILITIES.filter(
       (capability) => !entitlement.can(capability)
     ),
-    general: general.read(),
+    general: general.read(state.profiles.map((profile) => profile.id)),
     trustedSites: trustedSites.list(),
     advanced: advanced.read(),
     about: about.read(),

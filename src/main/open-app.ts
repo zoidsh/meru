@@ -15,8 +15,11 @@ import type { Overlays } from "./overlay.ts";
 export interface OpenAppDeps {
   /** The registry, or the suite's stand-ins for it. */
   apps: readonly App[];
-  /** Whether a new tab of the app opens in Meru now, as Tabs & Google Apps says. */
-  opensInMeru: (app: App) => boolean;
+  /**
+   * Whether a new tab of the app opens in Meru now, as Tabs & Google Apps
+   * says for the profile.
+   */
+  opensInMeru: (app: App, profileId: string) => boolean;
   /** Where a pick that does not open in Meru goes, asking first where it should. */
   systemBrowser: SystemBrowser;
   state: () => State;
@@ -58,7 +61,8 @@ export interface OpenAppDeps {
  * tab. As Open in split, from Split right or Split down, the pick goes in a
  * new pane beside or below the focused one, a single-instance app's tab as
  * it is, and a bookmark always as a new tab. A pick that would open a new
- * tab of an app Tabs & Google Apps sends to the default browser goes there instead.
+ * tab of an app Tabs & Google Apps sends to the default browser, for the
+ * profile it opens in, goes there instead.
  */
 export const createOpenApp = ({
   apps,
@@ -91,9 +95,12 @@ export const createOpenApp = ({
     }
   };
 
-  /** Sends `url` to the default browser if a new tab of `app` may not open in Meru. */
-  const leaves = (app: App, url: string) => {
-    if (opensInMeru(app)) {
+  /**
+   * Sends `url` to the default browser if a new tab of `app` may not open in
+   * Meru for the profile.
+   */
+  const leaves = (profileId: string, app: App, url: string) => {
+    if (opensInMeru(app, profileId)) {
       return false;
     }
 
@@ -128,7 +135,10 @@ export const createOpenApp = ({
       ? knownTabs(profile).find((tab) => tab.app === app.id)
       : undefined;
 
-    if ((!existing && leaves(app, app.home)) || !fits(profile, direction)) {
+    if (
+      (!existing && leaves(profile.id, app, app.home)) ||
+      !fits(profile, direction)
+    ) {
       return;
     }
 
@@ -201,7 +211,7 @@ export const createOpenApp = ({
 
       overlays.close();
 
-      if (!leaves(app, app.home)) {
+      if (!leaves(profile.id, app, app.home)) {
         await openTab(open.profileId, app, app.home);
       }
     },
@@ -227,7 +237,7 @@ export const createOpenApp = ({
 
       if (
         (open.split !== undefined || choice.kind !== "select") &&
-        leaves(app, choice.bookmark.url)
+        leaves(profile.id, app, choice.bookmark.url)
       ) {
         return;
       }

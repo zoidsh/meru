@@ -452,10 +452,11 @@ const start = async () => {
     // oxlint-disable-next-line no-use-before-define -- no profile is added before the inbox exists
     closeInbox: () => inbox.setOpen(false),
   });
-  // Read at each link and each pick, so a change applies to the next one.
-  const appOpening = () => ({
-    openAppsInMeru: settings.get("openAppsInMeru"),
-    appsInDefaultBrowser: settings.get("appsInDefaultBrowser"),
+  // Read at each link and each pick, for the profile it opens in, so a
+  // change applies to the next one.
+  const appOpening = (profileId: string) => ({
+    openAppsInMeru: settings.get("openAppsInMeru", profileId),
+    appsInDefaultBrowser: settings.get("appsInDefaultBrowser", profileId),
   });
   const views = createTabViews({
     frame,

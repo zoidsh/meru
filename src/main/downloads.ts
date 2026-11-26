@@ -44,8 +44,11 @@ export interface DownloadsDeps {
   signals: DownloadSignals;
   /** What the person chose in Settings, read as each download starts. */
   choices: {
-    /** The folder they chose, `null` for the system's. */
-    folder: () => string | null;
+    /**
+     * The folder they chose for the profile, its own or the app's, `null`
+     * for the system's.
+     */
+    folder: (profileId: string | undefined) => string | null;
     /** Whether each download asks where to save it. */
     saveAs: () => boolean;
     /** Whether each finished download is shown in its folder. */
@@ -261,13 +264,13 @@ export const createDownloads = ({
   };
 
   /**
-   * The chosen folder where it can take the file, else the system's, the
-   * chosen one left as stored for when it is back. `announce` tells of the
-   * fallback, for a download saved there rather than one the save dialog
-   * only starts at.
+   * The folder chosen for the profile where it can take the file, else the
+   * system's, the chosen one left as stored for when it is back. `announce`
+   * tells of the fallback, for a download saved there rather than one the
+   * save dialog only starts at.
    */
-  const saveFolder = (announce: boolean) => {
-    const chosen = choices.folder();
+  const saveFolder = (announce: boolean, profileId: string | undefined) => {
+    const chosen = choices.folder(profileId);
     const { folder, fallback } = downloadsFolder(chosen, {
       usable: files.usable,
       system: files.folder,
@@ -318,11 +321,12 @@ export const createDownloads = ({
    * Names and saves a download as its session starts it, at once, since
    * Chromium asks where to save it once the item's turn ends; or, where
    * each download asks, offers that name in the save dialog, a cancel
-   * leaving nothing listed.
+   * leaving nothing listed. `profileId` is the profile whose session
+   * started it, none when no profile has that session any more.
    */
-  const take = (item: DownloadItem) => {
+  const take = (item: DownloadItem, profileId: string | undefined) => {
     const asks = choices.saveAs();
-    const folder = saveFolder(!asks);
+    const folder = saveFolder(!asks, profileId);
     const filePath = path.join(
       folder,
       unusedName(

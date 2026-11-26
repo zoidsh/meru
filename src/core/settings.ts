@@ -169,7 +169,7 @@ export const SETTINGS = {
    * for the system's Downloads folder. Only Change… writes it; a relative
    * path, which only a hand edit makes, reads as none chosen.
    */
-  downloadsFolder: setting<string | null>({
+  downloadsFolder: overridable<string | null>({
     schema: z.nullable(z.string().check(z.regex(ABSOLUTE_PATH))),
     default: null,
   }),
@@ -352,7 +352,7 @@ export const SETTINGS = {
    * Whether a link, or New tab, opens a Google app other than Gmail in Meru
    * rather than the default browser. Tabs already open stay.
    */
-  openAppsInMeru: setting<boolean>({
+  openAppsInMeru: overridable<boolean>({
     schema: z.boolean(),
     default: true,
   }),
@@ -361,7 +361,7 @@ export const SETTINGS = {
    * while `openAppsInMeru` is on. Read entry by entry, so one that is not a
    * string costs only itself; an id this build does not know is kept.
    */
-  appsInDefaultBrowser: setting<string[]>({
+  appsInDefaultBrowser: overridable<string[]>({
     schema: z.pipe(
       z.array(z.unknown()),
       z.transform((entries) =>

@@ -391,6 +391,83 @@ describe(createSettingsStore, () => {
     ]);
   });
 
+  it("reads each profile's Google apps and downloads folder, its own or else the app's, with the two app settings at their free values without workspaceApps whatever a profile stored", () => {
+    const initial = {
+      version: 1,
+      openAppsInMeru: true,
+      appsInDefaultBrowser: ["docs"],
+      downloadsFolder: "/App",
+      profiles: {
+        work: {
+          openAppsInMeru: false,
+          appsInDefaultBrowser: ["meet"],
+          downloadsFolder: "/Work",
+        },
+      },
+    };
+    const read = (can: (capability: string) => boolean) => {
+      const settings = createSettingsStore({
+        initial,
+        save: () => Promise.resolve(),
+        platform: "darwin",
+        log: () => {},
+        can,
+      });
+
+      return ["work", "home"].map((profileId) => [
+        settings.get("openAppsInMeru", profileId),
+        settings.get("appsInDefaultBrowser", profileId),
+        settings.get("downloadsFolder", profileId),
+      ]);
+    };
+
+    expect([
+      read(() => true),
+      read((capability) => capability !== "workspaceApps"),
+    ]).toStrictEqual([
+      [
+        [false, ["meet"], "/Work"],
+        [true, ["docs"], "/App"],
+      ],
+      [
+        [false, [], "/Work"],
+        [false, [], "/App"],
+      ],
+    ]);
+  });
+
+  it("changes a profile's own value from the one it reads, the app's until it has its own, after every change queued before", async () => {
+    const { settings, saved } = setup({
+      version: 1,
+      appsInDefaultBrowser: ["docs"],
+    });
+
+    await Promise.all([
+      settings.updateOverride("work", "appsInDefaultBrowser", (apps) => [
+        ...apps,
+        "drive",
+      ]),
+      settings.updateOverride("work", "appsInDefaultBrowser", (apps) => [
+        ...apps,
+        "meet",
+      ]),
+    ]);
+
+    expect([
+      saved.at(-1),
+      settings.get("appsInDefaultBrowser"),
+      settings.get("appsInDefaultBrowser", "home"),
+    ]).toStrictEqual([
+      {
+        version: 1,
+        appsInDefaultBrowser: ["docs"],
+        profiles: { work: { appsInDefaultBrowser: ["docs", "drive", "meet"] } },
+      },
+      ["docs"],
+      ["docs"],
+    ]);
+  });
+
   it("tells a listener of several gated keys once when a license arrives, not once per key", () => {
     let licensed = false;
     const settings = createSettingsStore({

@@ -253,7 +253,7 @@ describe(readSetting, () => {
 });
 
 describe("a profile's overrides", () => {
-  it("are allowed for the notification, badge and Unified inbox settings alone", () => {
+  it("are allowed for the notification, badge, Unified inbox, downloads folder and Google apps settings alone", () => {
     expect(OVERRIDABLE_SETTING_KEYS).toStrictEqual([
       "notifications",
       "notificationSender",
@@ -262,8 +262,11 @@ describe("a profile's overrides", () => {
       "notificationImportantOnly",
       "quietHours",
       "notificationSound",
+      "downloadsFolder",
       "unreadBadge",
       "unifiedInbox",
+      "openAppsInMeru",
+      "appsInDefaultBrowser",
     ]);
   });
 

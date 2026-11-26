@@ -33,7 +33,7 @@ const AppRow = ({ app, checked }: { app: App; checked: boolean }) => {
           checked={checked}
           onCheckedChange={(on) => {
             settingsCalls()
-              .setAppInDefaultBrowser({ app: app.id, on })
+              .setAppInDefaultBrowser({ profileId: null, app: app.id, on })
               .catch(noop);
           }}
         />

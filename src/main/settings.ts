@@ -225,6 +225,26 @@ export const createSettingsStore = ({
       writing(key, () =>
         commit((current) => writeOverride(current, profileId, key, value))
       ),
+    /**
+     * Sets the profile's own value to what `change` makes of the value it
+     * reads, its own or else the app's, read after every change queued
+     * before.
+     */
+    updateOverride: <Key extends OverridableSettingKey>(
+      profileId: string,
+      key: Key,
+      change: (value: SettingValue<Key>) => SettingValue<Key>
+    ) =>
+      writing(key, () =>
+        commit((current) =>
+          writeOverride(
+            current,
+            profileId,
+            key,
+            change(readSetting(current, key, platform, profileId))
+          )
+        )
+      ),
     /** The profile reads the app value again. */
     clearOverride: (profileId: string, key: OverridableSettingKey) =>
       writing(key, () =>

@@ -183,7 +183,9 @@ export const GeneralPage = () => {
                   })}
                   aria-describedby={ids.description || undefined}
                   onClick={() => {
-                    calls.chooseDownloadsFolder({}).catch(noop);
+                    calls
+                      .chooseDownloadsFolder({ profileId: null })
+                      .catch(noop);
                   }}
                 >
                   {t({

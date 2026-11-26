@@ -1,4 +1,5 @@
 import type { Platform } from "#core/platform.ts";
+import { profilePartition } from "#core/state.ts";
 import { createDownloadSessions } from "#platform/downloads.ts";
 import type { Notifier } from "#platform/notifications.ts";
 
@@ -55,7 +56,7 @@ export const wireDownloads = ({
     files,
     signals: downloadSignals(shell.window),
     choices: {
-      folder: () => settings.get("downloadsFolder"),
+      folder: (profileId) => settings.get("downloadsFolder", profileId),
       saveAs: () => settings.get("downloadsSaveAs"),
       showWhenDone: () => settings.get("downloadsShowInFolder"),
     },
@@ -126,7 +127,14 @@ export const wireDownloads = ({
     /** `started` hears of each download after it is taken, by the webContents it began in. */
     watch: (partition: string, started: (webContentsId: number) => void) => {
       sessions.watch(partition, (item, startedIn) => {
-        downloads.take(item);
+        // A tab's own window shares its profile's session, so the session
+        // names the profile wherever in it the download began.
+        downloads.take(
+          item,
+          profiles
+            .get()
+            .profiles.find(({ id }) => profilePartition(id) === partition)?.id
+        );
         started(startedIn);
       });
     },

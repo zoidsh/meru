@@ -61,10 +61,10 @@ export interface TabViewsDeps {
    */
   tabApps: () => readonly App[];
   /**
-   * Tabs & Google Apps' settings as they are now, which send a link to another
-   * app to the default browser.
+   * Tabs & Google Apps' settings as they are now for the profile, which send
+   * a link of its tabs to another app to the default browser.
    */
-  appOpening: () => AppOpening;
+  appOpening: (profileId: string) => AppOpening;
   /** Google's sign-in, or the suite's stand-in for it. */
   signInOrigins: readonly string[];
   background: boolean;

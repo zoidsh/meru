@@ -86,15 +86,22 @@ export const PRIVACY_PAGE_KEYS = [
 ] as const;
 
 /**
- * The Tabs & Google Apps page's settings, in its order; the app holds them, never
- * a profile.
+ * The Tabs & Google Apps page's settings a profile may hold a value of its
+ * own for, in its order.
  */
-export const TABS_APPS_PAGE_KEYS = [
+export const TABS_APPS_OVERRIDABLE_KEYS = [
   "openAppsInMeru",
   "appsInDefaultBrowser",
-  "sleepIdleTabs",
-  "sleepAfter",
 ] as const;
+
+/**
+ * The Tabs & Google Apps page's other settings, in its order, after those;
+ * the app holds them, never a profile.
+ */
+export const TABS_APPS_PAGE_KEYS = ["sleepIdleTabs", "sleepAfter"] as const;
+
+/** The General page's setting a profile may hold a value of its own for. */
+export const GENERAL_OVERRIDABLE_KEYS = ["downloadsFolder"] as const;
 
 /** What the About page shows and copies, as its slice names them. */
 export const ABOUT_ITEMS = ["version", "operatingSystem"] as const;
@@ -108,15 +115,35 @@ export const ABOUT_PAGE_KEYS = ["autoUpdate", "updateChannel"] as const;
 export const ADVANCED_PAGE_KEYS = ["hardwareAcceleration"] as const;
 
 /**
- * The settings a profile may hold a value of its own for, as the
- * Notifications page shows them. `unifiedInbox` is a profile's own switch on
- * its page instead, so it never counts as one of this page's overrides.
+ * The settings a profile may hold a value of its own for, as the pages show
+ * them. `unifiedInbox` is a profile's own switch on its page instead, so it
+ * never counts as one of a page's overrides.
  */
 export type PageOverridableKey = Exclude<OverridableSettingKey, "unifiedInbox">;
 
 export const PAGE_OVERRIDABLE_KEYS = OVERRIDABLE_SETTING_KEYS.filter(
   (key): key is PageOverridableKey => key !== "unifiedInbox"
 );
+
+const ELSEWHERE = new Set<PageOverridableKey>([
+  ...TABS_APPS_OVERRIDABLE_KEYS,
+  ...GENERAL_OVERRIDABLE_KEYS,
+]);
+
+/** The Notifications page's settings a profile may hold a value of its own for. */
+export const NOTIFICATIONS_OVERRIDABLE_KEYS = PAGE_OVERRIDABLE_KEYS.filter(
+  (key) => !ELSEWHERE.has(key)
+);
+
+/**
+ * Set only through the system's folder picker, so a page can never name a
+ * folder downloads are written to.
+ */
+type PickedKey = (typeof GENERAL_OVERRIDABLE_KEYS)[number];
+
+const isWritten = <Key extends PageSettingKey>(
+  key: Key
+): key is Exclude<Key, PickedKey> => key !== "downloadsFolder";
 
 /** The pages' settings that only the app holds, never a profile. */
 const APP_ONLY_PAGE_KEYS = [
@@ -157,10 +184,12 @@ type ChangeOf<Keys extends PageSettingKey> = {
 }[Keys];
 
 /** One setting's new app value, the key naming which schema checks it. */
-export type SettingChange = ChangeOf<PageSettingKey>;
+export type SettingChange = ChangeOf<Exclude<PageSettingKey, PickedKey>>;
 
 /** One setting's new value of the profile's own. */
-export type OverrideChange = ChangeOf<PageOverridableKey> & {
+export type OverrideChange = ChangeOf<
+  Exclude<PageOverridableKey, PickedKey>
+> & {
   profileId: string;
 };
 
@@ -180,13 +209,13 @@ const schemaOf = (key: PageSettingKey) =>
   SETTINGS[key].schema as z.ZodMiniType<unknown>;
 
 const settingChange = z.union(
-  PAGE_SETTING_KEYS.map((key) =>
+  PAGE_SETTING_KEYS.filter(isWritten).map((key) =>
     z.object({ key: z.literal(key), value: schemaOf(key) })
   )
 ) as unknown as z.ZodMiniType<SettingChange>;
 
 const overrideChange = z.union(
-  PAGE_OVERRIDABLE_KEYS.map((key) =>
+  PAGE_OVERRIDABLE_KEYS.filter(isWritten).map((key) =>
     z.object({ profileId, key: z.literal(key), value: schemaOf(key) })
   )
 ) as unknown as z.ZodMiniType<OverrideChange>;
@@ -349,10 +378,14 @@ export const SETTINGS_CALLS = {
     response: z.undefined(),
   },
   /**
-   * Opens the system's folder picker on the Settings window and saves
-   * downloads to the folder chosen; a cancel changes nothing.
+   * Opens the system's folder picker on the Settings window at the folder in
+   * use and saves downloads to the folder chosen: the app's for `null`,
+   * else a listed profile's own; a cancel changes nothing.
    */
-  chooseDownloadsFolder: { request: none, response: z.undefined() },
+  chooseDownloadsFolder: {
+    request: z.object({ profileId: z.nullable(profileId) }),
+    response: z.undefined(),
+  },
   /**
    * Checks spelling in the language too, or no longer, applied to the list
    * as stored when main gets to it; refused on macOS.
@@ -363,10 +396,16 @@ export const SETTINGS_CALLS = {
   },
   /**
    * Opens the app in the default browser too, or no longer, applied to the
-   * list as stored when main gets to it; refused for Gmail.
+   * list as stored when main gets to it: the app's for `null`, else a listed
+   * profile's own, which starts from the app's list when it has none yet.
+   * Refused for Gmail.
    */
   setAppInDefaultBrowser: {
-    request: z.object({ app: z.enum(APP_IDS), on: z.boolean() }),
+    request: z.object({
+      profileId: z.nullable(profileId),
+      app: z.enum(APP_IDS),
+      on: z.boolean(),
+    }),
     response: z.undefined(),
   },
   /**
@@ -412,6 +451,11 @@ export const SETTINGS_CALLS = {
   SettingsCallName,
   { request: z.ZodMiniType; response: z.ZodMiniType }
 >;
+
+const downloadsFolderShown = z.object({
+  path: z.string(),
+  available: z.boolean(),
+});
 
 const shortcutKey = z.object({
   /** One per key, in the platform's order and symbols: `⇧` `⌘` `G`. */
@@ -497,7 +541,12 @@ export const SETTINGS_STATE = {
      * folder is there to take them, which while it is not sends them to
      * the system's Downloads folder.
      */
-    downloadsFolder: z.object({ path: z.string(), available: z.boolean() }),
+    downloadsFolder: downloadsFolderShown,
+    /**
+     * The same of each listed profile that holds a folder of its own, by
+     * its id.
+     */
+    profileDownloadsFolders: z.record(profileId, downloadsFolderShown),
     /**
      * What Language offers: what System shows Meru in and every language this
      * build has, each named in itself.

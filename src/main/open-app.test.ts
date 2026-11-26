@@ -20,15 +20,21 @@ const setup = (
   start: State = two,
   pageSize?: Size,
   pages: Partial<Record<string, string>> = {},
-  /** The apps Tabs & Google Apps sends to the default browser. */
-  inBrowser: readonly string[] = []
+  /**
+   * The apps Tabs & Google Apps sends to the default browser, for every
+   * profile or by profile.
+   */
+  inBrowser: readonly string[] | ReadonlyMap<string, readonly string[]> = []
 ) => {
   let state = start;
   let open = initial;
   const events: unknown[] = [];
   const openApp = createOpenApp({
     apps: APPS,
-    opensInMeru: (app) => !inBrowser.includes(app.id),
+    opensInMeru: (app, profileId) =>
+      !(
+        inBrowser instanceof Map ? (inBrowser.get(profileId) ?? []) : inBrowser
+      ).includes(app.id),
     systemBrowser: {
       open: (url) => {
         events.push(["browser", url]);
@@ -315,6 +321,67 @@ describe(createOpenApp, () => {
     expect([tab.events, split.events]).toStrictEqual([
       [["close"], ["browser", drive?.home]],
       [["close"], ["browser", drive?.home]],
+    ]);
+  });
+
+  it("reads where an app opens for the profile New tab is over, so a profile sending Drive out opens it in the browser and another as a tab", async () => {
+    const drive = APPS.find(({ id }) => id === "drive");
+    const out = new Map([["b", ["drive"]]]);
+    const work = setup(
+      { kind: "open-app", profileId: "b" },
+      two,
+      undefined,
+      {},
+      out
+    );
+    const home = setup(
+      { kind: "open-app", profileId: "a" },
+      two,
+      undefined,
+      {},
+      out
+    );
+    const workSplit = setup(
+      { kind: "open-app", profileId: "b", split: "row" },
+      two,
+      undefined,
+      {},
+      out
+    );
+
+    await work.openApp.choose("drive");
+    await home.openApp.choose("drive");
+    await workSplit.openApp.choose("drive");
+
+    expect([work.events, home.events, workSplit.events]).toStrictEqual([
+      [["close"], ["browser", drive?.home]],
+      [["close"], ["tab", "a", "drive", drive?.home]],
+      [["close"], ["browser", drive?.home]],
+    ]);
+  });
+
+  it("reads where a bookmark opens for the profile it belongs to", async () => {
+    const sentOut = setup(
+      { kind: "open-app", profileId: "a" },
+      withBookmarks,
+      undefined,
+      {},
+      new Map([["a", ["sheets"]]])
+    );
+    const kept = setup(
+      { kind: "open-app", profileId: "a" },
+      withBookmarks,
+      undefined,
+      {},
+      new Map([["b", ["sheets"]]])
+    );
+
+    await sentOut.openApp.chooseBookmark("s");
+    await kept.openApp.chooseBookmark("s");
+
+    expect([sentOut.events, kept.events.at(-1)]).toStrictEqual([
+      [["close"], ["browser", SHEET]],
+      ["tab", "a", "sheets", SHEET],
     ]);
   });
 

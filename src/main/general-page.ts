@@ -14,7 +14,10 @@ import type { Spellcheck } from "./spellcheck.ts";
 export interface GeneralPageDeps {
   platform: Platform;
   loginItem: LoginItem;
-  settings: Pick<SettingsStore, "get" | "update" | "onChange">;
+  settings: Pick<
+    SettingsStore,
+    "get" | "update" | "setOverride" | "overridingProfiles"
+  >;
   /**
    * The system's Downloads folder, never made by a page that only shows it,
    * and whether a chosen one is there.
@@ -52,31 +55,41 @@ export const createGeneralPage = ({
     }
   };
 
-  settings.onChange("downloadsFolder", notify);
-
-  /** Where the next download goes: the chosen folder while it is usable. */
-  const saveFolder = () =>
-    downloadsFolder(settings.get("downloadsFolder"), {
+  /**
+   * Where the profile's next download goes, or the app's with none: the
+   * chosen folder while it is usable.
+   */
+  const saveFolder = (profileId: string | undefined) =>
+    downloadsFolder(settings.get("downloadsFolder", profileId), {
       usable: files.usable,
       system: files.systemFolder,
     }).folder;
 
+  const shown = (profileId?: string) => {
+    const chosen = settings.get("downloadsFolder", profileId);
+
+    return {
+      path: shownFolder(chosen ?? files.systemFolder(), { home, platform }),
+      available: chosen === null || files.usable(chosen),
+    };
+  };
+
   return {
-    read: (): SettingsState["general"] => {
-      const chosen = settings.get("downloadsFolder");
+    /** Of the listed profiles alone, as no other profile's value is sent. */
+    read: (listed: readonly string[]): SettingsState["general"] => {
+      const own = settings.overridingProfiles("downloadsFolder");
 
       return {
         openAtLogin:
           platform === "linux"
             ? null
             : { on: loginItem.isOn(), real: loginItem.real },
-        downloadsFolder: {
-          path: shownFolder(chosen ?? files.systemFolder(), {
-            home,
-            platform,
-          }),
-          available: chosen === null || files.usable(chosen),
-        },
+        downloadsFolder: shown(),
+        profileDownloadsFolders: Object.fromEntries(
+          listed
+            .filter((profileId) => own.includes(profileId))
+            .map((profileId) => [profileId, shown(profileId)])
+        ),
         language: {
           system: languageName(language.system()),
           choices: language.available.map((tag) => ({
@@ -96,11 +109,12 @@ export const createGeneralPage = ({
       notify();
     },
     /**
-     * Opens the picker at where downloads go now and stores the folder
-     * chosen; a cancel changes nothing.
+     * Opens the picker at where the profile's downloads go now, or the
+     * app's with none, and stores the folder chosen as its own or the app's;
+     * a cancel changes nothing.
      */
-    chooseDownloadsFolder: async () => {
-      const chosen = await pickFolder(saveFolder());
+    chooseDownloadsFolder: async (profileId: string | undefined) => {
+      const chosen = await pickFolder(saveFolder(profileId));
 
       if (chosen === undefined) {
         return;
@@ -110,7 +124,9 @@ export const createGeneralPage = ({
         throw new Error("The folder picker gave a relative path");
       }
 
-      await settings.update("downloadsFolder", () => chosen);
+      await (profileId === undefined
+        ? settings.update("downloadsFolder", () => chosen)
+        : settings.setOverride(profileId, "downloadsFolder", chosen));
     },
     /**
      * Applied to the list as stored when the store gets to it, so two quick

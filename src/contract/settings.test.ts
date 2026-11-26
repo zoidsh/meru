@@ -364,6 +364,7 @@ describe("the settings contract", () => {
       openInBackground: true,
       downloadsSaveAs: true,
       downloadsShowInFolder: false,
+      downloadsFolder: "/Users/example/Mail",
       theme: "dark",
       profileTint: false,
       profileTintStrength: "medium",

@@ -28,8 +28,8 @@ export const createWindowOpenRouting = ({
 }: {
   /** The apps a link may open a tab of, as they are now. */
   apps: () => readonly App[];
-  /** Tabs & Google Apps' settings as they are now. */
-  appOpening: () => AppOpening;
+  /** Tabs & Google Apps' settings as they are now, for the profile. */
+  appOpening: (profileId: string) => AppOpening;
   signInOrigins: readonly string[];
   systemBrowser: SystemBrowser;
   /** The app of the tab whose page asks, or "" once it is gone. */
@@ -98,7 +98,7 @@ export const createWindowOpenRouting = ({
     signInOrigins,
     apps: apps(),
     openerApp: openerApp(tabKeyed),
-    opening: appOpening(),
+    opening: appOpening(tabKeyed.profileId),
   });
 
   return {
