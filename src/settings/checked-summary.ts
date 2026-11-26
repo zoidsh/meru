@@ -20,7 +20,7 @@ export const useCheckedSummary = (checked: readonly string[]) => {
     return t({
       message: "None",
       comment:
-        "What a menu's button in Settings reads while none of its checkboxes is checked, as the Spelling menu with no language or Always open in your default browser with no Google app",
+        "What a menu's button in Settings reads while none of its checkboxes is checked, as the Spelling menu with no language",
     });
   }
 

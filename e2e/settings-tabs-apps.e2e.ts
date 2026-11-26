@@ -36,7 +36,7 @@ const SLEEP_IDLE = "Sleep idle tabs";
 const SLEEP_AFTER = "Sleep after";
 const SLEEP_WHEN_IDLE = "Sleep When Idle";
 
-/** The apps the menu offers, in the registry's order: every one but Gmail. */
+/** The apps the dialog offers, in the launcher's order: every one but Gmail. */
 const OFFERED = ["Calendar", "Drive", "Docs", "Sheets", "Slides", "Meet"];
 
 const readStored = async (userDataDir: string) => {
@@ -56,14 +56,17 @@ const openTabsApps = async (page: Page) => {
   );
 };
 
-/** The menu's button, named by its row's label and what it reads. */
-const menuButton = (page: Page, summary?: string) =>
+/** The row's Manage…, which the row's description describes. */
+const manage = (page: Page) =>
   page.getByRole("button", {
-    name:
-      summary === undefined
-        ? new RegExp(`^${IN_BROWSER}\\b`, "u")
-        : `${IN_BROWSER} ${summary}`,
+    name: "Manage Google apps that open in your default browser",
   });
+
+const manageDialog = (page: Page) =>
+  page.getByRole("dialog", { name: IN_BROWSER });
+
+const appBox = (page: Page, name: string) =>
+  manageDialog(page).getByRole("checkbox", { name, exact: true });
 
 /** The URL each content view shows. */
 const viewUrls = async (app: ElectronApplication) => {
@@ -72,7 +75,7 @@ const viewUrls = async (app: ElectronApplication) => {
   return views.map(({ url }) => url);
 };
 
-test("opens from the sidebar after Gmail with no scopes, the menu listing every Google app but Gmail, and a Sleep group of two menus at their defaults", async ({
+test("opens from the sidebar after Gmail with no scopes, Manage… listing every Google app but Gmail, and a Sleep group of two menus at their defaults", async ({
   app,
 }) => {
   const page = await openSettings(app);
@@ -95,17 +98,24 @@ test("opens from the sidebar after Gmail with no scopes, the menu listing every 
   await expect(
     group.getByRole("switch", { name: IN_MERU })
   ).not.toHaveAccessibleDescription(SWITCHED_OFF);
-  await expect(menuButton(page, "None")).toBeEnabled();
+  await expect(manage(page)).toBeEnabled();
+  await expect(manage(page)).toHaveAccessibleDescription("None");
 
-  await menuButton(page).click();
-  await expect(page.getByRole("menuitemcheckbox")).toHaveText(OFFERED);
+  await manage(page).click();
+  await expect(
+    manageDialog(page).getByRole("row").getByRole("checkbox")
+  ).toHaveCount(OFFERED.length);
+  await expect(manageDialog(page).getByRole("row")).toHaveText(OFFERED);
 
-  for (const item of await page.getByRole("menuitemcheckbox").all()) {
-    // oxlint-disable-next-line no-await-in-loop -- one item after another
-    await expect(item).not.toBeChecked();
+  for (const name of OFFERED) {
+    // oxlint-disable-next-line no-await-in-loop -- one app after another
+    await expect(appBox(page, name)).not.toBeChecked();
   }
 
-  await page.keyboard.press("Escape");
+  await expect(appBox(page, OFFERED[0] ?? "")).toBeFocused();
+  await manageDialog(page).getByRole("button", { name: "Done" }).click();
+  await expect(manageDialog(page)).toHaveCount(0);
+  await expect(manage(page)).toBeFocused();
 
   const sleep = page.getByRole("group", { name: "Sleep" });
   const which = sleep.getByRole("combobox", { name: SLEEP_IDLE });
@@ -225,7 +235,7 @@ test("Tabs you choose brings Sleep When Idle to a tab's menu after Sleep, whose 
   expect(await calendarMenu(again)).toContain(`${SLEEP_WHEN_IDLE} [x]`);
 });
 
-test("turning the switch off sends Gmail's Calendar link to the default browser and disables the menu saying why, its value kept", async ({
+test("turning the switch off sends Gmail's Calendar link to the default browser and disables Manage… saying why, its value kept", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -240,17 +250,16 @@ test("turning the switch off sends Gmail's Calendar link to the default browser 
   const page = await openSettings(app);
 
   await openTabsApps(page);
-  await expect(menuButton(page, "Drive")).toBeEnabled();
+  await expect(manage(page)).toBeEnabled();
+  await expect(manage(page)).toHaveAccessibleDescription("1 Google app");
   await switchNamed(page, IN_MERU).click();
 
   await expect(switchNamed(page, IN_MERU)).not.toBeChecked();
   await expect(switchNamed(page, IN_MERU)).toHaveAccessibleDescription(
     SWITCHED_OFF
   );
-  await expect(menuButton(page, "Drive")).toBeDisabled();
-  await expect(menuButton(page, "Drive")).toHaveAccessibleDescription(
-    TURN_ON_FIRST
-  );
+  await expect(manage(page)).toBeDisabled();
+  await expect(manage(page)).toHaveAccessibleDescription(TURN_ON_FIRST);
   await expect
     .poll(async () => {
       const stored = await readStored(userDataDir);
@@ -267,7 +276,7 @@ test("turning the switch off sends Gmail's Calendar link to the default browser 
 
   // Turned back on, the next link opens as a tab with no restart.
   await switchNamed(page, IN_MERU).click();
-  await expect(menuButton(page, "Drive")).toBeEnabled();
+  await expect(manage(page)).toBeEnabled();
   await gmail.getByRole("link", { name: "Open Calendar" }).click();
   await expect
     .poll(() => viewUrls(app))
@@ -291,13 +300,12 @@ test("excluding Drive sends Gmail's Drive link out while its Calendar link opens
   const page = await openSettings(app);
 
   await openTabsApps(page);
-  await menuButton(page, "None").click();
-  await page.getByRole("menuitemcheckbox", { name: "Drive" }).click();
-  await page.getByRole("menuitemcheckbox", { name: "Meet" }).click();
-  await expect(
-    page.getByRole("menuitemcheckbox", { name: "Drive" })
-  ).toBeChecked();
-  await expect(menuButton(page, "Drive, Meet")).toBeVisible();
+  await manage(page).click();
+  await appBox(page, "Drive").click();
+  // The app's name checks it too.
+  await manageDialog(page).getByText("Meet", { exact: true }).click();
+  await expect(appBox(page, "Drive")).toBeChecked();
+  await expect(appBox(page, "Meet")).toBeChecked();
   await expect
     .poll(async () => {
       const stored = await readStored(userDataDir);
@@ -306,6 +314,8 @@ test("excluding Drive sends Gmail's Drive link out while its Calendar link opens
     })
     .toStrictEqual(["drive", "meet"]);
   await page.keyboard.press("Escape");
+  await expect(manageDialog(page)).toHaveCount(0);
+  await expect(manage(page)).toHaveAccessibleDescription("2 Google apps");
 
   await gmail.getByRole("link", { name: "Open Drive" }).click();
   await expect
@@ -418,15 +428,15 @@ test("on the free version every row is a Pro row, disabled, its stored value kep
   }
 
   await expect(switchNamed(page, IN_MERU)).toBeDisabled();
-  await expect(menuButton(page, "None")).toBeDisabled();
+  await expect(manage(page)).toBeDisabled();
+  await manage(page).click({ force: true });
+  await expect(manageDialog(page)).toHaveCount(0);
   await expect(page.getByRole("combobox", { name: SLEEP_IDLE })).toBeDisabled();
   await expect(
     page.getByRole("combobox", { name: SLEEP_AFTER })
   ).toBeDisabled();
   // The Pro state outranks the reason the switch would give.
-  await expect(menuButton(page, "None")).not.toHaveAccessibleDescription(
-    TURN_ON_FIRST
-  );
+  await expect(manage(page)).not.toHaveAccessibleDescription(TURN_ON_FIRST);
 
   await app.close();
 
@@ -445,7 +455,7 @@ const shoot = async (app: ElectronApplication, page: Page, surface: string) => {
 test.describe("shots", () => {
   test.beforeEach(onlyWithShots);
 
-  test("the page on, off and with the menu open, light and dark", async ({
+  test("the page on, off and with Manage… open, light and dark", async ({
     app,
   }) => {
     const page = await openSettings(app);
@@ -453,14 +463,15 @@ test.describe("shots", () => {
     await openTabsApps(page);
     await shoot(app, page, "settings-tabs-apps");
 
-    await menuButton(page, "None").click();
-    await page.getByRole("menuitemcheckbox", { name: "Drive" }).click();
-    await expect(menuButton(page, "Drive")).toBeVisible();
-    await shoot(app, page, "settings-tabs-apps-menu");
+    await manage(page).click();
+    await appBox(page, "Drive").click();
+    await expect(appBox(page, "Drive")).toBeChecked();
+    await shoot(app, page, "settings-tabs-apps-manage");
     await page.keyboard.press("Escape");
+    await expect(manageDialog(page)).toHaveCount(0);
 
     await switchNamed(page, IN_MERU).click();
-    await expect(menuButton(page, "Drive")).toBeDisabled();
+    await expect(manage(page)).toBeDisabled();
     await shoot(app, page, "settings-tabs-apps-off");
   });
 

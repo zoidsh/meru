@@ -1,18 +1,9 @@
+import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
-import { ChevronDownIcon } from "lucide-react";
-import { useId } from "react";
 
 import { APPS } from "#core/apps.ts";
 import { SLEEP_AFTER, SLEEP_IDLE_TABS } from "#core/settings.ts";
-import { Button } from "#ui/button.tsx";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuTrigger,
-} from "#ui/dropdown-menu.tsx";
 import {
   Select,
   SelectContent,
@@ -23,13 +14,13 @@ import {
 } from "#ui/select.tsx";
 import { Switch } from "#ui/switch.tsx";
 
-import { useCheckedSummary } from "./checked-summary.ts";
+import { AppsInBrowserDialog } from "./apps-in-browser-dialog.tsx";
 import { useNeedsPro } from "./pro-badge.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
 
-/** Every Google app but Gmail, which always opens in Meru. */
+/** Every Google app but Gmail, which always opens in Meru, in the launcher's order. */
 const OFFERED = APPS.filter((app) => app.id !== "gmail");
 
 /**
@@ -41,21 +32,50 @@ export const TabsAppsPage = () => {
   const { t } = useLingui();
   const settings = useSettingsState("settings");
   const needsPro = useNeedsPro();
-  const summaryId = useId();
-  const excluded = settings?.appsInDefaultBrowser ?? [];
-  const summary = useCheckedSummary(
-    OFFERED.filter((app) => excluded.includes(app.id)).map((app) => app.name)
-  );
 
   if (!settings) {
     return null;
   }
+
+  const excluded = settings.appsInDefaultBrowser;
+  // An id this build does not know stays stored, uncounted.
+  const chosen = OFFERED.filter((app) => excluded.includes(app.id)).length;
+  const excludedLabel = t({
+    message: "Always open in your default browser",
+    comment:
+      "Label of the row in Settings for the Google apps whose links always open in the default browser rather than in Meru, and title of the dialog that chooses them",
+  });
 
   const calls = settingsCalls();
   const inMeruPro = needsPro.setting("openAppsInMeru");
   const excludedPro = needsPro.setting("appsInDefaultBrowser");
   // On the free version the row says Pro, not to turn the switch on.
   const excludedOff = !settings.openAppsInMeru && !excludedPro;
+  let excludedDescription: string;
+
+  if (excludedOff) {
+    excludedDescription = t({
+      message: "Turn on Open Google apps in Meru first.",
+      comment:
+        "Description of the Always open in your default browser row in Settings while Open Google apps in Meru, the switch above it, is off; it says what to do to use the row",
+    });
+  } else if (chosen === 0) {
+    excludedDescription = t({
+      message: "None",
+      comment:
+        "Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser",
+    });
+  } else {
+    excludedDescription = t({
+      message: plural(chosen, {
+        one: "# Google app",
+        other: "# Google apps",
+      }),
+      comment:
+        "Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser",
+    });
+  }
+
   const sleepPro = needsPro.setting("sleepIdleTabs");
   const afterPro = needsPro.setting("sleepAfter");
   const sleepIdleTabs = {
@@ -144,57 +164,19 @@ export const TabsAppsPage = () => {
             </SettingRow>,
             <SettingRow
               key="appsInDefaultBrowser"
-              label={t({
-                message: "Always open in your default browser",
-                comment:
-                  "Label of the menu in Settings choosing the Google apps whose links always open in the default browser rather than in Meru",
-              })}
-              description={
-                excludedOff
-                  ? t({
-                      message: "Turn on Open Google apps in Meru first.",
-                      comment:
-                        "Description of the Always open in your default browser row in Settings while Open Google apps in Meru, the switch above it, is off; it says what to do to use the row",
-                    })
-                  : undefined
-              }
+              label={excludedLabel}
+              description={excludedDescription}
               disabled={excludedOff || excludedPro}
               pro={excludedPro}
             >
               {(ids) => (
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    disabled={excludedOff || excludedPro}
-                    render={
-                      <Button
-                        variant="outline"
-                        aria-labelledby={`${ids.label} ${summaryId}`}
-                        aria-describedby={ids.description || undefined}
-                      />
-                    }
-                  >
-                    <span id={summaryId}>{summary}</span>
-                    <ChevronDownIcon data-icon="inline-end" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuGroup>
-                      {OFFERED.map((app) => (
-                        <DropdownMenuCheckboxItem
-                          key={app.id}
-                          checked={excluded.includes(app.id)}
-                          closeOnClick={false}
-                          onCheckedChange={(on) => {
-                            calls
-                              .setAppInDefaultBrowser({ app: app.id, on })
-                              .catch(noop);
-                          }}
-                        >
-                          {app.name}
-                        </DropdownMenuCheckboxItem>
-                      ))}
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <AppsInBrowserDialog
+                  apps={OFFERED}
+                  chosen={excluded}
+                  title={excludedLabel}
+                  disabled={excludedOff || excludedPro}
+                  describedBy={ids.description}
+                />
               )}
             </SettingRow>,
           ]}

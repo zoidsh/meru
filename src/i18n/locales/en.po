@@ -13,6 +13,11 @@ msgstr ""
 msgid "{0, plural, one {# message} other {# messages}}"
 msgstr "{0, plural, one {# message} other {# messages}}"
 
+#. Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser
+#: src/settings/tabs-apps-page.tsx
+msgid "{chosen, plural, one {# Google app} other {# Google apps}}"
+msgstr "{chosen, plural, one {# Google app} other {# Google apps}}"
+
 #. Accessible name of a profile's button in the title bar, read by screen readers, while its inbox has unread mail; {name} is the profile's name, # how many messages are unread
 #: src/shell/titlebar.tsx
 msgid "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
@@ -365,7 +370,7 @@ msgstr "Already bought Meru Pro? Enter your key to unlock it."
 msgid "Alt"
 msgstr "Alt"
 
-#. Label of the menu in Settings choosing the Google apps whose links always open in the default browser rather than in Meru
+#. Label of the row in Settings for the Google apps whose links always open in the default browser rather than in Meru, and title of the dialog that chooses them
 #: src/settings/tabs-apps-page.tsx
 msgid "Always open in your default browser"
 msgstr "Always open in your default browser"
@@ -982,7 +987,9 @@ msgstr "Do Not Disturb is on."
 msgid "Dock"
 msgstr "Dock"
 
+#. Button that closes the Always open in your default browser dialog in Settings
 #. Button that closes the Trusted sites dialog in Settings
+#: src/settings/apps-in-browser-dialog.tsx
 #: src/settings/trusted-sites-dialog.tsx
 msgid "Done"
 msgstr "Done"
@@ -1175,7 +1182,9 @@ msgstr "Go online and try again."
 msgid "Go to Profiles"
 msgstr "Go to Profiles"
 
+#. Accessible name of the list of Google apps, such as Calendar or Drive, in the Always open in your default browser dialog of Settings
 #. Heading of the group of Google's apps in the New tab launcher
+#: src/settings/apps-in-browser-dialog.tsx
 #: src/shell/open-app.tsx
 msgid "Google apps"
 msgstr "Google apps"
@@ -1375,6 +1384,11 @@ msgstr "Links can't leave Meru while it's your default browser. Choose another d
 msgid "Links can't leave Meru while it's your default browser. Choose another default browser in your system settings to open them."
 msgstr "Links can't leave Meru while it's your default browser. Choose another default browser in your system settings to open them."
 
+#. Description of the Always open in your default browser dialog in Settings, which lists Google apps such as Calendar or Drive with a checkbox each
+#: src/settings/apps-in-browser-dialog.tsx
+msgid "Links to the Google apps you check open in your default browser instead of Meru."
+msgstr "Links to the Google apps you check open in your default browser instead of Meru."
+
 #. Description of the Trusted sites dialog in Settings; asking is the question Meru shows before a link opens in the default browser
 #: src/settings/trusted-sites-dialog.tsx
 msgid "Links to these sites open without asking."
@@ -1390,12 +1404,19 @@ msgstr "Loading"
 msgid "Mail"
 msgstr "Mail"
 
+#. Accessible name of the Manage… button in Settings that opens the list of Google apps, such as Calendar or Drive, whose links always open in the default browser
+#: src/settings/apps-in-browser-dialog.tsx
+msgid "Manage Google apps that open in your default browser"
+msgstr "Manage Google apps that open in your default browser"
+
 #. Accessible name of the Manage… button in Settings that opens the list of sites whose links open without asking
 #: src/settings/trusted-sites-dialog.tsx
 msgid "Manage trusted sites"
 msgstr "Manage trusted sites"
 
+#. Button of the Always open in your default browser row in Settings that opens the list of Google apps to choose from
 #. Button of the Trusted sites row in Settings that opens the list of sites whose links open without asking
+#: src/settings/apps-in-browser-dialog.tsx
 #: src/settings/trusted-sites-dialog.tsx
 msgid "Manage…"
 msgstr "Manage…"
@@ -1717,9 +1738,11 @@ msgid "none"
 msgstr "none"
 
 #. Choice of the Sound menu in Settings: no sound with a notification
-#. What a menu's button in Settings reads while none of its checkboxes is checked, as the Spelling menu with no language or Always open in your default browser with no Google app
+#. Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser
+#. What a menu's button in Settings reads while none of its checkboxes is checked, as the Spelling menu with no language
 #: src/settings/checked-summary.ts
 #: src/settings/notifications-page.tsx
+#: src/settings/tabs-apps-page.tsx
 msgid "None"
 msgstr "None"
 
