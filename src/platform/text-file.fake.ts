@@ -10,6 +10,7 @@ export const fakeTextFile = (
 ): TextFile => ({
   path,
   read: () => Promise.resolve(files.get(path)),
+  readSync: () => files.get(path),
   write: (text) => {
     files.set(path, text);
 

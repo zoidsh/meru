@@ -101,6 +101,15 @@ const fakeDisk = () => {
         ? Promise.reject(failure("ENOENT", `open '${file}'`))
         : Promise.resolve(text);
     },
+    readFileSync: (file) => {
+      const text = files.get(file);
+
+      if (text === undefined) {
+        throw failure("ENOENT", `open '${file}'`);
+      }
+
+      return text;
+    },
     writeFile: (file, contents) => {
       const code = writeFails.shift();
 
@@ -305,6 +314,16 @@ describe("createTextFile on the disk", () => {
 
     await expect(file.read()).resolves.toBe("two");
     await expect(readdir(made)).resolves.toStrictEqual(["settings.json"]);
+  });
+
+  it("reads at once what is written, nothing for a missing file, and throws for a folder", async () => {
+    const made = await folder();
+    const file = createTextFile(path.join(made, "settings.json"));
+
+    expect(file.readSync()).toBeUndefined();
+    await file.write("one");
+    expect(file.readSync()).toBe("one");
+    expect(() => createTextFile(made).readSync()).toThrow(/EISDIR/u);
   });
 
   it("removes nothing, and fails nothing, when there is nothing to remove", async () => {

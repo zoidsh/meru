@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { open, readFile, rename, rm, writeFile } from "node:fs/promises";
 
 import { Mutex, noop, retry } from "es-toolkit";
@@ -6,6 +7,11 @@ export interface TextFile {
   readonly path: string;
   /** Nothing when the file does not exist. */
   read: () => Promise<string | undefined>;
+  /**
+   * As `read`, blocking: only for what must be known before the app is
+   * ready, when nothing has written the file yet.
+   */
+  readSync: () => string | undefined;
   /**
    * Written beside the file, then renamed over it, so a crash leaves one
    * whole. Writes land in the order they were called.
@@ -18,6 +24,7 @@ export interface TextFile {
 /** The calls a `TextFile` makes, taken as an argument so tests can fake them. */
 export interface FileSystem {
   readFile: (path: string) => Promise<string>;
+  readFileSync: (path: string) => string;
   /** Flushed to the disk before it resolves. */
   writeFile: (path: string, contents: string) => Promise<void>;
   rename: (from: string, to: string) => Promise<void>;
@@ -27,6 +34,7 @@ export interface FileSystem {
 
 export const nodeFileSystem: FileSystem = {
   readFile: (path) => readFile(path, "utf-8"),
+  readFileSync: (path) => readFileSync(path, "utf-8"),
   writeFile: (path, contents) =>
     writeFile(path, contents, { encoding: "utf-8", flush: true }),
   rename,
@@ -64,6 +72,17 @@ export const createTextFile = (
     read: async () => {
       try {
         return await fileSystem.readFile(path);
+      } catch (error) {
+        if (isMissing(error)) {
+          return;
+        }
+
+        throw error;
+      }
+    },
+    readSync: () => {
+      try {
+        return fileSystem.readFileSync(path);
       } catch (error) {
         if (isMissing(error)) {
           return;
