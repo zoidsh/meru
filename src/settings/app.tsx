@@ -5,6 +5,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DockIcon,
+  KeyboardIcon,
   LayoutGridIcon,
   MailIcon,
   PaletteIcon,
@@ -32,6 +33,7 @@ import { ProPage } from "./pro-page.tsx";
 import { ProfilePage } from "./profile-page.tsx";
 import { ProfilesPage } from "./profiles-page.tsx";
 import type { RemovedProfile } from "./profiles-page.tsx";
+import { ShortcutsPage } from "./shortcuts-page.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
 import { TabsAppsPage } from "./tabs-apps-page.tsx";
 
@@ -43,6 +45,7 @@ const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
   notifications: NotificationsPage,
   gmail: GmailPage,
   "tabs-and-apps": TabsAppsPage,
+  shortcuts: ShortcutsPage,
   privacy: PrivacyPage,
   advanced: AdvancedPage,
   pro: ProPage,
@@ -70,6 +73,7 @@ const SECTION_GROUPS: readonly (readonly Section[])[] = [
     { id: "tabs-and-apps", icon: LayoutGridIcon },
   ],
   [
+    { id: "shortcuts", icon: KeyboardIcon },
     { id: "privacy", icon: ShieldIcon },
     { id: "advanced", icon: WrenchIcon },
   ],
@@ -122,6 +126,11 @@ const useSectionTitles = (): Record<SettingsSection, string> => {
       message: "Tabs & Apps",
       comment:
         "Name of the Settings section for how Google apps such as Calendar and Drive open, in Meru's tabs or in the default browser, in its list and as its title",
+    }),
+    shortcuts: t({
+      message: "Shortcuts",
+      comment:
+        "Name of the Settings section listing every keyboard shortcut of Meru by menu, in its list and as its title",
     }),
     privacy: t({
       message: "Privacy & Security",

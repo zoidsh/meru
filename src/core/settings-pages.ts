@@ -7,6 +7,7 @@ export const SETTINGS_SECTIONS = [
   "notifications",
   "gmail",
   "tabs-and-apps",
+  "shortcuts",
   "privacy",
   "advanced",
   "pro",

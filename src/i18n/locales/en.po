@@ -63,6 +63,11 @@ msgstr "{days, plural, one {Your trial ends in # day.} other {Your trial ends in
 msgid "{done} of {total}"
 msgstr "{done} of {total}"
 
+#. On the Shortcuts page of Settings, the keys of the first and the last of a numbered set of commands, such as ⌃⇧1 to ⌃⇧9
+#: src/settings/shortcuts-page.tsx
+msgid "{first} to {last}"
+msgstr "{first} to {last}"
+
 #. Description of the Do Not Disturb switch in Settings while it is off; {holds} is what it does, such as Silences all notifications. The moon is the Do Not Disturb button in the main window's title bar
 #: src/settings/do-not-disturb.ts
 msgid "{holds} You can also turn it on for a while from the moon in the title bar."
@@ -513,6 +518,11 @@ msgstr "Browsing data"
 #: src/settings/profile-page.tsx
 msgid "Browsing data deleted."
 msgstr "Browsing data deleted."
+
+#. Title of the last group of the Shortcuts page in Settings, listing keys such as zoom and quit that Meru binds and that cannot be changed
+#: src/settings/shortcuts-page.tsx
+msgid "Built-in shortcuts"
+msgstr "Built-in shortcuts"
 
 #. Label of the row in Settings that clears the saved pages and images of every profile
 #: src/settings/advanced-page.tsx
@@ -1623,6 +1633,12 @@ msgstr "none"
 msgid "None"
 msgstr "None"
 
+#. On the Shortcuts page of Settings, in place of the keys of a command that has none on this platform
+#: src/settings/shortcuts-page.tsx
+msgctxt "keyboard shortcut"
+msgid "None"
+msgstr "None"
+
 #. Label over the part of the window a tab dragged there would take, when dropping it would leave a pane too small, so it does nothing
 #: src/shell/drop-zone.tsx
 msgid "Not enough room"
@@ -2213,6 +2229,11 @@ msgstr "Shift"
 #: src/shell/open-app.tsx
 msgid "Shift+Delete removes the highlighted bookmark"
 msgstr "Shift+Delete removes the highlighted bookmark"
+
+#. Name of the Settings section listing every keyboard shortcut of Meru by menu, in its list and as its title
+#: src/settings/app.tsx
+msgid "Shortcuts"
+msgstr "Shortcuts"
 
 #. Button of the Test notification row in Settings that shows a sample new mail notification, as the settings above would show one
 #: src/settings/notifications-page.tsx
@@ -2971,6 +2992,11 @@ msgstr "Works on every page in Meru, including Gmail."
 #: src/settings/privacy-page.tsx
 msgid "You can delete cookies and cached files for each profile on its page."
 msgstr "You can delete cookies and cached files for each profile on its page."
+
+#. Description of the Built-in shortcuts group of the Shortcuts page in Settings
+#: src/settings/shortcuts-page.tsx
+msgid "You can't change these."
+msgstr "You can't change these."
 
 #. Description of Remove profile on the page of the only enabled profile in Settings, whose button is disabled
 #: src/settings/profile-page.tsx
