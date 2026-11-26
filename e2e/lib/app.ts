@@ -18,6 +18,7 @@ import { delay, withTimeout } from "es-toolkit";
 
 import { DEV_IDENTITY } from "#core/app-identity.ts";
 import { REFUSED_MARKER } from "#core/loopback.ts";
+import { WITHHELD_MARKER } from "#core/withheld.ts";
 
 import { startStandIn } from "./stand-in.ts";
 import type { StandIn } from "./stand-in.ts";
@@ -813,6 +814,9 @@ export const test = base.extend<AppFixtures, WorkerFixtures>({
     const apps: { app: ElectronApplication; log: string[] }[] = [];
     // Every request the app's build refused for leaving this machine.
     const refused: string[] = [];
+    // Every Electron call the build withheld, which a stand-in should have
+    // answered.
+    const withheld: string[] = [];
 
     try {
       await use(async (added = {}) => {
@@ -834,6 +838,10 @@ export const test = base.extend<AppFixtures, WorkerFixtures>({
           for (const line of String(chunk).split("\n")) {
             if (line.startsWith(REFUSED_MARKER)) {
               refused.push(line.slice(REFUSED_MARKER.length + 1));
+            }
+
+            if (line.startsWith(WITHHELD_MARKER)) {
+              withheld.push(line.slice(WITHHELD_MARKER.length + 1));
             }
 
             if (line !== "" && log.length < MAIN_LOG_LINES) {
@@ -875,6 +883,12 @@ export const test = base.extend<AppFixtures, WorkerFixtures>({
         `The app asked to reach the network, which the suite's build refused: ${[...new Set(refused)].join(", ")}`
       );
     }
+
+    if (withheld.length > 0) {
+      throw new Error(
+        `The app made a call the suite's build withheld, which its stand-in should have answered: ${[...new Set(withheld)].join(", ")}`
+      );
+    }
   },
   app: async ({ launchApp }, use, testInfo) => {
     const app = await launchApp();
@@ -890,6 +904,9 @@ export const test = base.extend<AppFixtures, WorkerFixtures>({
     await use(await findPage(app, SHELL_URL));
   },
   spawnApp: async ({ userDataDir, launched, standIn, display }, use) => {
+    // As the launched app's: a call withheld is a stand-in forgotten.
+    const withheld: string[] = [];
+
     await use((args = []) => {
       const child = spawn(
         executablePath,
@@ -900,9 +917,17 @@ export const test = base.extend<AppFixtures, WorkerFixtures>({
             MERU_TEST_APP_URLS: standIn.appUrls,
             ...(display && { DISPLAY: display }),
           },
-          stdio: "ignore",
+          stdio: ["ignore", "ignore", "pipe"],
         }
       );
+
+      child.stderr.on("data", (chunk: Buffer) => {
+        for (const line of String(chunk).split("\n")) {
+          if (line.startsWith(WITHHELD_MARKER)) {
+            withheld.push(line.slice(WITHHELD_MARKER.length + 1));
+          }
+        }
+      });
 
       if (child.pid !== undefined) {
         launched.push(child.pid);
@@ -910,6 +935,12 @@ export const test = base.extend<AppFixtures, WorkerFixtures>({
 
       return { exited: once(child, "exit").then(() => child.exitCode) };
     });
+
+    if (withheld.length > 0) {
+      throw new Error(
+        `A second launch made a call the suite's build withheld, which its stand-in should have answered: ${[...new Set(withheld)].join(", ")}`
+      );
+    }
   },
 });
 

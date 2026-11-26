@@ -86,6 +86,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may answer Electron's dialogs and openers as canceled in place of showing or opening anything",
     },
     {
+      marker: "MERU_E2E_WITHHELD",
+      why: "only the end-to-end build may log the Electron calls it withheld",
+    },
+    {
       marker: "meruTestClipboard",
       why: "only the end-to-end build may capture clipboard writes in place of making them",
     },

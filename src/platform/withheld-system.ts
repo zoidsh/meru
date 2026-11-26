@@ -1,10 +1,12 @@
 import { dialog, shell } from "electron";
 
+import { WITHHELD_MARKER } from "#core/withheld.ts";
+
 /**
  * For the end-to-end build, from launch: Electron's own calls that open
  * something outside the app or put a native dialog on the desktop answer as
  * a cancel and record what was asked under `meruTestWithheld`, said on
- * main's log. Each surface a feature uses has a captured adapter of its
+ * main's log under `WITHHELD_MARKER`, which fails the test that hit it. Each surface a feature uses has a captured adapter of its
  * own; this catches the call that has none, so a test that forgets to stub
  * one never opens the system's mail app, a browser or a dialog. A test may
  * still put its own answer in place, as the removal confirmation's does.
@@ -16,7 +18,7 @@ export const withholdSystemSurfaces = () => {
 
   const withhold = (call: string) => {
     withheld.push(call);
-    console.error(`meruTestWithheld: ${call}`);
+    console.error(`${WITHHELD_MARKER} ${call}`);
   };
 
   shell.openExternal = () => {
