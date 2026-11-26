@@ -1,11 +1,7 @@
-import path from "node:path";
-
 import { hardwareAccelerationAtLaunch } from "#core/hardware-acceleration.ts";
 import type { Platform } from "#core/platform.ts";
 import type { AppLifecycle } from "#platform/app.ts";
-import { createTextFile } from "#platform/text-file.ts";
-
-import { SETTINGS_FILE_NAME } from "../settings.ts";
+import type { TextFile } from "#platform/text-file.ts";
 
 /**
  * Turns hardware acceleration off for the run when `settings.json` says so,
@@ -14,16 +10,19 @@ import { SETTINGS_FILE_NAME } from "../settings.ts";
  * use is the stores' to decide once the app is ready. Answers whether the run
  * keeps it.
  */
-export const wireHardwareAcceleration = (
-  lifecycle: Pick<AppLifecycle, "userDataPath" | "disableHardwareAcceleration">,
-  platform: Platform
-) => {
+export const wireHardwareAcceleration = ({
+  settingsFile,
+  lifecycle,
+  platform,
+}: {
+  settingsFile: Pick<TextFile, "readSync">;
+  lifecycle: Pick<AppLifecycle, "disableHardwareAcceleration">;
+  platform: Platform;
+}) => {
   let text: string | undefined;
 
   try {
-    text = createTextFile(
-      path.join(lifecycle.userDataPath, SETTINGS_FILE_NAME)
-    ).readSync();
+    text = settingsFile.readSync();
   } catch {
     text = undefined;
   }

@@ -22,6 +22,7 @@ import { setApplicationMenu } from "#platform/menu.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSpellChecker } from "#platform/spellcheck.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
+import { createTextFile } from "#platform/text-file.ts";
 import { createTheme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
@@ -33,6 +34,7 @@ import { createFocus } from "./focus.ts";
 import { createLanguage } from "./language.ts";
 import { createOverlays } from "./overlay.ts";
 import { createSenderRegistry } from "./senders.ts";
+import { SETTINGS_FILE_NAME } from "./settings.ts";
 import { createShellSource, serveShellContract } from "./shell-ipc.ts";
 import {
   createTrialChoice,
@@ -126,10 +128,13 @@ const start = async () => {
   }
 
   // Synchronous and before the first await, so it is done before `ready`.
-  const hardwareAccelerationAtLaunch = wireHardwareAcceleration(
+  const hardwareAccelerationAtLaunch = wireHardwareAcceleration({
+    settingsFile: createTextFile(
+      path.join(lifecycle.userDataPath, SETTINGS_FILE_NAME)
+    ),
     lifecycle,
-    process.platform as Platform
-  );
+    platform: process.platform as Platform,
+  });
 
   const appProtocol = createAppProtocol();
 
