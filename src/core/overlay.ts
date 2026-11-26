@@ -127,9 +127,8 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth =>
  * area, so the card can be placed in it by CSS and a press beside it lands
  * in the view, which closes it; a toast's or the update card's only where
  * it is, so the pages beside it take their own presses, as does the find
- * bar's, at the
- * top right of `pane`, the focused one placed in the page area, or of the
- * page area outside a split.
+ * bar's, at the top right of `pane`, the focused one placed in the page
+ * area, or of the page area outside a split.
  */
 export const overlayRectangle = (
   contentSize: Size,
