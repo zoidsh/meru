@@ -152,15 +152,15 @@ export const GmailPage = () => {
             switchRow(
               "extendDarkTheme",
               t({
-                message: "Darken more of Gmail",
+                message: "Extend Gmail's dark theme",
                 comment:
                   "Label of the switch in Settings that darkens the parts of Gmail its own dark theme leaves white, such as the conversation view and the compose window",
               }),
               t({
                 message:
-                  "Darkens the conversation view, the compose window, menus and dialogs that Gmail leaves white. Emails keep their own colors. Only works when Gmail itself is set to Dark.",
+                  "Darkens the conversation view, the compose window, menus and dialogs that Gmail leaves white. Only works when Gmail itself is set to Dark.",
                 comment:
-                  "Description of the Darken more of Gmail switch in Settings; emails themselves stay on a white card in the sender's colors, and Dark is the name of the theme chosen in Gmail's own settings, as Gmail writes it",
+                  "Description of the Extend Gmail's dark theme switch in Settings; Dark is the name of the theme chosen in Gmail's own settings, as Gmail writes it",
               })
             ),
           ]}

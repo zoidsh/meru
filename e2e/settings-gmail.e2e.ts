@@ -30,7 +30,7 @@ const SWITCHES = [
   ["Hide promotions", "hidePromoBanner"],
   ["Hide Upgrade button", "hideUpgradeButton"],
   ["Hide inbox footer", "hideInboxFooter"],
-  ["Darken more of Gmail", "extendDarkTheme"],
+  ["Extend Gmail's dark theme", "extendDarkTheme"],
   ["Newest message first", "reverseConversation"],
   ["Show attachments first", "moveAttachmentsToTop"],
   ["Show trimmed content", "showTrimmedContent"],

@@ -911,15 +911,10 @@ msgstr "Cyan"
 msgid "Dark"
 msgstr "Dark"
 
-#. Label of the switch in Settings that darkens the parts of Gmail its own dark theme leaves white, such as the conversation view and the compose window
+#. Description of the Extend Gmail's dark theme switch in Settings; Dark is the name of the theme chosen in Gmail's own settings, as Gmail writes it
 #: src/settings/gmail-page.tsx
-msgid "Darken more of Gmail"
-msgstr "Darken more of Gmail"
-
-#. Description of the Darken more of Gmail switch in Settings; emails themselves stay on a white card in the sender's colors, and Dark is the name of the theme chosen in Gmail's own settings, as Gmail writes it
-#: src/settings/gmail-page.tsx
-msgid "Darkens the conversation view, the compose window, menus and dialogs that Gmail leaves white. Emails keep their own colors. Only works when Gmail itself is set to Dark."
-msgstr "Darkens the conversation view, the compose window, menus and dialogs that Gmail leaves white. Emails keep their own colors. Only works when Gmail itself is set to Dark."
+msgid "Darkens the conversation view, the compose window, menus and dialogs that Gmail leaves white. Only works when Gmail itself is set to Dark."
+msgstr "Darkens the conversation view, the compose window, menus and dialogs that Gmail leaves white. Only works when Gmail itself is set to Dark."
 
 #. Accessible name of the days a window of quiet hours holds on in Settings
 #: src/settings/quiet-hours-field.tsx
@@ -1136,6 +1131,11 @@ msgstr "Exit"
 #: src/shell/tab-strip.tsx
 msgid "Expand sidebar"
 msgstr "Expand sidebar"
+
+#. Label of the switch in Settings that darkens the parts of Gmail its own dark theme leaves white, such as the conversation view and the compose window
+#: src/settings/gmail-page.tsx
+msgid "Extend Gmail's dark theme"
+msgstr "Extend Gmail's dark theme"
 
 #. Shown in the Downloads card when nothing is listed
 #: src/shell/downloads.tsx
