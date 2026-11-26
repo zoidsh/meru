@@ -56,6 +56,7 @@ export const TabsAppsPage = () => {
       return inCaption
         ? t({
             message: "none",
+            context: "Google apps",
             comment:
               "Always open in your default browser under All profiles when no Google app is chosen, in the Settings caption under a profile's own value: For all profiles, it's none.",
           })

@@ -1771,10 +1771,14 @@ msgstr "No trusted sites"
 msgid "No unread messages"
 msgstr "No unread messages"
 
-#. Always open in your default browser under All profiles when no Google app is chosen, in the Settings caption under a profile's own value: For all profiles, it's none.
 #. Quiet hours under All profiles when they have no window, in the Settings caption: For all profiles, it's none.
 #: src/settings/scope.ts
+msgid "none"
+msgstr "none"
+
+#. Always open in your default browser under All profiles when no Google app is chosen, in the Settings caption under a profile's own value: For all profiles, it's none.
 #: src/settings/tabs-apps-page.tsx
+msgctxt "Google apps"
 msgid "none"
 msgstr "none"
 
