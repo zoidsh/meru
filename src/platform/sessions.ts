@@ -163,15 +163,14 @@ const send = (
 };
 
 export const createSessions = (): Sessions => {
-  const guarded = new WeakSet<Electron.Session>();
-  /** Every guarded session, whose display-media handler a change sets again. */
-  const guardedPartitions = new Map<string, Electron.Session>();
+  /** Every guarded session by its partition, whose display-media handler a change sets again. */
+  const guarded = new Map<string, Electron.Session>();
   let handler: DisplayMediaHandler | undefined;
   let streams: DisplayMediaStreams | undefined;
   let systemPicker = false;
 
   const setDisplayMedia = (partition: string, guarding: Electron.Session) => {
-    guardedPartitions.set(partition, guarding);
+    guarded.set(partition, guarding);
 
     const useSystemPicker =
       streams?.systemPicker(partition, systemPicker) ?? false;
@@ -210,13 +209,12 @@ export const createSessions = (): Sessions => {
     clearData: (partition, dataTypes) =>
       session.fromPartition(partition).clearData({ dataTypes: [...dataTypes] }),
     guard: (partition, allows) => {
-      const guarding = session.fromPartition(partition);
-
-      if (guarded.has(guarding)) {
+      if (guarded.has(partition)) {
         return;
       }
 
-      guarded.add(guarding);
+      const guarding = session.fromPartition(partition);
+
       guarding.setPermissionRequestHandler(
         (webContents, permission, answer, details) => {
           const media: Partial<Electron.MediaAccessPermissionRequest> =
@@ -248,7 +246,7 @@ export const createSessions = (): Sessions => {
       handler = next;
       streams = nextStreams;
 
-      for (const [partition, guarding] of guardedPartitions) {
+      for (const [partition, guarding] of guarded) {
         setDisplayMedia(partition, guarding);
       }
     },
@@ -259,7 +257,7 @@ export const createSessions = (): Sessions => {
 
       systemPicker = on;
 
-      for (const [partition, guarding] of guardedPartitions) {
+      for (const [partition, guarding] of guarded) {
         setDisplayMedia(partition, guarding);
       }
     },

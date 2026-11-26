@@ -1449,6 +1449,11 @@ msgstr "Links to these sites open without asking."
 msgid "Loading"
 msgstr "Loading"
 
+#. Accessible name of the placeholders the screen sharing card shows while it lists the windows and screens to share
+#: src/shell/screen-picker.tsx
+msgid "Loading…"
+msgstr "Loading…"
+
 #. Choice of the Tint strength menu in Settings: a little of the profile's color in the title bar and sidebar
 #: src/settings/appearance-page.tsx
 msgid "Low"

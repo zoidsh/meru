@@ -490,7 +490,12 @@ export const SHELL_STATE = {
       card: z.nullable(
         z.discriminatedUnion("kind", [
           z.object({ kind: z.literal("downloads") }),
-          z.object({ kind: z.literal("screen-picker"), picker: pickerCard }),
+          z.object({
+            kind: z.literal("screen-picker"),
+            picker: pickerCard,
+            /** Which request it answers, so a new one draws afresh. */
+            request: z.number(),
+          }),
         ])
       ),
       /** Its find bar while it is open, drawn over the page in that window. */

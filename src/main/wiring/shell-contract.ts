@@ -44,12 +44,12 @@ import type { UpdateCardModule } from "../update-card.ts";
 
 /** The card a tab's own window shows, the screen picker before Downloads. */
 const ownWindowCard = (
-  picker: PickerCard | undefined,
+  picker: { picker: PickerCard; request: number } | undefined,
   downloadsIn: TabKey | undefined,
   key: TabKey
 ): ShellState["windows"][number]["card"] => {
   if (picker) {
-    return { kind: "screen-picker", picker };
+    return { kind: "screen-picker", ...picker };
   }
 
   return downloadsIn !== undefined && tabKey(downloadsIn) === tabKey(key)
@@ -272,7 +272,12 @@ export const wireShellContract = ({
               const navigation = views.navigation(key);
               const bar = find.bar(key);
               const downloadsIn = downloads.window();
-              const picker = screenPicker.windowCard(key);
+              const card = screenPicker.windowCard(key);
+              const request = screenPicker.windowRequest(key);
+              const picker =
+                card && request !== undefined
+                  ? { picker: card, request }
+                  : undefined;
 
               return tab && navigation
                 ? [

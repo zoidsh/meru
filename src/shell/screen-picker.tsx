@@ -306,14 +306,22 @@ export const ScreenPicker = ({
 
             if (!listed) {
               content = (
-                <div className={GRID} aria-busy>
+                <output
+                  aria-busy
+                  aria-label={t({
+                    message: "Loading…",
+                    comment:
+                      "Accessible name of the placeholders the screen sharing card shows while it lists the windows and screens to share",
+                  })}
+                  className={GRID}
+                >
                   {SKELETONS.map((key) => (
                     <div key={key} className="flex flex-col gap-2 p-2.5">
                       <Skeleton className="aspect-video w-full" />
                       <Skeleton className="h-4 w-2/3" />
                     </div>
                   ))}
-                </div>
+                </output>
               );
             } else if (sources.length === 0) {
               content = (

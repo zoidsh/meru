@@ -38,6 +38,8 @@ export interface ScreenPickerDeps {
 type Answer = Parameters<DisplayMediaHandler>[1];
 
 interface Request {
+  /** Told apart from the request before it, whose card the shell may still draw. */
+  id: number;
   /** The tab whose page asked, or whose page opened the window that asked. */
   key: TabKey;
   /** The tab's own window it shows in; none for the main window. */
@@ -80,6 +82,7 @@ export const createScreenPicker = ({
   log,
 }: ScreenPickerDeps) => {
   const requests = new Map<string, Request>();
+  let requested = 0;
   const listeners = new Set<() => void>();
   const closedInListeners = new Set<(window: TabKey) => void>();
 
@@ -209,7 +212,10 @@ export const createScreenPicker = ({
       return;
     }
 
+    requested += 1;
+
     const opened: Request = {
+      id: requested,
       key,
       window,
       webContentsId,
@@ -305,6 +311,8 @@ export const createScreenPicker = ({
     mainCard: () => requests.get(MAIN)?.card,
     /** The card in the tab's own window, while one is there. */
     windowCard: (window: TabKey) => at(window)?.card,
+    /** Which request the card in the tab's own window answers. */
+    windowRequest: (window: TabKey) => at(window)?.id,
     /** Cancels any request whose tab has lost its page. */
     follow: () => {
       for (const open of requests.values()) {

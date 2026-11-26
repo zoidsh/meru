@@ -292,6 +292,7 @@ const DrawnCard = ({ own, card }: { own: OwnWindow; card: ShownCard }) => {
   if (card.kind === "screen-picker") {
     return (
       <ScreenPicker
+        key={card.request}
         card={card.picker}
         window={{ profileId: own.profileId, tabId: own.tabId }}
       />

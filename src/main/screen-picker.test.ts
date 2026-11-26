@@ -360,8 +360,12 @@ describe(createScreenPicker, () => {
     fake.state.sources = [SCREEN];
     await picker.share(NOTES.id, meetTab);
 
+    const gone = picker.windowRequest(meetTab);
+
     expect(ask(PAGE)).toStrictEqual([]);
     expect(picker.windowCard(meetTab)).toStrictEqual({ kind: "loading" });
+    // The shell draws the new request afresh, with no tab or choice kept.
+    expect(picker.windowRequest(meetTab)).not.toBe(gone);
   });
 
   it("closes the card in a tab's own window as the window closes, giving the keys back only when closed from within", () => {
