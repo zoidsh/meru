@@ -4,6 +4,8 @@ import { isEqual } from "es-toolkit";
 
 import { matchesAccelerator } from "#core/accelerator.ts";
 import type { KeyInput } from "#core/accelerator.ts";
+import { builtInAccelerator } from "#core/built-in-shortcuts.ts";
+import type { BuiltInShortcutId } from "#core/built-in-shortcuts.ts";
 import {
   PINNED_SHORTCUT_COUNT,
   selectPinnedCommandId,
@@ -46,6 +48,76 @@ export interface MenuTemplateInput {
 
 const separator: MenuItemConstructorOptions = { type: "separator" };
 
+/** The item's accelerator from the built-in table; none where its role gives the key. */
+const builtIn = (id: BuiltInShortcutId, platform: Platform) => {
+  const accelerator = builtInAccelerator(id, platform);
+
+  return accelerator === undefined ? {} : { accelerator };
+};
+
+/** The label of the item a built-in key belongs to, which the Shortcuts page shows too. */
+export const builtInLabel = (
+  id: BuiltInShortcutId,
+  appName: string,
+  platform: Platform
+) => {
+  switch (id) {
+    case "resetZoom": {
+      return t({
+        message: "Actual Size",
+        comment:
+          "Menu item in the View menu that sets the page's zoom back to 100%",
+      });
+    }
+    case "zoomIn": {
+      return t({
+        message: "Zoom In",
+        comment: "Menu item in the View menu that makes the page larger",
+      });
+    }
+    case "zoomOut": {
+      return t({
+        message: "Zoom Out",
+        comment: "Menu item in the View menu that makes the page smaller",
+      });
+    }
+    case "fullScreen": {
+      return t({
+        message: "Toggle Full Screen",
+        comment:
+          "Menu item in the View menu that makes the window fill the screen, or stop filling it",
+      });
+    }
+    case "minimize": {
+      return t({
+        message: "Minimize",
+        comment: "Menu item in the Window menu",
+      });
+    }
+    case "close": {
+      return platform === "darwin"
+        ? t({
+            message: "Close Window",
+            comment: "Menu item in the macOS Window menu",
+          })
+        : t({
+            message: "Close",
+            comment: "Menu item in the Window menu that closes the window",
+          });
+    }
+    case "quit": {
+      return t({
+        message: `Quit ${appName}`,
+        comment:
+          "Menu item that quits the app; {appName} is the app's name, such as Meru",
+      });
+    }
+    default: {
+      return "";
+    }
+  }
+};
+
 /**
  * The zoom items' keys as a view hears them; `=`, which carries `+`, zooms
  * in with Shift or without.
@@ -58,16 +130,11 @@ const ZOOM_KEYS: readonly (readonly [string, ZoomChange])[] = [
 ];
 
 /** The app menu's items that are the system's own. */
-const appRoles = (appName: string, isMacOS: boolean) => {
+const appRoles = (appName: string, platform: Platform) => {
   const quit: MenuItemConstructorOptions = {
-    label: t({
-      message: `Quit ${appName}`,
-      comment:
-        "Menu item that quits the app; {appName} is the app's name, such as Meru",
-    }),
+    label: builtInLabel("quit", appName, platform),
     role: "quit",
-    // The role has no key on Windows; v3 gives Quit this one everywhere.
-    ...(!isMacOS && { accelerator: "CommandOrControl+Q" }),
+    ...builtIn("quit", platform),
   };
 
   return {
@@ -178,13 +245,12 @@ const windowLabel = () =>
   t({ message: "Window", comment: "Name of the Window menu" });
 
 /** The Window menu's items for the window itself. */
-const windowRoles = (isMacOS: boolean) => {
+const windowRoles = (appName: string, platform: Platform) => {
+  const isMacOS = platform === "darwin";
   const minimize: MenuItemConstructorOptions = {
-    label: t({
-      message: "Minimize",
-      comment: "Menu item in the Window menu",
-    }),
+    label: builtInLabel("minimize", appName, platform),
     role: "minimize",
+    ...builtIn("minimize", platform),
   };
 
   return {
@@ -202,19 +268,15 @@ const windowRoles = (isMacOS: boolean) => {
     // draft; Alt+F4 still closes it.
     close: (isMacOS
       ? {
-          label: t({
-            message: "Close Window",
-            comment: "Menu item in the macOS Window menu",
-          }),
+          label: builtInLabel("close", appName, platform),
           role: "close",
           id: "window.close",
+          ...builtIn("close", platform),
         }
       : {
-          label: t({
-            message: "Close",
-            comment: "Menu item in the Window menu that closes the window",
-          }),
+          label: builtInLabel("close", appName, platform),
           id: "window.close",
+          ...builtIn("close", platform),
           click: (_item, window) => {
             window?.close();
           },
@@ -241,8 +303,8 @@ export const buildLaunchMenuTemplate = ({
   appName: string;
 }): MenuItemConstructorOptions[] => {
   const isMacOS = platform === "darwin";
-  const roles = appRoles(appName, isMacOS);
-  const windowItems = windowRoles(isMacOS);
+  const roles = appRoles(appName, platform);
+  const windowItems = windowRoles(appName, platform);
 
   return [
     {
@@ -343,7 +405,7 @@ export const buildMenuTemplate = ({
     submenu: doNotDisturbItems(commands, context, locale, run),
   };
 
-  const roles = appRoles(appName, isMacOS);
+  const roles = appRoles(appName, platform);
   const appMenu: MenuItemConstructorOptions = {
     label: appName,
     submenu: isMacOS
@@ -395,47 +457,34 @@ export const buildMenuTemplate = ({
       // Not the zoom roles, which zoom whatever has focus, the find bar's
       // view among them; the roles' own keys.
       {
-        label: t({
-          message: "Actual Size",
-          comment:
-            "Menu item in the View menu that sets the page's zoom back to 100%",
-        }),
+        label: builtInLabel("resetZoom", appName, platform),
         id: "view.resetZoom",
-        accelerator: "CommandOrControl+0",
+        ...builtIn("resetZoom", platform),
         click: () => {
           zoom("reset");
         },
       },
       {
-        label: t({
-          message: "Zoom In",
-          comment: "Menu item in the View menu that makes the page larger",
-        }),
+        label: builtInLabel("zoomIn", appName, platform),
         id: "view.zoomIn",
-        accelerator: "CommandOrControl+Plus",
+        ...builtIn("zoomIn", platform),
         click: () => {
           zoom("in");
         },
       },
       {
-        label: t({
-          message: "Zoom Out",
-          comment: "Menu item in the View menu that makes the page smaller",
-        }),
+        label: builtInLabel("zoomOut", appName, platform),
         id: "view.zoomOut",
-        accelerator: "CommandOrControl+-",
+        ...builtIn("zoomOut", platform),
         click: () => {
           zoom("out");
         },
       },
       separator,
       {
-        label: t({
-          message: "Toggle Full Screen",
-          comment:
-            "Menu item in the View menu that makes the window fill the screen, or stop filling it",
-        }),
+        label: builtInLabel("fullScreen", appName, platform),
         role: "togglefullscreen",
+        ...builtIn("fullScreen", platform),
       },
       ...(developerTools ? [separator, developerTools] : []),
     ],
@@ -553,7 +602,7 @@ export const buildMenuTemplate = ({
     ...item("profile.sleep"),
   ];
 
-  const windowItems = windowRoles(isMacOS);
+  const windowItems = windowRoles(appName, platform);
   const windowMenu: MenuItemConstructorOptions = {
     label: windowLabel(),
     ...(isMacOS ? { role: "windowMenu" as const } : {}),

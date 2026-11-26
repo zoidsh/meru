@@ -1,6 +1,8 @@
 import type { MenuItemConstructorOptions } from "electron";
 import { describe, expect, it } from "vitest";
 
+import { BUILT_IN_SHORTCUTS } from "#core/built-in-shortcuts.ts";
+import type { BuiltInShortcutId } from "#core/built-in-shortcuts.ts";
 import type { Platform } from "#core/platform.ts";
 import { decodeState, gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -62,6 +64,20 @@ const outline = (menus: MenuItemConstructorOptions[]) =>
 
 const itemOf = (menus: MenuItemConstructorOptions[], id: string) =>
   menus.flatMap(submenu).find((item) => (item.role ?? item.id) === id);
+
+/**
+ * Each built-in key's item, by its role or, for an item of Meru's own, its
+ * id; Close is the role on macOS and an item of ours elsewhere.
+ */
+const BUILT_IN_ITEMS: Record<BuiltInShortcutId, string> = {
+  resetZoom: "view.resetZoom",
+  zoomIn: "view.zoomIn",
+  zoomOut: "view.zoomOut",
+  fullScreen: "togglefullscreen",
+  minimize: "minimize",
+  close: "close",
+  quit: "quit",
+};
 
 const labels = (menus: MenuItemConstructorOptions[]) =>
   menus.map((menu) => menu.label);
@@ -179,6 +195,30 @@ describe(buildMenuTemplate, () => {
       ["reset", "in", "out"],
     ]);
   });
+
+  it.each(["darwin", "win32", "linux"] as const)(
+    "on %s carries the built-in table's keys: its accelerator, or none of ours where the table says the key is a role's",
+    (platform) => {
+      const menus = template(platform);
+      const carried = BUILT_IN_SHORTCUTS.map(({ id }) => {
+        const item = itemOf(menus, BUILT_IN_ITEMS[id]);
+
+        return [
+          id,
+          item?.accelerator ?? (item?.role ? `role ${item.role}` : "no key"),
+        ];
+      });
+
+      expect(carried).toStrictEqual(
+        BUILT_IN_SHORTCUTS.map(({ id, shortcut, role }) => [
+          id,
+          role?.[platform]
+            ? `role ${BUILT_IN_ITEMS[id]}`
+            : (shortcut[platform] ?? "no key"),
+        ])
+      );
+    }
+  );
 
   it.each(["win32", "linux"] as const)(
     "on %s has no Help, Quit on Ctrl+Q and a Close with no key, so Ctrl+W in a page cannot quit",
