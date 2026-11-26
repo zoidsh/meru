@@ -10,6 +10,16 @@ import type { Updater } from "#platform/updater.ts";
 
 import type { SettingsStore } from "./settings.ts";
 
+/**
+ * How long the app may keep running once the install is asked for before
+ * Meru finishes the quit itself. On macOS the library says a download is
+ * ready before Squirrel.Mac has fetched it from the library's local server,
+ * and its install waits for Squirrel, which may still be fetching or may
+ * have failed with nothing said: without this the app would stay running
+ * with its windows closed.
+ */
+export const INSTALL_QUIT_CAP = 15_000;
+
 const UNSUPPORTED: UpdateStatus = {
   status: "unsupported",
   version: null,
@@ -66,6 +76,14 @@ export const createUpdates = ({
   let interval: ReturnType<typeof setInterval> | undefined;
   let started = false;
   let installing = false;
+  let installCap: ReturnType<typeof setTimeout> | undefined;
+
+  // Finishes the quit begun for an install that is not quitting the app.
+  const finishQuit = () => {
+    clearTimeout(installCap);
+    installing = false;
+    quit();
+  };
 
   const set = (next: UpdateStatus) => {
     if (
@@ -119,10 +137,9 @@ export const createUpdates = ({
           `Update ${event.signature ? "not verified" : "failed"}: ${loggableUpdateError(message ?? "", home)}`
         );
 
-        // Nothing was there to install, so the quit begun for it finishes.
+        // Nothing was there to install.
         if (installing) {
-          installing = false;
-          quit();
+          finishQuit();
         }
       }
 
@@ -150,14 +167,18 @@ export const createUpdates = ({
       follow();
     },
     check,
-    /** Saves what quit saves, then installs; nothing without a download. */
+    /**
+     * Saves what quit saves, then installs; nothing without a download. A
+     * second press while the quit is held is `quitThen`'s to ignore.
+     */
     restart: () => {
-      if (!supported || current.status !== "ready" || installing) {
+      if (!supported || current.status !== "ready") {
         return;
       }
 
-      installing = true;
       quitThen(() => {
+        installing = true;
+        installCap = setTimeout(finishQuit, INSTALL_QUIT_CAP);
         supported.quitAndInstall();
       });
     },
@@ -167,8 +188,10 @@ export const createUpdates = ({
         void openExternal(releasePageUrl(current.version));
       }
     },
+    /** As the app quits, the install's own quit included. */
     dispose: () => {
       clearInterval(interval);
+      clearTimeout(installCap);
     },
   };
 };

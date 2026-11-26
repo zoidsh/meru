@@ -4,7 +4,11 @@ import { UPDATE_CHECK_INTERVAL } from "#core/updates.ts";
 import { fakeUpdater } from "#platform/updater.fake.ts";
 
 import { createSettingsStore } from "./settings.ts";
-import { createUpdates, loggableUpdateError } from "./updates.ts";
+import {
+  INSTALL_QUIT_CAP,
+  createUpdates,
+  loggableUpdateError,
+} from "./updates.ts";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -34,7 +38,12 @@ const setup = ({
     updater: noUpdater ? undefined : fake.updater,
     settings,
     runningVersion,
+    // One-shot, as the app's own is.
     quitThen: (next) => {
+      if (finish) {
+        return;
+      }
+
       steps.push("quitThen");
       finish = next;
     },
@@ -288,6 +297,53 @@ describe(createUpdates, () => {
       app.updates.restart();
       app.finishQuit();
       await app.emit({ kind: "error", signature: false }, "No update filepath");
+
+      expect(app.steps).toStrictEqual(["quitThen", "quit"]);
+    });
+
+    it("keeps the quit held through an error that comes before the install", async () => {
+      const app = await ready();
+
+      app.updates.restart();
+      await app.emit({ kind: "error", signature: false }, "A check failed");
+
+      expect(app.steps).toStrictEqual(["quitThen"]);
+
+      app.finishQuit();
+      expect(app.calls.at(-1)).toBe("quitAndInstall");
+    });
+
+    it("finishes the quit itself when the install has not quit the app in time", async () => {
+      const app = await ready();
+
+      app.updates.restart();
+      app.finishQuit();
+      vi.advanceTimersByTime(INSTALL_QUIT_CAP - 1);
+      expect(app.steps).toStrictEqual(["quitThen"]);
+
+      vi.advanceTimersByTime(1);
+      expect(app.steps).toStrictEqual(["quitThen", "quit"]);
+    });
+
+    it("quits no second time when the install quits the app", async () => {
+      const app = await ready();
+
+      app.updates.restart();
+      app.finishQuit();
+      // The install's quit runs the before-quit work, this among it.
+      app.updates.dispose();
+      vi.advanceTimersByTime(INSTALL_QUIT_CAP);
+
+      expect(app.steps).toStrictEqual(["quitThen"]);
+    });
+
+    it("quits once when the install fails and then the time runs out", async () => {
+      const app = await ready();
+
+      app.updates.restart();
+      app.finishQuit();
+      await app.emit({ kind: "error", signature: false }, "No update filepath");
+      vi.advanceTimersByTime(INSTALL_QUIT_CAP);
 
       expect(app.steps).toStrictEqual(["quitThen", "quit"]);
     });
