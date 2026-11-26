@@ -315,10 +315,10 @@ export const pathOpener = () =>
  * published to a feed; the suite's build gets a stand-in its test drives,
  * and every other build none, so it never checks.
  */
-export const systemUpdater = () => {
+export const systemUpdater = async () => {
   if (MERU_E2E_BUILD) {
     return createCapturedUpdater();
   }
 
-  return isReleaseAppId(MERU_APP_ID) ? createUpdater() : undefined;
+  return isReleaseAppId(MERU_APP_ID) ? await createUpdater() : undefined;
 };

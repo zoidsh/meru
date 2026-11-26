@@ -613,7 +613,7 @@ const start = async () => {
   entitlement.onChange(views.relayout);
   entitlement.onChange(overlays.relayout);
 
-  const updates = wireUpdates({
+  const updates = await wireUpdates({
     lifecycle,
     settings,
     runningVersion: createSystemInfo().appVersion(),

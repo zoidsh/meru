@@ -114,6 +114,9 @@ export const appBundles = (target: BuildTarget): BuildOptions[] => {
       output: {
         file: path.join(outDir(target), "main.mjs"),
         format: "esm",
+        // One file still: a dynamic import's module is inlined, evaluated
+        // only once the import runs.
+        codeSplitting: false,
         minify,
         sourcemap: mode === "dev",
       },

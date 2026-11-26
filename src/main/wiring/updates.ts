@@ -11,7 +11,7 @@ import { systemUpdater } from "./test-build.ts";
  * Meru's updates, on the installed Meru's updater alone; `start` once the
  * window shows.
  */
-export const wireUpdates = ({
+export const wireUpdates = async ({
   lifecycle,
   settings,
   runningVersion,
@@ -24,7 +24,7 @@ export const wireUpdates = ({
   systemBrowser: Pick<SystemBrowser, "open">;
 }) => {
   const updates = createUpdates({
-    updater: systemUpdater(),
+    updater: await systemUpdater(),
     settings,
     runningVersion,
     quitThen: lifecycle.quitThen,

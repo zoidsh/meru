@@ -1,5 +1,4 @@
 import { app } from "electron";
-import { autoUpdater } from "electron-updater";
 
 import type { ChannelOptions, UpdateEvent } from "#core/updates.ts";
 
@@ -29,9 +28,12 @@ const isInvalidSignature = (error: unknown) =>
 /**
  * The library's own updater, its download and install at quit left on as it
  * defaults them. Its logger is off, since it logs the feed's URLs whole;
- * main logs each error itself.
+ * main logs each error itself. The library loads here alone, so no build
+ * but the installed Meru's evaluates it.
  */
-export const createUpdater = (): Updater => {
+export const createUpdater = async (): Promise<Updater> => {
+  const { autoUpdater } = await import("electron-updater");
+
   autoUpdater.logger = null;
 
   return {
