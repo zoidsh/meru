@@ -87,6 +87,8 @@ const APP: PageSettings = {
   sleepIdleTabs: "unpinned",
   sleepAfter: "1h",
   hardwareAcceleration: true,
+  autoUpdate: true,
+  updateChannel: "stable",
 };
 
 describe(isScoped, () => {

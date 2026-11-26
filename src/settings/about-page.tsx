@@ -7,6 +7,7 @@ import { CopyButton } from "./copy-button.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
+import { UpdatesGroup } from "./updates-group.tsx";
 
 /**
  * A value and its Copy; the value describes the button, so a screen reader
@@ -43,13 +44,15 @@ const CopyableValue = ({
 
 /**
  * About: this build's version and the system it runs on, each with Copy,
- * for a support message. Neither value is translated.
+ * for a support message, neither translated; then its updates.
  */
 export const AboutPage = () => {
   const { t } = useLingui();
   const about = useSettingsState("about");
+  const settings = useSettingsState("settings");
+  const updates = useSettingsState("updates");
 
-  if (!about) {
+  if (!about || !settings || !updates) {
     return null;
   }
 
@@ -95,6 +98,7 @@ export const AboutPage = () => {
           ))}
         </Rows>
       </SettingGroup>
+      <UpdatesGroup settings={settings} updates={updates} />
     </SettingGroups>
   );
 };

@@ -453,6 +453,16 @@ msgstr "Below the focused pane"
 msgid "Beside the focused pane"
 msgstr "Beside the focused pane"
 
+#. Option of the Release channel menu on the About page of Settings: test versions of Meru before they are released
+#: src/settings/updates-group.tsx
+msgid "Beta"
+msgstr "Beta"
+
+#. Description of the Release channel menu on the About page of Settings
+#: src/settings/updates-group.tsx
+msgid "Beta gets new features sooner, but it may have more bugs."
+msgstr "Beta gets new features sooner, but it may have more bugs."
+
 #. Label of the switch in Settings that blocks ads in Meru's pages
 #: src/settings/privacy-page.tsx
 msgid "Block ads"
@@ -593,10 +603,30 @@ msgstr "Changes here only apply to {chosenName}."
 msgid "Changes the language Meru uses. Gmail uses the one set in your Google account."
 msgstr "Changes the language Meru uses. Gmail uses the one set in your Google account."
 
+#. On the About page of Settings before Meru has checked for a new version
+#: src/settings/updates-group.tsx
+msgid "Check for updates"
+msgstr "Check for updates"
+
+#. Label of the switch on the About page of Settings that has Meru check for new versions by itself
+#: src/settings/updates-group.tsx
+msgid "Check for updates automatically"
+msgstr "Check for updates automatically"
+
 #. Label of the switch on a profile's page in Settings that turns checking its mail on or off
 #: src/settings/profile-page.tsx
 msgid "Check mail"
 msgstr "Check mail"
+
+#. Button on the About page of Settings that checks for a new version of Meru at once
+#: src/settings/updates-group.tsx
+msgid "Check now"
+msgstr "Check now"
+
+#. On the About page of Settings while Meru asks whether a new version is out
+#: src/settings/updates-group.tsx
+msgid "Checking for updates…"
+msgstr "Checking for updates…"
 
 #. Name of a notification sound, picked in Settings
 #: src/settings/notifications-page.tsx
@@ -801,6 +831,11 @@ msgstr "Copy version"
 msgid "Couldn’t archive the message."
 msgstr "Couldn’t archive the message."
 
+#. On the About page of Settings when the last check for a new version, or its download, failed
+#: src/settings/updates-group.tsx
+msgid "Couldn't check for updates"
+msgstr "Couldn't check for updates"
+
 #. Under the Cache row in Settings, when clearing the cache of some profile failed
 #: src/settings/advanced-page.tsx
 msgid "Couldn't clear the cache. Try again."
@@ -952,6 +987,11 @@ msgstr "Dock"
 msgid "Done"
 msgstr "Done"
 
+#. Button on the About page of Settings that opens the release page of a version Meru could not verify, to download it by hand
+#: src/settings/updates-group.tsx
+msgid "Download"
+msgstr "Download"
+
 #. Title of the system notification when a download stops before it is done; the file's name is its text
 #: src/main/download-notifications.ts
 msgid "Download failed"
@@ -971,6 +1011,11 @@ msgstr "Downloaded files"
 #: src/shell/downloads.tsx
 msgid "Downloading"
 msgstr "Downloading"
+
+#. On the About page of Settings while a new version downloads; {version} is its version number, such as 4.2.0
+#: src/settings/updates-group.tsx
+msgid "Downloading Meru {version}…"
+msgstr "Downloading Meru {version}…"
 
 #. Accessible name and tooltip of the Downloads button in the title bar, pressed while the list of downloaded files shows
 #. Heading of the group of Settings about where downloads are saved and what happens when one finishes
@@ -1261,6 +1306,11 @@ msgstr "label:receipts is:unread"
 msgid "Language"
 msgstr "Language"
 
+#. Under Meru is up to date on the About page of Settings; {when} is the date and time of the last check, such as Nov 26, 2026, 9:41 AM
+#: src/settings/updates-group.tsx
+msgid "Last checked {when}."
+msgstr "Last checked {when}."
+
 #. The left arrow key, as a screen reader says it in a keyboard shortcut
 #: src/main/shortcuts-page.ts
 msgid "Left Arrow"
@@ -1396,6 +1446,16 @@ msgstr "Menu bar"
 msgid "Menu Bar & Dock"
 msgstr "Menu Bar & Dock"
 
+#. On the About page of Settings when a downloaded version's signature did not match; {version} is its version number, such as 4.2.0
+#: src/settings/updates-group.tsx
+msgid "Meru {version} couldn't be verified, so it wasn't installed."
+msgstr "Meru {version} couldn't be verified, so it wasn't installed."
+
+#. On the About page of Settings once a new version has downloaded; {version} is its version number, such as 4.2.0
+#: src/settings/updates-group.tsx
+msgid "Meru {version} is ready to install"
+msgstr "Meru {version} is ready to install"
+
 #. Description of the Ask before opening links switch in Settings
 #: src/settings/privacy-page.tsx
 msgid "Meru asks before a link opens in your default browser."
@@ -1438,10 +1498,20 @@ msgstr "Meru couldn't identify this computer, so it can't check your license. Re
 msgid "Meru couldn't save your license. Check that your disk isn't full, then try again."
 msgstr "Meru couldn't save your license. Check that your disk isn't full, then try again."
 
+#. Description of the Check for updates automatically switch on the About page of Settings
+#: src/settings/updates-group.tsx
+msgid "Meru downloads updates in the background and installs them when you quit."
+msgstr "Meru downloads updates in the background and installs them when you quit."
+
 #. Description of Quiet hours in Settings
 #: src/settings/quiet-hours-field.tsx
 msgid "Meru holds notifications until quiet hours end."
 msgstr "Meru holds notifications until quiet hours end."
+
+#. Under Meru … is ready to install on the About page of Settings
+#: src/settings/updates-group.tsx
+msgid "Meru installs it when you quit."
+msgstr "Meru installs it when you quit."
 
 #. About Meru Pro (in Settings) while a license key carried over from an earlier Meru is not yet confirmed, beside the Try again button
 #: src/shared/license-status.ts
@@ -1452,6 +1522,11 @@ msgstr "Meru is checking your license."
 #: src/shell/trial-ended.tsx
 msgid "Meru is free to use with one profile. Everything from your trial is kept, and it comes back when you upgrade."
 msgstr "Meru is free to use with one profile. Everything from your trial is kept, and it comes back when you upgrade."
+
+#. On the About page of Settings once a check found no newer version of Meru
+#: src/settings/updates-group.tsx
+msgid "Meru is up to date"
+msgstr "Meru is up to date"
 
 #. Title of the alert Meru shows in place of opening a link in the default browser, since Meru itself is the system's default browser
 #: src/main/default-browser-guard.ts
@@ -1949,6 +2024,11 @@ msgstr "Quit {productName}"
 msgid "Redo"
 msgstr "Redo"
 
+#. Label of the menu on the About page of Settings choosing whether Meru updates to beta versions too
+#: src/settings/updates-group.tsx
+msgid "Release channel"
+msgstr "Release channel"
+
 #. Accessible name and tooltip of the title bar button that loads the page again
 #. Button in place of a tab's page that crashed, which loads the page again
 #. Menu item, in the View menu and a tab's context menu, that loads the page again
@@ -2067,6 +2147,11 @@ msgstr "Reset {label} to All profiles"
 #: src/shell/pane-handle.tsx
 msgid "Resize panes"
 msgstr "Resize panes"
+
+#. Button on the About page of Settings that quits Meru, installs the downloaded version and opens Meru again
+#: src/settings/updates-group.tsx
+msgid "Restart now"
+msgstr "Restart now"
 
 #. Accessible name and tooltip of the button in the sidebar's box of a split view, while one pane shows alone, that shows every pane again
 #: src/shell/tab-strip.tsx
@@ -2526,6 +2611,11 @@ msgstr "Split Right"
 msgid "Split this pane"
 msgstr "Split this pane"
 
+#. Option of the Release channel menu on the About page of Settings: only finished releases of Meru
+#: src/settings/updates-group.tsx
+msgid "Stable"
+msgstr "Stable"
+
 #. Second line of a download in the Downloads card before anything of it has arrived
 #: src/shell/downloads.tsx
 msgid "Starting…"
@@ -2647,6 +2737,11 @@ msgstr "These apply to every profile unless you change them for one."
 #: src/settings/gmail-page.tsx
 msgid "These change how Gmail looks in Meru. Your Gmail settings stay the same."
 msgstr "These change how Gmail looks in Meru. Your Gmail settings stay the same."
+
+#. On the About page of Settings in place of the Updates group, for a build of Meru that cannot install new versions
+#: src/settings/updates-group.tsx
+msgid "This build doesn't update itself."
+msgstr "This build doesn't update itself."
 
 #. Shown when the app is started on data that a later version of the app wrote, which this version cannot read
 #: src/main/store-file.ts
@@ -2770,6 +2865,11 @@ msgstr "Trusted sites"
 #: src/shell/tab-problem.tsx
 msgid "Try again"
 msgstr "Try again"
+
+#. Under Couldn't check for updates on the About page of Settings
+#: src/settings/updates-group.tsx
+msgid "Try again later."
+msgstr "Try again later."
 
 #. Label of the disabled button in place of a tab's page while it tries to load the page again
 #: src/shell/tab-problem.tsx
@@ -2899,6 +2999,11 @@ msgstr "Until Tomorrow"
 #: src/main/commands.ts
 msgid "Until Turned Off"
 msgstr "Until Turned Off"
+
+#. Title of the group on the About page of Settings for checking for and installing new versions of Meru
+#: src/settings/updates-group.tsx
+msgid "Updates"
+msgstr "Updates"
 
 #. Button in the popover a Meru Pro badge opens in Settings, which opens Meru Pro's page in the default browser
 #. Button of the trial-ended screen at launch that opens Meru Pro's page in the default browser

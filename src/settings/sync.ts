@@ -26,6 +26,7 @@ const connect = () => {
     "trustedSites",
     "advanced",
     "about",
+    "updates",
     "shortcuts",
     "page",
     "language",
