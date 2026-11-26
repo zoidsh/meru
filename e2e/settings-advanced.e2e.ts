@@ -98,14 +98,15 @@ test("turning hardware acceleration off says to restart, and the next launch run
 }) => {
   const app = await launchApp();
 
-  // Xvfb has no GPU, so on Linux Chromium starts without acceleration
-  // already, reporting the same as a launch with it turned off: there the
-  // relaunch shows only that it stays off.
-  expect(
-    await app.evaluate(({ app: electron }) =>
-      electron.isHardwareAccelerationEnabled()
-    )
-  ).toBe(process.platform !== "linux");
+  const atFirstLaunch = await app.evaluate(({ app: electron }) =>
+    electron.isHardwareAccelerationEnabled()
+  );
+
+  // Only a Mac is sure to have a GPU Chromium uses. Xvfb on Linux and a
+  // Windows runner may have none, and then the first launch already reports
+  // what a launch with acceleration turned off does, so there the relaunch
+  // shows only that it stays off.
+  expect(atFirstLaunch || process.platform !== "darwin").toBeTruthy();
 
   const page = await openAdvanced(app);
 
