@@ -810,7 +810,7 @@ test("the free version applies none of the Pro Gmail page settings but the foote
   for (const label of [
     "Hide promotions",
     "Hide Upgrade button",
-    "Dark theme for all of Gmail",
+    "Darken more of Gmail",
     "Newest message first",
     "Show attachments first",
     "Show trimmed content",
@@ -836,7 +836,7 @@ test("the free version applies none of the Pro Gmail page settings but the foote
   await expect(upgrade).toBeHidden();
   await openSection(page, "Gmail");
   await expect(switchNamed(page, "Newest message first")).toBeChecked();
-  await expect(switchNamed(page, "Dark theme for all of Gmail")).toBeEnabled();
+  await expect(switchNamed(page, "Darken more of Gmail")).toBeEnabled();
   await expect(badgeOf(page, "Hide promotions")).toHaveCount(0);
 });
 
