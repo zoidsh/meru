@@ -130,6 +130,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may stand in for the updater, which a test drives",
     },
     {
+      marker: "meruTestScreenSources",
+      why: "only the end-to-end build may list stand-in screens and windows to share",
+    },
+    {
       marker: "en-XA",
       why: "only the end-to-end build may show its pseudo-language",
     },
