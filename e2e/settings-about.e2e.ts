@@ -341,19 +341,32 @@ test.describe("updates", () => {
 
     // The changes are sent in the same turn as the click, so their writes are
     // still out as the quit begins; each is written after those ahead of it.
-    await statusButton(page, "Restart now").evaluate((button: HTMLElement) => {
-      const { calls } = Reflect.get(window, "meru") as {
-        calls: {
-          update: (change: { key: string; value: unknown }) => Promise<void>;
+    // The app can exit before the evaluation answers, which then rejects with
+    // the closed target, and only with that.
+    await statusButton(page, "Restart now")
+      .evaluate((button: HTMLElement) => {
+        const { calls } = Reflect.get(window, "meru") as {
+          calls: {
+            update: (change: { key: string; value: unknown }) => Promise<void>;
+          };
         };
-      };
 
-      for (const key of ["unreadBadge", "hidePromoBanner", "autoUpdate"]) {
-        void calls.update({ key, value: false });
-      }
+        for (const key of ["unreadBadge", "hidePromoBanner", "autoUpdate"]) {
+          void calls.update({ key, value: false });
+        }
 
-      button.click();
-    });
+        button.click();
+      })
+      .catch((error: unknown) => {
+        if (
+          !(error instanceof Error) ||
+          !error.message.includes(
+            "Target page, context or browser has been closed"
+          )
+        ) {
+          throw error;
+        }
+      });
     await closed;
 
     expect(log.join("")).toContain("meruTestUpdater: quit and install");
