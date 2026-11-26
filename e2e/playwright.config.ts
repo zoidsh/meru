@@ -48,7 +48,8 @@ const NEEDS_THE_FOCUS = [
   "**/update-card.e2e.ts",
   // Its New tab test opens the launcher, which the blur closes.
   "**/settings-scope-apps.e2e.ts",
-  // Its free version's link shows a toast the blur closes.
+  // Its profile question is a card that takes the focus, which its keys
+  // test follows.
   "**/email-links.e2e.ts",
 ];
 const takesTheFocus = process.platform === "win32";

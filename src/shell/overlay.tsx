@@ -12,6 +12,7 @@ import { FindBar } from "./find-bar.tsx";
 import { Inbox } from "./inbox.tsx";
 import { LicenseNotice } from "./license-notice.tsx";
 import { OpenAppOverlay } from "./open-app.tsx";
+import { ProfileQuestion } from "./profile-question.tsx";
 import { MainScreenPicker } from "./screen-picker.tsx";
 import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
@@ -141,6 +142,10 @@ const OverlayContent = ({
     }
     case "screen-picker": {
       drawn = <MainScreenPicker />;
+      break;
+    }
+    case "profile-question": {
+      drawn = <ProfileQuestion profileIds={open.profileIds} />;
       break;
     }
     default: {

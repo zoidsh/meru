@@ -10,12 +10,13 @@ import {
 } from "../email-links.ts";
 import type { Entitlement } from "../entitlement.ts";
 import type { Overlays } from "../overlay.ts";
+import type { ProfileQuestion } from "../profile-question.ts";
 import type { Profiles } from "../profiles.ts";
 import type { SenderRegistry } from "../senders.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import type { createTabViews } from "../tab-views.ts";
 import { revealWindow } from "../windows.ts";
-import { nativeQuestion, registerMailHandler } from "./test-build.ts";
+import { registerMailHandler } from "./test-build.ts";
 
 /**
  * Listens for the links the system hands Meru from the start of the run,
@@ -96,9 +97,9 @@ export const wireComposeWindows = ({
 };
 
 /**
- * Answers email links once the main window can show a toast, the ones held
- * first: a compose window in the profile the person picks, or, without Meru
- * Pro, a toast in the main window, shown for it.
+ * Answers email links once the main window's overlay can show, the ones held
+ * first: a compose window in the profile the person picks in the main
+ * window, shown for the question, or, without Meru Pro, a toast there.
  */
 export const answerEmailLinks = ({
   incoming,
@@ -108,6 +109,7 @@ export const answerEmailLinks = ({
   entitlement,
   overlays,
   composeWindows,
+  question,
 }: {
   incoming: ReturnType<typeof receiveEmailLinks>;
   background: boolean;
@@ -116,11 +118,16 @@ export const answerEmailLinks = ({
   entitlement: Pick<Entitlement, "can">;
   overlays: Pick<Overlays, "open" | "hasView" | "onChange">;
   composeWindows: Pick<ReturnType<typeof wireComposeWindows>, "open">;
+  question: Pick<ProfileQuestion, "ask">;
 }) => {
   const answer = answerIncomingLink({
     can: entitlement.can,
     state: profiles.get,
-    question: nativeQuestion(),
+    ask: (profileIds) => {
+      revealWindow(shell.window, background);
+
+      return question.ask(profileIds);
+    },
     compose: composeWindows.open,
     refuse: () => {
       revealWindow(shell.window, background);
@@ -129,8 +136,8 @@ export const answerEmailLinks = ({
     log: console.error,
   });
 
-  // Once the shell's overlay document is there, so the toast that refuses a
-  // link has somewhere to show.
+  // Once the shell's overlay document is there, so the question and the
+  // toast that refuses a link have somewhere to show.
   const start = () => {
     if (overlays.hasView()) {
       incoming.start(answer);

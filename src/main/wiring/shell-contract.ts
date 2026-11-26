@@ -25,6 +25,7 @@ import type { Overlays } from "../overlay.ts";
 import type { OwnWindows } from "../own-windows.ts";
 import { createPaneResize } from "../pane-resize.ts";
 import { createProfileMenu } from "../profile-menu.ts";
+import type { ProfileQuestion } from "../profile-question.ts";
 import type { Profiles } from "../profiles.ts";
 import type { ScreenPicker } from "../screen-picker.ts";
 import type { SettingsStore } from "../settings.ts";
@@ -81,6 +82,7 @@ export const wireShellContract = ({
   inbox,
   downloads,
   screenPicker,
+  profileQuestion,
   mail,
   doNotDisturb,
   openApp,
@@ -121,6 +123,7 @@ export const wireShellContract = ({
   inbox: Inbox;
   downloads: Downloads;
   screenPicker: ScreenPicker;
+  profileQuestion: ProfileQuestion;
   mail: MailPoller;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
   openApp: OpenApp;
@@ -208,6 +211,7 @@ export const wireShellContract = ({
         inbox,
         downloads,
         screenPicker,
+        profileQuestion,
         openApp,
         bookmarks,
         tabMenu,

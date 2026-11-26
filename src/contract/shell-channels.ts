@@ -39,6 +39,7 @@ export const SHELL_CALL_NAMES = [
   "removeDownload",
   "clearDownloads",
   "shareScreen",
+  "answerProfileQuestion",
   "cancelScreenPicker",
   "retryScreenPicker",
   "openScreenRecordingSettings",

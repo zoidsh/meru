@@ -293,6 +293,11 @@ export const SHELL_CALLS = {
     }),
     response: z.undefined(),
   },
+  /** The profile picked to write the email a link asked for. */
+  answerProfileQuestion: {
+    request: z.object({ profileId }),
+    response: z.undefined(),
+  },
   /** Cancel, Escape or a press outside the picker: the page gets no stream. */
   cancelScreenPicker: {
     request: z.object({ window: inWindow }),
@@ -650,6 +655,14 @@ export const SHELL_STATE = {
     z.object({ kind: z.literal("license") }),
     /** The screen picker, drawn from the `screenPicker` slice. */
     z.object({ kind: z.literal("screen-picker") }),
+    /**
+     * Which profile writes an email a link asked for, of these, in this
+     * order, drawn from the `profiles` slice.
+     */
+    z.object({
+      kind: z.literal("profile-question"),
+      profileIds: z.array(profileId),
+    }),
     /** A version ready to install, or one that could not be verified. */
     z.object({
       kind: z.literal("update"),

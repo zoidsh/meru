@@ -32,6 +32,7 @@ import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
 import { createLanguage } from "./language.ts";
 import { createOverlays } from "./overlay.ts";
+import { createProfileQuestion } from "./profile-question.ts";
 import { createSenderRegistry } from "./senders.ts";
 import { SETTINGS_FILE_NAME } from "./settings.ts";
 import { createShellSource, serveShellContract } from "./shell-ipc.ts";
@@ -752,6 +753,8 @@ const start = async () => {
     log: console.error,
   });
 
+  const profileQuestion = createProfileQuestion({ overlays });
+
   wireShellContract({
     platform,
     language,
@@ -773,6 +776,7 @@ const start = async () => {
     inbox,
     downloads,
     screenPicker,
+    profileQuestion,
     mail,
     doNotDisturb,
     openApp,
@@ -827,6 +831,7 @@ const start = async () => {
     entitlement,
     overlays,
     composeWindows,
+    question: profileQuestion,
   });
 
   updates.start();

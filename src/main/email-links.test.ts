@@ -9,8 +9,8 @@ import type {
   SessionWindow,
   SessionWindowOptions,
 } from "#platform/content-view.ts";
-import type { NativeQuestion, Question } from "#platform/question.ts";
 
+import type { AskProfile } from "./email-links.ts";
 import {
   answerIncomingLink,
   chooseProfile,
@@ -35,15 +35,15 @@ const THREE = stateOf(
   newProfile("d", "Side")
 );
 
-/** Answers each question with `answer`, the cancel button for `"cancel"`. */
+/** Picks the profile at `answer` of those offered, none for `"cancel"`. */
 const fakeQuestion = (answer: number | "cancel") => {
-  const asked: Question[] = [];
-  const question: NativeQuestion = {
-    ask: (asking) => {
-      asked.push(asking);
+  const asked: (readonly string[])[] = [];
+  const question: AskProfile = (profileIds) => {
+    asked.push(profileIds);
 
-      return Promise.resolve(answer === "cancel" ? asking.cancelId : answer);
-    },
+    return Promise.resolve(
+      answer === "cancel" ? undefined : profileIds[answer]
+    );
   };
 
   return { question, asked };
@@ -60,17 +60,11 @@ describe(chooseProfile, () => {
     expect(asked).toStrictEqual([]);
   });
 
-  it("asks among the enabled profiles in the titlebar's order, then Cancel", async () => {
+  it("asks among the enabled profiles in the titlebar's order", async () => {
     const { question, asked } = fakeQuestion(1);
 
     await expect(chooseProfile(THREE, question)).resolves.toBe("c");
-    expect(asked).toStrictEqual([
-      {
-        message: "Which profile should write this email?",
-        buttons: ["Default", "Work", "Side", "Cancel"],
-        cancelId: 3,
-      },
-    ]);
+    expect(asked).toStrictEqual([["a", "c", "d"]]);
   });
 
   it("takes the one enabled profile without asking, a disabled one never offered", async () => {
@@ -107,7 +101,7 @@ const answering = ({
   const answer_ = answerIncomingLink({
     can: (capability: Capability) => pro && capability === "incomingLinks",
     state: () => state,
-    question,
+    ask: question,
     compose: (profileId, mailto) => {
       composed.push([profileId, mailto]);
     },

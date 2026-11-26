@@ -1,7 +1,7 @@
 // Email links handed to Meru: through the stand-in for macOS's `open-url`
 // and through a real second launch's arguments. The compose window loads the
-// Gmail stand-in, never the network, and the profile question is answered
-// by the suite's build, never shown.
+// Gmail stand-in, never the network, and the profile question is a card in
+// the main window's overlay, answered through it.
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -31,6 +31,13 @@ import {
   scopeTab,
   switchNamed,
 } from "./lib/settings.ts";
+import {
+  THEMES,
+  emulateTheme,
+  onlyWithShots,
+  shootWindow,
+  shotPath,
+} from "./lib/shots.ts";
 import { ELSEWHERE_URL } from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 
@@ -65,38 +72,11 @@ const composeWindows = (app: ElectronApplication) =>
     ["personal", "work"]
   );
 
-const questions = (app: ElectronApplication) =>
-  app.evaluate(
-    () =>
-      (
-        Reflect.get(globalThis, "meruTestQuestions") as
-          | { asked: unknown[] }
-          | undefined
-      )?.asked ?? []
-  );
+const QUESTION = "Which profile should write this email?";
 
-// The stand-in is made only once the shell has loaded, which can come after
-// the shell's page is found.
-const answerQuestions = async (
-  app: ElectronApplication,
-  answer: number | "cancel"
-) => {
-  await expect
-    .poll(() =>
-      app.evaluate((_electron, given) => {
-        const stand = Reflect.get(globalThis, "meruTestQuestions") as
-          | { answer: number | "cancel" }
-          | undefined;
-
-        if (stand) {
-          stand.answer = given;
-        }
-
-        return stand !== undefined;
-      }, answer)
-    )
-    .toBe(true);
-};
+/** The profile question's card in the main window's overlay. */
+const question = (overlay: Page) =>
+  overlay.getByRole("dialog", { name: QUESTION });
 
 /** How many of the app's documents show the Pro toast's words. */
 const toastsShown = async (app: ElectronApplication) => {
@@ -193,7 +173,7 @@ test("a mailto link opens a compose window in the one profile's session, asking 
         visible: true,
       },
     ]);
-  expect(await questions(app)).toStrictEqual([]);
+  await expect(question(await findOverlayDocument(app))).toHaveCount(0);
   const after = await readState<typeof before>(userDataDir);
 
   expect(after.profiles[0]?.tabs).toStrictEqual(before.profiles[0]?.tabs);
@@ -254,38 +234,47 @@ test("a second launch's link opens a compose window, and anything but mailto is 
 
   expect(await spawnApp([LINK]).exited).toBe(0);
   await expect
-    .poll(() => composeWindows(app))
+    // Sorted by profile, since the system lists the newest window first.
+    .poll(async () => {
+      const windows = await composeWindows(app);
+
+      return windows.toSorted((a, b) =>
+        (a.profileId ?? "").localeCompare(b.profileId ?? "")
+      );
+    })
     .toMatchObject([
       { url: composeUrl(standIn.url, LINK), profileId: "personal" },
     ]);
 });
 
-test("with two profiles Meru asks which one writes, and opens the compose window in the one chosen", async ({
+test("with two profiles Meru asks in its window which one writes, showing the hidden window for it, and opens the compose window in the one picked", async ({
   launchApp,
   userDataDir,
   standIn,
 }) => {
   await seedProfiles(userDataDir, standIn, ["Personal", "Work"]);
+  await writeSettings(userDataDir, { openInBackground: true });
 
   const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const card = question(overlay);
 
   await findPage(app, standIn.url);
-  await answerQuestions(app, 1);
   await openUrl(app, LINK);
+
+  await expect(card).toBeVisible();
+  await expect.poll(() => mainWindowVisible(app)).toBe(true);
+  await expect(card.getByRole("listitem")).toHaveText(["Personal", "Work"]);
+  await expect(card.getByRole("button", { name: "Personal" })).toBeFocused();
+  await card.getByRole("button", { name: "Work" }).click();
 
   await expect
     .poll(() => composeWindows(app))
     .toMatchObject([{ url: composeUrl(standIn.url, LINK), profileId: "work" }]);
-  expect(await questions(app)).toStrictEqual([
-    {
-      message: "Which profile should write this email?",
-      buttons: ["Personal", "Work", "Cancel"],
-      cancelId: 2,
-    },
-  ]);
+  await expect(card).toHaveCount(0);
 });
 
-test("Cancel in the profile question opens nothing", async ({
+test("the keys pick in the profile question: Down moves to the next profile and Enter picks it", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -293,14 +282,119 @@ test("Cancel in the profile question opens nothing", async ({
   await seedProfiles(userDataDir, standIn, ["Personal", "Work"]);
 
   const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const card = question(overlay);
 
   await findPage(app, standIn.url);
-  await answerQuestions(app, "cancel");
   await openUrl(app, LINK);
+  await expect(card.getByRole("button", { name: "Personal" })).toBeFocused();
+  await overlay.keyboard.press("ArrowDown");
+  await expect(card.getByRole("button", { name: "Work" })).toBeFocused();
+  await overlay.keyboard.press("Enter");
 
-  await expect.poll(() => questions(app)).toHaveLength(1);
+  await expect
+    .poll(() => composeWindows(app))
+    .toMatchObject([{ profileId: "work" }]);
+});
+
+test("Cancel, Escape and a press beside the profile question each open nothing", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Personal", "Work"]);
+
+  const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const card = question(overlay);
+  const dismissals = [
+    () => card.getByRole("button", { name: "Cancel" }).click(),
+    () => overlay.keyboard.press("Escape"),
+    () => overlay.mouse.click(8, 8),
+  ];
+
+  await findPage(app, standIn.url);
+
+  for (const dismiss of dismissals) {
+    // oxlint-disable-next-line no-await-in-loop -- one link after another
+    await openUrl(app, LINK);
+    // oxlint-disable-next-line no-await-in-loop -- one link after another
+    await expect(card).toBeVisible();
+    // oxlint-disable-next-line no-await-in-loop -- one link after another
+    await dismiss();
+    // oxlint-disable-next-line no-await-in-loop -- one link after another
+    await expect(card).toHaveCount(0);
+  }
+
   await delay(500);
   expect(await composeWindows(app)).toStrictEqual([]);
+});
+
+test("a second link while the question waits is asked about once the first is answered", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Personal", "Work"]);
+
+  const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const card = question(overlay);
+  const second = "mailto:another@example.com";
+
+  await findPage(app, standIn.url);
+  await openUrl(app, LINK);
+  await openUrl(app, second);
+  await card.getByRole("button", { name: "Personal" }).click();
+  await expect
+    .poll(() => composeWindows(app))
+    .toMatchObject([{ url: composeUrl(standIn.url, LINK) }]);
+  await card.getByRole("button", { name: "Work" }).click();
+
+  await expect
+    // Sorted by profile, since the system lists the newest window first.
+    .poll(async () => {
+      const windows = await composeWindows(app);
+
+      return windows.toSorted((a, b) =>
+        (a.profileId ?? "").localeCompare(b.profileId ?? "")
+      );
+    })
+    .toMatchObject([
+      { url: composeUrl(standIn.url, LINK), profileId: "personal" },
+      { url: composeUrl(standIn.url, second), profileId: "work" },
+    ]);
+});
+
+test.describe("shots", () => {
+  test.beforeEach(onlyWithShots);
+
+  test("the profile question over the main window, light and dark", async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    await seedProfiles(userDataDir, standIn, ["Personal", "Work"]);
+
+    const app = await launchApp();
+    const shell = await findPage(app, SHELL_URL);
+    const overlay = await findOverlayDocument(app);
+
+    await findPage(app, standIn.url);
+    await openUrl(app, LINK);
+    await expect(question(overlay)).toBeVisible();
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await shootWindow(
+        app,
+        shell,
+        shotPath("email-link-profile-question", theme)
+      );
+    }
+  });
 });
 
 test("without Meru Pro a link opens nothing and says so in a toast, showing the hidden main window for it, with Upgrade opening Meru Pro's pricing", async ({
@@ -322,7 +416,7 @@ test("without Meru Pro a link opens nothing and says so in a toast, showing the 
 
   await expect(overlay.getByText(PRO_NEEDED, { exact: true })).toBeVisible();
   await expect.poll(() => mainWindowVisible(app)).toBe(true);
-  expect(await questions(app)).toStrictEqual([]);
+  await expect(question(overlay)).toHaveCount(0);
   expect(await composeWindows(app)).toStrictEqual([]);
 
   await overlay
@@ -363,13 +457,13 @@ test("a link that comes while the trial-ended screen waits is answered once the 
   await delay(500);
 
   expect(await toastsShown(app)).toBe(0);
-  expect(await questions(app)).toStrictEqual([]);
 
   await choose.click();
 
   const overlay = await findOverlayDocument(app);
 
   await expect(overlay.getByText(PRO_NEEDED, { exact: true })).toBeVisible();
+  await expect(question(overlay)).toHaveCount(0);
   expect(await composeWindows(app)).toStrictEqual([]);
 });
 

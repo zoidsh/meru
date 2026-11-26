@@ -79,7 +79,12 @@ export type Overlay =
    * Meru's picker for the screen or window a page of the tab asked to
    * share, which answers the page as it closes.
    */
-  | { kind: "screen-picker"; profileId: string; tabId: string };
+  | { kind: "screen-picker"; profileId: string; tabId: string }
+  /**
+   * Which of `profileIds`, in that order, writes an email a link asked for,
+   * answered as it closes.
+   */
+  | { kind: "profile-question"; profileIds: string[] };
 
 /** Whether an overlay leaves focus where it is, taking none and giving none back. */
 export const takesNoFocus = (overlay: Pick<Overlay, "kind"> | undefined) =>
@@ -100,13 +105,15 @@ export const staysOpenOnPressOutside = (
 /**
  * Whether an overlay stays open as the window loses focus: those a press
  * outside leaves, the screen picker, whose person may look at the windows to
- * share or open the system's settings, and a toast, which takes no focus and
- * runs out its time whatever has the keys.
+ * share or open the system's settings, a toast, which takes no focus and
+ * runs out its time whatever has the keys, and the profile question, asked
+ * for a link clicked in another app, which may keep the focus a moment.
  */
 export const staysOpenOnBlur = (overlay: Pick<Overlay, "kind"> | undefined) =>
   staysOpenOnPressOutside(overlay) ||
   overlay?.kind === "screen-picker" ||
-  overlay?.kind === "toast";
+  overlay?.kind === "toast" ||
+  overlay?.kind === "profile-question";
 
 /**
  * Whether an overlay is a card over the page, which takes the keys a page's
@@ -207,8 +214,8 @@ const selection = (state: State) => {
 /**
  * The overlay open after `event`. What is underneath changing, another
  * profile or tab selected, closes New tab and the find bar, as does their
- * profile going. The unified inbox and Downloads, each
- * over every profile, keep their own rules.
+ * profile going. The unified inbox and Downloads, each over every profile,
+ * keep their own rules, and the profile question is about no tab.
  */
 export const transitionOverlay = (
   current: Overlay | undefined,
@@ -228,7 +235,8 @@ export const transitionOverlay = (
         current?.kind === "license" ||
         current?.kind === "update" ||
         current?.kind === "toast" ||
-        current?.kind === "drop"
+        current?.kind === "drop" ||
+        current?.kind === "profile-question"
       ) {
         return current;
       }

@@ -138,6 +138,11 @@ const setup = ({
         return Promise.resolve();
       },
     },
+    profileQuestion: {
+      answer: (profileId) => {
+        calls.push(["answerProfileQuestion", profileId]);
+      },
+    },
     screenPicker: {
       share: (source, window) => {
         calls.push(["shareScreen", source, window]);

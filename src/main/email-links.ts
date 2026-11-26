@@ -1,5 +1,3 @@
-import { t } from "@lingui/core/macro";
-
 import type { Capability } from "#core/entitlement.ts";
 import { composeUrl, isMailtoUrl, schemeOf } from "#core/mailto.ts";
 import {
@@ -15,47 +13,33 @@ import type {
   SessionWindowOptions,
   WindowOpenAnswer,
 } from "#platform/content-view.ts";
-import type { NativeQuestion } from "#platform/question.ts";
 
-import { profileDisplayName } from "./profile-copy.ts";
 import type { SenderRegistry } from "./senders.ts";
 
 const describe = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
+
+/** Asks which of `profileIds`, in that order, writes; the one picked, if any. */
+export type AskProfile = (
+  profileIds: readonly string[]
+) => Promise<string | undefined>;
 
 /**
  * Which profile writes an email: the one enabled profile, or the one the
  * person picks of them, in the titlebar's order; none when they cancel or
  * none is enabled.
  */
-export const chooseProfile = async (
+export const chooseProfile = (
   state: State,
-  question: NativeQuestion
+  ask: AskProfile
 ): Promise<string | undefined> => {
   const profiles = enabledProfiles(state);
 
   if (profiles.length <= 1) {
-    return profiles[0]?.id;
+    return Promise.resolve(profiles[0]?.id);
   }
 
-  const answer = await question.ask({
-    message: t({
-      message: "Which profile should write this email?",
-      comment:
-        "Question in the dialog that asks which profile opens a new email for an email link clicked outside Meru; each profile's name is a button below it",
-    }),
-    buttons: [
-      ...profiles.map(profileDisplayName),
-      t({
-        message: "Cancel",
-        comment:
-          "Button in the dialog that asks which profile writes a new email for an email link, which opens no email",
-      }),
-    ],
-    cancelId: profiles.length,
-  });
-
-  return profiles[answer]?.id;
+  return ask(profiles.map((profile) => profile.id));
 };
 
 export const MAX_WAITING_LINKS = 10;
@@ -137,14 +121,14 @@ export const answerIncomingLink =
   ({
     can,
     state,
-    question,
+    ask,
     compose,
     refuse,
     log,
   }: {
     can: (capability: Capability) => boolean;
     state: () => State;
-    question: NativeQuestion;
+    ask: AskProfile;
     compose: (profileId: string, mailto: string) => void;
     /** Tells the person the link needs Meru Pro. */
     refuse: () => void;
@@ -163,7 +147,7 @@ export const answerIncomingLink =
       return;
     }
 
-    const profileId = await chooseProfile(state(), question);
+    const profileId = await chooseProfile(state(), ask);
 
     if (profileId !== undefined) {
       compose(profileId, url);

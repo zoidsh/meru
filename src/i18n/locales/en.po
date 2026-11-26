@@ -563,17 +563,17 @@ msgstr "Cached images and files"
 #. Button in the Delete browsing data dialog in Settings that closes it, deleting nothing
 #. Button in the alert saying Meru is the default browser, which opens nothing
 #. Button in the dialog that asks before a link opens in the default browser, which opens nothing
-#. Button in the dialog that asks which profile writes a new email for an email link, which opens no email
 #. Button in the dialog that confirms removing a profile, which keeps it
 #. Button in the license key dialog that closes it, changing nothing
+#. Button of the card that asks which profile writes a new email for an email link; it opens no email
 #. Button of the screen sharing card that closes it and shares nothing
 #: src/main/default-browser-guard.ts
-#: src/main/email-links.ts
 #: src/main/link-opener.ts
 #: src/main/profile-copy.ts
 #: src/settings/delete-browsing-data.tsx
 #: src/settings/saved-searches-card.tsx
 #: src/shared/license-dialog.tsx
+#: src/shell/profile-question.tsx
 #: src/shell/screen-picker.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -3357,8 +3357,8 @@ msgstr "When hidden, it still shows while Do Not Disturb is on."
 msgid "When you click Copy"
 msgstr "When you click Copy"
 
-#. Question in the dialog that asks which profile opens a new email for an email link clicked outside Meru; each profile's name is a button below it
-#: src/main/email-links.ts
+#. Title of the card in the main window that asks which profile opens a new email for an email link clicked outside Meru; the profiles are listed below it
+#: src/shell/profile-question.tsx
 msgid "Which profile should write this email?"
 msgstr "Which profile should write this email?"
 

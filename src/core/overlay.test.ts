@@ -223,6 +223,7 @@ const EVERY_KIND = [
   "downloads",
   "toast",
   "drop",
+  "profile-question",
 ] as const;
 
 describe(staysOpenOnPressOutside, () => {
@@ -239,13 +240,14 @@ describe(staysOpenOnPressOutside, () => {
       false,
       false,
       false,
+      false,
     ]);
     expect(staysOpenOnPressOutside(undefined)).toBeFalsy();
   });
 });
 
 describe(staysOpenOnBlur, () => {
-  it("is those, the screen picker and a toast, which the window losing focus leaves", () => {
+  it("is those, the screen picker, a toast and the profile question, which the window losing focus leaves", () => {
     expect(EVERY_KIND.map((kind) => staysOpenOnBlur({ kind }))).toStrictEqual([
       true,
       true,
@@ -256,6 +258,7 @@ describe(staysOpenOnBlur, () => {
       false,
       true,
       false,
+      true,
     ]);
     expect(staysOpenOnBlur(undefined)).toBeFalsy();
   });
@@ -279,6 +282,22 @@ describe("the screen picker", () => {
       changed(picker, selectProfile(two, "b")),
       changed(picker, removeProfile(two, "a")),
     ]).toStrictEqual([picker, undefined, undefined]);
+  });
+});
+
+describe("the profile question", () => {
+  it("is a medium card over the page, which a press outside closes, kept as another profile or tab is selected", () => {
+    const question: Overlay = {
+      kind: "profile-question",
+      profileIds: ["a", "b"],
+    };
+
+    expect([
+      coversPage(question),
+      overlayWidth(question),
+      staysOpenOnPressOutside(question),
+      changed(question, selectProfile(two, "b")),
+    ]).toStrictEqual([true, "medium", false, question]);
   });
 });
 

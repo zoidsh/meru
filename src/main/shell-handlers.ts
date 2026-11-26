@@ -38,6 +38,7 @@ import type { Overlays } from "./overlay.ts";
 import type { PaneResizer } from "./pane-resize.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { ProfileMenu } from "./profile-menu.ts";
+import type { ProfileQuestion } from "./profile-question.ts";
 import type { Profiles } from "./profiles.ts";
 import type { ScreenPicker } from "./screen-picker.ts";
 import type { LaunchHandlers, ShellHandlers } from "./shell-ipc.ts";
@@ -89,6 +90,7 @@ export interface ShellHandlersDeps {
     ScreenPicker,
     "share" | "cancel" | "retry" | "openSettings"
   >;
+  profileQuestion: Pick<ProfileQuestion, "answer">;
   openApp: Pick<OpenApp, "choose" | "chooseBookmark" | "removeBookmark">;
   bookmarks: Pick<Bookmarks, "toggle">;
   tabMenu: Pick<TabMenu, "open" | "openOwnWindow">;
@@ -170,31 +172,35 @@ const shellOverlay = (
     return { kind: "update", card: overlay.card, version: overlay.version };
   }
 
+  if (overlay?.kind === "profile-question") {
+    return { kind: "profile-question", profileIds: overlay.profileIds };
+  }
+
   if (overlay?.kind === "find") {
     return shellFind(overlay, find);
   }
 
-  if (overlay?.kind === "toast") {
-    return {
-      kind: "toast",
-      message: overlay.message,
-      title: overlay.title ?? null,
-    };
-  }
-
-  if (overlay?.kind === "drop") {
-    return {
-      kind: "drop",
-      ...overlay.zone,
-      along: overlay.along,
-      fits: overlay.fits,
-    };
+  if (overlay?.kind === "toast" || overlay?.kind === "drop") {
+    return shellNotice(overlay);
   }
 
   return overlay
     ? shellProfileOverlay(state, overlay, apps, bookmarkRows)
     : { kind: "none" };
 };
+
+/** A toast, or a drop's zone, neither of which takes focus. */
+const shellNotice = (
+  overlay: Extract<Overlay, { kind: "toast" | "drop" }>
+): ShellState["overlay"] =>
+  overlay.kind === "toast"
+    ? { kind: "toast", message: overlay.message, title: overlay.title ?? null }
+    : {
+        kind: "drop",
+        ...overlay.zone,
+        along: overlay.along,
+        fits: overlay.fits,
+      };
 
 /** An overlay over a profile, which shows nothing once that profile is gone. */
 const shellProfileOverlay = (
@@ -351,6 +357,7 @@ export const createShellHandlers = ({
   inbox,
   downloads,
   screenPicker,
+  profileQuestion,
   openApp,
   bookmarks,
   tabMenu,
@@ -575,6 +582,11 @@ export const createShellHandlers = ({
     },
     shareScreen: async ({ source, window: ownWindow }) => {
       await screenPicker.share(source, ownWindow);
+    },
+    answerProfileQuestion: ({ profileId }) => {
+      profileQuestion.answer(profileId);
+
+      return Promise.resolve();
     },
     cancelScreenPicker: ({ window: ownWindow }) => {
       screenPicker.cancel(ownWindow);
