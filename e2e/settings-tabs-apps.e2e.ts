@@ -7,11 +7,15 @@ import { DAY } from "#core/entitlement.ts";
 
 import {
   NO_TRIAL,
+  SHELL_URL,
+  chooseContextMenuItem,
   clickMenuItem,
   expect,
   findOverlayDocument,
   findPage,
+  openContextMenu,
   readOpenedExternally,
+  readState,
   readViews,
   stubSystemBrowser,
   test,
@@ -20,13 +24,17 @@ import {
 } from "./lib/app.ts";
 import { openSection, openSettings, switchNamed } from "./lib/settings.ts";
 import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
-import { DRIVE_TITLE } from "./lib/stand-in.ts";
+import { CALENDAR_TITLE, DRIVE_TITLE } from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 
 const IN_MERU = "Open Google apps in Meru";
 const IN_BROWSER = "Always open in your default browser";
 const SWITCHED_OFF = "Google apps open in your default browser.";
 const TURN_ON_FIRST = "Turn on Open Google apps in Meru first.";
+
+const SLEEP_IDLE = "Sleep idle tabs";
+const SLEEP_AFTER = "Sleep after";
+const SLEEP_WHEN_IDLE = "Sleep When Idle";
 
 /** The apps the menu offers, in the registry's order: every one but Gmail. */
 const OFFERED = ["Calendar", "Drive", "Docs", "Sheets", "Slides", "Meet"];
@@ -64,7 +72,7 @@ const viewUrls = async (app: ElectronApplication) => {
   return views.map(({ url }) => url);
 };
 
-test("opens from the sidebar after Gmail with one group of two rows, no scopes, and the menu listing every Google app but Gmail", async ({
+test("opens from the sidebar after Gmail with no scopes, the menu listing every Google app but Gmail, and a Sleep group of two menus at their defaults", async ({
   app,
 }) => {
   const page = await openSettings(app);
@@ -96,6 +104,121 @@ test("opens from the sidebar after Gmail with one group of two rows, no scopes, 
     // oxlint-disable-next-line no-await-in-loop -- one item after another
     await expect(item).not.toBeChecked();
   }
+
+  await page.keyboard.press("Escape");
+
+  const sleep = page.getByRole("group", { name: "Sleep" });
+  const which = sleep.getByRole("combobox", { name: SLEEP_IDLE });
+  const after = sleep.getByRole("combobox", { name: SLEEP_AFTER });
+
+  await expect(which).toContainText("Unpinned tabs");
+  await expect(which).toHaveAccessibleDescription(
+    "Sleeping tabs free up memory and reload when you open them."
+  );
+  await expect(after).toContainText("1 hour");
+  await expect(after).toHaveAccessibleDescription(
+    "Your current tab, tabs in separate windows and tabs playing sound stay awake."
+  );
+
+  await which.click();
+  await expect(page.getByRole("option")).toHaveText([
+    "Unpinned tabs",
+    "Tabs you choose",
+    "All tabs",
+  ]);
+  await page.keyboard.press("Escape");
+  await after.click();
+  await expect(page.getByRole("option")).toHaveText([
+    "30 minutes",
+    "1 hour",
+    "3 hours",
+    "6 hours",
+  ]);
+});
+
+const calendarTab = (shell: Page) =>
+  shell
+    .getByRole("tablist", { name: "Tabs" })
+    .getByRole("tab", { name: CALENDAR_TITLE, exact: true });
+
+/** The Calendar tab's context menu, as its labels. */
+const calendarMenu = async (app: ElectronApplication) => {
+  const shell = await findPage(app, SHELL_URL);
+  const menu = await openContextMenu(app, () =>
+    calendarTab(shell).click({ button: "right" })
+  );
+
+  return menu.items;
+};
+
+test("Tabs you choose brings Sleep When Idle to a tab's menu after Sleep, whose check is written to the tab and kept across a relaunch", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: CALENDAR_TITLE,
+          },
+        ],
+        selectedTabId: "gmail",
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
+  const app = await launchApp();
+
+  await findPage(app, standIn.url);
+  expect(await calendarMenu(app)).not.toContain(`${SLEEP_WHEN_IDLE} [ ]`);
+
+  const page = await openSettings(app);
+
+  await openTabsApps(page);
+  await page.getByRole("combobox", { name: SLEEP_IDLE }).click();
+  await page.getByRole("option", { name: "Tabs you choose" }).click();
+  await expect
+    .poll(async () => {
+      const stored = await readStored(userDataDir);
+
+      return stored.sleepIdleTabs;
+    })
+    .toBe("chosen");
+
+  const chosen = await calendarMenu(app);
+
+  expect(chosen.slice(0, 3)).toStrictEqual([
+    "Wake",
+    `${SLEEP_WHEN_IDLE} [ ]`,
+    "—",
+  ]);
+  await chooseContextMenuItem(app, SLEEP_WHEN_IDLE);
+
+  const marked = async () => {
+    const state = await readState<{
+      profiles: { tabs: { id: string; sleepWhenIdle?: unknown }[] }[];
+    }>(userDataDir);
+
+    return state.profiles[0]?.tabs.find((each) => each.id === "c")
+      ?.sleepWhenIdle;
+  };
+
+  await expect.poll(marked).toBe(true);
+  await app.close();
+
+  const again = await launchApp();
+
+  await findPage(again, standIn.url);
+  expect(await calendarMenu(again)).toContain(`${SLEEP_WHEN_IDLE} [x]`);
 });
 
 test("turning the switch off sends Gmail's Calendar link to the default browser and disables the menu saying why, its value kept", async ({
@@ -265,11 +388,16 @@ const launchFree = async (
   return launchApp(NO_TRIAL);
 };
 
-test("on the free version both rows are Pro rows, disabled, their stored values kept and unwritten", async ({
+test("on the free version every row is a Pro row, disabled, its stored value kept and unwritten", async ({
   launchApp,
   userDataDir,
 }) => {
-  const stored = { openAppsInMeru: true, appsInDefaultBrowser: ["drive"] };
+  const stored = {
+    openAppsInMeru: true,
+    appsInDefaultBrowser: ["drive"],
+    sleepIdleTabs: "all",
+    sleepAfter: "3h",
+  };
 
   await writeSettings(userDataDir, stored);
 
@@ -278,7 +406,7 @@ test("on the free version both rows are Pro rows, disabled, their stored values 
 
   await openTabsApps(page);
 
-  for (const label of [IN_MERU, IN_BROWSER]) {
+  for (const label of [IN_MERU, IN_BROWSER, SLEEP_IDLE, SLEEP_AFTER]) {
     // oxlint-disable-next-line no-await-in-loop -- one row after another
     await expect(
       page.getByRole("button", { name: `Meru Pro ${label}`, exact: true })
@@ -287,6 +415,10 @@ test("on the free version both rows are Pro rows, disabled, their stored values 
 
   await expect(switchNamed(page, IN_MERU)).toBeDisabled();
   await expect(menuButton(page, "None")).toBeDisabled();
+  await expect(page.getByRole("combobox", { name: SLEEP_IDLE })).toBeDisabled();
+  await expect(
+    page.getByRole("combobox", { name: SLEEP_AFTER })
+  ).toBeDisabled();
   // The Pro state outranks the reason the switch would give.
   await expect(menuButton(page, "None")).not.toHaveAccessibleDescription(
     TURN_ON_FIRST

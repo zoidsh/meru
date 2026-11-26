@@ -250,6 +250,26 @@ msgstr "{unreadCount, plural, one {{name}: the newest {listed} of # unread} othe
 msgid "<0>Failed</0> · {when}"
 msgstr "<0>Failed</0> · {when}"
 
+#. Option of the Sleep after menu in Settings: how long a tab goes unused before it sleeps
+#: src/settings/tabs-apps-page.tsx
+msgid "1 hour"
+msgstr "1 hour"
+
+#. Option of the Sleep after menu in Settings: how long a tab goes unused before it sleeps
+#: src/settings/tabs-apps-page.tsx
+msgid "3 hours"
+msgstr "3 hours"
+
+#. Option of the Sleep after menu in Settings: how long a tab goes unused before it sleeps
+#: src/settings/tabs-apps-page.tsx
+msgid "30 minutes"
+msgstr "30 minutes"
+
+#. Option of the Sleep after menu in Settings: how long a tab goes unused before it sleeps
+#: src/settings/tabs-apps-page.tsx
+msgid "6 hours"
+msgstr "6 hours"
+
 #. Read by screen readers on the title bar's Downloads button, green once a download finished and the list has not been opened since
 #: src/shell/downloads.tsx
 msgid "A download finished"
@@ -304,6 +324,11 @@ msgstr "all day {days}"
 #: src/settings/scope-tabs.tsx
 msgid "All profiles"
 msgstr "All profiles"
+
+#. Option of the Sleep idle tabs menu in Settings: every tab, pinned or not, sleeps once idle
+#: src/settings/tabs-apps-page.tsx
+msgid "All tabs"
+msgstr "All tabs"
 
 #. Label of the switch in Settings that shows a notification for new mail
 #: src/settings/notifications-page.tsx
@@ -2263,11 +2288,23 @@ msgstr "Sites you trust when Meru asks show up here."
 #. Item of a profile button's context menu that closes every page of the profile until it is woken, its mail still checked
 #. Item of a tab's context menu that frees its page until it is woken, keeping its place
 #. Label of the switch on a profile's page in Settings that puts it to sleep or wakes it
+#. Title of the group of Settings for tabs that sleep by themselves, freeing their memory, once they go unused
 #: src/main/profile-menu.ts
 #: src/main/tab-menu.ts
 #: src/settings/profile-page.tsx
+#: src/settings/tabs-apps-page.tsx
 msgid "Sleep"
 msgstr "Sleep"
+
+#. Label of the menu in Settings choosing how long a tab goes unused before it sleeps by itself
+#: src/settings/tabs-apps-page.tsx
+msgid "Sleep after"
+msgstr "Sleep after"
+
+#. Label of the menu in Settings choosing which tabs sleep by themselves once they go unused
+#: src/settings/tabs-apps-page.tsx
+msgid "Sleep idle tabs"
+msgstr "Sleep idle tabs"
 
 #. Menu item in the Window menu that closes every page of the selected profile until it is woken, its mail still checked
 #: src/main/commands.ts
@@ -2283,6 +2320,11 @@ msgstr "Sleep Tab"
 #: src/main/tab-menu.ts
 msgid "Sleep When Idle"
 msgstr "Sleep When Idle"
+
+#. Description of the Sleep idle tabs menu in Settings
+#: src/settings/tabs-apps-page.tsx
+msgid "Sleeping tabs free up memory and reload when you open them."
+msgstr "Sleeping tabs free up memory and reload when you open them."
 
 #. Label of the menu in Settings choosing the sound a new mail notification makes
 #: src/settings/notifications-page.tsx
@@ -2381,6 +2423,11 @@ msgstr "Tabs"
 #: src/settings/app.tsx
 msgid "Tabs & Apps"
 msgstr "Tabs & Apps"
+
+#. Option of the Sleep idle tabs menu in Settings: only tabs marked Sleep When Idle in their context menu sleep once idle
+#: src/settings/tabs-apps-page.tsx
+msgid "Tabs you choose"
+msgstr "Tabs you choose"
 
 #. Label of the row in Settings whose button shows a sample new mail notification
 #: src/settings/notifications-page.tsx
@@ -2623,6 +2670,11 @@ msgstr "Unpin"
 msgid "Unpin Tab"
 msgstr "Unpin Tab"
 
+#. Option of the Sleep idle tabs menu in Settings: every tab that is not pinned sleeps once idle
+#: src/settings/tabs-apps-page.tsx
+msgid "Unpinned tabs"
+msgstr "Unpinned tabs"
+
 #. Title of the group of Settings for how unread mail is counted and listed
 #: src/settings/notifications-page.tsx
 msgid "Unread mail"
@@ -2850,6 +2902,11 @@ msgstr "Your computer's date looks wrong"
 #: src/shell/toast.tsx
 msgid "Your computer's date looks wrong. Pro features turn off when you quit Meru."
 msgstr "Your computer's date looks wrong. Pro features turn off when you quit Meru."
+
+#. Description of the Sleep after menu in Settings, naming the tabs that never sleep by themselves
+#: src/settings/tabs-apps-page.tsx
+msgid "Your current tab, tabs in separate windows and tabs playing sound stay awake."
+msgstr "Your current tab, tabs in separate windows and tabs playing sound stay awake."
 
 #. Status about Meru Pro (in Settings, and alone as a short notice in the main window) when the license server no longer accepts the license, after a refund or the device's removal
 #: src/shared/license-status.ts

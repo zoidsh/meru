@@ -84,6 +84,8 @@ const APP: PageSettings = {
   confirmLinks: true,
   openAppsInMeru: true,
   appsInDefaultBrowser: [],
+  sleepIdleTabs: "unpinned",
+  sleepAfter: "1h",
 };
 
 describe(isScoped, () => {

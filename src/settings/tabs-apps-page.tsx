@@ -4,6 +4,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { useId } from "react";
 
 import { APPS } from "#core/apps.ts";
+import { SLEEP_AFTER, SLEEP_IDLE_TABS } from "#core/settings.ts";
 import { Button } from "#ui/button.tsx";
 import {
   DropdownMenu,
@@ -12,6 +13,14 @@ import {
   DropdownMenuGroup,
   DropdownMenuTrigger,
 } from "#ui/dropdown-menu.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#ui/select.tsx";
 import { Switch } from "#ui/switch.tsx";
 
 import { useCheckedSummary } from "./checked-summary.ts";
@@ -24,9 +33,9 @@ import { settingsCalls, useSettingsState } from "./sync.ts";
 const OFFERED = APPS.filter((app) => app.id !== "gmail");
 
 /**
- * Whether a link or New tab opens a Google app in Meru, and which always
- * leave for the default browser: app settings alone, so the page has no
- * scopes.
+ * Whether a link or New tab opens a Google app in Meru, which always leave
+ * for the default browser, and which idle tabs sleep after how long: app
+ * settings alone, so the page has no scopes.
  */
 export const TabsAppsPage = () => {
   const { t } = useLingui();
@@ -47,6 +56,47 @@ export const TabsAppsPage = () => {
   const excludedPro = needsPro.setting("appsInDefaultBrowser");
   // On the free version the row says Pro, not to turn the switch on.
   const excludedOff = !settings.openAppsInMeru && !excludedPro;
+  const sleepPro = needsPro.setting("sleepIdleTabs");
+  const afterPro = needsPro.setting("sleepAfter");
+  const sleepIdleTabs = {
+    unpinned: t({
+      message: "Unpinned tabs",
+      comment:
+        "Option of the Sleep idle tabs menu in Settings: every tab that is not pinned sleeps once idle",
+    }),
+    chosen: t({
+      message: "Tabs you choose",
+      comment:
+        "Option of the Sleep idle tabs menu in Settings: only tabs marked Sleep When Idle in their context menu sleep once idle",
+    }),
+    all: t({
+      message: "All tabs",
+      comment:
+        "Option of the Sleep idle tabs menu in Settings: every tab, pinned or not, sleeps once idle",
+    }),
+  };
+  const sleepAfter = {
+    "30m": t({
+      message: "30 minutes",
+      comment:
+        "Option of the Sleep after menu in Settings: how long a tab goes unused before it sleeps",
+    }),
+    "1h": t({
+      message: "1 hour",
+      comment:
+        "Option of the Sleep after menu in Settings: how long a tab goes unused before it sleeps",
+    }),
+    "3h": t({
+      message: "3 hours",
+      comment:
+        "Option of the Sleep after menu in Settings: how long a tab goes unused before it sleeps",
+    }),
+    "6h": t({
+      message: "6 hours",
+      comment:
+        "Option of the Sleep after menu in Settings: how long a tab goes unused before it sleeps",
+    }),
+  };
 
   return (
     <SettingGroups>
@@ -145,6 +195,117 @@ export const TabsAppsPage = () => {
                     </DropdownMenuGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              )}
+            </SettingRow>,
+          ]}
+        </Rows>
+      </SettingGroup>
+      <SettingGroup
+        title={t({
+          message: "Sleep",
+          comment:
+            "Title of the group of Settings for tabs that sleep by themselves, freeing their memory, once they go unused",
+        })}
+      >
+        <Rows>
+          {[
+            <SettingRow
+              key="sleepIdleTabs"
+              label={t({
+                message: "Sleep idle tabs",
+                comment:
+                  "Label of the menu in Settings choosing which tabs sleep by themselves once they go unused",
+              })}
+              description={t({
+                message:
+                  "Sleeping tabs free up memory and reload when you open them.",
+                comment: "Description of the Sleep idle tabs menu in Settings",
+              })}
+              disabled={sleepPro}
+              pro={sleepPro}
+            >
+              {(ids) => (
+                <Select
+                  items={SLEEP_IDLE_TABS.map((which) => ({
+                    value: which,
+                    label: sleepIdleTabs[which],
+                  }))}
+                  value={settings.sleepIdleTabs}
+                  disabled={sleepPro}
+                  onValueChange={(which) => {
+                    if (which !== null) {
+                      calls
+                        .update({ key: "sleepIdleTabs", value: which })
+                        .catch(noop);
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    aria-labelledby={ids.label}
+                    aria-describedby={ids.description || undefined}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    <SelectGroup>
+                      {SLEEP_IDLE_TABS.map((which) => (
+                        <SelectItem key={which} value={which}>
+                          {sleepIdleTabs[which]}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            </SettingRow>,
+            <SettingRow
+              key="sleepAfter"
+              label={t({
+                message: "Sleep after",
+                comment:
+                  "Label of the menu in Settings choosing how long a tab goes unused before it sleeps by itself",
+              })}
+              description={t({
+                message:
+                  "Your current tab, tabs in separate windows and tabs playing sound stay awake.",
+                comment:
+                  "Description of the Sleep after menu in Settings, naming the tabs that never sleep by themselves",
+              })}
+              disabled={afterPro}
+              pro={afterPro}
+            >
+              {(ids) => (
+                <Select
+                  items={SLEEP_AFTER.map((after) => ({
+                    value: after,
+                    label: sleepAfter[after],
+                  }))}
+                  value={settings.sleepAfter}
+                  disabled={afterPro}
+                  onValueChange={(after) => {
+                    if (after !== null) {
+                      calls
+                        .update({ key: "sleepAfter", value: after })
+                        .catch(noop);
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    aria-labelledby={ids.label}
+                    aria-describedby={ids.description || undefined}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    <SelectGroup>
+                      {SLEEP_AFTER.map((after) => (
+                        <SelectItem key={after} value={after}>
+                          {sleepAfter[after]}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               )}
             </SettingRow>,
           ]}

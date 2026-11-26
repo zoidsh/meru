@@ -379,6 +379,8 @@ describe("the settings contract", () => {
       confirmLinks: true,
       openAppsInMeru: false,
       appsInDefaultBrowser: ["drive"],
+      sleepIdleTabs: "chosen",
+      sleepAfter: "6h",
     };
 
     expect([

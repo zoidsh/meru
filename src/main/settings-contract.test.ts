@@ -958,14 +958,19 @@ describe("the Settings window's Language and Spelling", () => {
 });
 
 describe("the Settings window's Tabs & Apps page", () => {
-  it("sends Open Google apps in Meru on and no app excluded where none is stored", () => {
+  it("sends Open Google apps in Meru on, no app excluded, and unpinned tabs sleeping after an hour where none is stored", () => {
     const app = setup(stateOf("Work"));
 
     expect(
       Object.fromEntries(
         TABS_APPS_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
       )
-    ).toStrictEqual({ openAppsInMeru: true, appsInDefaultBrowser: [] });
+    ).toStrictEqual({
+      openAppsInMeru: true,
+      appsInDefaultBrowser: [],
+      sleepIdleTabs: "unpinned",
+      sleepAfter: "1h",
+    });
     app.dispose();
   });
 

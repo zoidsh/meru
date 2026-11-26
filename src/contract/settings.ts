@@ -89,6 +89,8 @@ export const PRIVACY_PAGE_KEYS = [
 export const TABS_APPS_PAGE_KEYS = [
   "openAppsInMeru",
   "appsInDefaultBrowser",
+  "sleepIdleTabs",
+  "sleepAfter",
 ] as const;
 
 /**
