@@ -73,16 +73,27 @@ const expectUntouched = async (view: Page) => {
   await expect(view.getByRole("main")).toBeVisible();
 };
 
+/** Every hide on, as a person turns them on; none is on by default. */
+const HIDES_ON = {
+  hideInboxFooter: true,
+  hidePromoBanner: true,
+  hideUpgradeButton: true,
+};
+
 /** Moves within the page, as Gmail does between views. */
 const moveTo = (view: Page, hash: string) =>
   view.evaluate((next) => {
     location.hash = next;
   }, hash);
 
-test("hides each of Gmail's parts by default, and reports every hook matched in the list", async ({
-  app,
+test("hides each of Gmail's parts whose hide is on at launch, and reports every hook matched in the list", async ({
+  launchApp,
   standIn,
+  userDataDir,
 }) => {
+  await writeSettings(userDataDir, HIDES_ON);
+
+  const app = await launchApp();
   const view = await findPage(app, standIn.url);
 
   await Promise.all(
@@ -104,18 +115,10 @@ test("hides each of Gmail's parts by default, and reports every hook matched in 
     ]);
 });
 
-test("shows each part whose hide is off at launch", async ({
-  launchApp,
+test("shows each part on a fresh profile, since Meru hides nothing of Gmail until asked", async ({
+  app,
   standIn,
-  userDataDir,
 }) => {
-  await writeSettings(userDataDir, {
-    hideInboxFooter: false,
-    hidePromoBanner: false,
-    hideUpgradeButton: false,
-  });
-
-  const app = await launchApp();
   const view = await findPage(app, standIn.url);
 
   await Promise.all(
@@ -126,9 +129,13 @@ test("shows each part whose hide is off at launch", async ({
 });
 
 test("switches each hide off and on again while the page stays loaded, touching the others not", async ({
-  app,
+  launchApp,
   standIn,
+  userDataDir,
 }) => {
+  await writeSettings(userDataDir, HIDES_ON);
+
+  const app = await launchApp();
   const view = await findPage(app, standIn.url);
   const all = parts(view);
 
@@ -165,9 +172,13 @@ test("switches each hide off and on again while the page stays loaded, touching 
 });
 
 test("reports a hook broken when the markup it anchors on goes, and absent when its content does", async ({
-  app,
+  launchApp,
   standIn,
+  userDataDir,
 }) => {
+  await writeSettings(userDataDir, HIDES_ON);
+
+  const app = await launchApp();
   const view = await findPage(app, standIn.url);
 
   await expect.poll(() => readHealth(app)).toHaveLength(1);
@@ -216,9 +227,13 @@ test("reports a hook broken when the markup it anchors on goes, and absent when 
 });
 
 test("drops the handshake of a document off Gmail's origin in Gmail's view, which then hides nothing", async ({
-  app,
+  launchApp,
   standIn,
+  userDataDir,
 }) => {
+  await writeSettings(userDataDir, HIDES_ON);
+
+  const app = await launchApp();
   const view = await findPage(app, standIn.url);
 
   await expect(parts(view).hideUpgradeButton).toBeHidden();

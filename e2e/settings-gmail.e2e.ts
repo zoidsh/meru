@@ -101,7 +101,7 @@ test("each switch shows the stored value and writes the one it is turned to", as
   userDataDir,
 }) => {
   await writeSettings(userDataDir, {
-    hidePromoBanner: false,
+    hidePromoBanner: true,
     reverseConversation: true,
     verificationCodeTrash: true,
   });
@@ -109,10 +109,10 @@ test("each switch shows the stored value and writes the one it is turned to", as
   const app = await launchApp();
   const page = await openSettings(app);
   const stored = {
-    hidePromoBanner: false,
-    hideUpgradeButton: true,
-    hideInboxFooter: true,
-    extendDarkTheme: true,
+    hidePromoBanner: true,
+    hideUpgradeButton: false,
+    hideInboxFooter: false,
+    extendDarkTheme: false,
     reverseConversation: true,
     moveAttachmentsToTop: false,
     showTrimmedContent: false,
@@ -153,14 +153,14 @@ test("each switch shows the stored value and writes the one it is turned to", as
     );
 });
 
-test("a hide switched off shows Gmail's promotions on the page while it stays loaded, and on hides them again", async ({
+test("on a fresh profile the four Gmail appearance switches are off, and a hide switched on hides Gmail's promotions while the page stays loaded, and off shows them again", async ({
   app,
   standIn,
 }) => {
   const view = await findPage(app, standIn.url);
   const promo = view.getByText(GMAIL_PARTS.promo);
 
-  await expect(promo).toBeHidden();
+  await expect(promo).toBeVisible();
   await view.evaluate(() => {
     Reflect.set(window, "keptAcrossSettings", true);
   });
@@ -168,10 +168,16 @@ test("a hide switched off shows Gmail's promotions on the page while it stays lo
   const page = await openSettings(app);
 
   await openGmail(page);
-  await switchNamed(page, "Hide promotions").click();
-  await expect(promo).toBeVisible();
+
+  for (const [label] of SWITCHES.slice(0, 4)) {
+    // oxlint-disable-next-line no-await-in-loop -- one row after another
+    await expect(switchNamed(page, label)).not.toBeChecked();
+  }
+
   await switchNamed(page, "Hide promotions").click();
   await expect(promo).toBeHidden();
+  await switchNamed(page, "Hide promotions").click();
+  await expect(promo).toBeVisible();
   expect(
     await view.evaluate(() => Reflect.get(window, "keptAcrossSettings"))
   ).toBe(true);

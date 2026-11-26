@@ -63,19 +63,19 @@ describe("the registry", () => {
     }
   });
 
-  it("switches each feature by a boolean setting, with v3's default where v3 had one", () => {
+  it("switches each feature by a boolean setting, each off until the person turns it on", () => {
     expect(
       Object.fromEntries(
         GMAIL_FEATURES.map((feature) => [feature, SETTINGS[feature].default])
       )
     ).toStrictEqual({
-      hideInboxFooter: true,
-      hidePromoBanner: true,
-      hideUpgradeButton: true,
+      hideInboxFooter: false,
+      hidePromoBanner: false,
+      hideUpgradeButton: false,
       reverseConversation: false,
       moveAttachmentsToTop: false,
       showTrimmedContent: false,
-      extendDarkTheme: true,
+      extendDarkTheme: false,
     });
   });
 });

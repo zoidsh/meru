@@ -749,7 +749,7 @@ describe("the Settings window's Gmail page", () => {
   it("sends the app value of each of the page's settings, the default where none is stored", () => {
     const app = setup(stateOf("Work"), {
       version: 1,
-      hidePromoBanner: false,
+      hidePromoBanner: true,
       verificationCodeCopyMode: "immediately",
       reverseConversation: "sometimes",
       verificationCodesDuringDoNotDisturb: "yes",
@@ -760,10 +760,10 @@ describe("the Settings window's Gmail page", () => {
         GMAIL_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
       )
     ).toStrictEqual({
-      hidePromoBanner: false,
-      hideUpgradeButton: true,
-      hideInboxFooter: true,
-      extendDarkTheme: true,
+      hidePromoBanner: true,
+      hideUpgradeButton: false,
+      hideInboxFooter: false,
+      extendDarkTheme: false,
       reverseConversation: false,
       moveAttachmentsToTop: false,
       showTrimmedContent: false,

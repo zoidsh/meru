@@ -102,6 +102,8 @@ test("darkens each of Gmail's white surfaces while Gmail is Dark, keeping a body
   standIn,
 }) => {
   const view = await findPage(app, standIn.url);
+
+  await setDarkTheme(app, true);
   const each = parts(view);
 
   await openDarkThread(view, true);
@@ -138,6 +140,8 @@ test("leaves Gmail's page as Gmail draws it while Gmail is not Dark, and darkens
   standIn,
 }) => {
   const view = await findPage(app, standIn.url);
+
+  await setDarkTheme(app, true);
   const each = parts(view);
 
   await openDarkThread(view, false);
@@ -154,11 +158,29 @@ test("leaves Gmail's page as Gmail draws it while Gmail is not Dark, and darkens
   await expect.poll(() => paneBackground(view)).toBe(WHITE);
 });
 
+test("is off on a fresh profile, so Gmail's Dark page stays as Gmail draws it until the switch is turned on", async ({
+  app,
+  standIn,
+}) => {
+  const view = await findPage(app, standIn.url);
+
+  await openDarkThread(view, true);
+  await expect
+    .poll(() => lastHooks(app), { timeout: 15_000 })
+    .toMatchObject({ darkPane: "matched" });
+  expect(await paneBackground(view)).toBe(WHITE);
+
+  await setDarkTheme(app, true);
+  await expect.poll(() => paneBackground(view)).toBe(CLEAR);
+});
+
 test("switches the dark theme off and on while the page stays loaded, changing nothing in a body or a draft", async ({
   app,
   standIn,
 }) => {
   const view = await findPage(app, standIn.url);
+
+  await setDarkTheme(app, true);
 
   await openDarkThread(view, true);
   await expect.poll(() => paneBackground(view)).toBe(CLEAR);
@@ -199,6 +221,8 @@ test("reports the pane broken when Gmail renames it in a thread, which then stay
   standIn,
 }) => {
   const view = await findPage(app, standIn.url);
+
+  await setDarkTheme(app, true);
   const { pane } = parts(view);
 
   await openDarkThread(view, true);
@@ -238,6 +262,8 @@ for (const { card, what, at, renamed, back } of CARDS) {
     standIn,
   }) => {
     const view = await findPage(app, standIn.url);
+
+    await setDarkTheme(app, true);
     const setClass = (selector: string, value: string, hash: string) =>
       view.evaluate(
         ([match, name, next]) => {

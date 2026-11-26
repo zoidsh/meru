@@ -284,17 +284,17 @@ export const SETTINGS = {
   /** The storage, policy and account activity footer below Gmail's list. */
   hideInboxFooter: setting<boolean>({
     schema: z.boolean(),
-    default: true,
+    default: false,
   }),
   /** Google's promotional banners above Gmail's list. */
   hidePromoBanner: setting<boolean>({
     schema: z.boolean(),
-    default: true,
+    default: false,
   }),
   /** Gmail's own Upgrade button. */
   hideUpgradeButton: setting<boolean>({
     schema: z.boolean(),
-    default: true,
+    default: false,
   }),
   /** An open conversation newest message first, on screen only. */
   reverseConversation: setting<boolean>({
@@ -317,7 +317,7 @@ export const SETTINGS = {
    */
   extendDarkTheme: setting<boolean>({
     schema: z.boolean(),
-    default: true,
+    default: false,
   }),
   /** Google's ad hosts, in every profile's pages. */
   blockAds: setting<boolean>({
