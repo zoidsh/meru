@@ -54,6 +54,7 @@ export const GENERAL_PAGE_KEYS = [
 export const APPEARANCE_PAGE_KEYS = [
   "theme",
   "profileTint",
+  "profileTintStrength",
   "titlebarNewTab",
   "titlebarUnifiedInbox",
   "titlebarDownloads",

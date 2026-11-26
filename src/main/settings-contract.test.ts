@@ -1193,6 +1193,7 @@ describe("the Settings window's Appearance page", () => {
     ).toStrictEqual({
       theme: "light",
       profileTint: true,
+      profileTintStrength: "medium",
       titlebarNewTab: true,
       titlebarUnifiedInbox: true,
       titlebarDownloads: true,
@@ -1207,6 +1208,7 @@ describe("the Settings window's Appearance page", () => {
     await app.handlers.setDoNotDisturb({ on: true });
     await app.handlers.update({ key: "theme", value: "dark" });
     await app.handlers.update({ key: "profileTint", value: false });
+    await app.handlers.update({ key: "profileTintStrength", value: "low" });
     await app.handlers.update({ key: "titlebarDoNotDisturb", value: false });
 
     expect([app.saved.at(-1), app.read().doNotDisturb.on]).toStrictEqual([
@@ -1214,6 +1216,7 @@ describe("the Settings window's Appearance page", () => {
         version: 1,
         theme: "dark",
         profileTint: false,
+        profileTintStrength: "low",
         titlebarDoNotDisturb: false,
       },
       true,

@@ -8,6 +8,7 @@ import { INBOX_ROW_CAP } from "#core/inbox.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import { TOAST_MESSAGES } from "#core/overlay.ts";
 import { PANE_DIRECTIONS, PANE_GAP_ENDS } from "#core/pane-tree.ts";
+import { PROFILE_TINT_STRENGTHS } from "#core/profile-color.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
 
 import type {
@@ -449,6 +450,8 @@ export const SHELL_STATE = {
   appearance: z.object({
     /** Whether the shell mixes the profile's colour into its greys. */
     tint: z.boolean(),
+    /** How much of it, `styles.css` holding the percentage per theme. */
+    tintStrength: z.enum(PROFILE_TINT_STRENGTHS),
     /**
      * Whether each titlebar button may show; one that may still shows only
      * where it otherwise would.

@@ -112,7 +112,8 @@ const MainWindow = ({ pro }: { pro: ShellState["pro"] }) => {
   const tabs = useShellState("tabs");
   const profiles = useShellState("profiles");
   const sidebar = useShellState("sidebar")?.state ?? "hidden";
-  const tint = useShellState("appearance")?.tint ?? true;
+  const appearance = useShellState("appearance");
+  const tint = appearance?.tint ?? true;
   const footerDays = pro.trialFooterDays;
   const { inset, radius } = viewFrame({
     sidebar,
@@ -124,9 +125,10 @@ const MainWindow = ({ pro }: { pro: ShellState["pro"] }) => {
 
   return (
     <>
-      {/* The selected profile's colour, which `styles.css` mixes into the shell's greys; with none set they stay plain. */}
+      {/* The selected profile's colour, which `styles.css` mixes into the shell's greys at the strength; with none set they stay plain. */}
       <div
         data-tint
+        data-tint-strength={appearance?.tintStrength}
         style={
           { "--tint": tint ? selected?.color : undefined } as CSSProperties
         }

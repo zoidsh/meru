@@ -51,34 +51,58 @@
 
 /*
  * Ours too: the profile tint. Where `data-tint` sets `--tint` to the selected
- * profile's colour, the shell grey takes 12% of it, and the titlebar and the
- * sidebar, marked `data-tinted`, mix it into their hover (14%), selected and
- * outline (16%) fills. The page and overlays keep their own greys.
+ * profile's colour, the shell grey takes `--tint-amount` of it, by
+ * `data-tint-strength` and the theme, and the titlebar and the sidebar,
+ * marked `data-tinted`, mix it into their hover (7/6 of that), selected and
+ * outline (4/3) fills. The page and overlays keep their own greys.
  * Mixed here and not in `[data-tinted]`, where a token naming itself would be
  * a cycle. Mixed in oklab, since in oklch shadcn's greys, `oklch(L 0 0)`, name
  * a hue of 0 that pulls every tint's hue toward it, which is pink.
  */
 [data-tint] {
+  --tint-amount: 20%;
   --tint-shell: color-mix(
     in oklab,
     var(--shell),
-    var(--tint, var(--shell)) 12%
+    var(--tint, var(--shell)) var(--tint-amount)
   );
   --tint-hover: color-mix(
     in oklab,
     var(--muted),
-    var(--tint, var(--muted)) 14%
+    var(--tint, var(--muted)) calc(var(--tint-amount) * 7 / 6)
   );
   --tint-selected: color-mix(
     in oklab,
     var(--secondary),
-    var(--tint, var(--secondary)) 16%
+    var(--tint, var(--secondary)) calc(var(--tint-amount) * 4 / 3)
   );
   --tint-outline: color-mix(
     in oklab,
     var(--border),
-    var(--tint, var(--border)) 16%
+    var(--tint, var(--border)) calc(var(--tint-amount) * 4 / 3)
   );
+}
+
+[data-tint][data-tint-strength="low"] {
+  --tint-amount: 12%;
+}
+
+[data-tint][data-tint-strength="high"] {
+  --tint-amount: 28%;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-tint] {
+    --tint-amount: 12%;
+  }
+
+  [data-tint][data-tint-strength="low"] {
+    --tint-amount: 8%;
+  }
+
+  [data-tint][data-tint-strength="high"] {
+    --tint-amount: 18%;
+  }
 }
 
 [data-tinted] {

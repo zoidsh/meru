@@ -92,6 +92,7 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
   return (
     <div
       data-tint
+      data-tint-strength={appearance?.tintStrength}
       style={{ "--tint": tint ? profile?.color : undefined } as CSSProperties}
       className="flex h-screen flex-col bg-shell"
     >

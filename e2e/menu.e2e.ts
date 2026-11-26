@@ -63,14 +63,14 @@ test("the view sits as the shell draws it, on the shell grey the window has too 
   ]);
   await expect.poll(() => drawnPadding(shell)).toBe("0px 8px");
   // Playwright emulates the light theme in the page, not in main. The first
-  // profile's colour is the palette's first.
+  // profile's colour is the palette's first, at the light theme's Medium.
   const [drawn, tinted] = await shell
     .getByRole("banner", { name: "Title bar" })
     .evaluate((titlebar) => {
       const probe = document.createElement("div");
 
       probe.style.backgroundColor =
-        "color-mix(in oklab, rgb(235, 235, 235), #2d52d2 12%)";
+        "color-mix(in oklab, rgb(235, 235, 235), #2d52d2 20%)";
       document.body.append(probe);
 
       const expected = getComputedStyle(probe).backgroundColor;

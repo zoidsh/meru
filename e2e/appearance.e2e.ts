@@ -386,6 +386,50 @@ test.describe("the Appearance page", () => {
       .toBeTruthy();
   });
 
+  test("Tint strength puts more of the profile's blue in the title bar at each step, written as chosen, and waits for the tint while it is off", async ({
+    app,
+    userDataDir,
+  }) => {
+    const shell = await findPage(app, SHELL_URL);
+    const page = await openAppearance(app);
+    const strength = page.getByRole("combobox", { name: "Tint strength" });
+    // How far blue leads red, which grows with the tint.
+    const lean = async () => {
+      const [red = 0, , blue = 0] = await titlebarRgb(shell);
+
+      return blue - red;
+    };
+    const choose = async (name: string, stored: string) => {
+      await strength.click();
+      await page.getByRole("option", { name }).click();
+      await expect(strength).toContainText(name);
+      await expect
+        .poll(async () => {
+          const written = await readSettings(userDataDir);
+
+          return written.profileTintStrength;
+        })
+        .toBe(stored);
+    };
+
+    await expect(strength).toContainText("Medium");
+    await expect(strength).toBeEnabled();
+
+    const medium = await lean();
+
+    await choose("Low", "low");
+    await expect.poll(lean).toBeLessThan(medium);
+    await choose("High", "high");
+    await expect.poll(lean).toBeGreaterThan(medium);
+
+    await switchNamed(page, "Tint with profile color").click();
+    await expect(strength).toBeDisabled();
+    await expect(strength).toHaveAccessibleDescription(
+      "Turn on Tint with profile color first."
+    );
+    await expect(strength).toContainText("High");
+  });
+
   test("each title bar switch hides its button, and the page's values survive a relaunch", async ({
     launchApp,
     standIn,
@@ -448,6 +492,77 @@ test.describe("the Appearance page", () => {
 
 test.describe("shots", () => {
   test.beforeEach(onlyWithShots);
+
+  test("the main window at each tint strength and with the tint off, the orange profile selected with the sidebar and the trial footer showing, light and dark", async ({
+    launchApp,
+    standIn,
+    userDataDir,
+  }) => {
+    const tabs = [
+      {
+        id: "gmail",
+        app: "gmail",
+        url: standIn.url,
+        title: "",
+        pinned: true,
+        openAtLaunch: true,
+      },
+      { id: "c", app: "calendar", url: standIn.calendarUrl, title: "" },
+      { id: "d", app: "drive", url: standIn.driveUrl, title: "" },
+    ];
+
+    await writeState(userDataDir, {
+      profiles: [
+        {
+          id: "home",
+          name: "Home",
+          color: "blue",
+          tabs: [{ id: "gmail", app: "gmail", url: standIn.url, title: "" }],
+          selectedTabId: "gmail",
+        },
+        {
+          id: "work",
+          name: "Work",
+          color: "orange",
+          tabs,
+          selectedTabId: "gmail",
+        },
+      ],
+      selectedProfileId: "work",
+    });
+
+    const app = await launchApp();
+    const shell = await findPage(app, SHELL_URL);
+
+    await findPage(app, standIn.url);
+    await expect(shell.getByRole("tablist", { name: "Tabs" })).toBeVisible();
+    await expect(
+      shell.getByRole("contentinfo", { name: "Meru Pro trial" })
+    ).toBeVisible();
+    // Away from every control, so no hover shows in the picture.
+    await shell.mouse.move(700, 20);
+
+    for (const strength of ["low", "medium", "high"]) {
+      // oxlint-disable-next-line no-await-in-loop -- one strength at a time
+      await setSetting(app, "profileTintStrength", strength);
+
+      for (const scheme of THEMES) {
+        // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+        await emulateTheme(app, scheme);
+        // oxlint-disable-next-line no-await-in-loop -- one after another
+        await shootWindow(app, shell, shotPath(`tint-${strength}`, scheme));
+      }
+    }
+
+    await setSetting(app, "profileTint", false);
+
+    for (const scheme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, scheme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await shootWindow(app, shell, shotPath("tint-off", scheme));
+    }
+  });
 
   test("the page top and bottom, the main window with the tint off and the title bar with every button hidden, light and dark", async ({
     launchApp,

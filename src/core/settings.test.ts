@@ -84,18 +84,29 @@ describe(readSetting, () => {
 
   it("follows the system's theme and tints with the profile's color by default, and reads a choice the file holds", () => {
     const defaults = read({ version: 1 });
-    const chosen = read({ version: 1, theme: "dark", profileTint: false });
-    const broken = read({ version: 1, theme: "sepia", profileTint: "no" });
+    const chosen = read({
+      version: 1,
+      theme: "dark",
+      profileTint: false,
+      profileTintStrength: "high",
+    });
+    const broken = read({
+      version: 1,
+      theme: "sepia",
+      profileTint: "no",
+      profileTintStrength: 28,
+    });
 
     expect(
       [defaults, chosen, broken].map((settings) => [
         readSetting(settings, "theme", "linux"),
         readSetting(settings, "profileTint", "linux"),
+        readSetting(settings, "profileTintStrength", "linux"),
       ])
     ).toStrictEqual([
-      ["system", true],
-      ["dark", false],
-      ["system", true],
+      ["system", true, "medium"],
+      ["dark", false, "high"],
+      ["system", true, "medium"],
     ]);
   });
 

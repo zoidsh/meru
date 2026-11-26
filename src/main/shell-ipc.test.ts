@@ -98,6 +98,7 @@ const setup = () => {
     sidebar: { state: "hidden" },
     appearance: {
       tint: true,
+      tintStrength: "medium",
       buttons: {
         sidebar: true,
         newTab: true,

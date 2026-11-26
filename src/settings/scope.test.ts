@@ -71,6 +71,7 @@ const APP: PageSettings = {
   downloadsShowInFolder: false,
   theme: "system",
   profileTint: true,
+  profileTintStrength: "medium",
   titlebarNewTab: true,
   titlebarUnifiedInbox: true,
   titlebarDownloads: true,

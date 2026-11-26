@@ -297,6 +297,7 @@ describe("an end no date holds", () => {
             sidebar: { state: "hidden" },
             appearance: {
               tint: true,
+              tintStrength: "medium",
               buttons: {
                 sidebar: true,
                 newTab: true,
