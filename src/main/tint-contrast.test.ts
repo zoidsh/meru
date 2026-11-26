@@ -12,11 +12,15 @@ const css = readFileSync(
   "utf-8"
 );
 
-/** Every value the stylesheet gives `token`, in its order: light, then dark. */
+/**
+ * Every value the stylesheet gives `token` of its own, in its order: light,
+ * then dark. One that names another token, as `[data-tinted]` hands the
+ * shell's on, is left out.
+ */
 const declared = (token: string) =>
-  [...css.matchAll(new RegExp(`${token}: ([^;]+);`, "gu"))].map(
-    (match) => match[1] ?? ""
-  );
+  [...css.matchAll(new RegExp(`^\\s+${token}: ([^;]+);`, "gmu"))]
+    .map((match) => match[1] ?? "")
+    .filter((value) => !value.startsWith("var("));
 
 const toLinear = (channel: number) =>
   channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
@@ -81,6 +85,23 @@ const mix = (from: Lab, to: Lab, percent: number): Lab => [
   from[2] + (to[2] - from[2]) * (percent / 100),
 ];
 
+/** `color` at `opacity` over `ground`, composited in sRGB as Chromium does. */
+const over = (color: Lab, ground: Lab, opacity: number): Lab => {
+  const encode = (lab: Lab) =>
+    labToLinear(lab).map((channel) =>
+      channel <= 0.0031308
+        ? 12.92 * channel
+        : 1.055 * channel ** (1 / 2.4) - 0.055
+    );
+  const groundChannels = encode(ground);
+
+  return linearToLab(
+    encode(color).map((channel, at) =>
+      toLinear(channel * opacity + (groundChannels[at] ?? 0) * (1 - opacity))
+    )
+  );
+};
+
 const luminance = (color: Lab) => {
   const [red = 0, green = 0, blue = 0] = labToLinear(color);
 
@@ -119,6 +140,60 @@ const strengths = (theme: (typeof THEMES)[number]) => {
   return { low, medium, high };
 };
 
+type Theme = (typeof THEMES)[number];
+
+/**
+ * The shell's muted text and icons: the theme's `--tint-muted-foreground`,
+ * a token mixed with the profile's colour, or with its fallback untinted.
+ */
+const mutedForeground = (theme: Theme, tint: Lab | undefined) => {
+  const value = declared("--tint-muted-foreground")[theme === "light" ? 0 : 1];
+  const parts =
+    /^color-mix\(\s*in oklab,\s*var\(--(?<base>[\w-]+)\),\s*var\(--tint, (?<fallback>.+)\) (?<percent>\d+)%\s*\)$/su.exec(
+      value ?? ""
+    )?.groups;
+
+  if (!parts?.base || !parts.fallback || !parts.percent) {
+    throw new Error(`Not a mix this test reads: ${value}`);
+  }
+
+  const named = /^var\(--(?<name>[\w-]+)\)$/u.exec(parts.fallback)?.groups
+    ?.name;
+  const fallback = named ? token(named, theme) : parse(parts.fallback);
+
+  return mix(token(parts.base, theme), tint ?? fallback, Number(parts.percent));
+};
+
+/** What `contrast` gives below the bar, by where: empty when all pass. */
+const below = (bar: number, cases: readonly (readonly [string, Lab, Lab])[]) =>
+  cases
+    .filter(([, one, other]) => contrast(one, other) < bar)
+    .map(
+      ([where, one, other]) => `${where} ${contrast(one, other).toFixed(2)}`
+    );
+
+/** Untinted, then each colour at each strength, the shell and the muted foreground. */
+const shells = (theme: Theme) => {
+  const shell = token("shell", theme);
+  const amounts = strengths(theme);
+
+  return [
+    ["untinted", shell, mutedForeground(theme, undefined)] as const,
+    ...PROFILE_COLOR_NAMES.flatMap((name) => {
+      const tint = parse(paletteColor(name));
+
+      return (["low", "medium", "high"] as const).map(
+        (strength) =>
+          [
+            `${name} ${strength}`,
+            mix(shell, tint, amounts[strength] ?? 0),
+            mutedForeground(theme, tint),
+          ] as const
+      );
+    }),
+  ];
+};
+
 describe("the profile tint", () => {
   it("takes 12, 20 and 28% of the profile's colour in light and 8, 12 and 18% in dark", () => {
     expect(THEMES.map(strengths)).toStrictEqual([
@@ -142,4 +217,45 @@ describe("the profile tint", () => {
       expect(failing).toStrictEqual([]);
     }
   );
+
+  it.each(THEMES)(
+    "keeps the shell's muted text at least 4.5:1, so its icons pass 3:1, untinted and at every strength for every profile colour, %s",
+    (theme) => {
+      expect(
+        below(
+          4.5,
+          shells(theme).map(([where, shell, muted]) => [where, muted, shell])
+        )
+      ).toStrictEqual([]);
+    }
+  );
+
+  it.each(THEMES)(
+    "draws a disabled control's half-opacity icon weaker than an enabled one's yet at least 2:1, %s",
+    (theme) => {
+      const disabled = shells(theme).map(
+        ([where, shell, muted]) =>
+          [where, over(muted, shell, 0.5), shell, muted] as const
+      );
+
+      expect(
+        below(
+          2,
+          disabled.map(([where, dimmed, shell]) => [where, dimmed, shell])
+        )
+      ).toStrictEqual([]);
+      expect(
+        disabled.filter(
+          ([, dimmed, shell, muted]) =>
+            contrast(dimmed, shell) >= contrast(muted, shell)
+        )
+      ).toStrictEqual([]);
+    }
+  );
+
+  it("leaves the dark shell's muted grey as it was untinted", () => {
+    expect(mutedForeground("dark", undefined)).toStrictEqual(
+      token("muted-foreground", "dark")
+    );
+  });
 });

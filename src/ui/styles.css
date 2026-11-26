@@ -81,6 +81,17 @@
     var(--border),
     var(--tint, var(--border)) calc(var(--tint-amount) * 4 / 3)
   );
+  /*
+   * The shell's own muted text and icons: shadcn's muted grey is 3.97:1 on
+   * the light shell and less on a tinted one. Light takes a dark tone of the
+   * profile's colour, as Chrome does on a coloured frame, and without one a
+   * grey of the same weight; at High every colour stays above 4.5:1.
+   */
+  --tint-muted-foreground: color-mix(
+    in oklab,
+    var(--foreground),
+    var(--tint, oklch(0.7 0 0)) 55%
+  );
 }
 
 [data-tint][data-tint-strength="low"] {
@@ -92,8 +103,14 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  /* Dark's muted grey already reads at every strength, so it only leans. */
   [data-tint] {
     --tint-amount: 12%;
+    --tint-muted-foreground: color-mix(
+      in oklab,
+      var(--muted-foreground),
+      var(--tint, var(--muted-foreground)) 15%
+    );
   }
 
   [data-tint][data-tint-strength="low"] {
@@ -109,6 +126,7 @@
   --muted: var(--tint-hover);
   --secondary: var(--tint-selected);
   --border: var(--tint-outline);
+  --muted-foreground: var(--tint-muted-foreground);
 }
 
 @layer base {
