@@ -238,6 +238,7 @@ test.describe("updates", () => {
       button: "Check now",
       enabled: false,
     });
+    await expect(statusButton(page, "Check now")).toBeFocused();
 
     await emitUpdate(app, { kind: "notAvailable" });
     await expectStatus(page, {

@@ -153,10 +153,14 @@ const StatusRow = ({ updates }: { updates: Updates }) => {
   return (
     <SettingRow center live label={title} description={description}>
       {(ids) => (
+        // Still focusable while it checks, so focus stays where it was;
+        // shadcn's Button dims only a `:disabled` one, hence the class.
         <Button
           variant="outline"
           size="sm"
           disabled={busy}
+          focusableWhenDisabled
+          className="aria-disabled:opacity-50"
           aria-describedby={ids.description || undefined}
           onClick={() => {
             settingsCalls()[button.call]({}).catch(noop);
