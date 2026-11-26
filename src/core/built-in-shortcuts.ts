@@ -60,6 +60,17 @@ export const BUILT_IN_SHORTCUTS: readonly BuiltInShortcut[] = [
   },
 ];
 
+/**
+ * What a page's view hears as Zoom In in place of the table's Plus: `=`,
+ * which carries `+`, with Shift or without, since a key event names the key
+ * pressed and Plus is no key of its own on most layouts. Not shown on the
+ * Shortcuts page, which lists the menu's Plus.
+ */
+export const ZOOM_IN_KEYS = [
+  "CommandOrControl+=",
+  "CommandOrControl+Shift+=",
+] as const;
+
 /** The accelerator the menu gives the item itself on `platform`, none for a role's own key. */
 export const builtInAccelerator = (
   id: BuiltInShortcutId,

@@ -4,7 +4,11 @@ import { isEqual } from "es-toolkit";
 
 import { matchesAccelerator } from "#core/accelerator.ts";
 import type { KeyInput } from "#core/accelerator.ts";
-import { builtInAccelerator } from "#core/built-in-shortcuts.ts";
+import {
+  BUILT_IN_SHORTCUTS,
+  ZOOM_IN_KEYS,
+  builtInAccelerator,
+} from "#core/built-in-shortcuts.ts";
 import type { BuiltInShortcutId } from "#core/built-in-shortcuts.ts";
 import {
   PINNED_SHORTCUT_COUNT,
@@ -118,16 +122,23 @@ export const builtInLabel = (
   }
 };
 
-/**
- * The zoom items' keys as a view hears them; `=`, which carries `+`, zooms
- * in with Shift or without.
- */
-const ZOOM_KEYS: readonly (readonly [string, ZoomChange])[] = [
-  ["CommandOrControl+0", "reset"],
-  ["CommandOrControl+=", "in"],
-  ["CommandOrControl+Shift+=", "in"],
-  ["CommandOrControl+-", "out"],
-];
+/** The zoom items' keys as a view hears them, the table's with Zoom In's `=` for its Plus. */
+const zoomKeys = (platform: Platform): (readonly [string, ZoomChange])[] => {
+  const key = (id: BuiltInShortcutId) =>
+    BUILT_IN_SHORTCUTS.find((entry) => entry.id === id)?.shortcut[platform];
+  const keys: [string | undefined, ZoomChange][] = [
+    [key("resetZoom"), "reset"],
+    ...ZOOM_IN_KEYS.map((accelerator): [string, ZoomChange] => [
+      accelerator,
+      "in",
+    ]),
+    [key("zoomOut"), "out"],
+  ];
+
+  return keys.flatMap(([accelerator, change]) =>
+    accelerator === undefined ? [] : [[accelerator, change] as const]
+  );
+};
 
 /** The app menu's items that are the system's own. */
 const appRoles = (appName: string, platform: Platform) => {
@@ -783,7 +794,7 @@ export const createApplicationMenu = ({
 
       const zoomed =
         command === undefined
-          ? ZOOM_KEYS.find(([accelerator]) =>
+          ? zoomKeys(platform).find(([accelerator]) =>
               matchesAccelerator(accelerator, input, platform === "darwin")
             )
           : undefined;
