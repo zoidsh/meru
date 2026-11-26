@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  APPS,
-  entitledApps,
-  linkApps,
-  opensInMeru,
-  standInApps,
-} from "./apps.ts";
+import { APPS, entitledApps, opensInMeru, standInApps } from "./apps.ts";
 import type { AppOpening } from "./apps.ts";
 import { entitledSetting } from "./entitled-settings.ts";
 import {
@@ -19,6 +13,7 @@ const fromCalendar = {
   signInOrigins: SIGN_IN_ORIGINS,
   apps: APPS,
   openerApp: "calendar",
+  opening: { openAppsInMeru: true, appsInDefaultBrowser: [] },
 };
 
 const fromGmail = { ...fromCalendar, openerApp: "gmail" };
@@ -310,29 +305,46 @@ describe(allowsChildNavigation, () => {
   });
 });
 
-/** Where a link goes from a page of `openerApp`, the apps narrowed by `opening`. */
+/** The context of a page of `openerApp`, with Tabs & Apps as `opening` says. */
+const contextOf = (
+  opening: AppOpening,
+  openerApp = "gmail",
+  workspaceApps = true
+) => ({
+  signInOrigins: SIGN_IN_ORIGINS,
+  apps: entitledApps(APPS, workspaceApps),
+  openerApp,
+  opening,
+});
+
+/** Where a link from a page of `openerApp` goes. */
 const routed = (
   url: string,
   opening: AppOpening,
   openerApp = "gmail",
   workspaceApps = true
-) =>
-  routeWindowOpen(url, {
-    signInOrigins: SIGN_IN_ORIGINS,
-    apps: linkApps(entitledApps(APPS, workspaceApps), opening, openerApp),
-    openerApp,
-  }).kind;
+) => {
+  const answer = routeWindowOpen(
+    url,
+    contextOf(opening, openerApp, workspaceApps)
+  );
+
+  return answer.kind === "tab" ? `tab:${answer.app.id}` : answer.kind;
+};
 
 describe("Tabs & Apps' settings", () => {
   const ON = { openAppsInMeru: true, appsInDefaultBrowser: [] };
   const CALENDAR = "https://calendar.google.com/calendar/r";
   const DRIVE = "https://drive.google.com/drive/my-drive";
   const POPOUT = `${GMAIL}/popout?ver=1`;
+  const DOC = "https://docs.google.com/document/d/1/edit";
+  const SHEET = "https://docs.google.com/spreadsheets/d/1/edit";
+  const SLIDE = "https://docs.google.com/presentation/d/1/edit";
 
   it("opens every app's links as tabs at their defaults", () => {
     expect([routed(CALENDAR, ON), routed(DRIVE, ON)]).toStrictEqual([
-      "tab",
-      "tab",
+      "tab:calendar",
+      "tab:drive",
     ]);
   });
 
@@ -351,7 +363,7 @@ describe("Tabs & Apps' settings", () => {
     const drive = { openAppsInMeru: true, appsInDefaultBrowser: ["drive"] };
 
     expect([routed(CALENDAR, drive), routed(DRIVE, drive)]).toStrictEqual([
-      "tab",
+      "tab:calendar",
       "system-browser",
     ]);
   });
@@ -363,8 +375,8 @@ describe("Tabs & Apps' settings", () => {
     };
 
     expect([routed(CALENDAR, unknown), routed(DRIVE, unknown)]).toStrictEqual([
-      "tab",
-      "tab",
+      "tab:calendar",
+      "tab:drive",
     ]);
   });
 
@@ -375,14 +387,47 @@ describe("Tabs & Apps' settings", () => {
       routed(DRIVE, off, "drive"),
       routed(GMAIL, off, "calendar"),
       routed(POPOUT, off),
-    ]).toStrictEqual(["tab", "tab", "child-window"]);
-    expect(
-      allowsChildNavigation(DRIVE, {
-        signInOrigins: SIGN_IN_ORIGINS,
-        apps: linkApps(APPS, off, "drive"),
-        openerApp: "drive",
-      })
-    ).toBeTruthy();
+    ]).toStrictEqual(["tab:drive", "tab:gmail", "child-window"]);
+    expect(allowsChildNavigation(DRIVE, contextOf(off, "drive"))).toBeTruthy();
+  });
+
+  it("sends a sheet or a slide out when its app is, never opening it as a Docs tab, though Docs claims the rest of their host", () => {
+    const sheets = { openAppsInMeru: true, appsInDefaultBrowser: ["sheets"] };
+    const slides = { openAppsInMeru: true, appsInDefaultBrowser: ["slides"] };
+
+    expect([
+      routed(SHEET, sheets),
+      routed(SHEET, sheets, "docs"),
+      routed(SLIDE, slides),
+      routed(DOC, sheets),
+    ]).toStrictEqual([
+      "system-browser",
+      "system-browser",
+      "system-browser",
+      "tab:docs",
+    ]);
+  });
+
+  it("keeps a Docs page's documents in Meru with the switch off and sends its sheets out", () => {
+    const off = { openAppsInMeru: false, appsInDefaultBrowser: [] };
+
+    expect([
+      routed(DOC, off, "docs"),
+      routed(SHEET, off, "docs"),
+    ]).toStrictEqual(["tab:docs", "system-browser"]);
+  });
+
+  it("keeps a Docs window from going to a sheet whose app is sent out, routing it to the system browser", () => {
+    const context = contextOf(
+      { openAppsInMeru: true, appsInDefaultBrowser: ["sheets"] },
+      "docs"
+    );
+
+    expect([
+      allowsChildNavigation(SHEET, context),
+      allowsChildNavigation(DOC, context),
+      routeWindowOpen(SHEET, context).kind,
+    ]).toStrictEqual([false, true, "system-browser"]);
   });
 
   it("opens only Gmail in Meru on the free version, whatever is stored", () => {
@@ -405,7 +450,7 @@ describe("Tabs & Apps' settings", () => {
         "system-browser",
         "system-browser",
         "child-window",
-        "tab",
+        "tab:gmail",
       ]);
     }
   });

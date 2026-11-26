@@ -1,5 +1,5 @@
-import { appForUrl } from "./apps.ts";
-import type { App } from "./apps.ts";
+import { appForUrl, opensInMeru } from "./apps.ts";
+import type { App, AppOpening } from "./apps.ts";
 import {
   isGoogleRedirect,
   isWebUrl,
@@ -30,6 +30,11 @@ export interface WindowOpenContext {
   apps: readonly App[];
   /** The app of the tab whose page, or whose page's window, asked. */
   openerApp: string;
+  /**
+   * Tabs & Apps' settings, which send a link to another app to the system
+   * browser rather than a tab.
+   */
+  opening: AppOpening;
 }
 
 const parseWebUrl = (url: string) => {
@@ -71,7 +76,7 @@ const isInboxRoot = (url: URL) =>
 
 export const routeWindowOpen = (
   url: string,
-  { signInOrigins, apps, openerApp }: WindowOpenContext,
+  { signInOrigins, apps, openerApp, opening }: WindowOpenContext,
   {
     inBackground = false,
   }: {
@@ -118,6 +123,12 @@ export const routeWindowOpen = (
   // in the session. Its inbox is its one tab.
   if (app.singleInstance && app.id === openerApp && !isInboxRoot(parsed)) {
     return { kind: "child-window" };
+  }
+
+  // Matched against every app first, so a sheet left out never falls to
+  // Docs' claim on the rest of docs.google.com.
+  if (app.id !== openerApp && !opensInMeru(app, opening)) {
+    return { kind: "system-browser", url };
   }
 
   return { kind: "tab", app };

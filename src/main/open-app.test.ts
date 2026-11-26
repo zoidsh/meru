@@ -330,6 +330,20 @@ describe(createOpenApp, () => {
     ]);
   });
 
+  it("sends a sheet's bookmark out with Sheets alone sent out, by the app it was saved as, never as a tab of Docs, whose host it shares", async () => {
+    const { openApp, events } = setup(
+      { kind: "open-app", profileId: "a", split: "row" },
+      withBookmarks,
+      undefined,
+      {},
+      ["sheets"]
+    );
+
+    await openApp.chooseBookmark("s");
+
+    expect(events).toStrictEqual([["close"], ["browser", SHEET]]);
+  });
+
   it("removes a bookmark it lists, staying open, and refuses either with nothing open or for a bookmark the profile has not", async () => {
     const listed = setup({ kind: "open-app", profileId: "a" }, withBookmarks);
     const closed = setup({ kind: "inbox" }, withBookmarks);

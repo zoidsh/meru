@@ -93,17 +93,6 @@ export const opensInMeru = (
   app.id === "gmail" ||
   (openAppsInMeru && !appsInDefaultBrowser.includes(app.id));
 
-/**
- * The apps a link from a page of `openerApp` may open a tab of: those that
- * open in Meru, and the opener's own, whose pages and pop-outs stay in it.
- */
-export const linkApps = (
-  apps: readonly App[],
-  opening: AppOpening,
-  openerApp: string
-): readonly App[] =>
-  apps.filter((app) => app.id === openerApp || opensInMeru(app, opening));
-
 /** Docs, Sheets and Slides share `docs.google.com`, told apart by path. */
 export const APPS: readonly App[] = [
   {

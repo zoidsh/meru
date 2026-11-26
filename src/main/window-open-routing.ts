@@ -1,4 +1,4 @@
-import type { App } from "#core/apps.ts";
+import type { App, AppOpening } from "#core/apps.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
 import type { WindowOpenRoute } from "#core/window-open.ts";
@@ -18,6 +18,7 @@ const describe = (error: unknown) =>
  */
 export const createWindowOpenRouting = ({
   apps,
+  appOpening,
   signInOrigins,
   systemBrowser,
   openerApp,
@@ -25,8 +26,10 @@ export const createWindowOpenRouting = ({
   addProfile,
   log,
 }: {
-  /** The apps a link from a page of `openerApp` may open a tab of, as they are now. */
-  apps: (openerApp: string) => readonly App[];
+  /** The apps a link may open a tab of, as they are now. */
+  apps: () => readonly App[];
+  /** Tabs & Apps' settings as they are now. */
+  appOpening: () => AppOpening;
   signInOrigins: readonly string[];
   systemBrowser: SystemBrowser;
   /** The app of the tab whose page asks, or "" once it is gone. */
@@ -91,11 +94,12 @@ export const createWindowOpenRouting = ({
     }
   };
 
-  const opening = (tabKeyed: TabKey) => {
-    const opener = openerApp(tabKeyed);
-
-    return { signInOrigins, apps: apps(opener), openerApp: opener };
-  };
+  const opening = (tabKeyed: TabKey) => ({
+    signInOrigins,
+    apps: apps(),
+    openerApp: openerApp(tabKeyed),
+    opening: appOpening(),
+  });
 
   return {
     onWindowOpen: (

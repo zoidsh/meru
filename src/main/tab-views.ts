@@ -2,7 +2,7 @@ import { isEqual } from "es-toolkit";
 
 import type { KeyInput } from "#core/accelerator.ts";
 import { findApp, restoreUrl } from "#core/apps.ts";
-import type { App } from "#core/apps.ts";
+import type { App, AppOpening } from "#core/apps.ts";
 import type { FoundInPage } from "#core/find.ts";
 import { contentViewBounds, viewFrame } from "#core/layout.ts";
 import type { ShellFrame } from "#core/layout.ts";
@@ -55,11 +55,16 @@ export interface TabViewsDeps {
   /** The registry, or the suite's stand-ins for it. */
   apps: readonly App[];
   /**
-   * The apps a link from a page of `openerApp` may open a tab of, as they
-   * are now: `apps` as Tabs & Apps narrows them, or Gmail alone on the free
-   * version, whose links to another app leave Meru as any other site's do.
+   * The apps a page's link may open a tab of, as they are now: `apps`, or
+   * Gmail alone on the free version, whose links to another app leave
+   * Meru as any other site's do.
    */
-  tabApps: (openerApp: string) => readonly App[];
+  tabApps: () => readonly App[];
+  /**
+   * Tabs & Apps' settings as they are now, which send a link to another
+   * app to the default browser.
+   */
+  appOpening: () => AppOpening;
   /** Google's sign-in, or the suite's stand-in for it. */
   signInOrigins: readonly string[];
   background: boolean;
@@ -172,6 +177,7 @@ export const createTabViews = ({
   ownWindows,
   apps,
   tabApps,
+  appOpening,
   signInOrigins,
   background,
   systemBrowser,
@@ -576,6 +582,7 @@ export const createTabViews = ({
 
   const routing = createWindowOpenRouting({
     apps: tabApps,
+    appOpening,
     signInOrigins,
     systemBrowser,
     openerApp: (key) => findTab(state(), key)?.app ?? "",

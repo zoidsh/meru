@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { APPS, entitledApps, linkApps } from "#core/apps.ts";
-import type { App } from "#core/apps.ts";
+import { APPS, entitledApps } from "#core/apps.ts";
+import type { App, AppOpening } from "#core/apps.ts";
 import type { FoundInPage } from "#core/find.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
@@ -78,10 +78,13 @@ const MAIN_HOST = 1;
 const setup = async ({
   state = initial,
   tabApps,
+  appOpening,
 }: {
   state?: State;
   /** The apps a link may open a tab of, every one when absent. */
-  tabApps?: (openerApp: string) => readonly App[];
+  tabApps?: () => readonly App[];
+  /** Tabs & Apps' settings, at their defaults when absent. */
+  appOpening?: () => AppOpening;
 } = {}) => {
   let size: Size = { width: 1280, height: 800 };
   let sidebar: SidebarState = "wide";
@@ -230,6 +233,9 @@ const setup = async ({
     },
     apps: APPS,
     tabApps: tabApps ?? (() => APPS),
+    appOpening:
+      appOpening ??
+      (() => ({ openAppsInMeru: true, appsInDefaultBrowser: [] })),
     signInOrigins: SIGN_IN_ORIGINS,
     background: true,
     systemBrowser: {
@@ -843,13 +849,12 @@ describe(createTabViews, () => {
     ]).toStrictEqual([[link], ["gmail", "c1"]]);
   });
 
-  it("asks for the apps a link may open by the opener's app at each link, so a change to Tabs & Apps applies to the next one, closing no tab", async () => {
+  it("reads Tabs & Apps at each link, so a change applies to the next one and closes no tab it opened", async () => {
     let opening = { openAppsInMeru: false, appsInDefaultBrowser: [] };
-    const window = await setup({
-      tabApps: (openerApp) => linkApps(APPS, opening, openerApp),
-    });
+    const window = await setup({ appOpening: () => opening });
     const gmail = window.viewOf("persist:a");
     const link = "https://drive.google.com/file/d/1";
+    const other = "https://drive.google.com/file/d/2";
 
     gmail?.options.onWindowOpen(link);
     await vi.advanceTimersByTimeAsync(0);
@@ -857,6 +862,7 @@ describe(createTabViews, () => {
     gmail?.options.onWindowOpen(link);
     await vi.advanceTimersByTimeAsync(0);
     opening = { openAppsInMeru: false, appsInDefaultBrowser: [] };
+    gmail?.options.onWindowOpen(other);
     await vi.advanceTimersByTimeAsync(0);
 
     const [tabs] = window.profiles.get().profiles;
@@ -864,7 +870,10 @@ describe(createTabViews, () => {
     expect([
       window.opened,
       tabs && knownTabs(tabs).map((tab) => tab.id),
-    ]).toStrictEqual([[link], ["gmail", "c1", "new-1"]]);
+    ]).toStrictEqual([
+      [link, other],
+      ["gmail", "c1", "new-1"],
+    ]);
   });
 
   it("opens a claimed link as a tab in the same session, selected, loading the link", async () => {
