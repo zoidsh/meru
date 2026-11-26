@@ -230,6 +230,11 @@ export const createSettingsStore = ({
       writing(key, () =>
         commit((current) => clearOverride(current, profileId, key))
       ),
+    /** Settles once every change asked for so far is written, for a quit to wait on. */
+    settled: async () => {
+      await mutex.acquire();
+      mutex.release();
+    },
     /** Deletes every value of the profile's own, as it is removed. */
     removeProfile: (profileId: string) =>
       commit((current) => clearProfileOverrides(current, profileId)),

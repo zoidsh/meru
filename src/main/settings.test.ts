@@ -8,11 +8,13 @@ import { fakeTextFile } from "#platform/text-file.fake.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
 import { StartupError } from "./failures.ts";
+import { hasSettled, heldTextFile } from "./held-file.fake.ts";
 import { createProfiles } from "./profiles.ts";
 import {
   createSettingsStore,
   followRemovedProfiles,
   openSettings,
+  saveSettings,
 } from "./settings.ts";
 
 const SETTINGS_PATH = path.join("/data", "Meru Dev", "settings.json");
@@ -512,5 +514,70 @@ describe(followRemovedProfiles, () => {
 
     expect(profiles.get().profiles).toHaveLength(1);
     expect(saved).toStrictEqual([]);
+  });
+});
+
+const setupHeld = () => {
+  const held = heldTextFile(SETTINGS_PATH);
+  const settings = createSettingsStore({
+    initial: { version: 1 },
+    save: (next) => saveSettings(held.file, next),
+    platform: "darwin",
+    log: () => {},
+  });
+
+  return { held, settings };
+};
+
+describe("a quit's wait for the settings", () => {
+  it("settles only once a change being written and one queued behind it have landed", async () => {
+    const { held, settings } = setupHeld();
+
+    void settings.update("unreadBadge", () => false);
+    void settings.update("notifications", () => false);
+
+    const settled = settings.settled();
+
+    await expect(hasSettled(settled)).resolves.toBeFalsy();
+
+    held.land();
+
+    await expect(hasSettled(settled)).resolves.toBeFalsy();
+    expect(held.inFlight()).toBe(1);
+
+    held.land();
+
+    await expect(hasSettled(settled)).resolves.toBeTruthy();
+    expect(JSON.parse(held.read() ?? "")).toStrictEqual({
+      version: 1,
+      unreadBadge: false,
+      notifications: false,
+    });
+  });
+
+  it("settles once a write that fails has failed", async () => {
+    const settings = createSettingsStore({
+      initial: { version: 1 },
+      save: () => Promise.reject(new Error("disk full")),
+      platform: "darwin",
+      log: () => {},
+    });
+
+    const update = settings.update("unreadBadge", () => false);
+
+    await expect(settings.settled()).resolves.toBeUndefined();
+    await expect(update).rejects.toThrow("disk full");
+  });
+
+  it("settles with no time passing when nothing is being written", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const { settings } = setupHeld();
+
+      await expect(settings.settled()).resolves.toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

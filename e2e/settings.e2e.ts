@@ -5,6 +5,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
 import {
+  SHELL_URL,
   clickMenuItem,
   expect,
   findPage,
@@ -212,6 +213,47 @@ test("a switch writes the app value, which a restart keeps", async ({
     .toBe(false);
 
   await app.close();
+
+  const again = await openSettings(await launchApp());
+
+  await expect(
+    again.getByRole("switch", { name: "Show preview" })
+  ).not.toBeChecked();
+});
+
+test("settings changed just before quitting hold after a relaunch", async ({
+  launchApp,
+  userDataDir,
+}) => {
+  const app = await launchApp();
+
+  await findPage(app, SHELL_URL);
+
+  const closed = app.waitForEvent("close");
+
+  // The quit is asked in the same turn as the changes, before their writes
+  // land; the last is written only after the ones queued ahead of it.
+  await app.evaluate(({ app: electronApp }) => {
+    const settings = Reflect.get(globalThis, "meruTestSettings") as {
+      set: (key: string, value: unknown) => Promise<void>;
+    };
+
+    for (const key of [
+      "unreadBadge",
+      "notificationSender",
+      "hidePromoBanner",
+      "notificationSummary",
+    ]) {
+      void settings.set(key, false);
+    }
+
+    electronApp.quit();
+  });
+  await closed;
+
+  expect(await readStoredSetting(userDataDir, "notificationSummary")).toBe(
+    false
+  );
 
   const again = await openSettings(await launchApp());
 

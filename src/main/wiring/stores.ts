@@ -115,5 +115,12 @@ export const wireStores = async ({
     entitlement,
     licenseRequests,
     firstRefresh,
+    /** Settles once every write asked of the three stores so far has landed or failed. */
+    storesSettled: () =>
+      Promise.allSettled([
+        profiles.settled(),
+        settings.settled(),
+        entitlement.settled(),
+      ]),
   };
 };

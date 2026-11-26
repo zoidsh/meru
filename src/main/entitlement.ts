@@ -556,6 +556,14 @@ export const createEntitlement = ({
         writes.release();
       }
     },
+    /**
+     * Settles once every write already begun has landed or failed, for a quit
+     * to wait on; a call to the server still unanswered is not waited for.
+     */
+    settled: async () => {
+      await writes.acquire();
+      writes.release();
+    },
     dispose: () => {
       disposed = true;
       clearInterval(refreshTimer);

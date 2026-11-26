@@ -11,7 +11,12 @@ import type {
   ServerAnswer,
 } from "#platform/entitlement-server.ts";
 
-import { REFRESH_INTERVAL, createEntitlement } from "./entitlement.ts";
+import {
+  REFRESH_INTERVAL,
+  createEntitlement,
+  saveEntitlementFile,
+} from "./entitlement.ts";
+import { hasSettled, heldTextFile } from "./held-file.fake.ts";
 
 // Midday, so a 14-day trial begun now has 14 calendar days to its last.
 const START = Date.UTC(2026, 10, 1, 12);
@@ -1037,5 +1042,61 @@ describe("the entitlement when its file cannot be written", () => {
     expect(saved).toStrictEqual([expect.objectContaining({ token: trial })]);
     expect(entitlement.snapshot().status).toBe("trial");
     entitlement.dispose();
+  });
+});
+
+describe("a quit's wait for the entitlement", () => {
+  it("settles only once an activation being written has landed, though the entitlement is disposed first", async () => {
+    const held = heldTextFile("/data/Meru Dev/entitlement.json");
+    const fake = createFakeServer();
+    const entitlement = createEntitlement({
+      initial: { version: 1 },
+      save: (next) => saveEntitlementFile(held.file, next),
+      server: fake.server,
+      publicKey: keys.publicKey,
+      deviceId: DEVICE,
+      clipboard: { writeText: () => Promise.resolve() },
+      now: Date.now,
+      log: () => {},
+    });
+    fake.answerWith(() => ({ token: signToken({}) }));
+
+    const activation = entitlement.activate("MERU-KEY-0001");
+
+    await vi.waitFor(() => {
+      expect(held.inFlight()).toBe(1);
+    });
+    entitlement.dispose();
+
+    const settled = entitlement.settled();
+
+    await expect(hasSettled(settled)).resolves.toBeFalsy();
+
+    held.land();
+
+    await expect(activation).resolves.toStrictEqual({ ok: true });
+    await expect(hasSettled(settled)).resolves.toBeTruthy();
+    expect(JSON.parse(held.read() ?? "")).toMatchObject({
+      licenseKey: "MERU-KEY-0001",
+    });
+  });
+
+  it("does not wait for a call to the server still unanswered", async () => {
+    const { entitlement, hold, held } = setup();
+
+    hold();
+
+    const activation = entitlement.activate("MERU-KEY-0001");
+
+    await vi.waitFor(() => {
+      expect(held).toHaveLength(1);
+    });
+    entitlement.dispose();
+
+    await expect(entitlement.settled()).resolves.toBeUndefined();
+
+    held[0]?.({ token: signToken({}) });
+
+    await expect(activation).resolves.toMatchObject({ ok: false });
   });
 });

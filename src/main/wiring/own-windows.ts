@@ -14,7 +14,7 @@ import type { Profiles } from "../profiles.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import { revealWindow } from "../windows.ts";
 
-/** The longest a quit waits for the last writes of the state. */
+/** The longest a quit waits for the last writes of the stores. */
 const QUIT_WAIT_MS = 3000;
 
 /**
@@ -42,6 +42,7 @@ export const wireOwnWindows = ({
   theme,
   shell,
   profiles,
+  storesSettled,
   focus,
 }: {
   apps: readonly App[];
@@ -54,6 +55,7 @@ export const wireOwnWindows = ({
   theme: ReturnType<typeof createTheme>;
   shell: ReturnType<typeof createShellWindow>;
   profiles: Profiles;
+  storesSettled: () => Promise<unknown>;
   focus: Focus;
 }) => {
   const ownWindows = createOwnWindows({
@@ -80,10 +82,10 @@ export const wireOwnWindows = ({
   // Before the windows close, so closing them leaves their tabs where they are.
   lifecycle.onBeforeQuit(ownWindows.markQuitting);
   shell.window.onSessionEnd(ownWindows.markQuitting);
-  // Where each window was, saved as they close, and any other change still
-  // being written.
+  // Where each window was, saved as they close, and every store's change
+  // still being written.
   lifecycle.holdQuitFor(
-    () => Promise.allSettled([ownWindows.saved(), profiles.settled()]),
+    () => Promise.allSettled([ownWindows.saved(), storesSettled()]),
     QUIT_WAIT_MS
   );
 

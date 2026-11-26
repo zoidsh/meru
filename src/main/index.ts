@@ -146,6 +146,7 @@ const start = async () => {
     entitlement,
     licenseRequests,
     firstRefresh,
+    storesSettled,
   } = await wireStores({ lifecycle, newId, clipboard });
 
   // Decided once, from the entitlement read at launch.
@@ -370,6 +371,7 @@ const start = async () => {
     theme,
     shell,
     profiles,
+    storesSettled,
     focus,
   });
 
