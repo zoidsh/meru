@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  acceleratorParts,
   ariaKeyShortcut,
   formatAccelerator,
   matchesAccelerator,
@@ -182,5 +183,59 @@ describe(formatAccelerator, () => {
       formatAccelerator(accelerator, "darwin"),
       formatAccelerator(accelerator, "linux"),
     ]).toStrictEqual([mac, other]);
+  });
+});
+
+describe(acceleratorParts, () => {
+  it.each([
+    ["Shift+CommandOrControl+G", ["⇧", "⌘", "G"], ["Ctrl", "Shift", "G"]],
+    ["Control+Command+L", ["⌃", "⌘", "L"], ["Ctrl", "Super", "L"]],
+    [
+      "CommandOrControl+Alt+Shift+N",
+      ["⌥", "⇧", "⌘", "N"],
+      ["Ctrl", "Alt", "Shift", "N"],
+    ],
+    ["Control+Shift+1", ["⌃", "⇧", "1"], ["Ctrl", "Shift", "1"]],
+    [
+      "CommandOrControl+Shift+Enter",
+      ["⇧", "⌘", "↩"],
+      ["Ctrl", "Shift", "Enter"],
+    ],
+    ["Ctrl+Shift+Tab", ["⌃", "⇧", "⇥"], ["Ctrl", "Shift", "Tab"]],
+    ["Alt+Left", ["⌥", "←"], ["Alt", "Left"]],
+    ["CommandOrControl+Plus", ["⌘", "+"], ["Ctrl", "+"]],
+    ["CommandOrControl+-", ["⌘", "-"], ["Ctrl", "-"]],
+    ["F11", ["F11"], ["F11"]],
+  ])(
+    "splits %s one part per key on macOS and elsewhere",
+    (accelerator, mac, other) => {
+      expect([
+        acceleratorParts(accelerator, "darwin"),
+        acceleratorParts(accelerator, "win32"),
+      ]).toStrictEqual([mac, other]);
+    }
+  );
+
+  it("joins into what formatAccelerator shows, on every platform", () => {
+    const sample = [
+      "Shift+CommandOrControl+G",
+      "Control+Command+L",
+      "Alt+Right",
+      "CommandOrControl+Shift+,",
+      "CommandOrControl+Plus",
+      "Ctrl+Tab",
+    ];
+
+    for (const platform of ["darwin", "win32", "linux"] as const) {
+      expect(
+        sample.map((accelerator) =>
+          acceleratorParts(accelerator, platform).join(
+            platform === "darwin" ? "" : "+"
+          )
+        )
+      ).toStrictEqual(
+        sample.map((accelerator) => formatAccelerator(accelerator, platform))
+      );
+    }
   });
 });

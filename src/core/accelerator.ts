@@ -189,22 +189,59 @@ export const ariaKeyShortcut = (accelerator: string, platform: Platform) => {
   ].join("+");
 };
 
+/** A key of an accelerator: a modifier, or the key it ends with by Electron's name. */
+export type AcceleratorKey =
+  | { modifier: Modifier }
+  | { modifier?: undefined; key: string };
+
+/**
+ * An Electron accelerator's keys in the order `platform`'s menus show them,
+ * the modifiers first.
+ */
+export const acceleratorKeys = (
+  accelerator: string,
+  platform: Platform
+): AcceleratorKey[] => {
+  const parts = accelerator.split("+");
+  const key = parts.pop() ?? "";
+  const held = new Set(
+    parts.map((part) => modifierOf(part, platform === "darwin"))
+  );
+
+  return [
+    ...(platform === "darwin" ? MAC_MODIFIERS : OTHER_MODIFIERS)
+      .filter(([modifier]) => held.has(modifier))
+      .map(([modifier]) => ({ modifier })),
+    { key },
+  ];
+};
+
+/**
+ * An Electron accelerator as a person reads it on `platform`, one part per
+ * key: `⇧` `⌘` `W` on macOS, `Ctrl` `Shift` `W` elsewhere.
+ */
+export const acceleratorParts = (accelerator: string, platform: Platform) => {
+  const isMacOS = platform === "darwin";
+  const modifiers = new Map<Modifier, string>(
+    isMacOS ? MAC_MODIFIERS : OTHER_MODIFIERS
+  );
+
+  return acceleratorKeys(accelerator, platform).map((part) => {
+    if (part.modifier) {
+      return modifiers.get(part.modifier) ?? "";
+    }
+
+    const named = (isMacOS ? MAC_KEYS : OTHER_KEYS)[part.key.toLowerCase()];
+
+    return named ?? (part.key.length === 1 ? part.key.toUpperCase() : part.key);
+  });
+};
+
 /**
  * An Electron accelerator as a person reads it on `platform`: `⇧⌘W` on
  * macOS, `Ctrl+Shift+W` elsewhere.
  */
-export const formatAccelerator = (accelerator: string, platform: Platform) => {
-  const isMacOS = platform === "darwin";
-  const parts = accelerator.split("+");
-  const key = parts.pop() ?? "";
-  const held = new Set(parts.map((part) => modifierOf(part, isMacOS)));
-  const named = (isMacOS ? MAC_KEYS : OTHER_KEYS)[key.toLowerCase()];
-  const shown = [
-    ...(isMacOS ? MAC_MODIFIERS : OTHER_MODIFIERS)
-      .filter(([modifier]) => held.has(modifier))
-      .map(([, symbol]) => symbol),
-    named ?? (key.length === 1 ? key.toUpperCase() : key),
-  ];
-
-  return shown.join(isMacOS ? "" : "+");
-};
+export const formatAccelerator = (accelerator: string, platform: Platform) =>
+  acceleratorParts(accelerator, platform).join(
+    platform === "darwin" ? "" : "+"
+  );
