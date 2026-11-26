@@ -165,7 +165,7 @@ test("shares a window chosen over a Meet tab in the main window, video alone, Wi
   ]);
 });
 
-test("Enter on a source, and a double-click, share it", async ({
+test("Enter on a source, reached by the keys alone or chosen, and a double-click, share it", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -177,6 +177,16 @@ test("Enter on a source, and a double-click, share it", async ({
   const overlay = await findOverlayDocument(app);
   const card = picker(overlay);
 
+  // Tab lands on the first source without choosing it; Enter shares it all the same.
+  await expect(card.getByRole("tab", { name: "Windows" })).toBeFocused();
+  await overlay.keyboard.press("Tab");
+  await overlay.keyboard.press("Tab");
+  await expect(card.getByRole("radio", { name: "Notes" })).toBeFocused();
+  await expect(card.getByRole("radio", { name: "Notes" })).not.toBeChecked();
+  await overlay.keyboard.press("Enter");
+  await expect(sharing(meet)).toHaveText("Sharing 1 video, 0 audio");
+
+  await present(meet);
   await card.getByRole("radio", { name: "Terminal" }).click();
   await overlay.keyboard.press("Enter");
   await expect(sharing(meet)).toHaveText("Sharing 1 video, 0 audio");
@@ -188,6 +198,7 @@ test("Enter on a source, and a double-click, share it", async ({
   const { shared } = await readSources(app);
 
   expect(shared).toStrictEqual([
+    { id: "window:101:0", name: "Notes" },
     { id: "window:103:0", name: "Terminal" },
     { id: "screen:2:0", name: "Screen 2" },
   ]);

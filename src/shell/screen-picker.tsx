@@ -65,10 +65,13 @@ const SourceGrid = ({
           onSelect(value);
         }
       }}
-      onKeyDown={(event: KeyboardEvent) => {
-        if (event.key === "Enter" && selected !== undefined) {
+      onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
+        // The radio Enter is pressed on, which Tab can focus without checking it.
+        const { source } = (event.target as HTMLElement).dataset;
+
+        if (event.key === "Enter" && source !== undefined) {
           event.preventDefault();
-          onShare(selected);
+          onShare(source);
         }
       }}
       className={GRID}
@@ -94,7 +97,11 @@ const SourceGrid = ({
                 className="aspect-video w-full rounded-md bg-muted object-contain"
               />
               <div className="flex min-w-0 items-center gap-2">
-                <RadioGroupItem id={id} value={source.id} />
+                <RadioGroupItem
+                  id={id}
+                  value={source.id}
+                  data-source={source.id}
+                />
                 <FieldTitle
                   aria-hidden
                   className="block min-w-0 truncate"
