@@ -1,11 +1,14 @@
 import { useLingui } from "@lingui/react/macro";
+import { noop } from "es-toolkit";
 import { useEffect } from "react";
 
 import type { LicenseStanding } from "#contract/entitlement.ts";
 import type { ShellState } from "#contract/shell.ts";
+import { offersUpgrade } from "#core/overlay.ts";
 import { useLicenseStatus } from "#shared/license-status.ts";
 import {
   Toast as ToastRoot,
+  ToastAction,
   ToastContent,
   ToastPortal,
   ToastProvider,
@@ -14,6 +17,8 @@ import {
   createToastManager,
   useToastManager,
 } from "#ui/toast.tsx";
+
+import { shellCalls } from "./sync.ts";
 
 const notices = createToastManager();
 
@@ -33,7 +38,8 @@ const NoticeList = () => {
       <ToastContent>
         {/* The view main sizes for the toast holds two lines, so a long page
             title is cut at the second, keeping "Bookmarked" in sight. */}
-        <ToastTitle className="line-clamp-2 min-w-0" />
+        <ToastTitle className="line-clamp-2 min-w-0 flex-1" />
+        <ToastAction />
       </ToastContent>
     </ToastRoot>
   ));
@@ -128,13 +134,35 @@ export const Toast = ({
     "trial-ended": ended,
   }[message];
 
+  const upgrade = offersUpgrade(message)
+    ? t({
+        message: "Upgrade",
+        comment:
+          "Button on a short notice at the foot of the window saying a feature needs Meru Pro; it opens Meru Pro's pricing in the default browser",
+      })
+    : undefined;
+
   useEffect(() => {
-    const id = notices.add({ title: text, timeout: 0 });
+    const id = notices.add({
+      title: text,
+      timeout: 0,
+      ...(upgrade && {
+        actionProps: {
+          children: upgrade,
+          onClick: () => {
+            const calls = shellCalls();
+
+            calls.openMeruPro(undefined).catch(noop);
+            calls.closeOverlay({});
+          },
+        },
+      }),
+    });
 
     return () => {
       notices.close(id);
     };
-  }, [text]);
+  }, [text, upgrade]);
 
   return (
     <ToastProvider toastManager={notices}>

@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import { APPS, findApp } from "./apps.ts";
 import {
   OVERLAY_FRAME_NAME,
+  TOAST_MESSAGES,
   coversPage,
   leavesViewFree,
+  offersUpgrade,
   overlayRectangle,
   overlayWidth,
   isShellDocument,
@@ -323,5 +325,13 @@ describe(isShellDocument, () => {
         "meru-app://shell/index.html",
       ].map((url) => isShellDocument({ url, frameName: OVERLAY_FRAME_NAME }))
     ).toStrictEqual([false, false, false]);
+  });
+});
+
+describe(offersUpgrade, () => {
+  it("is the two toasts saying what needs Meru Pro, and no other", () => {
+    expect(
+      TOAST_MESSAGES.filter((message) => offersUpgrade(message))
+    ).toStrictEqual(["one-profile", "email-links-pro"]);
   });
 });

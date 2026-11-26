@@ -8,7 +8,7 @@ import path from "node:path";
 import type { ElectronApplication, Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
-import { DAY } from "#core/entitlement.ts";
+import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
 import { composeUrl } from "#core/mailto.ts";
 
 import {
@@ -303,7 +303,7 @@ test("Cancel in the profile question opens nothing", async ({
   expect(await composeWindows(app)).toStrictEqual([]);
 });
 
-test("without Meru Pro a link opens nothing and says so in a toast, showing the hidden main window for it", async ({
+test("without Meru Pro a link opens nothing and says so in a toast, showing the hidden main window for it, with Upgrade opening Meru Pro's pricing", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -324,6 +324,15 @@ test("without Meru Pro a link opens nothing and says so in a toast, showing the 
   await expect.poll(() => mainWindowVisible(app)).toBe(true);
   expect(await questions(app)).toStrictEqual([]);
   expect(await composeWindows(app)).toStrictEqual([]);
+
+  await overlay
+    .getByRole("region", { name: "Notifications" })
+    .getByRole("button", { name: "Upgrade" })
+    .click();
+  await expect
+    .poll(() => readOpenedExternally(app))
+    .toStrictEqual([MERU_PRO_URL]);
+  await expect(overlay.getByText(PRO_NEEDED, { exact: true })).toHaveCount(0);
 });
 
 test("a link that comes while the trial-ended screen waits is answered once the person has chosen", async ({

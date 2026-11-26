@@ -4,7 +4,11 @@ import { newProfile, selectProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createFocus } from "./focus.ts";
-import { TOAST_DURATION, createOverlays } from "./overlay.ts";
+import {
+  ACTION_TOAST_DURATION,
+  TOAST_DURATION,
+  createOverlays,
+} from "./overlay.ts";
 
 const two: State = {
   version: 1,
@@ -146,6 +150,24 @@ describe(createOverlays, () => {
       "hide",
       "shell told closed",
     ]);
+    vi.useRealTimers();
+  });
+
+  it("keeps a toast with Upgrade past a plain one's time, closing it at its own", () => {
+    vi.useFakeTimers();
+
+    const { overlays, focus } = setup();
+    const shown = () => overlays.current()?.kind;
+
+    focus.noteFocused({ kind: "front" });
+    overlays.open({ kind: "toast", message: "email-links-pro" });
+    vi.advanceTimersByTime(TOAST_DURATION);
+
+    const atPlainEnd = shown();
+
+    vi.advanceTimersByTime(ACTION_TOAST_DURATION - TOAST_DURATION);
+
+    expect([atPlainEnd, shown()]).toStrictEqual(["toast", undefined]);
     vi.useRealTimers();
   });
 

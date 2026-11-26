@@ -30,6 +30,16 @@ export const TOAST_MESSAGES = [
 
 export type ToastMessage = (typeof TOAST_MESSAGES)[number];
 
+/** The toasts that say what needs Meru Pro, which carry an Upgrade button. */
+export const UPGRADE_TOASTS = [
+  "one-profile",
+  "email-links-pro",
+] as const satisfies readonly ToastMessage[];
+
+/** Whether the toast carries Upgrade. */
+export const offersUpgrade = (message: ToastMessage) =>
+  (UPGRADE_TOASTS as readonly ToastMessage[]).includes(message);
+
 /** What an overlay over the content views shows; one at a time. */
 export type Overlay =
   /**

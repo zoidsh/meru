@@ -300,7 +300,7 @@ test("the first profile's page on the free version has no Show in Unified inbox,
   });
 });
 
-test("Add another account on the free version adds no profile and says why", async ({
+test("Add another account on the free version adds no profile and says why, with Upgrade opening Meru Pro's pricing", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -309,16 +309,25 @@ test("Add another account on the free version adds no profile and says why", asy
   const view = await findPage(app, standIn.url);
   const overlay = await findOverlayDocument(app);
 
+  const notice = overlay.getByText(
+    "The free version uses one profile. Upgrade to Meru Pro to add more.",
+    { exact: true }
+  );
+
   await view.getByRole("link", { name: "Add another account" }).click();
-  await expect(
-    overlay.getByText(
-      "The free version uses one profile. Upgrade to Meru Pro to add more.",
-      { exact: true }
-    )
-  ).toBeVisible();
+  await expect(notice).toBeVisible();
   await expect(readState<SavedState>(userDataDir)).resolves.toMatchObject({
     profiles: [expect.anything()],
   });
+
+  await overlay
+    .getByRole("region", { name: "Notifications" })
+    .getByRole("button", { name: "Upgrade" })
+    .click();
+  await expect
+    .poll(() => readOpenedExternally(app))
+    .toStrictEqual([MERU_PRO_URL]);
+  await expect(notice).toHaveCount(0);
 });
 
 test("a license activated while free brings the other profile back at once, selected as stored", async ({
@@ -388,6 +397,35 @@ test("a trial and a license run every profile, and a license lost while running 
 
 test.describe("shots", () => {
   test.beforeEach(onlyWithShots);
+
+  test("the one-profile toast with its Upgrade button, light and dark", async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    const { app, shell } = await launchFree(launchApp, userDataDir);
+    const view = await findPage(app, standIn.url);
+    const overlay = await findOverlayDocument(app);
+    const upgrade = overlay
+      .getByRole("region", { name: "Notifications" })
+      .getByRole("button", { name: "Upgrade" });
+
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one scheme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+      await view.getByRole("link", { name: "Add another account" }).click();
+      // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+      await expect(upgrade).toBeVisible();
+      // Lets the toast slide in.
+      // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+      await view.waitForTimeout(600);
+      // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+      await shootWindow(app, shell, shotPath("toast-upgrade", theme));
+      // oxlint-disable-next-line no-await-in-loop -- one toast at a time
+      await expect(upgrade).toHaveCount(0, { timeout: 12_000 });
+    }
+  });
 
   test("Settings' Profiles on the free version, its popover, and the title bar free and licensed, light and dark", async ({
     launchApp,

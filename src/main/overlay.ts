@@ -1,6 +1,10 @@
 import { isEqual } from "es-toolkit";
 
-import { takesNoFocus, transitionOverlay } from "#core/overlay.ts";
+import {
+  offersUpgrade,
+  takesNoFocus,
+  transitionOverlay,
+} from "#core/overlay.ts";
 import type { Overlay, OverlayEvent } from "#core/overlay.ts";
 import type { State } from "#core/state.ts";
 import type { Rectangle } from "#core/window-bounds.ts";
@@ -10,6 +14,12 @@ import type { Focus } from "./focus.ts";
 
 /** How long a toast shows. */
 export const TOAST_DURATION = 4000;
+
+/**
+ * How long a toast with a button shows: long enough to read it and reach
+ * the button, since nothing pauses a toast's time.
+ */
+export const ACTION_TOAST_DURATION = 8000;
 
 export interface OverlaysDeps {
   focus: Pick<Focus, "focus" | "focused">;
@@ -80,12 +90,15 @@ export const createOverlays = ({
     open = overlay;
 
     if (overlay.kind === "toast") {
-      toastTimer = setTimeout(() => {
-        if (open === overlay) {
-          // oxlint-disable-next-line no-use-before-define -- the toast's timer closes it
-          hide();
-        }
-      }, TOAST_DURATION);
+      toastTimer = setTimeout(
+        () => {
+          if (open === overlay) {
+            // oxlint-disable-next-line no-use-before-define -- the toast's timer closes it
+            hide();
+          }
+        },
+        offersUpgrade(overlay.message) ? ACTION_TOAST_DURATION : TOAST_DURATION
+      );
     }
 
     if (takeFocus && !takesNoFocus(overlay)) {

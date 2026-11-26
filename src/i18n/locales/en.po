@@ -3242,9 +3242,11 @@ msgstr "Updates"
 
 #. Button in the popover a Meru Pro badge opens in Settings, which opens Meru Pro's page in the default browser
 #. Button of the trial-ended screen at launch that opens Meru Pro's page in the default browser
+#. Button on a short notice at the foot of the window saying a feature needs Meru Pro; it opens Meru Pro's pricing in the default browser
 #. Button on the Meru Pro page of Settings that opens Meru Pro's page in the default browser
 #: src/settings/pro-badge.tsx
 #: src/settings/pro-page.tsx
+#: src/shell/toast.tsx
 #: src/shell/trial-ended.tsx
 msgid "Upgrade"
 msgstr "Upgrade"
