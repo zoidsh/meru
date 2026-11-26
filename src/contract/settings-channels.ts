@@ -35,6 +35,7 @@ export const SETTINGS_CALL_NAMES = [
   "removeTrustedSite",
   "openSettingsFile",
   "clearCache",
+  "copyAboutValue",
   ...ENTITLEMENT_CALL_NAMES,
 ] as const;
 

@@ -73,6 +73,7 @@ test("sits last in Privacy & Security's group with its two cards, no scopes and 
     "Privacy & Security",
     "Advanced",
     "Meru Pro",
+    "About",
   ]);
   await expect(page.getByRole("tablist")).toHaveCount(0);
   await expect(page.getByText("Pro", { exact: true })).toHaveCount(0);

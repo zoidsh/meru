@@ -645,6 +645,7 @@ const start = async () => {
     entitlement,
     licenseRequests,
     systemBrowser,
+    clipboard,
     // Google's sign-in is in the profile's Gmail tab, so the window comes
     // forward with it, unless the background flags hold it back.
     signIn: async (profileId) => {

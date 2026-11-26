@@ -10,15 +10,18 @@ import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
+import type { Clipboard } from "#platform/clipboard.ts";
 import type { ContextMenus } from "#platform/context-menu.ts";
 import type { Displays } from "#platform/displays.ts";
 import type { DownloadFiles } from "#platform/downloads.ts";
 import type { Ipc } from "#platform/ipc.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
+import { createSystemInfo } from "#platform/system-info.ts";
 import type { TextFile } from "#platform/text-file.ts";
 import type { Theme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
+import { createAboutPage } from "../about-page.ts";
 import { createAdvancedPage } from "../advanced-page.ts";
 import { COMMANDS } from "../commands.ts";
 import { serveContract } from "../contract-ipc.ts";
@@ -85,6 +88,7 @@ export const wireSettingsWindow = ({
   entitlement,
   licenseRequests,
   systemBrowser,
+  clipboard,
 }: {
   platform: Platform;
   /** The downloads' own, for the folder they are saved to. */
@@ -125,6 +129,8 @@ export const wireSettingsWindow = ({
   licenseRequests: LicenseRequests;
   /** Meru's own links' browser, for Meru Pro's page. */
   systemBrowser: SystemBrowser;
+  /** For the About page's Copy. */
+  clipboard: Clipboard;
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
@@ -191,6 +197,12 @@ export const wireSettingsWindow = ({
     log: console.error,
   });
 
+  const about = createAboutPage({
+    platform,
+    system: createSystemInfo(),
+    clipboard,
+  });
+
   const shortcuts = () => readShortcuts(platform, lifecycle.name, COMMANDS);
 
   profiles.onChange(() => {
@@ -227,6 +239,7 @@ export const wireSettingsWindow = ({
       general,
       trustedSites,
       advanced,
+      about,
       shortcuts,
       entitlement,
       licenseRequests,
@@ -254,6 +267,7 @@ export const wireSettingsWindow = ({
           language,
           trustedSites,
           advanced,
+          about,
           shortcuts,
           entitlement,
           licenseRequests,

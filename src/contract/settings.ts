@@ -93,6 +93,11 @@ export const TABS_APPS_PAGE_KEYS = [
   "sleepAfter",
 ] as const;
 
+/** What the About page shows and copies, as its slice names them. */
+export const ABOUT_ITEMS = ["version", "operatingSystem"] as const;
+
+export type AboutItem = (typeof ABOUT_ITEMS)[number];
+
 /** The Advanced page's settings; the app holds them, never a profile. */
 export const ADVANCED_PAGE_KEYS = ["hardwareAcceleration"] as const;
 
@@ -375,6 +380,11 @@ export const SETTINGS_CALLS = {
    * pages; rejects when any could not be cleared.
    */
   clearCache: { request: none, response: z.undefined() },
+  /** Puts main's own string of one of the About page's values on the clipboard. */
+  copyAboutValue: {
+    request: z.object({ item: z.enum(ABOUT_ITEMS) }),
+    response: z.undefined(),
+  },
   ...ENTITLEMENT_CALLS,
 } as const satisfies Record<
   SettingsCallName,
@@ -502,6 +512,12 @@ export const SETTINGS_STATE = {
      */
     hardwareAccelerationAtLaunch: z.boolean(),
   }),
+  /**
+   * The About page's values, as main read them once: the app's version as
+   * Electron gives it, and the system's name and version with the processor
+   * architecture, such as `macOS 27.2 (arm64)`.
+   */
+  about: z.object({ version: z.string(), operatingSystem: z.string() }),
   /**
    * The Shortcuts page: a card per menu of the application menu, in the menu
    * bar's order, and the keys bound outside the registry, all of this

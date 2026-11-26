@@ -5,6 +5,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   DockIcon,
+  InfoIcon,
   KeyboardIcon,
   LayoutGridIcon,
   MailIcon,
@@ -22,6 +23,7 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import type { SettingsSection } from "#core/settings-pages.ts";
 import { Button } from "#ui/button.tsx";
 
+import { AboutPage } from "./about-page.tsx";
 import { AdvancedPage } from "./advanced-page.tsx";
 import { AppearancePage } from "./appearance-page.tsx";
 import { GeneralPage } from "./general-page.tsx";
@@ -49,6 +51,7 @@ const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
   privacy: PrivacyPage,
   advanced: AdvancedPage,
   pro: ProPage,
+  about: AboutPage,
 };
 
 /** The nav's width, which the titlebar's buttons start after. */
@@ -77,7 +80,10 @@ const SECTION_GROUPS: readonly (readonly Section[])[] = [
     { id: "privacy", icon: ShieldIcon },
     { id: "advanced", icon: WrenchIcon },
   ],
-  [{ id: "pro", icon: BadgeCheckIcon }],
+  [
+    { id: "pro", icon: BadgeCheckIcon },
+    { id: "about", icon: InfoIcon },
+  ],
 ];
 
 /** Each section's name, in the nav and as the title. */
@@ -146,6 +152,11 @@ const useSectionTitles = (): Record<SettingsSection, string> => {
       message: "Meru Pro",
       comment:
         "Name of the Settings section for the trial and the license, in its list and as its title; Meru Pro is the product's name",
+    }),
+    about: t({
+      message: "About",
+      comment:
+        "Name of the Settings section showing Meru's version and the operating system, in its list and as its title",
     }),
   };
 };

@@ -11,6 +11,7 @@ export const SETTINGS_SECTIONS = [
   "privacy",
   "advanced",
   "pro",
+  "about",
 ] as const;
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];

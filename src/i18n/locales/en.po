@@ -280,6 +280,11 @@ msgstr "6 hours"
 msgid "A download finished"
 msgstr "A download finished"
 
+#. Name of the Settings section showing Meru's version and the operating system, in its list and as its title
+#: src/settings/app.tsx
+msgid "About"
+msgstr "About"
+
 #. Menu item in the macOS app menu that shows the app's version; {appName} is the app's name
 #: src/main/application-menu.ts
 msgid "About {appName}"
@@ -740,7 +745,9 @@ msgstr "Conversations"
 msgid "Cookies and other site data"
 msgstr "Cookies and other site data"
 
+#. Read out by screen readers once Meru's version or the operating system is on the clipboard, from the About page of Settings
 #. Read out by screen readers once the license key is on the clipboard, from the Meru Pro page of Settings
+#: src/settings/about-page.tsx
 #: src/settings/pro-page.tsx
 msgid "Copied"
 msgstr "Copied"
@@ -753,8 +760,10 @@ msgstr "Copied verification code {verificationCode}"
 #. Button on a notification that copies the verification code
 #. Menu item in the Edit menu
 #. Tooltip of the button beside the license key on the Meru Pro page of Settings that copies the whole key
+#. Tooltip of the buttons on the About page of Settings that copy Meru's version or the operating system
 #: src/main/application-menu.ts
 #: src/main/notifications.ts
+#: src/settings/about-page.tsx
 #: src/settings/pro-page.tsx
 msgid "Copy"
 msgstr "Copy"
@@ -776,10 +785,20 @@ msgstr "Copy license key"
 msgid "Copy Link"
 msgstr "Copy Link"
 
+#. Accessible name of the button on the About page of Settings that copies the operating system's name, version and architecture
+#: src/settings/about-page.tsx
+msgid "Copy operating system"
+msgstr "Copy operating system"
+
 #. Item of a tab's context menu that copies its page's address
 #: src/main/tab-menu.ts
 msgid "Copy URL"
 msgstr "Copy URL"
+
+#. Accessible name of the button on the About page of Settings that copies Meru's version number
+#: src/settings/about-page.tsx
+msgid "Copy version"
+msgstr "Copy version"
 
 #. Said in the unified inbox when archiving a message failed and the message was put back in the list
 #: src/shell/inbox.tsx
@@ -1800,6 +1819,11 @@ msgstr "Opening Google apps"
 #: src/settings/advanced-page.tsx
 msgid "Opens settings.json in your text editor."
 msgstr "Opens settings.json in your text editor."
+
+#. Label of the row on the About page of Settings showing the computer's operating system, its version and processor architecture
+#: src/settings/about-page.tsx
+msgid "Operating system"
+msgstr "Operating system"
 
 #. The Option key on a Mac, as a screen reader says it in a keyboard shortcut
 #: src/main/shortcuts-page.ts
@@ -2923,6 +2947,11 @@ msgstr "Verification code {verificationCode}"
 #: src/settings/gmail-page.tsx
 msgid "Verification codes"
 msgstr "Verification codes"
+
+#. Label of the row on the About page of Settings showing Meru's version number
+#: src/settings/about-page.tsx
+msgid "Version"
+msgstr "Version"
 
 #. Name of the View menu
 #: src/main/application-menu.ts

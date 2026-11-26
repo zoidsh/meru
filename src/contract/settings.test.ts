@@ -410,7 +410,18 @@ describe("the settings contract", () => {
       openPage({ section: "about", profileId: null }),
       openPage({ section: "profiles", profileId: "" }),
       openPage({ section: "profiles" }),
-    ]).toStrictEqual([true, true, true, true, true, true, false, false, false]);
+    ]).toStrictEqual([true, true, true, true, true, true, true, false, false]);
+  });
+
+  it("copies one of the About page's values by name, never text the window sends", () => {
+    const copy = accepts(SETTINGS_CALLS.copyAboutValue.request);
+
+    expect([
+      copy({ item: "version" }),
+      copy({ item: "operatingSystem" }),
+      copy({ item: "licenseKey" }),
+      copy({ text: "anything" }),
+    ]).toStrictEqual([true, true, false, false]);
   });
 
   it("takes a profile's new name, one of the eight colours, and a place from 0", () => {

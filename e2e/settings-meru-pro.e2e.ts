@@ -107,7 +107,7 @@ const activateInDialog = async (page: Page, key: string) => {
   await activate(page).click();
 };
 
-test("is the last section, and shows a running trial's days with Upgrade, which opens Meru Pro's page", async ({
+test("is the section before About, and shows a running trial's days with Upgrade, which opens Meru Pro's page", async ({
   app,
 }) => {
   await stubSystemBrowser(app);
@@ -115,7 +115,9 @@ test("is the last section, and shows a running trial's days with Upgrade, which 
   const page = await openSettings(app);
   const nav = page.getByRole("navigation", { name: "Settings sections" });
 
-  await expect(nav.getByRole("button").last()).toHaveAccessibleName("Meru Pro");
+  await expect(nav.getByRole("button").nth(-2)).toHaveAccessibleName(
+    "Meru Pro"
+  );
   await openSection(page, "Meru Pro");
   await expectStatus(
     page,

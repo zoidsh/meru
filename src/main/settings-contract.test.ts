@@ -19,8 +19,10 @@ import type { Platform } from "#core/platform.ts";
 import type { Settings } from "#core/settings.ts";
 import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import { fakeSystemInfo } from "#platform/system-info.fake.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
 
+import { createAboutPage } from "./about-page.ts";
 import { createAdvancedPage } from "./advanced-page.ts";
 import { COMMANDS } from "./commands.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
@@ -95,19 +97,20 @@ const setup = (
   );
   const copied: string[] = [];
   const opened: string[] = [];
+  const clipboard = {
+    writeText: (text: string) => {
+      copied.push(text);
+
+      return Promise.resolve();
+    },
+  };
   const entitlement = createEntitlement({
     initial: free ? { version: 1 } : trialFile(),
     save: () => Promise.resolve(),
     server,
     publicKey: publicKeyFromRaw(DEV_PUBLIC_KEY),
     deviceId: "device",
-    clipboard: {
-      writeText: (text) => {
-        copied.push(text);
-
-        return Promise.resolve();
-      },
-    },
+    clipboard,
     now: Date.now,
     log: () => false,
   });
@@ -230,6 +233,10 @@ const setup = (
     return Promise.resolve();
   };
   const openedFiles: string[] = [];
+  const system = fakeSystemInfo({
+    appVersion: "4.0.0-dev.0",
+    osRelease: 'PRETTY_NAME="Ubuntu 24.04.3 LTS"\n',
+  });
   const deps = {
     settings,
     profiles,
@@ -289,6 +296,7 @@ const setup = (
       deleteBrowsingData,
       log: () => false,
     }),
+    about: createAboutPage({ platform, system: system.system, clipboard }),
     shortcuts: () => readShortcuts(platform, "Meru", COMMANDS),
     entitlement,
     licenseRequests: createLicenseRequests(),
@@ -343,6 +351,8 @@ const setup = (
     },
     copied,
     opened,
+    /** How many times `/etc/os-release` was read. */
+    osReleaseReads: system.osReleaseReads,
     /** Holds every call to the server until `release`. */
     hold,
     release,
@@ -979,6 +989,41 @@ describe("the Settings window's Language and Spelling", () => {
       app.handlers.setSpellcheckLanguage({ code: "de", on: true })
     ).rejects.toThrow("macOS");
     expect(app.saved).toStrictEqual([]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's About page", () => {
+  it("sends the app's version and macOS by its version, never reading os-release there", () => {
+    const app = setup(stateOf("Work"));
+
+    expect([app.read().about, app.osReleaseReads()]).toStrictEqual([
+      { version: "4.0.0-dev.0", operatingSystem: "macOS 27.2 (arm64)" },
+      0,
+    ]);
+    app.dispose();
+  });
+
+  it("reads os-release once on Linux, however often the state is read", () => {
+    const app = setup(stateOf("Work"), undefined, "linux");
+
+    app.read();
+
+    expect([
+      app.read().about.operatingSystem,
+      app.osReleaseReads(),
+    ]).toStrictEqual(["Ubuntu 24.04.3 LTS (arm64)", 1]);
+    app.dispose();
+  });
+
+  it("copies exactly the string it sends", async () => {
+    const app = setup(stateOf("Work"));
+    const { version, operatingSystem } = app.read().about;
+
+    await app.handlers.copyAboutValue({ item: "version" });
+    await app.handlers.copyAboutValue({ item: "operatingSystem" });
+
+    expect(app.copied).toStrictEqual([version, operatingSystem]);
     app.dispose();
   });
 });

@@ -84,6 +84,7 @@ test("sits first in Privacy & Security's group, a card per menu in the menu bar'
     "Privacy & Security",
     "Advanced",
     "Meru Pro",
+    "About",
   ]);
   await expect(page.getByRole("tablist")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /reset/iu })).toHaveCount(0);

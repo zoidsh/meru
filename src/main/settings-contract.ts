@@ -33,6 +33,7 @@ import {
 import type { Profile, State } from "#core/state.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
 
+import type { AboutPage } from "./about-page.ts";
 import type { AdvancedPage } from "./advanced-page.ts";
 import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
@@ -110,6 +111,7 @@ export interface SettingsContractDeps {
   >;
   trustedSites: Pick<TrustedSites, "list" | "remove">;
   advanced: Pick<AdvancedPage, "read" | "openSettingsFile" | "clearCache">;
+  about: Pick<AboutPage, "read" | "copy">;
   /** The Shortcuts page's cards, in the language of the moment. */
   shortcuts: () => SettingsState["shortcuts"];
   entitlement: Pick<
@@ -199,6 +201,7 @@ export const settingsHandlers = ({
   general,
   trustedSites,
   advanced,
+  about,
   entitlement,
   licenseRequests,
   systemBrowser,
@@ -436,6 +439,7 @@ export const settingsHandlers = ({
     removeTrustedSite: ({ site }) => trustedSites.remove(site),
     openSettingsFile: () => advanced.openSettingsFile(),
     clearCache: () => advanced.clearCache(),
+    copyAboutValue: ({ item }) => about.copy(item),
     ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };
 };
@@ -451,6 +455,7 @@ export const readSettingsState = ({
   language,
   trustedSites,
   advanced,
+  about,
   shortcuts,
   entitlement,
   licenseRequests,
@@ -465,6 +470,7 @@ export const readSettingsState = ({
   | "language"
   | "trustedSites"
   | "advanced"
+  | "about"
   | "shortcuts"
   | "entitlement"
   | "licenseRequests"
@@ -522,6 +528,7 @@ export const readSettingsState = ({
     general: general.read(),
     trustedSites: trustedSites.list(),
     advanced: advanced.read(),
+    about: about.read(),
     shortcuts: shortcuts(),
     language: language.current(),
     entitlement: entitlement.snapshot(),
