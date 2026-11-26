@@ -300,9 +300,9 @@ export const UpdatesGroup = ({
             })}
             description={t({
               message:
-                "Beta gets new features sooner, but it may have more bugs.",
+                "Beta versions come sooner and may have bugs. Switching downloads the latest version from that channel.",
               comment:
-                "Description of the Release channel menu on the About page of Settings",
+                "Description of the Release channel menu on the About page of Settings; a change of channel checks at once and downloads that channel's newest version, with no question first",
             })}
           >
             {(ids) => (

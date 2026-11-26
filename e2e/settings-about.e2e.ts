@@ -172,7 +172,7 @@ test.describe("updates", () => {
     );
     await expect(channel).toContainText("Stable");
     await expect(channel).toHaveAccessibleDescription(
-      "Beta gets new features sooner, but it may have more bugs."
+      "Beta versions come sooner and may have bugs. Switching downloads the latest version from that channel."
     );
     // The launch's check, which the stand-in leaves running.
     await expectStatus(page, {

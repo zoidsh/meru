@@ -463,10 +463,10 @@ msgstr "Beside the focused pane"
 msgid "Beta"
 msgstr "Beta"
 
-#. Description of the Release channel menu on the About page of Settings
+#. Description of the Release channel menu on the About page of Settings; a change of channel checks at once and downloads that channel's newest version, with no question first
 #: src/settings/updates-group.tsx
-msgid "Beta gets new features sooner, but it may have more bugs."
-msgstr "Beta gets new features sooner, but it may have more bugs."
+msgid "Beta versions come sooner and may have bugs. Switching downloads the latest version from that channel."
+msgstr "Beta versions come sooner and may have bugs. Switching downloads the latest version from that channel."
 
 #. Label of the switch in Settings that blocks ads in Meru's pages
 #: src/settings/privacy-page.tsx
