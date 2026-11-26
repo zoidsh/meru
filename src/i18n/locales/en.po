@@ -315,6 +315,11 @@ msgstr "Add search"
 msgid "Adds a touch of the profile color to the title bar and sidebar."
 msgstr "Adds a touch of the profile color to the title bar and sidebar."
 
+#. Name of the Settings section for hardware acceleration, the settings file and clearing the cache, in its list and as its title
+#: src/settings/app.tsx
+msgid "Advanced"
+msgstr "Advanced"
+
 #. A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the value under All profiles; {days} is when, such as every day or weekdays
 #: src/settings/scope.ts
 msgid "all day {days}"
@@ -504,6 +509,11 @@ msgstr "Browsing data"
 msgid "Browsing data deleted."
 msgstr "Browsing data deleted."
 
+#. Label of the row in Settings that clears the saved pages and images of every profile
+#: src/settings/advanced-page.tsx
+msgid "Cache"
+msgstr "Cache"
+
 #. Checkbox in the Delete browsing data dialog in Settings, as in Chrome's own dialog
 #: src/settings/delete-browsing-data.tsx
 msgid "Cached images and files"
@@ -592,6 +602,21 @@ msgstr "Choose more languages to check as you type."
 #: src/shell/downloads.tsx
 msgid "Clear all"
 msgstr "Clear all"
+
+#. Button on the Advanced page of Settings that clears the saved pages and images of every profile
+#: src/settings/advanced-page.tsx
+msgid "Clear cache"
+msgstr "Clear cache"
+
+#. The Clear cache button on the Advanced page of Settings for a moment after every profile's cache was cleared
+#: src/settings/advanced-page.tsx
+msgid "Cleared"
+msgstr "Cleared"
+
+#. Description of the Cache row in Settings
+#: src/settings/advanced-page.tsx
+msgid "Clears saved pages and images for all profiles."
+msgstr "Clears saved pages and images for all profiles."
 
 #. Description of the Jump to unread mail switch in Settings; the icon is Meru's in the menu bar or the system tray
 #: src/settings/menu-bar-page.tsx
@@ -730,6 +755,11 @@ msgstr "Copy URL"
 #: src/shell/inbox.tsx
 msgid "Couldn’t archive the message."
 msgstr "Couldn’t archive the message."
+
+#. Under the Cache row in Settings, when clearing the cache of some profile failed
+#: src/settings/advanced-page.tsx
+msgid "Couldn't clear the cache. Try again."
+msgstr "Couldn't clear the cache. Try again."
 
 #. Under the checkboxes of the Delete browsing data dialog in Settings, when deleting failed
 #: src/settings/delete-browsing-data.tsx
@@ -1630,6 +1660,11 @@ msgstr "Only important mail"
 msgid "Only notifies you about email Gmail marks as important."
 msgstr "Only notifies you about email Gmail marks as important."
 
+#. Button of the Settings file row in Settings that opens settings.json in the text editor
+#: src/settings/advanced-page.tsx
+msgid "Open"
+msgstr "Open"
+
 #. Checkbox menu item, in the Tabs menu and a pinned tab's context menu: whether the tab loads when Meru starts rather than when first selected
 #: src/main/menu-labels.ts
 msgid "Open at Launch"
@@ -1680,6 +1715,11 @@ msgstr "Open in the background"
 msgid "Open Link"
 msgstr "Open Link"
 
+#. Accessible name of the Open button of the Settings file row in Settings, which opens settings.json
+#: src/settings/advanced-page.tsx
+msgid "Open settings file"
+msgstr "Open settings file"
+
 #. Button in the alert saying Meru is the default browser, on macOS, which opens where macOS's default browser is chosen
 #: src/main/default-browser-guard.ts
 msgid "Open System Settings"
@@ -1699,6 +1739,11 @@ msgstr "Open this link in your default browser?"
 #: src/settings/tabs-apps-page.tsx
 msgid "Opening Google apps"
 msgstr "Opening Google apps"
+
+#. Description of the Settings file row in Settings; settings.json is the file's name
+#: src/settings/advanced-page.tsx
+msgid "Opens settings.json in your text editor."
+msgstr "Opens settings.json in your text editor."
 
 #. Placeholder of the Name field of a new saved search in Settings, which may stay empty
 #: src/settings/saved-searches-card.tsx
@@ -2068,6 +2113,11 @@ msgstr "Set the correct date and time, then try again."
 #: src/settings/app.tsx
 msgid "Settings"
 msgstr "Settings"
+
+#. Label of the row in Settings that opens settings.json, the file Meru keeps its settings in
+#: src/settings/advanced-page.tsx
+msgid "Settings file"
+msgstr "Settings file"
 
 #. Accessible name of the list of sections down the left of the Settings window
 #: src/settings/app.tsx
@@ -2573,6 +2623,11 @@ msgstr "Toggle Full Screen"
 msgid "Tray & Taskbar"
 msgstr "Tray & Taskbar"
 
+#. Title of the group of Settings for opening the settings file and clearing the cache, when something goes wrong
+#: src/settings/advanced-page.tsx
+msgid "Troubleshooting"
+msgstr "Troubleshooting"
+
 #. Accessible name of the table of trusted sites in the Trusted sites dialog of Settings
 #. Label of the row in Settings for the sites whose links open in the default browser without asking
 #. Title of the dialog in Settings listing the sites whose links open in the default browser without asking
@@ -2645,6 +2700,16 @@ msgstr "Turn on Show in menu bar first."
 #: src/settings/menu-bar-page.tsx
 msgid "Turn on Show in system tray first."
 msgstr "Turn on Show in system tray first."
+
+#. Description of the Use hardware acceleration switch in Settings once it was changed, which applies only when Meru starts again
+#: src/settings/advanced-page.tsx
+msgid "Turn this off if pages flicker or stay blank. Restart Meru to apply the change."
+msgstr "Turn this off if pages flicker or stay blank. Restart Meru to apply the change."
+
+#. Description of the Use hardware acceleration switch in Settings, which applies only when Meru starts again
+#: src/settings/advanced-page.tsx
+msgid "Turn this off if pages flicker or stay blank. You'll need to restart Meru."
+msgstr "Turn this off if pages flicker or stay blank. You'll need to restart Meru."
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -2737,6 +2802,11 @@ msgstr "Upgrade to keep them."
 #: src/shell/pane-handle.tsx
 msgid "Upper pane {percent}"
 msgstr "Upper pane {percent}"
+
+#. Label of the switch in Settings that lets Meru draw pages with the graphics card
+#: src/settings/advanced-page.tsx
+msgid "Use hardware acceleration"
+msgstr "Use hardware acceleration"
 
 #. Text of the notification for an email that carries a one-time code, which its Copy button copies. {verificationCode} is the code's digits, such as 482910
 #: src/main/notifications.ts

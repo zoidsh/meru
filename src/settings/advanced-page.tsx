@@ -1,0 +1,209 @@
+import { useLingui } from "@lingui/react/macro";
+import { noop } from "es-toolkit";
+import { CheckIcon } from "lucide-react";
+import { useState } from "react";
+
+import { Button } from "#ui/button.tsx";
+import { Switch } from "#ui/switch.tsx";
+
+import { useDoneBriefly } from "./done-briefly.ts";
+import { SettingGroup, SettingGroups } from "./setting-group.tsx";
+import { Rows, SettingRow } from "./setting-row.tsx";
+import { settingsCalls, useSettingsState } from "./sync.ts";
+
+/** Clear cache, disabled while it runs, then Cleared for a moment. */
+const ClearCache = ({
+  describedBy,
+  onDone,
+}: {
+  describedBy: string;
+  onDone: (failed: boolean) => void;
+}) => {
+  const { t } = useLingui();
+  const [clearing, setClearing] = useState(false);
+  const [cleared, showCleared] = useDoneBriefly();
+  const clearedLabel = t({
+    message: "Cleared",
+    comment:
+      "The Clear cache button on the Advanced page of Settings for a moment after every profile's cache was cleared",
+  });
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={clearing}
+        aria-describedby={describedBy || undefined}
+        onClick={async () => {
+          setClearing(true);
+          onDone(false);
+
+          const failed = await settingsCalls()
+            .clearCache({})
+            .then(() => false)
+            .catch(() => true);
+
+          setClearing(false);
+          onDone(failed);
+
+          if (!failed) {
+            showCleared();
+          }
+        }}
+      >
+        {cleared && <CheckIcon data-icon="inline-start" aria-hidden />}
+        {cleared
+          ? clearedLabel
+          : t({
+              message: "Clear cache",
+              comment:
+                "Button on the Advanced page of Settings that clears the saved pages and images of every profile",
+            })}
+      </Button>
+      <output className="sr-only">{cleared && clearedLabel}</output>
+    </>
+  );
+};
+
+/**
+ * Hardware acceleration, which applies at the next launch, and the
+ * troubleshooting that needs no setting: app-wide alone, so the page has no
+ * scopes, and nothing on it is Pro.
+ */
+export const AdvancedPage = () => {
+  const { t } = useLingui();
+  const settings = useSettingsState("settings");
+  const advanced = useSettingsState("advanced");
+  const [clearFailed, setClearFailed] = useState(false);
+
+  if (!settings || !advanced) {
+    return null;
+  }
+
+  const calls = settingsCalls();
+  const restartPending =
+    settings.hardwareAcceleration !== advanced.hardwareAccelerationAtLaunch;
+
+  return (
+    <SettingGroups>
+      <SettingGroup>
+        <Rows>
+          {[
+            <SettingRow
+              key="hardwareAcceleration"
+              label={t({
+                message: "Use hardware acceleration",
+                comment:
+                  "Label of the switch in Settings that lets Meru draw pages with the graphics card",
+              })}
+              description={
+                restartPending
+                  ? t({
+                      message:
+                        "Turn this off if pages flicker or stay blank. Restart Meru to apply the change.",
+                      comment:
+                        "Description of the Use hardware acceleration switch in Settings once it was changed, which applies only when Meru starts again",
+                    })
+                  : t({
+                      message:
+                        "Turn this off if pages flicker or stay blank. You'll need to restart Meru.",
+                      comment:
+                        "Description of the Use hardware acceleration switch in Settings, which applies only when Meru starts again",
+                    })
+              }
+            >
+              {(ids) => (
+                <Switch
+                  checked={settings.hardwareAcceleration}
+                  aria-labelledby={ids.label}
+                  aria-describedby={ids.description || undefined}
+                  onCheckedChange={(checked) => {
+                    calls
+                      .update({ key: "hardwareAcceleration", value: checked })
+                      .catch(noop);
+                  }}
+                />
+              )}
+            </SettingRow>,
+          ]}
+        </Rows>
+      </SettingGroup>
+      <SettingGroup
+        title={t({
+          message: "Troubleshooting",
+          comment:
+            "Title of the group of Settings for opening the settings file and clearing the cache, when something goes wrong",
+        })}
+      >
+        <Rows>
+          {[
+            <SettingRow
+              key="settingsFile"
+              label={t({
+                message: "Settings file",
+                comment:
+                  "Label of the row in Settings that opens settings.json, the file Meru keeps its settings in",
+              })}
+              description={t({
+                message: "Opens settings.json in your text editor.",
+                comment:
+                  "Description of the Settings file row in Settings; settings.json is the file's name",
+              })}
+            >
+              {(ids) => (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label={t({
+                    message: "Open settings file",
+                    comment:
+                      "Accessible name of the Open button of the Settings file row in Settings, which opens settings.json",
+                  })}
+                  aria-describedby={ids.description || undefined}
+                  onClick={() => {
+                    calls.openSettingsFile({}).catch(noop);
+                  }}
+                >
+                  {t({
+                    message: "Open",
+                    comment:
+                      "Button of the Settings file row in Settings that opens settings.json in the text editor",
+                  })}
+                </Button>
+              )}
+            </SettingRow>,
+            <SettingRow
+              key="cache"
+              label={t({
+                message: "Cache",
+                comment:
+                  "Label of the row in Settings that clears the saved pages and images of every profile",
+              })}
+              description={t({
+                message: "Clears saved pages and images for all profiles.",
+                comment: "Description of the Cache row in Settings",
+              })}
+              error={
+                clearFailed
+                  ? t({
+                      message: "Couldn't clear the cache. Try again.",
+                      comment:
+                        "Under the Cache row in Settings, when clearing the cache of some profile failed",
+                    })
+                  : undefined
+              }
+            >
+              {(ids) => (
+                <ClearCache
+                  describedBy={ids.description}
+                  onDone={setClearFailed}
+                />
+              )}
+            </SettingRow>,
+          ]}
+        </Rows>
+      </SettingGroup>
+    </SettingGroups>
+  );
+};

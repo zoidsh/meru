@@ -8,6 +8,7 @@ export const SETTINGS_SECTIONS = [
   "gmail",
   "tabs-and-apps",
   "privacy",
+  "advanced",
   "pro",
 ] as const;
 

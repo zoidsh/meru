@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
 import { BadgeCheckIcon, CheckIcon, CopyIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { EntitlementState } from "#contract/entitlement.ts";
@@ -12,20 +12,15 @@ import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
 import { Input } from "#ui/input.tsx";
 
+import { useDoneBriefly } from "./done-briefly.ts";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
 
-/** How long Copy shows that it copied. */
-const COPIED_FOR = 2000;
-
 /** Copy beside the masked key, which has main put the whole key on the clipboard. */
 const CopyKey = () => {
   const { t } = useLingui();
-  const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const [copied, showCopied] = useDoneBriefly();
 
   return (
     <>
@@ -48,11 +43,7 @@ const CopyKey = () => {
             .catch(noop);
 
           if (result?.ok) {
-            clearTimeout(timer.current);
-            setCopied(true);
-            timer.current = setTimeout(() => {
-              setCopied(false);
-            }, COPIED_FOR);
+            showCopied();
           }
         }}
       >

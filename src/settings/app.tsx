@@ -11,6 +11,7 @@ import {
   SettingsIcon,
   ShieldIcon,
   UsersIcon,
+  WrenchIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -20,6 +21,7 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import type { SettingsSection } from "#core/settings-pages.ts";
 import { Button } from "#ui/button.tsx";
 
+import { AdvancedPage } from "./advanced-page.tsx";
 import { AppearancePage } from "./appearance-page.tsx";
 import { GeneralPage } from "./general-page.tsx";
 import { GmailPage } from "./gmail-page.tsx";
@@ -42,6 +44,7 @@ const SECTION_PAGES: Partial<Record<SettingsSection, () => ReactNode>> = {
   gmail: GmailPage,
   "tabs-and-apps": TabsAppsPage,
   privacy: PrivacyPage,
+  advanced: AdvancedPage,
   pro: ProPage,
 };
 
@@ -66,7 +69,10 @@ const SECTION_GROUPS: readonly (readonly Section[])[] = [
     { id: "gmail", icon: MailIcon },
     { id: "tabs-and-apps", icon: LayoutGridIcon },
   ],
-  [{ id: "privacy", icon: ShieldIcon }],
+  [
+    { id: "privacy", icon: ShieldIcon },
+    { id: "advanced", icon: WrenchIcon },
+  ],
   [{ id: "pro", icon: BadgeCheckIcon }],
 ];
 
@@ -121,6 +127,11 @@ const useSectionTitles = (): Record<SettingsSection, string> => {
       message: "Privacy & Security",
       comment:
         "Name of the Settings section for the content blocker and the links that leave Meru, in its list and as its title",
+    }),
+    advanced: t({
+      message: "Advanced",
+      comment:
+        "Name of the Settings section for hardware acceleration, the settings file and clearing the cache, in its list and as its title",
     }),
     pro: t({
       message: "Meru Pro",

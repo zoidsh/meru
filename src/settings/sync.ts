@@ -24,6 +24,7 @@ const connect = () => {
     "proRequired",
     "general",
     "trustedSites",
+    "advanced",
     "page",
     "language",
     "entitlement",
