@@ -29,6 +29,8 @@ export const SETTINGS_CALL_NAMES = [
   "deleteBrowsingData",
   "signIn",
   "setOpenAtLogin",
+  "setEmailLinks",
+  "openDefaultApps",
   "chooseDownloadsFolder",
   "setSpellcheckLanguage",
   "setAppInDefaultBrowser",

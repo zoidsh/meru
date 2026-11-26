@@ -6,8 +6,10 @@ import type { SettingChange } from "#contract/settings.ts";
 import { Button } from "#ui/button.tsx";
 import { Switch } from "#ui/switch.tsx";
 
+import { emailLinksRow } from "./email-links-row.ts";
 import { LanguageGroup } from "./language-group.tsx";
 import { usePageScope } from "./page-scope.tsx";
+import { useNeedsPro } from "./pro-badge.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
@@ -20,16 +22,18 @@ type SwitchKey =
 const platform = () => document.documentElement.dataset.platform;
 
 /**
- * Meru's language and spelling, how it starts and where downloads go. Only
- * the downloads folder may be a profile's own, so a profile's scope shows
- * that row alone; the spelling languages, the login item and the folder are
- * main's to set, through calls of their own.
+ * Meru's language and spelling, how it starts, whether email links open in
+ * it and where downloads go. Only the downloads folder may be a profile's
+ * own, so a profile's scope shows that row alone; the spelling languages,
+ * the login item, the mail handler and the folder are main's to set, through
+ * calls of their own.
  */
 export const GeneralPage = () => {
   const { t } = useLingui();
   const settings = useSettingsState("settings");
   const general = useSettingsState("general");
   const profiles = useSettingsState("profiles");
+  const needsPro = useNeedsPro();
   const { profile, rowScope, page } = usePageScope(
     profiles,
     GENERAL_OVERRIDABLE_KEYS
@@ -135,6 +139,95 @@ export const GeneralPage = () => {
       )}
     </SettingRow>
   );
+  const emailLinks = emailLinksRow({
+    platform: platform(),
+    ...general.emailLinks,
+    needsPro: needsPro.capability("incomingLinks"),
+  });
+  const emailLinksDescription = {
+    asks: t({
+      message: "If you have more than one profile, Meru asks which one to use.",
+      comment:
+        "Description of the Open email links in Meru switch in Settings on macOS and Linux",
+    }),
+    "choose-in-windows": t({
+      message: "To open email links in Meru, choose it in Windows Settings.",
+      comment:
+        "Description of the Default mail app row in Settings on Windows while Meru is not the app Windows opens email links with",
+    }),
+    "meru-opens": t({
+      message: "Meru opens email links.",
+      comment:
+        "Description of the Default mail app row in Settings on Windows once Meru is the app Windows opens email links with",
+    }),
+    "meru-opens-change-in-system": t({
+      message:
+        "Meru opens email links. To change this, choose another app in your system settings.",
+      comment:
+        "Description of the Open email links in Meru switch in Settings on Linux once it is on, which Meru cannot turn off itself",
+    }),
+    development: t({
+      message: "This development build can't open email links.",
+      comment:
+        "Description of the email links row in Settings in a build that is not an installed release, where the row is disabled",
+    }),
+  }[emailLinks.description];
+  const emailLinksRowElement =
+    emailLinks.control === "button" ? (
+      <SettingRow
+        key="emailLinks"
+        label={t({
+          message: "Default mail app",
+          comment:
+            "Label of the row in Settings on Windows about the app Windows opens email links with, with a button to Windows Settings",
+        })}
+        description={emailLinksDescription}
+        pro={needsPro.capability("incomingLinks")}
+        disabled={emailLinks.disabled}
+      >
+        {(ids) => (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={emailLinks.disabled}
+            aria-describedby={ids.description || undefined}
+            onClick={() => {
+              calls.openDefaultApps({}).catch(noop);
+            }}
+          >
+            {t({
+              message: "Open Windows Settings",
+              comment:
+                "Button in Settings on Windows that opens Windows Settings at Default apps, where Meru is chosen to open email links",
+            })}
+          </Button>
+        )}
+      </SettingRow>
+    ) : (
+      <SettingRow
+        key="emailLinks"
+        label={t({
+          message: "Open email links in Meru",
+          comment:
+            "Label of the switch in Settings on macOS and Linux that makes Meru the app the system opens email links with",
+        })}
+        description={emailLinksDescription}
+        pro={needsPro.capability("incomingLinks")}
+        disabled={emailLinks.disabled}
+      >
+        {(ids) => (
+          <Switch
+            checked={emailLinks.checked}
+            disabled={emailLinks.disabled}
+            aria-labelledby={ids.label}
+            aria-describedby={ids.description || undefined}
+            onCheckedChange={(on) => {
+              calls.setEmailLinks({ on }).catch(noop);
+            }}
+          />
+        )}
+      </SettingRow>
+    );
   const downloadsTitle = t({
     message: "Downloads",
     comment:
@@ -219,6 +312,15 @@ export const GeneralPage = () => {
             }),
           ]}
         </Rows>
+      </SettingGroup>
+      <SettingGroup
+        title={t({
+          message: "Email links",
+          comment:
+            "Heading of the group of Settings about whether email links clicked anywhere on the computer open in Meru",
+        })}
+      >
+        <Rows>{[emailLinksRowElement]}</Rows>
       </SettingGroup>
       <SettingGroup title={downloadsTitle}>
         <Rows>

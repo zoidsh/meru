@@ -112,6 +112,8 @@ export interface SettingsContractDeps {
     | "read"
     | "onChange"
     | "setOpenAtLogin"
+    | "setEmailLinks"
+    | "openDefaultApps"
     | "chooseDownloadsFolder"
     | "setSpellcheckLanguage"
   >;
@@ -193,6 +195,12 @@ const assertSearch = (
 const assertProfileValues = (entitlement: Pick<Entitlement, "can">) => {
   if (!entitlement.can("profiles")) {
     throw new Error("A profile's own values need Meru Pro");
+  }
+};
+
+const assertEmailLinks = (entitlement: Pick<Entitlement, "can">) => {
+  if (!entitlement.can("incomingLinks")) {
+    throw new Error("Opening email links in Meru needs Meru Pro");
   }
 };
 
@@ -431,6 +439,14 @@ export const settingsHandlers = ({
       Promise.try(() => {
         general.setOpenAtLogin(on);
       }),
+    setEmailLinks: async ({ on }) => {
+      assertEmailLinks(entitlement);
+      await general.setEmailLinks(on);
+    },
+    openDefaultApps: async () => {
+      assertEmailLinks(entitlement);
+      await general.openDefaultApps();
+    },
     chooseDownloadsFolder: async ({ profileId }) => {
       if (profileId !== null) {
         assertListed(profiles, profileId);

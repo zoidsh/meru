@@ -49,7 +49,12 @@ import type { Spellcheck } from "../spellcheck.ts";
 import type { TrustedSites } from "../trusted-sites.ts";
 import type { Updates } from "../updates.ts";
 import { openingOptions } from "../windows.ts";
-import { folderPicker, pathOpener, systemLoginItem } from "./test-build.ts";
+import {
+  folderPicker,
+  pathOpener,
+  systemLoginItem,
+  systemMailHandler,
+} from "./test-build.ts";
 
 /** As the approved prototype draws it. */
 const SETTINGS_SIZE = { width: 800, height: 600 };
@@ -176,6 +181,7 @@ export const wireSettingsWindow = ({
   const general = createGeneralPage({
     platform,
     loginItem: systemLoginItem(),
+    mailHandler: systemMailHandler(platform),
     settings,
     files: downloadFiles,
     home: homedir(),
@@ -189,6 +195,15 @@ export const wireSettingsWindow = ({
     },
     language,
     spellcheck,
+    log: console.error,
+  });
+
+  // The system holds the answer, which a person changes outside Meru.
+  void general.readEmailLinks();
+  settingsWindow.onFocusChange(() => {
+    if (settingsWindow.isFocused()) {
+      void general.readEmailLinks();
+    }
   });
 
   const advanced = createAdvancedPage({

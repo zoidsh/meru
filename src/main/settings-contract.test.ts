@@ -176,6 +176,12 @@ const setup = (
   // The system's login item as a build that only pretends holds it.
   const loginCalls: boolean[] = [];
   let loginOn = false;
+  // The system's mail handler as an installed Meru asks it.
+  const systemMail = {
+    isDefault: false,
+    calls: [] as boolean[],
+    settingsOpened: 0,
+  };
   // The folders there to be chosen, and what the picker answers.
   const folders = new Set<string>(["/Users/example/Mail"]);
   let pickerAnswer: string | undefined;
@@ -216,6 +222,19 @@ const setup = (
         loginOn = on;
       },
     },
+    mailHandler: {
+      real: true,
+      isDefault: () => Promise.resolve(systemMail.isDefault),
+      set: (on) => {
+        systemMail.calls.push(on);
+        systemMail.isDefault = on;
+      },
+      openSettings: () => {
+        systemMail.settingsOpened += 1;
+
+        return Promise.resolve();
+      },
+    },
     settings,
     files: {
       systemFolder: () => "/Users/example/Downloads",
@@ -229,6 +248,7 @@ const setup = (
     },
     language,
     spellcheck,
+    log: () => false,
   });
   const deleteBrowsingData = (profileId: string, kinds: BrowsingDataKinds) => {
     deleted.push([profileId, kinds]);
@@ -357,6 +377,8 @@ const setup = (
     openedFiles,
     signedIn,
     loginCalls,
+    /** The mail handler's calls and answer, which a test sets as the system would. */
+    systemMail,
     activated,
     spellcheck,
     checked,
@@ -993,6 +1015,98 @@ describe("the Settings window's General page", () => {
       1,
     ]);
     app.dispose();
+  });
+
+  it("makes Meru the mail handler and gives the links back on macOS, never as a setting, sending the page the system's answer", async () => {
+    const app = setup(stateOf("Work"));
+    const sends = app.sends();
+
+    await app.deps.general.readEmailLinks();
+    expect(app.read().general.emailLinks).toStrictEqual({
+      isDefault: false,
+      real: true,
+    });
+
+    await app.handlers.setEmailLinks({ on: true });
+    expect(app.read().general.emailLinks.isDefault).toBeTruthy();
+
+    await app.handlers.setEmailLinks({ on: false });
+
+    expect([
+      app.read().general.emailLinks.isDefault,
+      app.systemMail.calls,
+      app.saved,
+      sends(),
+    ]).toStrictEqual([false, [true, false], [], 2]);
+    app.dispose();
+  });
+
+  it("reads again what the system holds, which changed outside Meru", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.deps.general.readEmailLinks();
+    app.systemMail.isDefault = true;
+    expect(app.read().general.emailLinks.isDefault).toBeFalsy();
+
+    await app.deps.general.readEmailLinks();
+
+    expect(app.read().general.emailLinks.isDefault).toBeTruthy();
+    app.dispose();
+  });
+
+  it("turns email links on but never off on Linux", async () => {
+    const app = setup(stateOf("Work"), undefined, "linux");
+
+    await app.handlers.setEmailLinks({ on: true });
+
+    await expect(app.handlers.setEmailLinks({ on: false })).rejects.toThrow(
+      "Linux gives email links back to no other app"
+    );
+    expect(app.systemMail.calls).toStrictEqual([true]);
+    app.dispose();
+  });
+
+  it("leaves the choice to Windows Settings on Windows, which the button opens", async () => {
+    const app = setup(stateOf("Work"), undefined, "win32");
+
+    await expect(app.handlers.setEmailLinks({ on: true })).rejects.toThrow(
+      "Windows lets no app make itself the mail handler"
+    );
+    await app.handlers.openDefaultApps({});
+
+    expect([app.systemMail.calls, app.systemMail.settingsOpened]).toStrictEqual(
+      [[], 1]
+    );
+    app.dispose();
+  });
+
+  it("opens no Windows Settings elsewhere", async () => {
+    const app = setup(stateOf("Work"));
+
+    await expect(app.handlers.openDefaultApps({})).rejects.toThrow(
+      "Only Windows chooses the mail handler in its settings"
+    );
+    expect(app.systemMail.settingsOpened).toBe(0);
+    app.dispose();
+  });
+
+  it("refuses email links on the free version, and marks the row Pro", async () => {
+    const app = setup(stateOf("Work"), undefined, "darwin", ["en"], true);
+    const windows = setup(stateOf("Work"), undefined, "win32", ["en"], true);
+
+    await expect(app.handlers.setEmailLinks({ on: true })).rejects.toThrow(
+      "Opening email links in Meru needs Meru Pro"
+    );
+    await expect(windows.handlers.openDefaultApps({})).rejects.toThrow(
+      "Opening email links in Meru needs Meru Pro"
+    );
+    expect([
+      app.systemMail.calls,
+      windows.systemMail.settingsOpened,
+      app.read().proRequired.includes("incomingLinks"),
+    ]).toStrictEqual([[], 0, true]);
+    app.dispose();
+    windows.dispose();
   });
 
   it("has no login item on Linux, as v3, and refuses to set one", async () => {

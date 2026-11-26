@@ -890,7 +890,16 @@ test.describe("shots", () => {
       }
     };
     const pages: [string, string, Locator?][] = [
-      ["General", "settings-general"],
+      [
+        "General",
+        "settings-general",
+        badgeOf(
+          page,
+          process.platform === "win32"
+            ? "Default mail app"
+            : "Open email links in Meru"
+        ),
+      ],
       ["Appearance", "settings-appearance", badgeOf(page, "Unified inbox")],
       [
         process.platform === "darwin" ? "Menu Bar & Dock" : "Tray & Taskbar",

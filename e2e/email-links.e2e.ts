@@ -5,7 +5,7 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { ElectronApplication } from "@playwright/test";
+import type { ElectronApplication, Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
 import { DAY } from "#core/entitlement.ts";
@@ -24,6 +24,13 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
+import {
+  emitSettingsFocus,
+  openSection,
+  openSettings,
+  scopeTab,
+  switchNamed,
+} from "./lib/settings.ts";
 import { ELSEWHERE_URL } from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 
@@ -341,4 +348,211 @@ test("a link that comes while the trial-ended screen waits is answered once the 
 
   await expect(overlay.getByText(PRO_NEEDED, { exact: true })).toBeVisible();
   expect(await composeWindows(app)).toStrictEqual([]);
+});
+
+const SWITCH = "Open email links in Meru";
+const WINDOWS_BUTTON = "Open Windows Settings";
+const onWindows = process.platform === "win32";
+
+/** What the suite's stand-in for the system's mail handler was asked. */
+const mailHandler = (
+  app: ElectronApplication,
+  field: "calls" | "settingsOpened"
+) =>
+  app.evaluate(
+    (_electron, name) =>
+      (
+        Reflect.get(globalThis, "meruTestMailHandler") as
+          | Record<string, unknown>
+          | undefined
+      )?.[name],
+    field
+  );
+
+/** Sets what the stand-in answers, as the system would hold it. */
+const setMailHandler = (
+  app: ElectronApplication,
+  values: { real?: boolean; isDefault?: boolean }
+) =>
+  app.evaluate((_electron, given) => {
+    Object.assign(
+      Reflect.get(globalThis, "meruTestMailHandler") as object,
+      given
+    );
+  }, values);
+
+const openGeneral = async (app: ElectronApplication) => {
+  const page = await openSettings(app);
+
+  await openSection(page, "General");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("General");
+
+  return page;
+};
+
+const group = (page: Page, name: string) =>
+  page.getByRole("group", { name, exact: true });
+
+/** Where each group's top is on the page, in the order named. */
+const tops = (page: Page, names: readonly string[]) =>
+  Promise.all(
+    names.map(async (name) => {
+      const box = await group(page, name).boundingBox();
+
+      return box?.y;
+    })
+  );
+
+test.describe("the General page's Email links", () => {
+  test("come after Startup, a switch on macOS and Linux and a button to Windows Settings on Windows", async ({
+    app,
+  }) => {
+    const page = await openGeneral(app);
+
+    await expect(group(page, "Email links")).toBeVisible();
+
+    const [startup = 0, emailLinks = 0, downloads = 0] = await tops(page, [
+      "Startup",
+      "Email links",
+      "Downloads",
+    ]);
+
+    expect(startup).toBeLessThan(emailLinks);
+    expect(emailLinks).toBeLessThan(downloads);
+
+    if (onWindows) {
+      const button = page.getByRole("button", { name: WINDOWS_BUTTON });
+
+      await expect(button).toBeEnabled();
+      await expect(button).toHaveAccessibleDescription(
+        "To open email links in Meru, choose it in Windows Settings."
+      );
+      await expect(switchNamed(page, SWITCH)).toHaveCount(0);
+    } else {
+      const toggle = switchNamed(page, SWITCH);
+
+      await expect(toggle).not.toBeChecked();
+      await expect(toggle).toHaveAccessibleDescription(
+        "If you have more than one profile, Meru asks which one to use."
+      );
+      await expect(
+        page.getByRole("button", { name: WINDOWS_BUTTON })
+      ).toHaveCount(0);
+    }
+  });
+
+  test("the switch makes Meru the mail handler, and off gives the links back on macOS while Linux keeps it on", async ({
+    app,
+  }) => {
+    test.skip(onWindows, "Windows chooses the mail app in its own settings");
+
+    const page = await openGeneral(app);
+    const toggle = switchNamed(page, SWITCH);
+
+    await toggle.click();
+    await expect(toggle).toBeChecked();
+
+    if (process.platform === "linux") {
+      await expect(toggle).toBeDisabled();
+      await expect(toggle).toHaveAccessibleDescription(
+        "Meru opens email links. To change this, choose another app in your system settings."
+      );
+      expect(await mailHandler(app, "calls")).toStrictEqual([true]);
+
+      return;
+    }
+
+    await toggle.click();
+    await expect(toggle).not.toBeChecked();
+    expect(await mailHandler(app, "calls")).toStrictEqual([true, false]);
+  });
+
+  test("the system's answer is read again as the Settings window regains focus", async ({
+    app,
+  }) => {
+    const page = await openGeneral(app);
+
+    await setMailHandler(app, { isDefault: true });
+    await emitSettingsFocus(app, "blur");
+    await emitSettingsFocus(app, "focus");
+
+    await (onWindows
+      ? expect(
+          page.getByRole("button", { name: WINDOWS_BUTTON })
+        ).toHaveAccessibleDescription("Meru opens email links.")
+      : expect(switchNamed(page, SWITCH)).toBeChecked());
+  });
+
+  test("Open Windows Settings opens Default apps through the stand-in", async ({
+    app,
+  }) => {
+    test.skip(!onWindows, "Only Windows has the button");
+
+    const page = await openGeneral(app);
+
+    await page.getByRole("button", { name: WINDOWS_BUTTON }).click();
+
+    await expect.poll(() => mailHandler(app, "settingsOpened")).toBe(1);
+  });
+
+  test("a build that is not a release's shows the row disabled, saying it can open none", async ({
+    app,
+  }) => {
+    // Set once main has wired it, before the Settings window reads it.
+    await expect.poll(() => mailHandler(app, "calls")).toStrictEqual([]);
+    await setMailHandler(app, { real: false });
+
+    const page = await openGeneral(app);
+    const control = onWindows
+      ? page.getByRole("button", { name: WINDOWS_BUTTON })
+      : switchNamed(page, SWITCH);
+
+    await expect(control).toBeDisabled();
+    await expect(control).toHaveAccessibleDescription(
+      "This development build can't open email links."
+    );
+  });
+
+  test("on the free version the row is a Pro row, disabled", async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    await seedProfiles(userDataDir, standIn, ["Personal"]);
+    await writeStub(userDataDir, { trialStartedAt: Date.now() - 15 * DAY });
+
+    const app = await launchApp(NO_TRIAL);
+
+    await findPage(app, SHELL_URL);
+    await expect
+      .poll(() => entitlementSnapshot(app))
+      .toMatchObject({ status: "trialEnded" });
+
+    const page = await openGeneral(app);
+    const label = onWindows ? "Default mail app" : SWITCH;
+    const control = onWindows
+      ? page.getByRole("button", { name: WINDOWS_BUTTON })
+      : switchNamed(page, SWITCH);
+
+    await expect(
+      page.getByRole("button", { name: `Meru Pro ${label}`, exact: true })
+    ).toBeVisible();
+    await expect(control).toBeDisabled();
+  });
+
+  test("are left out of a profile's scope", async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    await seedProfiles(userDataDir, standIn, ["Personal", "Work"]);
+
+    const app = await launchApp();
+    const page = await openGeneral(app);
+
+    await expect(group(page, "Email links")).toBeVisible();
+    await scopeTab(page, "Work").click();
+    await expect(group(page, "Downloads")).toBeVisible();
+    await expect(group(page, "Email links")).toHaveCount(0);
+  });
 });

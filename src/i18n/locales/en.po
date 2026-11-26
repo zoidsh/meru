@@ -918,6 +918,11 @@ msgctxt "profile name"
 msgid "Default"
 msgstr "Default"
 
+#. Label of the row in Settings on Windows about the app Windows opens email links with, with a button to Windows Settings
+#: src/settings/general-page.tsx
+msgid "Default mail app"
+msgstr "Default mail app"
+
 #. Button in the Delete browsing data dialog in Settings that deletes what is checked
 #. Button on a new email notification that moves the email to Gmail's Trash. Gmail's own word for the action
 #. Menu item in the Edit menu that deletes the selected text
@@ -1066,6 +1071,11 @@ msgstr "Duplicate"
 #: src/main/application-menu.ts
 msgid "Edit"
 msgstr "Edit"
+
+#. Heading of the group of Settings about whether email links clicked anywhere on the computer open in Meru
+#: src/settings/general-page.tsx
+msgid "Email links"
+msgstr "Email links"
 
 #. Label of the switch on a profile's page in Settings that turns the profile off or on; off, it leaves the title bar and its mail is not checked
 #: src/settings/profile-page.tsx
@@ -1274,6 +1284,11 @@ msgstr "High"
 #: src/settings/menu-bar-page.tsx
 msgid "Icon color"
 msgstr "Icon color"
+
+#. Description of the Open email links in Meru switch in Settings on macOS and Linux
+#: src/settings/general-page.tsx
+msgid "If you have more than one profile, Meru asks which one to use."
+msgstr "If you have more than one profile, Meru asks which one to use."
 
 #. Description of the Show in Dock switch in Settings; Meru's icon in the menu bar opens it while the Dock icon is hidden
 #: src/settings/menu-bar-page.tsx
@@ -1605,6 +1620,16 @@ msgstr "Meru keeps running in the tray when you close its window."
 msgid "Meru keeps trying by itself."
 msgstr "Meru keeps trying by itself."
 
+#. Description of the Default mail app row in Settings on Windows once Meru is the app Windows opens email links with
+#: src/settings/general-page.tsx
+msgid "Meru opens email links."
+msgstr "Meru opens email links."
+
+#. Description of the Open email links in Meru switch in Settings on Linux once it is on, which Meru cannot turn off itself
+#: src/settings/general-page.tsx
+msgid "Meru opens email links. To change this, choose another app in your system settings."
+msgstr "Meru opens email links. To change this, choose another app in your system settings."
+
 #. Badge beside a setting in Settings on the free version, which opens a popover saying the setting needs Meru Pro
 #. Name of the Settings section for the trial and the license, in its list and as its title; Meru Pro is the product's name
 #. Status about Meru Pro (in Settings) on the free version with no trial; Meru Pro is the product's name
@@ -1891,6 +1916,11 @@ msgstr "Open at Launch"
 msgid "Open at login"
 msgstr "Open at login"
 
+#. Label of the switch in Settings on macOS and Linux that makes Meru the app the system opens email links with
+#: src/settings/general-page.tsx
+msgid "Open email links in Meru"
+msgstr "Open email links in Meru"
+
 #. Description under No Google apps open when there are several profiles; {name} is the selected profile's name
 #: src/shell/nothing-open.tsx
 msgid "Open Gmail, Calendar or another Google app in {name}."
@@ -1950,6 +1980,11 @@ msgstr "Open these from Saved Searches in the Mail menu."
 #: src/main/link-opener.ts
 msgid "Open this link in your default browser?"
 msgstr "Open this link in your default browser?"
+
+#. Button in Settings on Windows that opens Windows Settings at Default apps, where Meru is chosen to open email links
+#: src/settings/general-page.tsx
+msgid "Open Windows Settings"
+msgstr "Open Windows Settings"
 
 #. Short notice at the foot of the window when an email link clicked outside Meru is not opened, as the free version opens none; at most two lines of a narrow notice
 #: src/shell/toast.tsx
@@ -2842,6 +2877,11 @@ msgstr "This build doesn't update itself."
 msgid "This data was saved by a newer version. Open it with that version, or update to it."
 msgstr "This data was saved by a newer version. Open it with that version, or update to it."
 
+#. Description of the email links row in Settings in a build that is not an installed release, where the row is disabled
+#: src/settings/general-page.tsx
+msgid "This development build can't open email links."
+msgstr "This development build can't open email links."
+
 #. Description of the Open at login switch in Settings in a build that is not an installed release, where the switch changes nothing in the system
 #: src/settings/general-page.tsx
 msgid "This development build never opens at login."
@@ -2932,6 +2972,11 @@ msgstr "to"
 #: src/settings/quiet-hours-field.tsx
 msgid "To"
 msgstr "To"
+
+#. Description of the Default mail app row in Settings on Windows while Meru is not the app Windows opens email links with
+#: src/settings/general-page.tsx
+msgid "To open email links in Meru, choose it in Windows Settings."
+msgstr "To open email links in Meru, choose it in Windows Settings."
 
 #. Menu item in the View menu that makes the window fill the screen, or stop filling it
 #: src/main/application-menu.ts

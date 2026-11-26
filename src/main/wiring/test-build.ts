@@ -47,6 +47,12 @@ import {
 } from "#platform/login-item.ts";
 import { keepToLoopback } from "#platform/loopback-only.ts";
 import {
+  createCapturedMailHandler,
+  createHeldMailHandler,
+  createMailHandler,
+  registerWindowsMailHandler,
+} from "#platform/mail-handler.ts";
+import {
   createCapturedNotifier,
   createNotifier,
 } from "#platform/notifications.ts";
@@ -294,6 +300,39 @@ export const systemLoginItem = () => {
   return isReleaseAppId(MERU_APP_ID)
     ? createLoginItem()
     : createHeldLoginItem();
+};
+
+/**
+ * Whether the system sends email links to Meru: asked of the system and set
+ * there by the installed Meru alone, since every other build claims no
+ * scheme; held for the run by a development build, and stood in for by the
+ * suite's, so no test or dev run changes the machine's mail handler.
+ */
+export const systemMailHandler = (platform: Platform) => {
+  if (MERU_E2E_BUILD) {
+    return createCapturedMailHandler();
+  }
+
+  return isReleaseAppId(MERU_APP_ID)
+    ? createMailHandler(platform)
+    : createHeldMailHandler();
+};
+
+/**
+ * Lets Windows' Default apps offer the installed Meru for email links; no
+ * other build writes the registry.
+ */
+export const registerMailHandler = async (
+  platform: Platform,
+  userDataPath: string
+) => {
+  if (MERU_E2E_BUILD) {
+    return;
+  }
+
+  if (isReleaseAppId(MERU_APP_ID) && platform === "win32") {
+    await registerWindowsMailHandler(userDataPath);
+  }
 };
 
 /**

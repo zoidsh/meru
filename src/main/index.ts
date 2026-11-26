@@ -51,7 +51,11 @@ import { revealWindow } from "./windows.ts";
 import { wireAddProfile } from "./wiring/add-profile.ts";
 import { wireContentBlocker } from "./wiring/content-blocker.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
-import { answerEmailLinks, receiveEmailLinks } from "./wiring/email-links.ts";
+import {
+  answerEmailLinks,
+  receiveEmailLinks,
+  registerAsMailApp,
+} from "./wiring/email-links.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireHardwareAcceleration } from "./wiring/hardware-acceleration.ts";
@@ -775,6 +779,7 @@ const start = async () => {
     await shell.load();
   }
 
+  void registerAsMailApp(platform, lifecycle.userDataPath);
   answerEmailLinks({
     incoming: emailLinks,
     background,

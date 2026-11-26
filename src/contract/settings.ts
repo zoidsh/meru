@@ -378,6 +378,19 @@ export const SETTINGS_CALLS = {
     response: z.undefined(),
   },
   /**
+   * Makes Meru the system's handler for email links, or gives them back, on
+   * macOS and Linux; refused on Windows, off on Linux, and without Meru Pro.
+   */
+  setEmailLinks: {
+    request: z.object({ on: z.boolean() }),
+    response: z.undefined(),
+  },
+  /**
+   * Opens Windows Settings at Default apps, where Meru is chosen for email
+   * links; refused elsewhere and without Meru Pro.
+   */
+  openDefaultApps: { request: none, response: z.undefined() },
+  /**
    * Opens the system's folder picker on the Settings window at the folder in
    * use and saves downloads to the folder chosen: the app's for `null`,
    * else a listed profile's own; a cancel changes nothing.
@@ -571,6 +584,12 @@ export const SETTINGS_STATE = {
         available: z.array(z.string()),
       })
     ),
+    /**
+     * Whether the system sends email links to Meru, as last asked of it;
+     * `real` is true in a release's build alone, every other build only
+     * pretending.
+     */
+    emailLinks: z.object({ isDefault: z.boolean(), real: z.boolean() }),
   }),
   /**
    * The sites whose links open without asking, each as stored, an origin

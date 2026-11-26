@@ -1,4 +1,5 @@
 import { incomingUrlsOf } from "#core/mailto.ts";
+import type { Platform } from "#core/platform.ts";
 import type { AppLifecycle } from "#platform/app.ts";
 import { openSessionWindow } from "#platform/content-view.ts";
 
@@ -14,7 +15,7 @@ import type { SenderRegistry } from "../senders.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import type { createTabViews } from "../tab-views.ts";
 import { revealWindow } from "../windows.ts";
-import { nativeQuestion } from "./test-build.ts";
+import { nativeQuestion, registerMailHandler } from "./test-build.ts";
 
 /**
  * Listens for the links the system hands Meru from the start of the run,
@@ -40,6 +41,23 @@ export const receiveEmailLinks = (
   });
 
   return incoming;
+};
+
+/**
+ * On Windows, lets Default apps offer the installed Meru for email links,
+ * written again at each launch; no other build or system writes anything.
+ */
+export const registerAsMailApp = async (
+  platform: Platform,
+  userDataPath: string
+) => {
+  try {
+    await registerMailHandler(platform, userDataPath);
+  } catch (error) {
+    console.error(
+      `Meru was not registered for email links: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
 };
 
 /**
