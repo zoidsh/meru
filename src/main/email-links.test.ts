@@ -16,6 +16,7 @@ import {
   chooseProfile,
   createComposeWindows,
   createIncomingLinks,
+  MAX_WAITING_LINKS,
 } from "./email-links.ts";
 
 const LINK = "mailto:someone@example.com?subject=Hello";
@@ -213,6 +214,47 @@ describe(createIncomingLinks, () => {
       "start mailto:2",
       "end mailto:2",
     ]);
+  });
+
+  it("drops a link beyond ten waiting, logging only the count, and takes links again once they are answered", async () => {
+    const logs: string[] = [];
+    const incoming = createIncomingLinks({
+      log: (message) => {
+        logs.push(message);
+      },
+    });
+    const answered: string[] = [];
+    const hold = Promise.withResolvers<undefined>();
+
+    for (let index = 1; index <= MAX_WAITING_LINKS + 1; index += 1) {
+      incoming.receive(`mailto:${index}`);
+    }
+
+    expect(logs).toStrictEqual([
+      "Dropped an incoming link, since 10 are already waiting to be answered",
+    ]);
+
+    incoming.start(async (url) => {
+      await hold.promise;
+      answered.push(url);
+    });
+    incoming.receive("mailto:late");
+    await settle();
+    expect(logs).toHaveLength(2);
+    expect(logs.join("\n")).not.toContain("mailto");
+
+    hold.resolve(undefined);
+    await settle();
+    expect(answered).toStrictEqual(
+      Array.from(
+        { length: MAX_WAITING_LINKS },
+        (_, index) => `mailto:${index + 1}`
+      )
+    );
+
+    incoming.receive("mailto:after");
+    await settle();
+    expect(answered.at(-1)).toBe("mailto:after");
   });
 
   it("goes on after a link whose answer failed, logging no part of it", async () => {

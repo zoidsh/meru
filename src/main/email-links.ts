@@ -58,11 +58,15 @@ export const chooseProfile = async (
   return profiles[answer]?.id;
 };
 
+export const MAX_WAITING_LINKS = 10;
+
 /**
  * The links the system hands Meru, from a click anywhere on the computer,
  * received from the start of the run. Those that come before main can act
  * are held, in order, until `start` gives it what answers them; then each is
- * answered in turn, so only one question shows at a time.
+ * answered in turn, so only one question shows at a time. At most
+ * `MAX_WAITING_LINKS` wait, so another app sending links in a loop cannot
+ * stack questions or windows without end.
  */
 export const createIncomingLinks = ({
   log,
@@ -72,6 +76,7 @@ export const createIncomingLinks = ({
   const held: string[] = [];
   let answer: ((url: string) => Promise<void>) | undefined;
   let turn = Promise.resolve();
+  let waiting = 0;
 
   const take = (url: string, answerWith: (url: string) => Promise<void>) => {
     const before = turn;
@@ -83,12 +88,24 @@ export const createIncomingLinks = ({
         await answerWith(url);
       } catch (error) {
         log(`An incoming link was not opened: ${describe(error)}`);
+      } finally {
+        waiting -= 1;
       }
     })();
   };
 
   return {
     receive: (url: string) => {
+      if (waiting >= MAX_WAITING_LINKS) {
+        log(
+          `Dropped an incoming link, since ${waiting} are already waiting to be answered`
+        );
+
+        return;
+      }
+
+      waiting += 1;
+
       if (answer) {
         take(url, answer);
       } else {
