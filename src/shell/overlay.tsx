@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-import { staysOpenOutside } from "#core/overlay.ts";
+import type { ShellState } from "#contract/shell.ts";
+import { staysOpenOnPressOutside } from "#core/overlay.ts";
 import type { Overlay } from "#core/overlay.ts";
 
 import { Downloads } from "./downloads.tsx";
@@ -11,6 +12,7 @@ import { FindBar } from "./find-bar.tsx";
 import { Inbox } from "./inbox.tsx";
 import { LicenseNotice } from "./license-notice.tsx";
 import { OpenAppOverlay } from "./open-app.tsx";
+import { MainScreenPicker } from "./screen-picker.tsx";
 import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { Toast } from "./toast.tsx";
@@ -24,7 +26,7 @@ const useClosers = (
   target: Document | undefined,
   kind: Overlay["kind"] | undefined
 ) => {
-  const staysOutside = staysOpenOutside(kind && { kind });
+  const staysOutside = staysOpenOnPressOutside(kind && { kind });
 
   useEffect(() => {
     if (!target) {
@@ -67,7 +69,7 @@ const useClosers = (
  */
 const useCloseOnShellPress = (kind: Overlay["kind"] | undefined) => {
   useEffect(() => {
-    if (!kind || staysOpenOutside({ kind })) {
+    if (!kind || staysOpenOnPressOutside({ kind })) {
       return;
     }
 
@@ -88,22 +90,19 @@ const useCloseOnShellPress = (kind: Overlay["kind"] | undefined) => {
   }, [kind]);
 };
 
-/** Draws the open overlay, if any, into the overlay's document. */
-export const OverlayLayer = () => {
-  const overlay = useShellState("overlay");
+type OpenOverlay = Exclude<ShellState["overlay"], { kind: "none" }>;
+
+/** The open overlay as its kind draws it. */
+const OverlayContent = ({
+  open,
+  target,
+}: {
+  open: OpenOverlay;
+  target: Document;
+}) => {
   const inbox = useShellState("inbox");
   const downloads = useShellState("downloads");
   const pro = useShellState("pro");
-  const target = openOverlayDocument();
-  const open = overlay && overlay.kind !== "none" ? overlay : undefined;
-
-  useClosers(target, open?.kind);
-  useCloseOnShellPress(open?.kind);
-
-  if (!target || !open) {
-    return null;
-  }
-
   let drawn: ReactNode;
 
   switch (open.kind) {
@@ -140,10 +139,28 @@ export const OverlayLayer = () => {
       drawn = <UpdateCard {...open} />;
       break;
     }
+    case "screen-picker": {
+      drawn = <MainScreenPicker />;
+      break;
+    }
     default: {
       drawn = <FindBar key={`${open.profileId}/${open.tabId}`} {...open} />;
     }
   }
 
-  return createPortal(drawn, target.body);
+  return drawn;
+};
+
+/** Draws the open overlay, if any, into the overlay's document. */
+export const OverlayLayer = () => {
+  const overlay = useShellState("overlay");
+  const target = openOverlayDocument();
+  const open = overlay && overlay.kind !== "none" ? overlay : undefined;
+
+  useClosers(target, open?.kind);
+  useCloseOnShellPress(open?.kind);
+
+  return target && open
+    ? createPortal(<OverlayContent open={open} target={target} />, target.body)
+    : null;
 };

@@ -45,6 +45,9 @@ import {
   GRABBY_FIELD,
   GRABBY_PATH,
   GRABBY_TITLE,
+  MEET_NEXT_PATH,
+  MEET_PRESENT,
+  MEET_TITLE,
   NEXT_WEEK_PATH,
   OPENER_LINE,
   POPOUT_PATH,
@@ -88,6 +91,8 @@ export interface StandIn {
   url: string;
   calendarUrl: string;
   driveUrl: string;
+  /** What the app loads in place of Meet, whose Present now shares a screen. */
+  meetUrl: string;
   /** The Gmail stand-in's page linking to files to download. */
   downloadsUrl: string;
   /** The Gmail stand-in's message with an ad, a tracker and a pixel. */
@@ -369,6 +374,13 @@ export const startStandIn = async (): Promise<StandIn> => {
     current,
     downloadFiles.answer
   );
+  const meet = await listen(
+    () => ({
+      "/": page(MEET_TITLE, MEET_PRESENT),
+      [MEET_NEXT_PATH]: page(MEET_TITLE, ""),
+    }),
+    current
+  );
   const signInServer = await listen(
     () => ({
       [POPUP_PATH]: page(POPUP_TITLE, ELSEWHERE_LINK),
@@ -393,6 +405,7 @@ export const startStandIn = async (): Promise<StandIn> => {
     url: gmail.url(),
     calendarUrl: calendar.url(),
     driveUrl: drive.url(),
+    meetUrl: meet.url(),
     downloadsUrl: `${gmail.url()}${DOWNLOADS_PATH.slice(1)}`,
     blockerUrl: `${gmail.url()}${BLOCKER_PATH.slice(1)}`,
     blockerServed: blockerPage.served,
@@ -403,6 +416,7 @@ export const startStandIn = async (): Promise<StandIn> => {
       gmail: gmail.url(),
       calendar: calendar.url(),
       drive: drive.url(),
+      meet: meet.url(),
       signIn: signInServer.url(),
     }),
     get cookieHeaders() {
@@ -471,6 +485,7 @@ export const startStandIn = async (): Promise<StandIn> => {
         gmail.stop(),
         calendar.stop(),
         drive.stop(),
+        meet.stop(),
         signInServer.stop(),
       ]);
     },

@@ -8,7 +8,6 @@ import { launchWindow } from "#core/launch-window.ts";
 import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import type { Platform } from "#core/platform.ts";
-import { tabKey } from "#core/tabs.ts";
 import {
   activateLanguage,
   AVAILABLE_LANGUAGES,
@@ -67,6 +66,7 @@ import { wireMailFeed } from "./wiring/mail-feed.ts";
 import { wireMenu } from "./wiring/menu.ts";
 import { wireNotifications } from "./wiring/notifications.ts";
 import { wireOwnWindows } from "./wiring/own-windows.ts";
+import { wireScreenPicker } from "./wiring/screen-picker.ts";
 import { wireSettingsWindow } from "./wiring/settings-window.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
 import { wireShellDocuments } from "./wiring/shell-documents.ts";
@@ -346,9 +346,7 @@ const start = async () => {
         }
         case "windowCard": {
           // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
-          const shown = downloads.window();
-
-          return shown && tabKey(shown) === tabKey(target.key)
+          return hasWindowCard(target.key)
             ? // oxlint-disable-next-line no-use-before-define -- resolved as focus moves, once both exist
               ownWindows.cardFocuser(target.key)
             : undefined;
@@ -533,6 +531,11 @@ const start = async () => {
     onNavigated: (key, inPage) => {
       // oxlint-disable-next-line no-use-before-define -- no page navigates before the find bar exists
       find.navigated(key, inPage);
+
+      if (!inPage) {
+        // oxlint-disable-next-line no-use-before-define -- no page navigates before the picker exists
+        screenPicker.navigated(key);
+      }
     },
     onFound: (key, result) => {
       // oxlint-disable-next-line no-use-before-define -- no page answers before the find bar exists
@@ -542,6 +545,19 @@ const start = async () => {
   });
 
   const find = wireFind({ views, overlays, focus, ownWindows, barsAwaited });
+
+  const { screenPicker, hasWindowCard } = wireScreenPicker({
+    platform,
+    apps,
+    sessions,
+    senders,
+    profiles,
+    views,
+    ownWindows,
+    overlays,
+    downloads,
+    focus,
+  });
 
   const { showGmail, navigateGmail, mailActions, inbox } = wireGmail({
     lifecycle,
@@ -734,6 +750,7 @@ const start = async () => {
     sidebar,
     inbox,
     downloads,
+    screenPicker,
     mail,
     doNotDisturb,
     openApp,

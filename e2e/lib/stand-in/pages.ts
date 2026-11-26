@@ -118,3 +118,36 @@ export const gmailWindowLinks = (
     <a href="${signIn}AddSession?continue=x" target="_blank">Add another account</a>
     <button type="button" onclick="window.open('about:blank')">Open a blank window</button>
     <button type="button" onclick="window.open('${POPOUT_REDIRECT_PATH}', 'redirected', 'width=${POPOUT_SIZE.width},height=${POPOUT_SIZE.height}')">Pop out elsewhere</button>`;
+
+export const MEET_TITLE = "Meet stand-in";
+
+/** A page on Meet's origin that Present now leaves, as Meet's own links do. */
+export const MEET_NEXT_PATH = "/next";
+
+/**
+ * Present now asks to share the screen, as Meet's does, and says what it
+ * got: the stream's tracks, stopped at once, or the error it was refused
+ * with.
+ */
+export const MEET_PRESENT = `<button type="button" id="present">Present now</button>
+    <p role="status" id="sharing">Not sharing</p>
+    <a href="${MEET_NEXT_PATH}">Next meeting</a>
+    <script>
+      document.getElementById("present").addEventListener("click", async () => {
+        const said = document.getElementById("sharing");
+
+        said.textContent = "Asking";
+
+        try {
+          const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+
+          said.textContent = "Sharing " + stream.getVideoTracks().length + " video, " + stream.getAudioTracks().length + " audio";
+
+          for (const track of stream.getTracks()) {
+            track.stop();
+          }
+        } catch (error) {
+          said.textContent = "Not shared: " + error.name;
+        }
+      });
+    </script>`;

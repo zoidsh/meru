@@ -21,6 +21,13 @@ describe(createContentSecurityPolicy, () => {
     expect(policy).not.toMatch(/unsafe|https?:|ws:|nonce/u);
   });
 
+  it("shows images from its own origin, and the data URLs main makes of the screen picker's thumbnails", () => {
+    expect(directive(createContentSecurityPolicy(), "img-src")).toStrictEqual([
+      "'self'",
+      "data:",
+    ]);
+  });
+
   it("plays media, the bundled sounds, only from its own origin", () => {
     expect(directive(createContentSecurityPolicy(), "media-src")).toStrictEqual(
       ["'self'"]

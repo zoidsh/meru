@@ -317,6 +317,7 @@ describe("an end no date holds", () => {
               button: { kind: "plain" },
               rows: [],
             },
+            screenPicker: null,
           },
           []
         ).doNotDisturb

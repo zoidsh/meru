@@ -8,7 +8,8 @@ import {
   overlayRectangle,
   overlayWidth,
   isShellDocument,
-  staysOpenOutside,
+  staysOpenOnBlur,
+  staysOpenOnPressOutside,
   transitionOverlay,
 } from "./overlay.ts";
 import type { Overlay } from "./overlay.ts";
@@ -210,13 +211,72 @@ describe(coversPage, () => {
   });
 });
 
-describe(staysOpenOutside, () => {
+const EVERY_KIND = [
+  "find",
+  "license",
+  "update",
+  "screen-picker",
+  "open-app",
+  "inbox",
+  "downloads",
+  "toast",
+  "drop",
+] as const;
+
+describe(staysOpenOnPressOutside, () => {
   it("is the find bar, the license notice and the update card", () => {
     expect(
-      (
-        ["find", "license", "update", "open-app", "inbox", "toast"] as const
-      ).map((kind) => staysOpenOutside({ kind }))
-    ).toStrictEqual([true, true, true, false, false, false]);
+      EVERY_KIND.map((kind) => staysOpenOnPressOutside({ kind }))
+    ).toStrictEqual([
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(staysOpenOnPressOutside(undefined)).toBeFalsy();
+  });
+});
+
+describe(staysOpenOnBlur, () => {
+  it("is those and the screen picker, which the window losing focus leaves", () => {
+    expect(EVERY_KIND.map((kind) => staysOpenOnBlur({ kind }))).toStrictEqual([
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(staysOpenOnBlur(undefined)).toBeFalsy();
+  });
+});
+
+describe("the screen picker", () => {
+  it("is a wide card over the page, which a press outside closes", () => {
+    expect(coversPage({ kind: "screen-picker" })).toBeTruthy();
+    expect(overlayWidth({ kind: "screen-picker" })).toBe("wide");
+  });
+
+  it("closes as another tab is selected, or its profile goes", () => {
+    const picker: Overlay = {
+      kind: "screen-picker",
+      profileId: "a",
+      tabId: "gmail",
+    };
+
+    expect([
+      changed(picker, two),
+      changed(picker, selectProfile(two, "b")),
+      changed(picker, removeProfile(two, "a")),
+    ]).toStrictEqual([picker, undefined, undefined]);
   });
 });
 

@@ -561,6 +561,7 @@ msgstr "Cached images and files"
 #. Button in the dialog that asks which profile writes a new email for an email link, which opens no email
 #. Button in the dialog that confirms removing a profile, which keeps it
 #. Button in the license key dialog that closes it, changing nothing
+#. Button of the screen sharing card that closes it and shares nothing
 #: src/main/default-browser-guard.ts
 #: src/main/email-links.ts
 #: src/main/link-opener.ts
@@ -568,6 +569,7 @@ msgstr "Cached images and files"
 #: src/settings/delete-browsing-data.tsx
 #: src/settings/saved-searches-card.tsx
 #: src/shared/license-dialog.tsx
+#: src/shell/screen-picker.tsx
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -660,6 +662,11 @@ msgstr "Choose a profile"
 msgid "Choose more languages to check as you type."
 msgstr "Choose more languages to check as you type."
 
+#. Title of the card Meru shows when a meeting asks to share the screen, listing the windows and screens to choose from
+#: src/shell/screen-picker.tsx
+msgid "Choose what to share"
+msgstr "Choose what to share"
+
 #. Button in the Downloads card's header that takes every download off the list but those still running
 #: src/shell/downloads.tsx
 msgid "Clear all"
@@ -687,9 +694,11 @@ msgstr "Clicking the icon opens the first profile that has unread mail."
 
 #. Button in the find bar that ends the search and hides the bar
 #. Button of the main window's card saying a downloaded update could not be verified; it hides the card
+#. Button of the screen sharing card that closes it once it says the window chosen is no longer open
 #. Menu item in the Window menu that closes the window
 #: src/main/application-menu.ts
 #: src/shell/find-bar.tsx
+#: src/shell/screen-picker.tsx
 #: src/shell/update-card.tsx
 msgid "Close"
 msgstr "Close"
@@ -859,6 +868,11 @@ msgstr "Couldn't clear the cache. Try again."
 #: src/settings/delete-browsing-data.tsx
 msgid "Couldn't delete browsing data. Try again."
 msgstr "Couldn't delete browsing data. Try again."
+
+#. On the screen sharing card when Meru could not get the list of screens and windows to share
+#: src/shell/screen-picker.tsx
+msgid "Couldn't list your screens and windows."
+msgstr "Couldn't list your screens and windows."
 
 #. Said by screen readers after a tab's title when its page could not load
 #: src/shell/tab-strip.tsx
@@ -1620,6 +1634,11 @@ msgstr "Meru keeps running in the tray when you close its window."
 msgid "Meru keeps trying by itself."
 msgstr "Meru keeps trying by itself."
 
+#. On the screen sharing card when macOS does not let Meru record the screen; the button under it opens the system's settings for it
+#: src/shell/screen-picker.tsx
+msgid "Meru needs permission to record your screen."
+msgstr "Meru needs permission to record your screen."
+
 #. Description of the Default mail app row in Settings on Windows once Meru is the app Windows opens email links with
 #: src/settings/general-page.tsx
 msgid "Meru opens email links."
@@ -1788,6 +1807,11 @@ msgstr "No results."
 msgid "No Saved Searches"
 msgstr "No Saved Searches"
 
+#. In the Screens tab of the screen sharing card when no display can be shared
+#: src/shell/screen-picker.tsx
+msgid "No screens to share."
+msgstr "No screens to share."
+
 #. Shown in the Trusted sites dialog of Settings when no site is trusted
 #: src/settings/trusted-sites-dialog.tsx
 msgid "No trusted sites"
@@ -1797,6 +1821,11 @@ msgstr "No trusted sites"
 #: src/shell/inbox.tsx
 msgid "No unread messages"
 msgstr "No unread messages"
+
+#. In the Windows tab of the screen sharing card when no app window can be shared
+#: src/shell/screen-picker.tsx
+msgid "No windows to share."
+msgstr "No windows to share."
 
 #. Quiet hours under All profiles when they have no window, in the Settings caption: For all profiles, it's none.
 #: src/settings/scope.ts
@@ -1967,7 +1996,9 @@ msgid "Open settings file"
 msgstr "Open settings file"
 
 #. Button in the alert saying Meru is the default browser, on macOS, which opens where macOS's default browser is chosen
+#. Button of the screen sharing card that opens the Screen Recording page of macOS's System Settings, named as macOS names that app
 #: src/main/default-browser-guard.ts
+#: src/shell/screen-picker.tsx
 msgid "Open System Settings"
 msgstr "Open System Settings"
 
@@ -2337,6 +2368,11 @@ msgstr "Saved to Downloads because your folder isn't available"
 msgid "Scope"
 msgstr "Scope"
 
+#. Tab of the screen sharing card listing the displays to share
+#: src/shell/screen-picker.tsx
+msgid "Screens"
+msgstr "Screens"
+
 #. Accessible name and tooltip of the arrow over the left end of the title bar's row of profiles, when some do not fit
 #: src/shell/titlebar.tsx
 msgid "Scroll profiles left"
@@ -2441,6 +2477,12 @@ msgstr "Settings sections"
 #: src/main/commands.ts
 msgid "Settings…"
 msgstr "Settings…"
+
+#. Button of the screen sharing card that shares the window or screen chosen with the meeting
+#: src/shell/screen-picker.tsx
+msgctxt "screen sharing"
+msgid "Share"
+msgstr "Share"
 
 #. The Shift key, as a screen reader says it in a keyboard shortcut
 #: src/main/shortcuts-page.ts
@@ -2833,6 +2875,13 @@ msgstr "Tabs you choose"
 msgid "Test notification"
 msgstr "Test notification"
 
+#. On the screen sharing card when the window or screen chosen to share closed before Share was clicked, so nothing is shared
+#. Short notice at the foot of the window when the window or screen chosen to share in a meeting closed before Share was clicked, so nothing is shared
+#: src/shell/screen-picker.tsx
+#: src/shell/toast.tsx
+msgid "That window is no longer open."
+msgstr "That window is no longer open."
+
 #. Short notice at the foot of the window when Gmail's Add another account is clicked on the free version, which adds no profile; at most two lines of a narrow notice
 #: src/shell/toast.tsx
 msgid "The free version uses one profile. Upgrade to Meru Pro to add more."
@@ -3003,9 +3052,11 @@ msgstr "Trusted sites"
 
 #. Button in place of a tab's page that could not load, which tries to load it again now
 #. Button of the main window's notice at launch that the license or trial could not be confirmed; it asks Meru's license server again now
+#. Button of the screen sharing card that asks for the list of screens and windows again after it could not be had
 #. Button on the Meru Pro page of Settings that asks Meru's license server again now
 #: src/settings/pro-page.tsx
 #: src/shell/license-notice.tsx
+#: src/shell/screen-picker.tsx
 #: src/shell/tab-problem.tsx
 msgid "Try again"
 msgstr "Try again"
@@ -3273,6 +3324,11 @@ msgstr "Which profile should write this email?"
 #: src/main/application-menu.ts
 msgid "Window"
 msgstr "Window"
+
+#. Tab of the screen sharing card listing the open app windows to share, never the Windows operating system
+#: src/shell/screen-picker.tsx
+msgid "Windows"
+msgstr "Windows"
 
 #. Description of the Content blocker group in Settings
 #: src/settings/privacy-page.tsx

@@ -22,6 +22,7 @@ export const TOAST_MESSAGES = [
   "downloads-folder-missing",
   "one-profile",
   "email-links-pro",
+  "screen-source-gone",
   ...DOWNGRADE_TOASTS,
   "license-refused",
   "trial-ended",
@@ -63,21 +64,36 @@ export type Overlay =
    * page area's bottom right, shown only while nothing else holds the view
    * and taking no focus as it appears.
    */
-  | ({ kind: "update" } & UpdateCard);
+  | ({ kind: "update" } & UpdateCard)
+  /**
+   * Meru's picker for the screen or window a page of the tab asked to
+   * share, which answers the page as it closes.
+   */
+  | { kind: "screen-picker"; profileId: string; tabId: string };
 
 /** Whether an overlay leaves focus where it is, taking none and giving none back. */
 export const takesNoFocus = (overlay: Pick<Overlay, "kind"> | undefined) =>
   overlay?.kind === "toast" || overlay?.kind === "drop";
 
 /**
- * Whether an overlay stays open when the person presses outside it or the
- * window loses focus: the find bar, beside which the page's matches are
- * clicked, and the license notice, which says something to read once.
+ * Whether an overlay stays open when the person presses outside it: the
+ * find bar, beside which the page's matches are clicked, the license
+ * notice, which says something to read once, and the update card.
  */
-export const staysOpenOutside = (overlay: Pick<Overlay, "kind"> | undefined) =>
+export const staysOpenOnPressOutside = (
+  overlay: Pick<Overlay, "kind"> | undefined
+) =>
   overlay?.kind === "find" ||
   overlay?.kind === "license" ||
   overlay?.kind === "update";
+
+/**
+ * Whether an overlay stays open as the window loses focus: those a press
+ * outside leaves, and the screen picker, whose person may look at the
+ * windows to share or open the system's settings.
+ */
+export const staysOpenOnBlur = (overlay: Pick<Overlay, "kind"> | undefined) =>
+  staysOpenOnPressOutside(overlay) || overlay?.kind === "screen-picker";
 
 /**
  * Whether an overlay is a card over the page, which takes the keys a page's
@@ -121,7 +137,9 @@ export type OverlayWidth = keyof typeof OVERLAY_WIDTHS;
 
 /** Each overlay's width class. */
 export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth =>
-  overlay.kind === "inbox" ? "wide" : "medium";
+  overlay.kind === "inbox" || overlay.kind === "screen-picker"
+    ? "wide"
+    : "medium";
 
 /**
  * Where the overlay's view sits while one is open: a card's over the page

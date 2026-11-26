@@ -58,6 +58,31 @@ const bookmarked = z.nullable(z.boolean());
 /** A point of the window's content area, in whole CSS pixels. */
 const coordinate = z.int().check(z.nonnegative());
 
+/** A screen or window the picker offers, its thumbnail a data URL main made. */
+const screenSource = z.object({
+  id: z.string().check(z.minLength(1)),
+  name: z.string(),
+  thumbnail: z.string(),
+});
+
+/** Meru's screen picker as main has it, wherever it shows. */
+const pickerCard = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("loading") }),
+  z.object({
+    kind: z.literal("listed"),
+    windows: z.array(screenSource),
+    screens: z.array(screenSource),
+  }),
+  z.object({ kind: z.literal("failed") }),
+  /** macOS refuses Meru the screen, so nothing was listed. */
+  z.object({ kind: z.literal("denied") }),
+  /** The source chosen had gone, and the page was answered with none. */
+  z.object({ kind: z.literal("gone") }),
+]);
+
+/** In place of the main window, the tab's own window whose card is meant. */
+const inWindow = z.optional(z.object({ profileId, tabId }));
+
 const tabStatus = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unloaded") }),
   z.object({ kind: z.literal("loading") }),
@@ -257,6 +282,29 @@ export const SHELL_CALLS = {
   removeDownload: { request: download, response: z.undefined() },
   /** Takes every download off the list but those running. */
   clearDownloads: { request: none, response: z.undefined() },
+  /**
+   * Share on the screen picker, in the main window or the tab's own window
+   * `window` names: the source it listed that the page is handed.
+   */
+  shareScreen: {
+    request: z.object({
+      source: z.string().check(z.minLength(1)),
+      window: inWindow,
+    }),
+    response: z.undefined(),
+  },
+  /** Cancel, Escape or a press outside the picker: the page gets no stream. */
+  cancelScreenPicker: {
+    request: z.object({ window: inWindow }),
+    response: z.undefined(),
+  },
+  /** Try again, on a picker that could not list what there is to share. */
+  retryScreenPicker: {
+    request: z.object({ window: inWindow }),
+    response: z.undefined(),
+  },
+  /** Open System Settings, on a picker macOS refuses the screen. */
+  openScreenRecordingSettings: { request: none, response: z.undefined() },
   /** Opens New tab, the launcher, or closes it, as its buttons ask. */
   toggleOpenApp: { request: none, response: z.undefined() },
   /**
@@ -442,6 +490,7 @@ export const SHELL_STATE = {
       card: z.nullable(
         z.discriminatedUnion("kind", [
           z.object({ kind: z.literal("downloads") }),
+          z.object({ kind: z.literal("screen-picker"), picker: pickerCard }),
         ])
       ),
       /** Its find bar while it is open, drawn over the page in that window. */
@@ -585,6 +634,8 @@ export const SHELL_STATE = {
       })
     ),
   }),
+  /** The screen picker over the main window's page, while it is open there. */
+  screenPicker: z.nullable(pickerCard),
   /** What the overlay over the content views shows, if anything. */
   overlay: z.discriminatedUnion("kind", [
     z.object({ kind: z.literal("none") }),
@@ -592,6 +643,8 @@ export const SHELL_STATE = {
     z.object({ kind: z.literal("downloads") }),
     /** Meru Pro ends at the next launch, or the license could not be confirmed. */
     z.object({ kind: z.literal("license") }),
+    /** The screen picker, drawn from the `screenPicker` slice. */
+    z.object({ kind: z.literal("screen-picker") }),
     /** A version ready to install, or one that could not be verified. */
     z.object({
       kind: z.literal("update"),

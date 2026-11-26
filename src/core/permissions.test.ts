@@ -27,6 +27,7 @@ describe(allowsPermission, () => {
     ["notifications", "https://meet.google.com/abc-defg-hij"],
     ["media", "https://meet.google.com/abc-defg-hij"],
     ["speaker-selection", "https://meet.google.com"],
+    ["display-capture", "https://meet.google.com/abc-defg-hij"],
   ])("gives %s to %s", (permission, url) => {
     expect(allows(permission, url)).toBeTruthy();
   });
@@ -36,7 +37,8 @@ describe(allowsPermission, () => {
     ["notifications", "https://mail.google.com/mail/u/0/"],
     ["media", "https://mail.google.com"],
     ["media", "https://calendar.google.com"],
-    ["display-capture", "https://meet.google.com"],
+    ["display-capture", "https://mail.google.com/mail/u/0/"],
+    ["display-capture", "https://calendar.google.com"],
     ["clipboard-read", "https://docs.google.com"],
     ["geolocation", "https://meet.google.com"],
     ["openExternal", "https://mail.google.com"],
@@ -55,6 +57,21 @@ describe(allowsPermission, () => {
   ])("gives nothing to %s, which no app claims", (url) => {
     expect(allows("fullscreen", url)).toBeFalsy();
     expect(allows("media", url)).toBeFalsy();
+    expect(allows("display-capture", url)).toBeFalsy();
+  });
+
+  it("refuses screen capture to a third-party frame in Meet, and to a Meet panel Gmail embeds", () => {
+    expect(
+      allows("display-capture", YOUTUBE, undefined, "https://meet.google.com")
+    ).toBeFalsy();
+    expect(
+      allows(
+        "display-capture",
+        "https://mail.google.com/mail/u/0/",
+        undefined,
+        "https://meet.google.com"
+      )
+    ).toBeFalsy();
   });
 
   it("judges fullscreen by the page, so a video another site embeds in an app fills the screen", () => {

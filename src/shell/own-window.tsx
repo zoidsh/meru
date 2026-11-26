@@ -1,6 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
+import { noop } from "es-toolkit";
 import { EllipsisVerticalIcon } from "lucide-react";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 
@@ -23,6 +24,7 @@ import { wholePoint } from "./context-menu.ts";
 import { Downloads, DownloadsButton } from "./downloads.tsx";
 import { FindBar } from "./find-bar.tsx";
 import { shellPlatform } from "./platform.ts";
+import { ScreenPicker } from "./screen-picker.tsx";
 import {
   closeShellDocument,
   openShellDocument,
@@ -257,17 +259,44 @@ const closeDownloads = () => {
   shellCalls().setDownloadsOpen({ open: false });
 };
 
-/** What closes the card, and the titlebar button that opens it, if any. */
-const cardClosing = (
-  _card: ShownCard
-): { close: () => void; opener: string | undefined } => ({
-  close: closeDownloads,
-  opener: '[data-opens="downloads"]',
-});
+/**
+ * What closes the card, and the titlebar button that opens it; the screen
+ * picker, which the page opened, has none.
+ */
+const useCardClosing = (
+  own: OwnWindow,
+  kind: ShownCard["kind"]
+): { close: () => void; opener: string | undefined } => {
+  const { profileId, tabId } = own;
+
+  return useMemo(
+    () =>
+      kind === "downloads"
+        ? { close: closeDownloads, opener: '[data-opens="downloads"]' }
+        : {
+            close: () => {
+              shellCalls()
+                .cancelScreenPicker({ window: { profileId, tabId } })
+                .catch(noop);
+            },
+            opener: undefined,
+          },
+    [kind, profileId, tabId]
+  );
+};
 
 /** The card as its kind draws it. */
-const DrawnCard = (_props: { card: ShownCard }) => {
+const DrawnCard = ({ own, card }: { own: OwnWindow; card: ShownCard }) => {
   const downloads = useShellState("downloads");
+
+  if (card.kind === "screen-picker") {
+    return (
+      <ScreenPicker
+        card={card.picker}
+        window={{ profileId: own.profileId, tabId: own.tabId }}
+      />
+    );
+  }
 
   return downloads?.open ? <Downloads downloads={downloads} /> : null;
 };
@@ -286,7 +315,7 @@ const OwnWindowCard = ({ own, card }: { own: OwnWindow; card: ShownCard }) => {
   const titlebar = useSyncExternalStore(subscribeShellDocuments, () =>
     shellDocument(ownWindowFrameName(own))
   );
-  const { close, opener } = cardClosing(card);
+  const { close, opener } = useCardClosing(own, card.kind);
 
   useEffect(() => {
     openShellDocument(name);
@@ -345,7 +374,9 @@ const OwnWindowCard = ({ own, card }: { own: OwnWindow; card: ShownCard }) => {
     };
   }, [titlebar, close, opener]);
 
-  return target ? createPortal(<DrawnCard card={card} />, target.body) : null;
+  return target
+    ? createPortal(<DrawnCard own={own} card={card} />, target.body)
+    : null;
 };
 
 /** The frame of each tab's own window, in a document of the shell's each. */

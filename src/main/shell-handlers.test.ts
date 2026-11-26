@@ -138,6 +138,24 @@ const setup = ({
         return Promise.resolve();
       },
     },
+    screenPicker: {
+      share: (source, window) => {
+        calls.push(["shareScreen", source, window]);
+
+        return Promise.resolve();
+      },
+      cancel: (window) => {
+        calls.push(["cancelScreenPicker", window]);
+      },
+      retry: (window) => {
+        calls.push(["retryScreenPicker", window]);
+      },
+      openSettings: () => {
+        calls.push(["openScreenRecordingSettings"]);
+
+        return Promise.resolve();
+      },
+    },
     downloads: {
       setOpen: (next) => {
         calls.push(["downloads", next]);
@@ -509,6 +527,7 @@ const CHROME = {
     button: { kind: "plain" },
     rows: [],
   } as ShellState["downloads"],
+  screenPicker: null,
 } as const;
 
 const NO_MAIL = { status: "unknown", unreadCount: null } as const;

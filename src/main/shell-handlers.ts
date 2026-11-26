@@ -39,6 +39,7 @@ import type { PaneResizer } from "./pane-resize.ts";
 import { profileDisplayName } from "./profile-copy.ts";
 import type { ProfileMenu } from "./profile-menu.ts";
 import type { Profiles } from "./profiles.ts";
+import type { ScreenPicker } from "./screen-picker.ts";
 import type { LaunchHandlers, ShellHandlers } from "./shell-ipc.ts";
 import type { Sidebar } from "./sidebar.ts";
 import type { TabMenu } from "./tab-menu.ts";
@@ -83,6 +84,10 @@ export interface ShellHandlersDeps {
     | "cancel"
     | "remove"
     | "clear"
+  >;
+  screenPicker: Pick<
+    ScreenPicker,
+    "share" | "cancel" | "retry" | "openSettings"
   >;
   openApp: Pick<OpenApp, "choose" | "chooseBookmark" | "removeBookmark">;
   bookmarks: Pick<Bookmarks, "toggle">;
@@ -155,7 +160,8 @@ const shellOverlay = (
   if (
     overlay?.kind === "inbox" ||
     overlay?.kind === "downloads" ||
-    overlay?.kind === "license"
+    overlay?.kind === "license" ||
+    overlay?.kind === "screen-picker"
   ) {
     return { kind: overlay.kind };
   }
@@ -279,6 +285,7 @@ export const shellState = (
     | "windows"
     | "downloads"
     | "pro"
+    | "screenPicker"
   >,
   /** The registry, or the suite's stand-ins for it, which New tab lists. */
   apps: readonly App[]
@@ -343,6 +350,7 @@ export const createShellHandlers = ({
   navigateTab,
   inbox,
   downloads,
+  screenPicker,
   openApp,
   bookmarks,
   tabMenu,
@@ -564,6 +572,22 @@ export const createShellHandlers = ({
       downloads.setOpen(open, ownWindow);
 
       return Promise.resolve();
+    },
+    shareScreen: async ({ source, window: ownWindow }) => {
+      await screenPicker.share(source, ownWindow);
+    },
+    cancelScreenPicker: ({ window: ownWindow }) => {
+      screenPicker.cancel(ownWindow);
+
+      return Promise.resolve();
+    },
+    retryScreenPicker: ({ window: ownWindow }) => {
+      screenPicker.retry(ownWindow);
+
+      return Promise.resolve();
+    },
+    openScreenRecordingSettings: async () => {
+      await screenPicker.openSettings();
     },
     openDownload: async ({ id }) => {
       await downloads.openFile(id);

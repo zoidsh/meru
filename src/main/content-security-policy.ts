@@ -18,7 +18,8 @@ export const createContentSecurityPolicy = () =>
     ...LOCKED_DOWN,
     "script-src": ["'self'"],
     "style-src": ["'self'"],
-    "img-src": ["'self'"],
+    // The screen picker's thumbnails, which main makes as data URLs.
+    "img-src": ["'self'", "data:"],
     "font-src": ["'self'"],
     "media-src": ["'self'"],
     "connect-src": ["'self'"],

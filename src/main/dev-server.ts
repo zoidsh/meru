@@ -43,7 +43,7 @@ export const createDevContentSecurityPolicy = (devServer: DevServer) => {
     ...LOCKED_DOWN,
     "script-src": [origin, nonce],
     "style-src": [origin, nonce],
-    "img-src": [origin],
+    "img-src": [origin, "data:"],
     "font-src": [origin],
     "media-src": [origin],
     "connect-src": [origin, socket],

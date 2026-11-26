@@ -65,6 +65,10 @@ import {
   createNativeQuestion,
 } from "#platform/question.ts";
 import {
+  createCapturedScreenSources,
+  createScreenSources,
+} from "#platform/screen-sources.ts";
+import {
   createCapturedTrayFactory,
   createTrayFactory,
 } from "#platform/tray.ts";
@@ -372,3 +376,13 @@ export const systemUpdater = async () => {
 
   return isReleaseAppId(MERU_APP_ID) ? await createUpdater() : undefined;
 };
+
+/**
+ * What can be shared and the stand-in for it: the suite's build lists fixed
+ * sources and never asks the system, so no test shows its Screen Recording
+ * prompt or settings.
+ */
+export const screenSources = (platform: Platform) =>
+  MERU_E2E_BUILD
+    ? createCapturedScreenSources()
+    : createScreenSources(platform);

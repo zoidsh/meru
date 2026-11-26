@@ -89,6 +89,11 @@ export const Toast = ({
       comment:
         "Short notice at the foot of the window when an email link clicked outside Meru is not opened, as the free version opens none; at most two lines of a narrow notice",
     }),
+    "screen-source-gone": t({
+      message: "That window is no longer open.",
+      comment:
+        "Short notice at the foot of the window when the window or screen chosen to share in a meeting closed before Share was clicked, so nothing is shared",
+    }),
     "pro-ends-trial-ended": t({
       message:
         "Your trial has ended. Pro features turn off when you quit Meru.",

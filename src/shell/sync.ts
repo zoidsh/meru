@@ -29,6 +29,7 @@ const connect = () => {
     "inbox",
     "downloads",
     "windows",
+    "screenPicker",
     "language",
     "pro",
   ]);

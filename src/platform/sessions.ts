@@ -1,9 +1,26 @@
-import { net, session } from "electron";
+import { net, session, webContents as contents } from "electron";
 
 import type { BrowsingDataType } from "#core/browsing-data.ts";
 import type { FeedResponse } from "#core/feed.ts";
 import type { ActionResponse } from "#core/mail-actions.ts";
 import type { PermissionAsk } from "#core/permissions.ts";
+import type { ScreenSource } from "#core/screen-picker.ts";
+
+import type { DisplayMediaStreams } from "./screen-sources.ts";
+
+/** A page's request to capture the screen, as the handler is told it. */
+export interface DisplayMediaAsk {
+  /** The web contents the asking frame is in, while it is there. */
+  webContentsId: number | undefined;
+  /** The asking frame's own origin, never the page's around it. */
+  frameOrigin: string | undefined;
+}
+
+/** Answers once: with the source to share, or nothing for no stream. */
+export type DisplayMediaHandler = (
+  ask: DisplayMediaAsk,
+  answer: (source?: Pick<ScreenSource, "id" | "name">) => void
+) => void;
 
 export interface Sessions {
   /** Every kind of data the partition's session holds, cache included. */
@@ -15,10 +32,21 @@ export interface Sessions {
   ) => Promise<void>;
   /**
    * Answers every permission request and check in the partition's session with
-   * `allows`, in place of Electron's default of granting all, and refuses
-   * screen capture. Once per session; later calls change nothing.
+   * `allows`, in place of Electron's default of granting all, and each request
+   * to capture the screen through `handleDisplayMedia`'s handler, refusing it
+   * until there is one. Once per session; later calls change nothing.
    */
   guard: (partition: string, allows: (ask: PermissionAsk) => boolean) => void;
+  /** What answers every guarded session's requests to capture the screen. */
+  handleDisplayMedia: (
+    handler: DisplayMediaHandler,
+    streams: DisplayMediaStreams
+  ) => void;
+  /**
+   * Whether every guarded session, now and from now on, has macOS 15 or
+   * later show its own picker in place of the handler.
+   */
+  useSystemPicker: (on: boolean) => void;
   /**
    * GETs `url` in the partition's session, with its cookies and never from the
    * cache. A redirect is answered, not followed. Rejects on a network error,
@@ -136,6 +164,41 @@ const send = (
 
 export const createSessions = (): Sessions => {
   const guarded = new WeakSet<Electron.Session>();
+  /** Every guarded session, whose display-media handler a change sets again. */
+  const guardedPartitions = new Map<string, Electron.Session>();
+  let handler: DisplayMediaHandler | undefined;
+  let streams: DisplayMediaStreams | undefined;
+  let systemPicker = false;
+
+  const setDisplayMedia = (partition: string, guarding: Electron.Session) => {
+    guardedPartitions.set(partition, guarding);
+    guarding.setDisplayMediaRequestHandler(
+      (request, respond) => {
+        const { frame } = request;
+        const current = handler;
+        const answering = streams;
+
+        if (!current || !answering) {
+          respond(null);
+
+          return;
+        }
+
+        current(
+          {
+            webContentsId: frame ? contents.fromFrame(frame)?.id : undefined,
+            frameOrigin: frame?.origin,
+          },
+          (source) => {
+            // Video alone: no audio is ever offered.
+            respond(source ? { video: answering.video(source, frame) } : null);
+          }
+        );
+      },
+      { useSystemPicker: systemPicker }
+    );
+    streams?.applied(partition, systemPicker);
+  };
 
   return {
     get: (partition, url, signal) => send(partition, url, undefined, signal),
@@ -176,10 +239,26 @@ export const createSessions = (): Sessions => {
             ...(details.mediaType ? { mediaTypes: [details.mediaType] } : {}),
           })
       );
-      // Sharing a screen needs a picker Meru does not have yet.
-      guarding.setDisplayMediaRequestHandler((_request, answer) => {
-        answer(null);
-      });
+      setDisplayMedia(partition, guarding);
+    },
+    handleDisplayMedia: (next, nextStreams) => {
+      handler = next;
+      streams = nextStreams;
+
+      for (const partition of guardedPartitions.keys()) {
+        nextStreams.applied(partition, systemPicker);
+      }
+    },
+    useSystemPicker: (on) => {
+      if (on === systemPicker) {
+        return;
+      }
+
+      systemPicker = on;
+
+      for (const [partition, guarding] of guardedPartitions) {
+        setDisplayMedia(partition, guarding);
+      }
     },
   };
 };

@@ -1,4 +1,4 @@
-import { OVERLAY_FRAME_NAME, staysOpenOutside } from "#core/overlay.ts";
+import { OVERLAY_FRAME_NAME, staysOpenOnBlur } from "#core/overlay.ts";
 import {
   ownWindowCardOfFrame,
   ownWindowFindOfFrame,
@@ -120,7 +120,7 @@ export const wireShellDocuments = ({
     focus.noteFocused({ kind: "shell" });
   });
   shell.window.on("blur", () => {
-    if (!staysOpenOutside(overlays.current())) {
+    if (!staysOpenOnBlur(overlays.current())) {
       overlays.close();
     }
   });

@@ -124,7 +124,13 @@ export const APPS: readonly App[] = [
   {
     ...entry("meet", "Meet", googleSubdomain("meet")),
     // Unprompted, as v3: macOS asks for the camera and microphone itself.
-    permissions: ["notifications", "media", "speaker-selection"],
+    // A screen is shared only through the display-media handler's picker.
+    permissions: [
+      "notifications",
+      "media",
+      "speaker-selection",
+      "display-capture",
+    ],
   },
 ];
 

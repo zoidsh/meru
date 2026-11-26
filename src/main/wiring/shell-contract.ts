@@ -3,6 +3,7 @@ import type { App } from "#core/apps.ts";
 import type { Capability } from "#core/entitlement.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import type { Platform } from "#core/platform.ts";
+import type { PickerCard } from "#core/screen-picker.ts";
 import { findTab, tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { createClipboard } from "#platform/clipboard.ts";
@@ -25,6 +26,7 @@ import type { OwnWindows } from "../own-windows.ts";
 import { createPaneResize } from "../pane-resize.ts";
 import { createProfileMenu } from "../profile-menu.ts";
 import type { Profiles } from "../profiles.ts";
+import type { ScreenPicker } from "../screen-picker.ts";
 import type { SettingsStore } from "../settings.ts";
 import {
   createShellHandlers,
@@ -39,6 +41,21 @@ import type { Sidebar } from "../sidebar.ts";
 import { createTabMenu } from "../tab-menu.ts";
 import type { createTabViews } from "../tab-views.ts";
 import type { UpdateCardModule } from "../update-card.ts";
+
+/** The card a tab's own window shows, the screen picker before Downloads. */
+const ownWindowCard = (
+  picker: PickerCard | undefined,
+  downloadsIn: TabKey | undefined,
+  key: TabKey
+): ShellState["windows"][number]["card"] => {
+  if (picker) {
+    return { kind: "screen-picker", picker };
+  }
+
+  return downloadsIn !== undefined && tabKey(downloadsIn) === tabKey(key)
+    ? { kind: "downloads" }
+    : null;
+};
 
 /**
  * The shell's calls and the state it draws, with the tab's and the
@@ -63,6 +80,7 @@ export const wireShellContract = ({
   sidebar,
   inbox,
   downloads,
+  screenPicker,
   mail,
   doNotDisturb,
   openApp,
@@ -102,6 +120,7 @@ export const wireShellContract = ({
   sidebar: Sidebar;
   inbox: Inbox;
   downloads: Downloads;
+  screenPicker: ScreenPicker;
   mail: MailPoller;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
   openApp: OpenApp;
@@ -188,6 +207,7 @@ export const wireShellContract = ({
         },
         inbox,
         downloads,
+        screenPicker,
         openApp,
         bookmarks,
         tabMenu,
@@ -246,11 +266,13 @@ export const wireShellContract = ({
             ariaShortcuts,
             navigation: views.navigation(),
             downloads: downloads.shellSlice(),
+            screenPicker: screenPicker.mainCard() ?? null,
             windows: views.windowTabs().flatMap((key) => {
               const tab = findTab(profiles.get(), key);
               const navigation = views.navigation(key);
               const bar = find.bar(key);
               const downloadsIn = downloads.window();
+              const picker = screenPicker.windowCard(key);
 
               return tab && navigation
                 ? [
@@ -261,11 +283,7 @@ export const wireShellContract = ({
                       status: shellTabStatus(views.status(key)),
                       navigation,
                       bookmarked: bookmarks.bookmarked(key) ?? null,
-                      card:
-                        downloadsIn !== undefined &&
-                        tabKey(downloadsIn) === tabKey(key)
-                          ? { kind: "downloads" as const }
-                          : null,
+                      card: ownWindowCard(picker, downloadsIn, key),
                       find: bar
                         ? {
                             term: bar.term,
@@ -291,6 +309,7 @@ export const wireShellContract = ({
         find.onChange(listener);
         inbox.onChange(listener);
         downloads.onChange(listener);
+        screenPicker.onChange(listener);
         sidebar.onChange(listener);
         for (const key of [
           "profileTint",

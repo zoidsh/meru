@@ -120,6 +120,7 @@ const setup = () => {
       button: { kind: "plain" },
       rows: [],
     },
+    screenPicker: null,
   };
 
   const ipc: Ipc = {
@@ -156,6 +157,10 @@ const setup = () => {
     retryEntitlement: () => Promise.resolve(),
     continueFree: () => Promise.resolve({ ok: true } as const),
     openMeruPro: () => Promise.resolve(),
+    shareScreen: () => Promise.resolve(),
+    cancelScreenPicker: () => Promise.resolve(),
+    retryScreenPicker: () => Promise.resolve(),
+    openScreenRecordingSettings: () => Promise.resolve(),
     navigateTab: (request) => {
       calls.push(["navigateTab", request]);
 
