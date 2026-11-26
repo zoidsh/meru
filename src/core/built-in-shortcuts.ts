@@ -47,8 +47,8 @@ export const BUILT_IN_SHORTCUTS: readonly BuiltInShortcut[] = [
   // The role on macOS alone: elsewhere Close is an item with no key, so
   // Ctrl+W in a page cannot close the window and quit Meru.
   { id: "close", shortcut: { darwin: "Command+W" }, role: { darwin: true } },
-  // The role has no key on Windows, so Meru gives Ctrl+Q wherever it is not
-  // macOS's, as v3 does.
+  // The role has no key on Windows, so Meru gives Ctrl+Q wherever the key
+  // is not macOS's role's.
   {
     id: "quit",
     shortcut: {
