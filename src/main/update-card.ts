@@ -47,8 +47,6 @@ export const createUpdateCard = ({
 
   return {
     follow,
-    /** Whether the card is what the overlay's view shows. */
-    isOpen: () => overlays.current()?.kind === "update",
     /** One of the open card's buttons, or Escape in it, which is Later or Close. */
     run: (action: UpdateCardAction) => {
       const open = overlays.current();
