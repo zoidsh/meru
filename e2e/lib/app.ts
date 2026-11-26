@@ -1,9 +1,10 @@
-// Linux needs a display: `xvfb-run -a pnpm test:e2e` where there is none.
+// Linux needs Xvfb, from which each worker starts a display of its own.
 import { execFile, spawn } from "node:child_process";
 import { once } from "node:events";
 import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import type { Readable } from "node:stream";
 import { promisify } from "node:util";
 
 import { _electron, expect, test as base } from "@playwright/test";
@@ -648,6 +649,87 @@ export const readState = async <State>(userDataDir: string) =>
     await readFile(path.join(userDataDir, "state.json"), "utf-8")
   ) as State;
 
+/**
+ * Runs Xvfb until this shell's stdin closes, which it does when the worker
+ * that started it ends, however it ends, so no display outlives its worker.
+ */
+const XVFB_WATCH = `
+command -v Xvfb >/dev/null || { echo "The suite on Linux needs Xvfb (the xvfb package), or MERU_E2E_CALLER_DISPLAY=1 to use DISPLAY" >&2; exit 127; }
+Xvfb -displayfd 3 -screen 0 1280x1024x24 -nolisten tcp 2>/dev/null &
+server=$!
+echo $server
+trap 'kill $server 2>/dev/null' EXIT
+read -r _ || true
+`;
+
+/**
+ * On Linux, an X display of the worker's own. Focusing a page activates its
+ * window, which on a display with no window manager takes the focus from
+ * every other app there, and an overlay closes when its window loses it;
+ * a worker runs one test at a time, so its display holds one app at a time,
+ * as a person's desktop holds Meru alone. Its screen is the one `xvfb-run`
+ * gives. `MERU_E2E_CALLER_DISPLAY=1` uses the caller's `DISPLAY` instead, to
+ * watch a run, with every worker's app on it.
+ */
+const startDisplay = async () => {
+  const watch = spawn("sh", ["-c", XVFB_WATCH], {
+    stdio: ["pipe", "pipe", "inherit", "pipe"],
+  });
+  let serverPid = "";
+
+  watch.stdout?.on("data", (chunk: Buffer) => {
+    serverPid += String(chunk);
+  });
+  // The fourth pipe, which the shell hands Xvfb as `-displayfd 3`.
+  const written = watch.stdio.at(3) as Readable | null | undefined;
+
+  if (!written) {
+    throw new Error("Xvfb's shell has no pipe for its display number");
+  }
+
+  // Xvfb writes the number and a newline once it takes connections; the
+  // pipe ends with no number when it cannot start.
+  let number = "";
+
+  for await (const chunk of written) {
+    number += String(chunk);
+
+    if (number.includes("\n")) {
+      break;
+    }
+  }
+
+  if (!number.includes("\n")) {
+    throw new Error("Xvfb exited before it was ready");
+  }
+
+  return {
+    display: `:${number.trim()}`,
+    stop: async () => {
+      const exited = once(watch, "exit");
+
+      watch.stdin?.end();
+      await withTimeout(() => exited, 5000).catch(() => {
+        const pids = [Number(serverPid.trim()), watch.pid ?? 0];
+
+        // Never 0, which would signal the worker's whole process group.
+        for (const pid of pids.filter((candidate) => candidate > 0)) {
+          try {
+            process.kill(pid, "SIGKILL");
+          } catch {
+            // Gone in the meantime.
+          }
+        }
+      });
+    },
+  };
+};
+
+interface WorkerFixtures {
+  /** The display this worker's apps draw on, where it has one of its own. */
+  display: string | undefined;
+}
+
 interface AppFixtures {
   /** The pids this test launched, for the teardown on Windows. */
   launched: number[];
@@ -669,7 +751,28 @@ interface AppFixtures {
   spawnApp: (args?: readonly string[]) => { exited: Promise<number | null> };
 }
 
-export const test = base.extend<AppFixtures>({
+export const test = base.extend<AppFixtures, WorkerFixtures>({
+  display: [
+    async ({}, use) => {
+      if (
+        process.platform !== "linux" ||
+        process.env.MERU_E2E_CALLER_DISPLAY === "1"
+      ) {
+        await use(undefined);
+
+        return;
+      }
+
+      const { display, stop } = await startDisplay();
+
+      try {
+        await use(display);
+      } finally {
+        await stop();
+      }
+    },
+    { scope: "worker" },
+  ],
   launched: async ({}, use) => {
     await use([]);
   },
@@ -703,7 +806,11 @@ export const test = base.extend<AppFixtures>({
       await standIn.close();
     }
   },
-  launchApp: async ({ userDataDir, launched, standIn }, use, testInfo) => {
+  launchApp: async (
+    { userDataDir, launched, standIn, display },
+    use,
+    testInfo
+  ) => {
     const apps: { app: ElectronApplication; log: string[] }[] = [];
     // Every request the app's build refused for leaving this machine.
     const refused: string[] = [];
@@ -713,7 +820,12 @@ export const test = base.extend<AppFixtures>({
         const app = await _electron.launch({
           executablePath,
           args: launchArgs(userDataDir),
-          env: { ...env, ...added, MERU_TEST_APP_URLS: standIn.appUrls },
+          env: {
+            ...env,
+            ...added,
+            MERU_TEST_APP_URLS: standIn.appUrls,
+            ...(display && { DISPLAY: display }),
+          },
         });
 
         const log: string[] = [];
@@ -778,13 +890,17 @@ export const test = base.extend<AppFixtures>({
   shell: async ({ app }, use) => {
     await use(await findPage(app, SHELL_URL));
   },
-  spawnApp: async ({ userDataDir, launched, standIn }, use) => {
+  spawnApp: async ({ userDataDir, launched, standIn, display }, use) => {
     await use((args = []) => {
       const child = spawn(
         executablePath,
         [...launchArgs(userDataDir), ...args],
         {
-          env: { ...env, MERU_TEST_APP_URLS: standIn.appUrls },
+          env: {
+            ...env,
+            MERU_TEST_APP_URLS: standIn.appUrls,
+            ...(display && { DISPLAY: display }),
+          },
           stdio: "ignore",
         }
       );

@@ -5,11 +5,14 @@ import { defineConfig } from "@playwright/test";
 const isCI = Boolean(process.env.CI);
 
 /**
- * On Windows and Linux every launch of the suite's app takes the desktop's
- * focus, and an overlay, the unified inbox among them, closes when its
- * window loses it, and a test that follows real focus sees it taken, so
- * these run alone, after the rest. On macOS the suite's app is never
- * activated.
+ * On Windows main's focus of a page activates its window, which takes the
+ * desktop's focus from every other worker's app, and an overlay, the unified
+ * inbox among them, closes when its window loses it, and a test that follows
+ * real focus sees it taken, so these run alone there, after the rest. One
+ * worker for the whole suite would cost about ten minutes more on CI's
+ * runner (the shared group takes 5.5 minutes at three workers). On macOS the
+ * suite's app is never activated, and on Linux each worker draws on an X
+ * display of its own (`e2e/lib/app.ts`), so there every file shares.
  */
 const NEEDS_THE_FOCUS = [
   "**/overlay.e2e.ts",
@@ -50,7 +53,7 @@ const NEEDS_THE_FOCUS = [
   // Its free version's link shows a toast the blur closes.
   "**/email-links.e2e.ts",
 ];
-const takesTheFocus = process.platform !== "darwin";
+const takesTheFocus = process.platform === "win32";
 
 export default defineConfig({
   // Never *.spec.ts or *.test.ts, which Vitest would claim.
