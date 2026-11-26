@@ -76,10 +76,11 @@ export const ProfileQuestion = ({
       }
     >
       <TitledOverlayBody>
-        {/* Its scrollbar hidden, as CommandList's is. */}
+        {/* Its scrollbar hidden, as CommandList's is, and room on every
+            side for a row's focus ring, which its scrolling would clip. */}
         <ItemGroup
           aria-labelledby={titleId}
-          className="no-scrollbar min-h-0 gap-0 overflow-y-auto"
+          className="no-scrollbar min-h-0 gap-0 overflow-y-auto p-1"
         >
           {offered.map((profile, index) => (
             // Item Group is a `role="list"` div, so the row is no `li`.
