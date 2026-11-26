@@ -14,6 +14,7 @@ import {
   NO_TRIAL,
   SHELL_URL,
   expect,
+  findOverlayDocument,
   findPage,
   readOpenedExternally,
   readState,
@@ -284,6 +285,9 @@ test("the free version refuses each way to open, move, split or bookmark a tab, 
 
   await stubSystemBrowser(app);
 
+  const overlay = await findOverlayDocument(app);
+  const launcher = overlay.getByRole("dialog", { name: "New tab" });
+
   for (const [keyCode, modifiers] of [
     ["T", [command]],
     ["Tab", ["control"]],
@@ -296,12 +300,15 @@ test("the free version refuses each way to open, move, split or bookmark a tab, 
     await press(app, standIn.url, keyCode, [...modifiers]);
   }
 
+  await expect(launcher).toHaveCount(0);
+
   const gmailKey = { profileId: "p", tabId: "gmail" };
 
   for (const [name, request] of [
+    // Choosing an app closes New tab, so it comes before New tab's toggle.
+    ["openApp", { appId: "calendar" }],
     ["toggleOpenApp", {}],
     ["toggleSidebar", {}],
-    ["openApp", { appId: "calendar" }],
     ["toggleTabBookmark", gmailKey],
     ["closeTab", gmailKey],
     ["maximizePane", { ...gmailKey, on: true }],
@@ -313,6 +320,8 @@ test("the free version refuses each way to open, move, split or bookmark a tab, 
     await callShell(shell, name, request);
   }
 
+  await expect(launcher).toHaveCount(0);
+
   await gmail.getByRole("link", { name: "Open Calendar" }).click();
   await expect
     .poll(() => readOpenedExternally(app))
@@ -320,9 +329,7 @@ test("the free version refuses each way to open, move, split or bookmark a tab, 
 
   expect(await viewUrls(app)).toStrictEqual([standIn.url]);
   await expect(tabs(shell)).toHaveCount(0);
-  await expect(
-    shell.getByRole("dialog", { name: "Open Google app or bookmark" })
-  ).toHaveCount(0);
+
   expect(standIn.requests()).toMatchObject({ calendar: 0, drive: 0 });
 
   await app.close();
@@ -378,6 +385,18 @@ test("New tab's title bar switch is a Pro row on the free version, its value kep
   await openSection(page, "Appearance");
   await expect(switchNamed(page, "New tab")).toBeChecked();
   await expect(switchNamed(page, "New tab")).toBeEnabled();
+
+  const overlay = await findOverlayDocument(app);
+
+  await press(app, standIn.url, "T", [command]);
+
+  const launcher = overlay.getByRole("dialog", {
+    name: "New tab",
+  });
+
+  await expect(
+    launcher.getByRole("group", { name: "Bookmarks" }).getByRole("option")
+  ).toHaveText([/^Drive/u]);
 });
 
 test.describe("shots", () => {
