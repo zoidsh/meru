@@ -157,7 +157,9 @@ const testEntry = (): FeedEntry => ({
  * single message offers `MAIL_ACTIONS` as its buttons. What was seen
  * is kept in memory only, and a profile's is dropped, with its notifications
  * closed, as it is removed. A message with a verification code gets the
- * code's notification in place of its own, which nothing holds.
+ * code's notification in place of its own, which only Do Not Disturb and
+ * quiet hours hold, and those only while `verificationCodesDuringDoNotDisturb`
+ * is off.
  */
 export const createMailNotifications = ({
   notifier,
@@ -344,12 +346,18 @@ export const createMailNotifications = ({
     const decision = decideNotification({
       kind: "verificationCode",
       notifications: setting("notifications", profileId),
+      codesDuringDoNotDisturb: setting("verificationCodesDuringDoNotDisturb"),
       quietHours: setting("quietHours", profileId),
       doNotDisturb: doNotDisturb(),
       now: momentOf(now()),
     });
 
+    // Held, it is neither shown nor copied, as no held notification is later.
     if (!decision.show) {
+      log(
+        `Held a verification code notification of profile ${profileId}: ${decision.reason}`
+      );
+
       return;
     }
 

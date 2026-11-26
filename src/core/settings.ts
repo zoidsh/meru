@@ -120,10 +120,19 @@ export const SETTINGS = {
     default: 1,
   }),
   /**
-   * A new message with a one-time code gets a notification with the code,
-   * shown whatever holds new-mail ones, and the code is copied.
+   * A new message with a one-time code gets a notification with the code in
+   * place of its own, whatever switches new mail's off, and the code is
+   * copied.
    */
   verificationCodes: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /**
+   * Whether a code's notification shows while Do Not Disturb or quiet hours
+   * hold new mail's; off, they hold it as well.
+   */
+  verificationCodesDuringDoNotDisturb: setting<boolean>({
     schema: z.boolean(),
     default: true,
   }),

@@ -32,6 +32,7 @@ export const GMAIL_PAGE_KEYS = [
   "moveAttachmentsToTop",
   "showTrimmedContent",
   "verificationCodes",
+  "verificationCodesDuringDoNotDisturb",
   "verificationCodeCopyMode",
   "verificationCodeMarkRead",
   "verificationCodeTrash",

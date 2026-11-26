@@ -60,6 +60,7 @@ const APP: PageSettings = {
   moveAttachmentsToTop: false,
   showTrimmedContent: false,
   verificationCodes: true,
+  verificationCodesDuringDoNotDisturb: true,
   verificationCodeCopyMode: "notificationClick",
   verificationCodeMarkRead: false,
   verificationCodeTrash: false,

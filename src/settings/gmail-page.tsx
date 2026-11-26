@@ -238,10 +238,25 @@ export const GmailPage = () => {
               }),
               t({
                 message:
-                  "Shows a notification with the code, even during quiet hours or Do Not Disturb.",
+                  "Shows a notification with the code when an email has one.",
                 comment:
-                  "Description of the Find verification codes switch in Settings; quiet hours and Do Not Disturb are the Notifications page's settings of those names",
+                  "Description of the Find verification codes switch in Settings",
               })
+            ),
+            switchRow(
+              "verificationCodesDuringDoNotDisturb",
+              t({
+                message: "Show during Do Not Disturb",
+                comment:
+                  "Label of the switch in Settings that lets a verification code's notification show while Do Not Disturb or quiet hours hold other notifications",
+              }),
+              t({
+                message:
+                  "Shows codes even when Do Not Disturb or quiet hours are on.",
+                comment:
+                  "Description of the Show during Do Not Disturb switch in Settings; Do Not Disturb and quiet hours are the Notifications page's settings of those names",
+              }),
+              true
             ),
             <SettingRow
               key="verificationCodeCopyMode"

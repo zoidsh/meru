@@ -83,15 +83,39 @@ describe(decideNotification, () => {
     ]);
   });
 
-  it("shows a verification code's through every hold at once", () => {
+  it("shows a verification code's through every hold at once while codes pass Do Not Disturb", () => {
     expect(
       decide({
         kind: "verificationCode",
         notifications: false,
+        codesDuringDoNotDisturb: true,
         doNotDisturb: { until: null },
         quietHours: [{ start: "00:00", end: "00:00" }],
       })
     ).toStrictEqual({ show: true });
+  });
+
+  it("holds a verification code's in Do Not Disturb and quiet hours while codes do not pass them, but never for notifications being off", () => {
+    const code = {
+      kind: "verificationCode",
+      codesDuringDoNotDisturb: false,
+    } as const;
+
+    expect([
+      decide({ ...code, doNotDisturb: { until: null } }),
+      decide({ ...code, quietHours: [{ start: "00:00", end: "00:00" }] }),
+      decide({ ...code, notifications: false }),
+    ]).toStrictEqual([
+      { show: false, reason: "doNotDisturb" },
+      { show: false, reason: "quietHours" },
+      { show: true },
+    ]);
+  });
+
+  it("holds new mail in Do Not Disturb whatever codes pass", () => {
+    expect(
+      decide({ codesDuringDoNotDisturb: true, doNotDisturb: { until: null } })
+    ).toStrictEqual({ show: false, reason: "doNotDisturb" });
   });
 
   it("names Do Not Disturb before quiet hours when both hold", () => {

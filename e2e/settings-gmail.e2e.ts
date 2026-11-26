@@ -35,6 +35,7 @@ const SWITCHES = [
   ["Show attachments first", "moveAttachmentsToTop"],
   ["Show trimmed content", "showTrimmedContent"],
   ["Find verification codes", "verificationCodes"],
+  ["Show during Do Not Disturb", "verificationCodesDuringDoNotDisturb"],
   ["Mark as read after copying", "verificationCodeMarkRead"],
   ["Move to Trash after copying", "verificationCodeTrash"],
 ] as const;
@@ -116,6 +117,7 @@ test("each switch shows the stored value and writes the one it is turned to", as
     moveAttachmentsToTop: false,
     showTrimmedContent: false,
     verificationCodes: true,
+    verificationCodesDuringDoNotDisturb: true,
     verificationCodeMarkRead: false,
     verificationCodeTrash: true,
   };
@@ -192,24 +194,26 @@ test("Copy code shows the stored mode and writes the one chosen", async ({
     .toBe("immediately");
 });
 
-test("with codes off the three rows under it are disabled and say why, and come back with their values", async ({
+test("with codes off the four rows under it are disabled and say why, and come back with their values", async ({
   launchApp,
   userDataDir,
 }) => {
   await writeSettings(userDataDir, {
+    verificationCodesDuringDoNotDisturb: false,
     verificationCodeCopyMode: "immediately",
     verificationCodeMarkRead: true,
   });
 
   const app = await launchApp();
   const page = await openSettings(app);
+  const duringDoNotDisturb = switchNamed(page, "Show during Do Not Disturb");
   const markRead = switchNamed(page, "Mark as read after copying");
   const trash = switchNamed(page, "Move to Trash after copying");
 
   await openGmail(page);
   await switchNamed(page, "Find verification codes").click();
 
-  for (const control of [copyMode(page), markRead, trash]) {
+  for (const control of [duringDoNotDisturb, copyMode(page), markRead, trash]) {
     // oxlint-disable-next-line no-await-in-loop -- one row after another
     await expect(control).toBeDisabled();
     // oxlint-disable-next-line no-await-in-loop -- one row after another
@@ -224,6 +228,11 @@ test("with codes off the three rows under it are disabled and say why, and come 
 
   await expect(copyMode(page)).toBeEnabled();
   await expect(copyMode(page)).toContainText("As soon as it arrives");
+  await expect(duringDoNotDisturb).toBeEnabled();
+  await expect(duringDoNotDisturb).not.toBeChecked();
+  await expect(duringDoNotDisturb).toHaveAccessibleDescription(
+    "Shows codes even when Do Not Disturb or quiet hours are on."
+  );
   await expect(markRead).toBeEnabled();
   await expect(markRead).toBeChecked();
   await expect(trash).not.toBeChecked();
@@ -232,6 +241,7 @@ test("with codes off the three rows under it are disabled and say why, and come 
   );
   expect(await readStored(userDataDir)).toMatchObject({
     verificationCodes: true,
+    verificationCodesDuringDoNotDisturb: false,
     verificationCodeCopyMode: "immediately",
     verificationCodeMarkRead: true,
   });
@@ -243,9 +253,9 @@ test("the keyboard reaches every control in the page's order", async ({
   const page = await openSettings(app);
   const labels = SWITCHES.map(([label]) => label);
   const order = [
-    ...labels.slice(0, 8).map((label) => switchNamed(page, label)),
+    ...labels.slice(0, 9).map((label) => switchNamed(page, label)),
     copyMode(page),
-    ...labels.slice(8).map((label) => switchNamed(page, label)),
+    ...labels.slice(9).map((label) => switchNamed(page, label)),
   ];
 
   await openGmail(page);

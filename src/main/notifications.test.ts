@@ -805,6 +805,59 @@ describe("verification codes", () => {
     ]);
   });
 
+  it("is held by Do Not Disturb with Show during Do Not Disturb off, neither shown nor copied as it arrives", async () => {
+    const app = setup({ doNotDisturb: { until: null } });
+
+    app.set("verificationCodesDuringDoNotDisturb", false);
+    app.set("verificationCodeCopyMode", "immediately");
+    app.set("verificationCodeTrash", true);
+    await arrive(app, codeEntry("1"));
+
+    expect([app.shown, app.copied, app.acted, app.played]).toStrictEqual([
+      [],
+      [],
+      [],
+      [],
+    ]);
+    expect(app.logs).toStrictEqual([
+      "Held a verification code notification of profile a: doNotDisturb",
+    ]);
+  });
+
+  it("is held by the profile's quiet hours with Show during Do Not Disturb off, and shows once they end", async () => {
+    const app = setup();
+
+    app.set("verificationCodesDuringDoNotDisturb", false);
+    app.set("quietHours", [{ start: "00:00", end: "00:00" }]);
+    await arrive(app, codeEntry("1"));
+
+    expect(app.shown).toStrictEqual([]);
+
+    app.set("quietHours", []);
+    await app.notifications.polled("a", feed(codeEntry("2"), codeEntry("1")));
+    await settle();
+
+    expect(content(app.shown)).toStrictEqual([
+      {
+        title: "Sender 2",
+        body: `Verification code ${CODE}`,
+        actions: ["Copy"],
+      },
+    ]);
+  });
+
+  it("still shows with Show during Do Not Disturb off while notifications are off, and sounds as a code does", async () => {
+    const app = setup();
+
+    app.set("verificationCodesDuringDoNotDisturb", false);
+    app.set("notifications", false);
+    app.set("notificationSound", "breeze");
+    await arrive(app, entry("2"), codeEntry("1"));
+
+    expect(titles(app.shown)).toStrictEqual(["Sender 1"]);
+    expect(app.played).toStrictEqual([{ sound: "breeze", volume: 1 }]);
+  });
+
   it("passes important only, which keeps none of the mail beside it", async () => {
     const app = setup({ important: () => Promise.resolve(new Set()) });
 

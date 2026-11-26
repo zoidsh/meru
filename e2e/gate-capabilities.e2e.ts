@@ -363,7 +363,7 @@ const copied = (app: ElectronApplication) =>
       | undefined) ?? []),
   ]);
 
-test("the free version finds no verification code, so its mail is notified as any other, and its four rows are Pro rows", async ({
+test("the free version finds no verification code, so its mail is notified as any other, and its five rows are Pro rows", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -406,8 +406,11 @@ test("the free version finds no verification code, so its mail is notified as an
     page.getByRole("combobox", { name: "Copy code" })
   ).toBeDisabled();
 
+  await expect(switchNamed(page, "Show during Do Not Disturb")).toBeDisabled();
+
   for (const label of [
     "Find verification codes",
+    "Show during Do Not Disturb",
     "Copy code",
     "Mark as read after copying",
     "Move to Trash after copying",

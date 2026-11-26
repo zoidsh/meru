@@ -2365,6 +2365,11 @@ msgstr "Show All"
 msgid "Show attachments first"
 msgstr "Show attachments first"
 
+#. Label of the switch in Settings that lets a verification code's notification show while Do Not Disturb or quiet hours hold other notifications
+#: src/settings/gmail-page.tsx
+msgid "Show during Do Not Disturb"
+msgstr "Show during Do Not Disturb"
+
 #. Label of the switch in Settings on Windows that shows each finished download in File Explorer; File Explorer is Windows's own name
 #: src/settings/general-page.tsx
 msgid "Show files in File Explorer when done"
@@ -2447,15 +2452,20 @@ msgstr "Show trimmed content"
 msgid "Show unread count"
 msgstr "Show unread count"
 
-#. Description of the Find verification codes switch in Settings; quiet hours and Do Not Disturb are the Notifications page's settings of those names
+#. Description of the Find verification codes switch in Settings
 #: src/settings/gmail-page.tsx
-msgid "Shows a notification with the code, even during quiet hours or Do Not Disturb."
-msgstr "Shows a notification with the code, even during quiet hours or Do Not Disturb."
+msgid "Shows a notification with the code when an email has one."
+msgstr "Shows a notification with the code when an email has one."
 
 #. Description of the Show attachments first switch in Settings
 #: src/settings/gmail-page.tsx
 msgid "Shows attachments above the message instead of below it."
 msgstr "Shows attachments above the message instead of below it."
+
+#. Description of the Show during Do Not Disturb switch in Settings; Do Not Disturb and quiet hours are the Notifications page's settings of those names
+#: src/settings/gmail-page.tsx
+msgid "Shows codes even when Do Not Disturb or quiet hours are on."
+msgstr "Shows codes even when Do Not Disturb or quiet hours are on."
 
 #. Description of the Show unread count switch in Settings on Windows and Linux
 #: src/settings/notifications-page.tsx

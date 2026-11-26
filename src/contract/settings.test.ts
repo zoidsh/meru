@@ -355,6 +355,7 @@ describe("the settings contract", () => {
       moveAttachmentsToTop: true,
       showTrimmedContent: false,
       verificationCodes: true,
+      verificationCodesDuringDoNotDisturb: true,
       verificationCodeCopyMode: "notificationClick",
       verificationCodeMarkRead: false,
       verificationCodeTrash: false,

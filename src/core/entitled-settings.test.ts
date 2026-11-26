@@ -48,10 +48,19 @@ describe(entitledSetting, () => {
   it("finds no verification code without Meru Pro, the settings under it read as stored", () => {
     expect([
       entitledSetting("verificationCodes", true, free),
+      entitledSetting("verificationCodesDuringDoNotDisturb", false, free),
       entitledSetting("verificationCodeCopyMode", "immediately", free),
       entitledSetting("verificationCodeMarkRead", true, free),
       entitledSetting("verificationCodeTrash", true, free),
-    ]).toStrictEqual([false, "immediately", true, true]);
+    ]).toStrictEqual([false, false, "immediately", true, true]);
+  });
+
+  it("writes Show during Do Not Disturb only with verification codes, as the rows beside it", () => {
+    expect([
+      settingWritable("verificationCodesDuringDoNotDisturb", free),
+      settingWritable("verificationCodesDuringDoNotDisturb", pro),
+      settingWritable("verificationCodeTrash", free),
+    ]).toStrictEqual([false, true, false]);
   });
 
   it("plays Linen without Meru Pro whatever sound was chosen, the system's included, and nothing for none", () => {

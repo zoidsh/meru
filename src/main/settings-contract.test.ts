@@ -729,6 +729,7 @@ describe("the Settings window's Gmail page", () => {
       hidePromoBanner: false,
       verificationCodeCopyMode: "immediately",
       reverseConversation: "sometimes",
+      verificationCodesDuringDoNotDisturb: "yes",
     });
 
     expect(
@@ -744,6 +745,7 @@ describe("the Settings window's Gmail page", () => {
       moveAttachmentsToTop: false,
       showTrimmedContent: false,
       verificationCodes: true,
+      verificationCodesDuringDoNotDisturb: true,
       verificationCodeCopyMode: "immediately",
       verificationCodeMarkRead: false,
       verificationCodeTrash: false,

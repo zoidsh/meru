@@ -75,8 +75,10 @@ export type NotificationDecision =
 
 export interface NotificationGates {
   kind: NotificationKind;
-  /** The switch for every notification of its kind. */
+  /** The switch for every notification of its kind; a code passes it. */
   notifications: boolean;
+  /** Whether a code passes Do Not Disturb and quiet hours too. */
+  codesDuringDoNotDisturb?: boolean;
   quietHours: readonly QuietWindow[];
   doNotDisturb: DoNotDisturb | undefined;
   now: Moment;
@@ -89,17 +91,19 @@ export interface NotificationGates {
 export const decideNotification = ({
   kind,
   notifications,
+  codesDuringDoNotDisturb = false,
   quietHours,
   doNotDisturb,
   now,
 }: NotificationGates): NotificationDecision => {
   // A code arrives while the person is signing in, and in the click-to-copy
-  // mode the notification is the only way to it, so nothing holds one.
+  // mode the notification is the only way to it, so only the holds the
+  // person lets reach codes hold one.
   if (kind === "verificationCode") {
-    return { show: true };
-  }
-
-  if (!notifications) {
+    if (codesDuringDoNotDisturb) {
+      return { show: true };
+    }
+  } else if (!notifications) {
     return { show: false, reason: "off" };
   }
 
