@@ -1111,7 +1111,7 @@ describe("the Settings window's Advanced page", () => {
   });
 });
 
-describe("the Settings window's Tabs & Apps page", () => {
+describe("the Settings window's Tabs & Google Apps page", () => {
   it("sends Open Google apps in Meru on, no app excluded, and unpinned tabs sleeping after an hour where none is stored", () => {
     const app = setup(stateOf("Work"));
 

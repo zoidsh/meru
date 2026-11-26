@@ -20,7 +20,7 @@ const setup = (
   start: State = two,
   pageSize?: Size,
   pages: Partial<Record<string, string>> = {},
-  /** The apps Tabs & Apps sends to the default browser. */
+  /** The apps Tabs & Google Apps sends to the default browser. */
   inBrowser: readonly string[] = []
 ) => {
   let state = start;
@@ -292,7 +292,7 @@ describe(createOpenApp, () => {
     ]);
   });
 
-  it("sends an app Tabs & Apps sends out to the default browser, closing, as New tab or Open in split", async () => {
+  it("sends an app Tabs & Google Apps sends out to the default browser, closing, as New tab or Open in split", async () => {
     const drive = APPS.find(({ id }) => id === "drive");
     const tab = setup(
       { kind: "open-app", profileId: "a" },

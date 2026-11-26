@@ -31,7 +31,7 @@ export interface WindowOpenContext {
   /** The app of the tab whose page, or whose page's window, asked. */
   openerApp: string;
   /**
-   * Tabs & Apps' settings, which send a link to another app to the system
+   * Tabs & Google Apps' settings, which send a link to another app to the system
    * browser rather than a tab.
    */
   opening: AppOpening;

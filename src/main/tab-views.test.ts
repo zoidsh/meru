@@ -85,7 +85,7 @@ const setup = async ({
   state?: State;
   /** The apps a link may open a tab of, every one when absent. */
   tabApps?: () => readonly App[];
-  /** Tabs & Apps' settings, at their defaults when absent. */
+  /** Tabs & Google Apps' settings, at their defaults when absent. */
   appOpening?: () => AppOpening;
 } = {}) => {
   let size: Size = { width: 1280, height: 800 };
@@ -853,7 +853,7 @@ describe(createTabViews, () => {
     ]).toStrictEqual([[link], ["gmail", "c1"]]);
   });
 
-  it("reads Tabs & Apps at each link, so a change applies to the next one and closes no tab it opened", async () => {
+  it("reads Tabs & Google Apps at each link, so a change applies to the next one and closes no tab it opened", async () => {
     let opening = { openAppsInMeru: false, appsInDefaultBrowser: [] };
     const window = await setup({ appOpening: () => opening });
     const gmail = window.viewOf("persist:a");

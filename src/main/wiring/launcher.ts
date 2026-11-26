@@ -28,7 +28,7 @@ export const wireLauncher = ({
 }: {
   platform: Platform;
   apps: readonly App[];
-  /** Tabs & Apps' settings as they are now, which links follow too. */
+  /** Tabs & Google Apps' settings as they are now, which links follow too. */
   appOpening: () => AppOpening;
   /** The opener a page's links leave Meru through. */
   systemBrowser: SystemBrowser;

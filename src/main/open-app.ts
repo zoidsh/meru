@@ -15,7 +15,7 @@ import type { Overlays } from "./overlay.ts";
 export interface OpenAppDeps {
   /** The registry, or the suite's stand-ins for it. */
   apps: readonly App[];
-  /** Whether a new tab of the app opens in Meru now, as Tabs & Apps says. */
+  /** Whether a new tab of the app opens in Meru now, as Tabs & Google Apps says. */
   opensInMeru: (app: App) => boolean;
   /** Where a pick that does not open in Meru goes, asking first where it should. */
   systemBrowser: SystemBrowser;
@@ -58,7 +58,7 @@ export interface OpenAppDeps {
  * tab. As Open in split, from Split right or Split down, the pick goes in a
  * new pane beside or below the focused one, a single-instance app's tab as
  * it is, and a bookmark always as a new tab. A pick that would open a new
- * tab of an app Tabs & Apps sends to the default browser goes there instead.
+ * tab of an app Tabs & Google Apps sends to the default browser goes there instead.
  */
 export const createOpenApp = ({
   apps,

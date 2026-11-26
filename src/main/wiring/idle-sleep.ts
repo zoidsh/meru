@@ -7,7 +7,7 @@ import type { SettingsStore } from "../settings.ts";
 import type { createTabViews } from "../tab-views.ts";
 
 /**
- * Idle tabs put to sleep, following the tabs, their pages, Tabs & Apps'
+ * Idle tabs put to sleep, following the tabs, their pages, Tabs & Google Apps'
  * two settings and the computer waking, and stopped as the app quits.
  */
 export const wireIdleSleep = ({

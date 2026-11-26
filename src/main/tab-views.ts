@@ -61,7 +61,7 @@ export interface TabViewsDeps {
    */
   tabApps: () => readonly App[];
   /**
-   * Tabs & Apps' settings as they are now, which send a link to another
+   * Tabs & Google Apps' settings as they are now, which send a link to another
    * app to the default browser.
    */
   appOpening: () => AppOpening;

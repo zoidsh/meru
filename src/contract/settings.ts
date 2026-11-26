@@ -86,7 +86,7 @@ export const PRIVACY_PAGE_KEYS = [
 ] as const;
 
 /**
- * The Tabs & Apps page's settings, in its order; the app holds them, never
+ * The Tabs & Google Apps page's settings, in its order; the app holds them, never
  * a profile.
  */
 export const TABS_APPS_PAGE_KEYS = [

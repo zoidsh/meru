@@ -305,7 +305,7 @@ describe(allowsChildNavigation, () => {
   });
 });
 
-/** The context of a page of `openerApp`, with Tabs & Apps as `opening` says. */
+/** The context of a page of `openerApp`, with Tabs & Google Apps as `opening` says. */
 const contextOf = (
   opening: AppOpening,
   openerApp = "gmail",
@@ -332,7 +332,7 @@ const routed = (
   return answer.kind === "tab" ? `tab:${answer.app.id}` : answer.kind;
 };
 
-describe("Tabs & Apps' settings", () => {
+describe("Tabs & Google Apps' settings", () => {
   const ON = { openAppsInMeru: true, appsInDefaultBrowser: [] };
   const CALENDAR = "https://calendar.google.com/calendar/r";
   const DRIVE = "https://drive.google.com/drive/my-drive";

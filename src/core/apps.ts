@@ -76,7 +76,7 @@ export const entitledApps = (
 ): readonly App[] =>
   workspaceApps ? apps : apps.filter((app) => app.id === "gmail");
 
-/** Tabs & Apps' two settings, as the run reads them. */
+/** Tabs & Google Apps' two settings, as the run reads them. */
 export interface AppOpening {
   openAppsInMeru: boolean;
   appsInDefaultBrowser: readonly string[];

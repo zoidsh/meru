@@ -28,7 +28,7 @@ export const createWindowOpenRouting = ({
 }: {
   /** The apps a link may open a tab of, as they are now. */
   apps: () => readonly App[];
-  /** Tabs & Apps' settings as they are now. */
+  /** Tabs & Google Apps' settings as they are now. */
   appOpening: () => AppOpening;
   signInOrigins: readonly string[];
   systemBrowser: SystemBrowser;
