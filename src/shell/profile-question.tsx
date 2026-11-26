@@ -34,7 +34,7 @@ const moveFocus = (event: KeyboardEvent<HTMLElement>) => {
 
 /**
  * Asks which profile writes the email a link clicked in another app asked
- * for: each profile offered, in the titlebar's order, with its colour and
+ * for: each profile offered, in the titlebar's order, with its color and
  * name. Cancel, Escape and a press beside the card open no email.
  */
 export const ProfileQuestion = ({
