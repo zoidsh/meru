@@ -560,47 +560,64 @@ describe("tabs, splits and bookmarks without Meru Pro", () => {
   const calendar = APPS.find((app) => app.id === "calendar");
   const gmail = APPS.find((app) => app.id === "gmail");
 
-  it("opens, closes, moves, pins, splits and bookmarks nothing, and writes nothing", async () => {
-    const { profiles, saved } = setupGated(stored, refused);
+  const page = {
+    url: "https://docs.google.com/y",
+    title: "Y",
+    app: "docs",
+  } as const;
+  const calendarKey = { profileId: "a", tabId: "c" };
 
+  /** Each change the gate refuses, which the same run with the grants makes. */
+  const tryEach = (profiles: ReturnType<typeof setupGated>["profiles"]) => {
     if (!calendar || !gmail) {
       throw new Error("The registry lacks an app");
     }
 
-    const answers = await Promise.all([
-      profiles.openTab("a", calendar, calendar.home, "new"),
-      profiles.openTab("a", gmail, gmail.home, "gmail", undefined, "row"),
+    return Promise.all([
+      profiles
+        .openTab("a", calendar, calendar.home, "new")
+        .then((opened) => opened !== undefined),
+      profiles
+        .openTab("a", gmail, gmail.home, "gmail", undefined, "row")
+        .then((opened) => opened !== undefined),
       profiles.setPinned(gmailKey, false),
-      profiles.closeTab(gmailKey),
-      profiles.moveToOwnWindow(gmailKey),
-      profiles.splitTab(gmailKey, "row"),
-      profiles.dropInView(
-        gmailKey,
-        { width: 800, height: 600 },
-        { x: 790, y: 300 }
-      ),
-      profiles.toggleBookmark("a", {
-        url: "https://docs.google.com/y",
-        title: "Y",
-        app: "docs",
-      }),
-      profiles.removeBookmark("a", "b"),
+      profiles.toggleBookmark("a", page).then((now) => now !== undefined),
     ]);
+  };
 
-    expect([answers, saved]).toStrictEqual([
-      [
-        undefined,
-        undefined,
-        false,
-        false,
-        false,
-        false,
-        false,
-        undefined,
-        false,
-      ],
+  it("opens, unpins, splits and bookmarks nothing on the free version, and writes nothing, where a licensed run makes each change", async () => {
+    const free = setupGated(stored, refused);
+    const licensed = setupGated(stored, []);
+
+    expect([
+      await tryEach(free.profiles),
+      free.saved,
+      await tryEach(licensed.profiles),
+    ]).toStrictEqual([
+      [false, false, false, false],
       [],
+      [true, true, true, true],
     ]);
+  });
+
+  const splitting = async (refusing: readonly Capability[]) => {
+    const { profiles, saved } = setupGated(stored, refusing);
+
+    return [
+      profiles.get().profiles[0]?.tabs.length,
+      await profiles.splitTab(calendarKey, "row"),
+      await profiles.splitOntoTab(calendarKey, "gmail"),
+      saved.length,
+    ];
+  };
+
+  it("splits no tab without splitView, by the menu or a drop onto another, while every tab shows", async () => {
+    expect([await splitting(["splitView"]), await splitting([])]).toStrictEqual(
+      [
+        [4, false, false, 0],
+        [4, true, true, 2],
+      ]
+    );
   });
 
   it("still opens a link in the Gmail tab, writing every hidden tab, the split and the bookmark back as stored", async () => {
