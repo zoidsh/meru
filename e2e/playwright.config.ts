@@ -39,11 +39,9 @@ const NEEDS_THE_FOCUS = [
   // Its shots picture overlays, which another app taking the focus would
   // close unseen, since a shot asserts nothing.
   "**/screens.e2e.ts",
-  // It opens New tab and toasts, which the window's blur closes, and checks
-  // that a page keeps the real focus.
+  // It opens New tab, which the window's blur closes, and checks that a page
+  // keeps the real focus.
   "**/trial.e2e.ts",
-  // Its free version's Add another account shows a toast the blur closes.
-  "**/gate-profiles.e2e.ts",
   // Its New tab test opens the launcher twice, which the blur closes.
   "**/settings-tabs-apps.e2e.ts",
   // It opens Downloads over the update card, which the blur closes.

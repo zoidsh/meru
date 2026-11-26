@@ -98,9 +98,9 @@ const LAPSED_TOASTS: Partial<Record<EntitlementState["status"], ToastMessage>> =
 
 /**
  * Tells what lapses of Meru Pro, only while the main window holds the keys,
- * and once it comes to hold them: a toast lasts four seconds and the
- * window's blur closes it, so one told to a window in the tray, in the
- * background or behind another app would be lost for the run.
+ * and once it comes to hold them: a toast lasts four seconds, so one told to
+ * a window in the tray, in the background or behind another app would run
+ * out unseen and be lost for the run.
  *
  * A license or trial still not confirmed once the launch's refresh has
  * answered or failed gets the card, opened once, before anything else is

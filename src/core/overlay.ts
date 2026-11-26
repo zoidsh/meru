@@ -89,11 +89,14 @@ export const staysOpenOnPressOutside = (
 
 /**
  * Whether an overlay stays open as the window loses focus: those a press
- * outside leaves, and the screen picker, whose person may look at the
- * windows to share or open the system's settings.
+ * outside leaves, the screen picker, whose person may look at the windows to
+ * share or open the system's settings, and a toast, which takes no focus and
+ * runs out its time whatever has the keys.
  */
 export const staysOpenOnBlur = (overlay: Pick<Overlay, "kind"> | undefined) =>
-  staysOpenOnPressOutside(overlay) || overlay?.kind === "screen-picker";
+  staysOpenOnPressOutside(overlay) ||
+  overlay?.kind === "screen-picker" ||
+  overlay?.kind === "toast";
 
 /**
  * Whether an overlay is a card over the page, which takes the keys a page's

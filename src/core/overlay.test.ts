@@ -243,7 +243,7 @@ describe(staysOpenOnPressOutside, () => {
 });
 
 describe(staysOpenOnBlur, () => {
-  it("is those and the screen picker, which the window losing focus leaves", () => {
+  it("is those, the screen picker and a toast, which the window losing focus leaves", () => {
     expect(EVERY_KIND.map((kind) => staysOpenOnBlur({ kind }))).toStrictEqual([
       true,
       true,
@@ -252,7 +252,7 @@ describe(staysOpenOnBlur, () => {
       false,
       false,
       false,
-      false,
+      true,
       false,
     ]);
     expect(staysOpenOnBlur(undefined)).toBeFalsy();

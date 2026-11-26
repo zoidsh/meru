@@ -535,6 +535,50 @@ test("a split that would leave a pane under the minimum is refused with a toast,
   expect(await savedSplit(userDataDir)).toBeUndefined();
 });
 
+test("a toast stays as the window loses focus and closes by itself, while the page beside it takes the pointer and the keys", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await seed(userDataDir, standIn);
+
+  const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const calendar = await findPage(app, standIn.calendarUrl);
+  const toast = overlay
+    .getByRole("region", { name: "Notifications" })
+    .getByText("Not enough room to split", { exact: true });
+
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.setContentSize(720, 480);
+  });
+  await expect
+    .poll(() => readViews(app).then(({ area }) => area.height))
+    .toBe(480);
+  await calendar.evaluate(() => {
+    const field = document.createElement("input");
+
+    field.setAttribute("aria-label", "Typed here");
+    field.style.cssText = "position:fixed;left:8px;top:8px;width:120px";
+    document.body.append(field);
+  });
+
+  await clickMenuItem(app, "tab.splitDown");
+  await expect(toast).toBeVisible();
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0]?.emit("blur");
+  });
+  // Past the moment a blur closed it, well short of its four seconds.
+  await calendar.waitForTimeout(1000);
+  await expect(toast).toBeVisible();
+
+  await calendar.getByLabel("Typed here").click();
+  await calendar.keyboard.type("meru");
+  await expect(calendar.getByLabel("Typed here")).toHaveValue("meru");
+  await expect(toast).toBeVisible();
+  await expect(toast).toHaveCount(0, { timeout: 8000 });
+});
+
 const PINNED_DOCS = "Docs pinned";
 const PINNED_SHEETS = "Sheets pinned";
 // Drive's, as a pinned tab a showing split holds: a Docs tab would load
