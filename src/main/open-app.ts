@@ -8,12 +8,17 @@ import { knownTabs, selectedProfile } from "#core/state.ts";
 import type { Profile, State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { Size } from "#core/window-bounds.ts";
+import type { SystemBrowser } from "#platform/system-browser.ts";
 
 import type { Overlays } from "./overlay.ts";
 
 export interface OpenAppDeps {
   /** The registry, or the suite's stand-ins for it. */
   apps: readonly App[];
+  /** Whether a new tab of the app opens in Meru now, as Tabs & Apps says. */
+  opensInMeru: (app: App) => boolean;
+  /** Where a pick that does not open in Meru goes, asking first where it should. */
+  systemBrowser: SystemBrowser;
   state: () => State;
   overlays: Pick<Overlays, "open" | "close" | "current">;
   /**
@@ -52,10 +57,13 @@ export interface OpenAppDeps {
  * page, waking it or bringing its own window forward, or opens it as a new
  * tab. As Open in split, from Split right or Split down, the pick goes in a
  * new pane beside or below the focused one, a single-instance app's tab as
- * it is, and a bookmark always as a new tab.
+ * it is, and a bookmark always as a new tab. A pick that would open a new
+ * tab of an app Tabs & Apps sends to the default browser goes there instead.
  */
 export const createOpenApp = ({
   apps,
+  opensInMeru,
+  systemBrowser,
   state,
   overlays,
   openTab,
@@ -71,6 +79,27 @@ export const createOpenApp = ({
     const open = overlays.current();
 
     return open?.kind === "open-app" ? open : undefined;
+  };
+
+  const openInSystemBrowser = async (url: string) => {
+    try {
+      await systemBrowser.open(url);
+    } catch (error) {
+      log(
+        `The system browser did not open a pick: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  };
+
+  /** Sends `url` to the default browser if a new tab of `app` may not open in Meru. */
+  const leaves = (app: App, url: string) => {
+    if (opensInMeru(app)) {
+      return false;
+    }
+
+    void openInSystemBrowser(url);
+
+    return true;
   };
 
   const fits = (profile: Profile, direction: PaneDirection) => {
@@ -95,13 +124,13 @@ export const createOpenApp = ({
   ) => {
     overlays.close();
 
-    if (!fits(profile, direction)) {
-      return;
-    }
-
     const existing = app.singleInstance
       ? knownTabs(profile).find((tab) => tab.app === app.id)
       : undefined;
+
+    if ((!existing && leaves(app, app.home)) || !fits(profile, direction)) {
+      return;
+    }
 
     await (existing
       ? splitTab({ profileId: profile.id, tabId: existing.id }, direction)
@@ -171,7 +200,10 @@ export const createOpenApp = ({
       }
 
       overlays.close();
-      await openTab(open.profileId, app, app.home);
+
+      if (!leaves(app, app.home)) {
+        await openTab(open.profileId, app, app.home);
+      }
     },
     /** Opens a bookmark the open launcher lists, and closes it. */
     chooseBookmark: async (id: string) => {
@@ -192,6 +224,13 @@ export const createOpenApp = ({
       }
 
       overlays.close();
+
+      if (
+        (open.split !== undefined || choice.kind !== "select") &&
+        leaves(app, choice.bookmark.url)
+      ) {
+        return;
+      }
 
       if (open.split) {
         if (fits(profile, open.split)) {

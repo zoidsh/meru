@@ -76,6 +76,34 @@ export const entitledApps = (
 ): readonly App[] =>
   workspaceApps ? apps : apps.filter((app) => app.id === "gmail");
 
+/** Tabs & Apps' two settings, as the run reads them. */
+export interface AppOpening {
+  openAppsInMeru: boolean;
+  appsInDefaultBrowser: readonly string[];
+}
+
+/**
+ * Whether a new tab of the app, from a link or New tab, opens in Meru rather
+ * than the default browser. Gmail always does, as in v3.
+ */
+export const opensInMeru = (
+  app: Pick<App, "id">,
+  { openAppsInMeru, appsInDefaultBrowser }: AppOpening
+) =>
+  app.id === "gmail" ||
+  (openAppsInMeru && !appsInDefaultBrowser.includes(app.id));
+
+/**
+ * The apps a link from a page of `openerApp` may open a tab of: those that
+ * open in Meru, and the opener's own, whose pages and pop-outs stay in it.
+ */
+export const linkApps = (
+  apps: readonly App[],
+  opening: AppOpening,
+  openerApp: string
+): readonly App[] =>
+  apps.filter((app) => app.id === openerApp || opensInMeru(app, opening));
+
 /** Docs, Sheets and Slides share `docs.google.com`, told apart by path. */
 export const APPS: readonly App[] = [
   {

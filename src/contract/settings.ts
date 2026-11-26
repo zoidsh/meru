@@ -1,5 +1,6 @@
 import { z } from "zod/mini";
 
+import { APP_IDS } from "#core/apps.ts";
 import { CAPABILITIES } from "#core/entitlement.ts";
 import { MAIL_STATUSES } from "#core/feed.ts";
 import { PROFILE_COLOR_NAMES } from "#core/profile-color.ts";
@@ -82,6 +83,15 @@ export const PRIVACY_PAGE_KEYS = [
 ] as const;
 
 /**
+ * The Tabs & Apps page's settings, in its order; the app holds them, never
+ * a profile.
+ */
+export const TABS_APPS_PAGE_KEYS = [
+  "openAppsInMeru",
+  "appsInDefaultBrowser",
+] as const;
+
+/**
  * The settings a profile may hold a value of its own for, as the
  * Notifications page shows them. `unifiedInbox` is a profile's own switch on
  * its page instead, so it never counts as one of this page's overrides.
@@ -96,6 +106,7 @@ export const PAGE_OVERRIDABLE_KEYS = OVERRIDABLE_SETTING_KEYS.filter(
 const APP_ONLY_PAGE_KEYS = [
   "notificationSoundVolume",
   ...GMAIL_PAGE_KEYS,
+  ...TABS_APPS_PAGE_KEYS,
   ...GENERAL_PAGE_KEYS,
   ...APPEARANCE_PAGE_KEYS,
   ...MENU_BAR_PAGE_KEYS,
@@ -330,6 +341,14 @@ export const SETTINGS_CALLS = {
    */
   setSpellcheckLanguage: {
     request: z.object({ code: z.string(), on: z.boolean() }),
+    response: z.undefined(),
+  },
+  /**
+   * Opens the app in the default browser too, or no longer, applied to the
+   * list as stored when main gets to it; refused for Gmail.
+   */
+  setAppInDefaultBrowser: {
+    request: z.object({ app: z.enum(APP_IDS), on: z.boolean() }),
     response: z.undefined(),
   },
   /**

@@ -377,6 +377,8 @@ describe("the settings contract", () => {
       blockAds: true,
       blockTrackers: false,
       confirmLinks: true,
+      openAppsInMeru: false,
+      appsInDefaultBrowser: ["drive"],
     };
 
     expect([

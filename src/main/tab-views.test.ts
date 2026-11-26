@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { APPS, entitledApps } from "#core/apps.ts";
+import { APPS, entitledApps, linkApps } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import type { FoundInPage } from "#core/find.ts";
 import type { SidebarState } from "#core/sidebar.ts";
@@ -81,7 +81,7 @@ const setup = async ({
 }: {
   state?: State;
   /** The apps a link may open a tab of, every one when absent. */
-  tabApps?: () => readonly App[];
+  tabApps?: (openerApp: string) => readonly App[];
 } = {}) => {
   let size: Size = { width: 1280, height: 800 };
   let sidebar: SidebarState = "wide";
@@ -841,6 +841,30 @@ describe(createTabViews, () => {
       window.opened,
       tabs && knownTabs(tabs).map((tab) => tab.id),
     ]).toStrictEqual([[link], ["gmail", "c1"]]);
+  });
+
+  it("asks for the apps a link may open by the opener's app at each link, so a change to Tabs & Apps applies to the next one, closing no tab", async () => {
+    let opening = { openAppsInMeru: false, appsInDefaultBrowser: [] };
+    const window = await setup({
+      tabApps: (openerApp) => linkApps(APPS, opening, openerApp),
+    });
+    const gmail = window.viewOf("persist:a");
+    const link = "https://drive.google.com/file/d/1";
+
+    gmail?.options.onWindowOpen(link);
+    await vi.advanceTimersByTimeAsync(0);
+    opening = { openAppsInMeru: true, appsInDefaultBrowser: [] };
+    gmail?.options.onWindowOpen(link);
+    await vi.advanceTimersByTimeAsync(0);
+    opening = { openAppsInMeru: false, appsInDefaultBrowser: [] };
+    await vi.advanceTimersByTimeAsync(0);
+
+    const [tabs] = window.profiles.get().profiles;
+
+    expect([
+      window.opened,
+      tabs && knownTabs(tabs).map((tab) => tab.id),
+    ]).toStrictEqual([[link], ["gmail", "c1", "new-1"]]);
   });
 
   it("opens a claimed link as a tab in the same session, selected, loading the link", async () => {

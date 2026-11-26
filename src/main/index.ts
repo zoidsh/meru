@@ -3,7 +3,7 @@ import path from "node:path";
 import { pick } from "es-toolkit";
 
 import { SHELL_ENTITLEMENT_CALL_NAMES } from "#contract/entitlement-channels.ts";
-import { entitledApps } from "#core/apps.ts";
+import { entitledApps, linkApps } from "#core/apps.ts";
 import { launchWindow } from "#core/launch-window.ts";
 import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
@@ -433,13 +433,23 @@ const start = async () => {
     // oxlint-disable-next-line no-use-before-define -- no profile is added before the inbox exists
     closeInbox: () => inbox.setOpen(false),
   });
+  // Read at each link and each pick, so a change applies to the next one.
+  const appOpening = () => ({
+    openAppsInMeru: settings.get("openAppsInMeru"),
+    appsInDefaultBrowser: settings.get("appsInDefaultBrowser"),
+  });
   const views = createTabViews({
     frame,
     platform,
     window: shell.window,
     ownWindows,
     apps,
-    tabApps: () => entitledApps(apps, entitlement.can("workspaceApps")),
+    tabApps: (openerApp) =>
+      linkApps(
+        entitledApps(apps, entitlement.can("workspaceApps")),
+        appOpening(),
+        openerApp
+      ),
     signInOrigins,
     background,
     systemBrowser: linkOpener,
@@ -529,6 +539,8 @@ const start = async () => {
   const { livePageUrl, openApp, bookmarks } = wireLauncher({
     platform,
     apps,
+    appOpening,
+    systemBrowser: linkOpener,
     shell,
     frame,
     profiles,

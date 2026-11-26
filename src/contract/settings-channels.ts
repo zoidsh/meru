@@ -31,6 +31,7 @@ export const SETTINGS_CALL_NAMES = [
   "setOpenAtLogin",
   "chooseDownloadsFolder",
   "setSpellcheckLanguage",
+  "setAppInDefaultBrowser",
   "removeTrustedSite",
   ...ENTITLEMENT_CALL_NAMES,
 ] as const;

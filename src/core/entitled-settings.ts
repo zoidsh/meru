@@ -47,6 +47,9 @@ export const GATED_SETTINGS: {
   // Links open without asking; the trusted sites stay as stored, unwritten.
   confirmLinks: { capability: "linkConfirmation", free: () => false },
   trustedSites: { capability: "linkConfirmation" },
+  // No Google app but Gmail opens in Meru without the capability anyway.
+  openAppsInMeru: { capability: "workspaceApps", free: () => false },
+  appsInDefaultBrowser: { capability: "workspaceApps", free: () => [] },
   // The footer's hide was never Pro, so it alone of Gmail's page applies.
   hidePromoBanner: { capability: "gmailPageSettings", free: () => false },
   hideUpgradeButton: { capability: "gmailPageSettings", free: () => false },

@@ -415,6 +415,19 @@ export const settingsHandlers = ({
     chooseDownloadsFolder: () => general.chooseDownloadsFolder(),
     setSpellcheckLanguage: ({ code, on }) =>
       general.setSpellcheckLanguage(code, on),
+    // Applied to the list as stored, so two quick toggles both hold and an
+    // id this build does not know stays.
+    setAppInDefaultBrowser: async ({ app, on }) => {
+      if (app === "gmail") {
+        throw new Error("Gmail always opens in Meru");
+      }
+
+      await settings.update("appsInDefaultBrowser", (apps) => {
+        const others = apps.filter((each) => each !== app);
+
+        return on ? [...others, app] : others;
+      });
+    },
     removeTrustedSite: ({ site }) => trustedSites.remove(site),
     ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };

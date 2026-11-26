@@ -19,13 +19,23 @@ const setup = (
   initial?: Overlay,
   start: State = two,
   pageSize?: Size,
-  pages: Partial<Record<string, string>> = {}
+  pages: Partial<Record<string, string>> = {},
+  /** The apps Tabs & Apps sends to the default browser. */
+  inBrowser: readonly string[] = []
 ) => {
   let state = start;
   let open = initial;
   const events: unknown[] = [];
   const openApp = createOpenApp({
     apps: APPS,
+    opensInMeru: (app) => !inBrowser.includes(app.id),
+    systemBrowser: {
+      open: (url) => {
+        events.push(["browser", url]);
+
+        return Promise.resolve();
+      },
+    },
     state: () => state,
     overlays: {
       open: (next) => {
@@ -105,6 +115,18 @@ const withBookmarks: State = {
     },
   ],
   selectedProfileId: "a",
+};
+
+/** What choosing the bookmark does with Calendar and Sheets sent to the default browser. */
+const pick = async (overlay: Overlay, id: string) => {
+  const { openApp, events } = setup(overlay, withBookmarks, undefined, {}, [
+    "calendar",
+    "sheets",
+  ]);
+
+  await openApp.chooseBookmark(id);
+
+  return events;
 };
 
 describe(createOpenApp, () => {
@@ -267,6 +289,44 @@ describe(createOpenApp, () => {
     expect([roomy.events, shrunk.events]).toStrictEqual([
       [["close"], ["tab", "a", "calendar", WEEK, "row"]],
       [["close"], ["open", { kind: "toast", message: "no-room" }]],
+    ]);
+  });
+
+  it("sends an app Tabs & Apps sends out to the default browser, closing, as New tab or Open in split", async () => {
+    const drive = APPS.find(({ id }) => id === "drive");
+    const tab = setup(
+      { kind: "open-app", profileId: "a" },
+      two,
+      undefined,
+      {},
+      ["drive"]
+    );
+    const split = setup(
+      { kind: "open-app", profileId: "b", split: "row" },
+      two,
+      undefined,
+      {},
+      ["drive"]
+    );
+
+    await tab.openApp.choose("drive");
+    await split.openApp.choose("drive");
+
+    expect([tab.events, split.events]).toStrictEqual([
+      [["close"], ["browser", drive?.home]],
+      [["close"], ["browser", drive?.home]],
+    ]);
+  });
+
+  it("sends a bookmark of such an app out where it would open a new tab, and still selects its tab where one is at its page", async () => {
+    expect([
+      await pick({ kind: "open-app", profileId: "a" }, "s"),
+      await pick({ kind: "open-app", profileId: "a" }, "w"),
+      await pick({ kind: "open-app", profileId: "a", split: "row" }, "w"),
+    ]).toStrictEqual([
+      [["close"], ["browser", SHEET]],
+      [["close"], ["select", "c1"]],
+      [["close"], ["browser", WEEK]],
     ]);
   });
 

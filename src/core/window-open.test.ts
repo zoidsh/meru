@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { APPS, standInApps } from "./apps.ts";
+import {
+  APPS,
+  entitledApps,
+  linkApps,
+  opensInMeru,
+  standInApps,
+} from "./apps.ts";
+import type { AppOpening } from "./apps.ts";
+import { entitledSetting } from "./entitled-settings.ts";
 import {
   SIGN_IN_ORIGINS,
   allowsChildNavigation,
@@ -299,5 +307,126 @@ describe(allowsChildNavigation, () => {
     ]) {
       expect(allowsChildNavigation(url, fromGmail)).toBeFalsy();
     }
+  });
+});
+
+/** Where a link goes from a page of `openerApp`, the apps narrowed by `opening`. */
+const routed = (
+  url: string,
+  opening: AppOpening,
+  openerApp = "gmail",
+  workspaceApps = true
+) =>
+  routeWindowOpen(url, {
+    signInOrigins: SIGN_IN_ORIGINS,
+    apps: linkApps(entitledApps(APPS, workspaceApps), opening, openerApp),
+    openerApp,
+  }).kind;
+
+describe("Tabs & Apps' settings", () => {
+  const ON = { openAppsInMeru: true, appsInDefaultBrowser: [] };
+  const CALENDAR = "https://calendar.google.com/calendar/r";
+  const DRIVE = "https://drive.google.com/drive/my-drive";
+  const POPOUT = `${GMAIL}/popout?ver=1`;
+
+  it("opens every app's links as tabs at their defaults", () => {
+    expect([routed(CALENDAR, ON), routed(DRIVE, ON)]).toStrictEqual([
+      "tab",
+      "tab",
+    ]);
+  });
+
+  it("sends a link to any other app out with the switch off, whatever is excluded", () => {
+    for (const appsInDefaultBrowser of [[], ["calendar"]]) {
+      const off = { openAppsInMeru: false, appsInDefaultBrowser };
+
+      expect([routed(CALENDAR, off), routed(DRIVE, off)]).toStrictEqual([
+        "system-browser",
+        "system-browser",
+      ]);
+    }
+  });
+
+  it("sends an excluded app's links out and opens the rest as tabs", () => {
+    const drive = { openAppsInMeru: true, appsInDefaultBrowser: ["drive"] };
+
+    expect([routed(CALENDAR, drive), routed(DRIVE, drive)]).toStrictEqual([
+      "tab",
+      "system-browser",
+    ]);
+  });
+
+  it("ignores an app id it does not know", () => {
+    const unknown = {
+      openAppsInMeru: true,
+      appsInDefaultBrowser: ["keep", "notebooklm"],
+    };
+
+    expect([routed(CALENDAR, unknown), routed(DRIVE, unknown)]).toStrictEqual([
+      "tab",
+      "tab",
+    ]);
+  });
+
+  it("keeps the opener's own app and Gmail in Meru, its pop-outs included", () => {
+    const off = { openAppsInMeru: false, appsInDefaultBrowser: ["drive"] };
+
+    expect([
+      routed(DRIVE, off, "drive"),
+      routed(GMAIL, off, "calendar"),
+      routed(POPOUT, off),
+    ]).toStrictEqual(["tab", "tab", "child-window"]);
+    expect(
+      allowsChildNavigation(DRIVE, {
+        signInOrigins: SIGN_IN_ORIGINS,
+        apps: linkApps(APPS, off, "drive"),
+        openerApp: "drive",
+      })
+    ).toBeTruthy();
+  });
+
+  it("opens only Gmail in Meru on the free version, whatever is stored", () => {
+    for (const stored of [true, false]) {
+      const opening = {
+        openAppsInMeru: entitledSetting("openAppsInMeru", stored, () => false),
+        appsInDefaultBrowser: entitledSetting(
+          "appsInDefaultBrowser",
+          ["calendar"],
+          () => false
+        ),
+      };
+
+      expect([
+        routed(CALENDAR, opening, "gmail", false),
+        routed(DRIVE, opening, "gmail", false),
+        routed(POPOUT, opening, "gmail", false),
+        routed(GMAIL, opening, "calendar", false),
+      ]).toStrictEqual([
+        "system-browser",
+        "system-browser",
+        "child-window",
+        "tab",
+      ]);
+    }
+  });
+});
+
+describe(opensInMeru, () => {
+  it("opens Gmail in Meru always, and another app only with the switch on and the app not excluded", () => {
+    const gmail = { id: "gmail" } as const;
+    const drive = { id: "drive" } as const;
+
+    expect([
+      opensInMeru(gmail, {
+        openAppsInMeru: false,
+        appsInDefaultBrowser: ["gmail"],
+      }),
+      opensInMeru(drive, { openAppsInMeru: true, appsInDefaultBrowser: [] }),
+      opensInMeru(drive, {
+        openAppsInMeru: true,
+        appsInDefaultBrowser: ["drive"],
+      }),
+      opensInMeru(drive, { openAppsInMeru: false, appsInDefaultBrowser: [] }),
+    ]).toStrictEqual([true, true, false, false]);
   });
 });

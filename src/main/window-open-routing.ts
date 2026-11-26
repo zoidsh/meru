@@ -25,8 +25,8 @@ export const createWindowOpenRouting = ({
   addProfile,
   log,
 }: {
-  /** The apps a link may open a tab of, as they are now. */
-  apps: () => readonly App[];
+  /** The apps a link from a page of `openerApp` may open a tab of, as they are now. */
+  apps: (openerApp: string) => readonly App[];
   signInOrigins: readonly string[];
   systemBrowser: SystemBrowser;
   /** The app of the tab whose page asks, or "" once it is gone. */
@@ -91,11 +91,11 @@ export const createWindowOpenRouting = ({
     }
   };
 
-  const opening = (tabKeyed: TabKey) => ({
-    signInOrigins,
-    apps: apps(),
-    openerApp: openerApp(tabKeyed),
-  });
+  const opening = (tabKeyed: TabKey) => {
+    const opener = openerApp(tabKeyed);
+
+    return { signInOrigins, apps: apps(opener), openerApp: opener };
+  };
 
   return {
     onWindowOpen: (

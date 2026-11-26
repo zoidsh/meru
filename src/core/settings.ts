@@ -318,6 +318,28 @@ export const SETTINGS = {
     default: [],
   }),
   /**
+   * Whether a link, or New tab, opens a Google app other than Gmail in Meru
+   * rather than the default browser. Tabs already open stay.
+   */
+  openAppsInMeru: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /**
+   * The apps, by id, that a link or New tab opens in the default browser
+   * while `openAppsInMeru` is on. Read entry by entry, so one that is not a
+   * string costs only itself; an id this build does not know is kept.
+   */
+  appsInDefaultBrowser: setting<string[]>({
+    schema: z.pipe(
+      z.array(z.unknown()),
+      z.transform((entries) =>
+        entries.filter((entry): entry is string => typeof entry === "string")
+      )
+    ),
+    default: [],
+  }),
+  /**
    * Meru's own language, as a catalog's tag, or `system` for the one the
    * system prefers. A tag this build has no catalog for reads as `system`.
    */

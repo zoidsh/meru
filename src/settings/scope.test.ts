@@ -82,6 +82,8 @@ const APP: PageSettings = {
   blockAds: true,
   blockTrackers: true,
   confirmLinks: true,
+  openAppsInMeru: true,
+  appsInDefaultBrowser: [],
 };
 
 describe(isScoped, () => {

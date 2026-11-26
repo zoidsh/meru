@@ -7,6 +7,7 @@ import {
   SETTINGS_CALLS,
   MENU_BAR_PAGE_KEYS,
   PRIVACY_PAGE_KEYS,
+  TABS_APPS_PAGE_KEYS,
 } from "#contract/settings.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
@@ -952,6 +953,72 @@ describe("the Settings window's Language and Spelling", () => {
       app.handlers.setSpellcheckLanguage({ code: "de", on: true })
     ).rejects.toThrow("macOS");
     expect(app.saved).toStrictEqual([]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Tabs & Apps page", () => {
+  it("sends Open Google apps in Meru on and no app excluded where none is stored", () => {
+    const app = setup(stateOf("Work"));
+
+    expect(
+      Object.fromEntries(
+        TABS_APPS_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
+      )
+    ).toStrictEqual({ openAppsInMeru: true, appsInDefaultBrowser: [] });
+    app.dispose();
+  });
+
+  it("keeps both of two quick toggles and an id this build does not know, applied to the list as stored", async () => {
+    const app = setup(stateOf("Work"), {
+      version: 1,
+      appsInDefaultBrowser: ["keep", 5],
+    });
+
+    await Promise.all([
+      app.handlers.setAppInDefaultBrowser({ app: "drive", on: true }),
+      app.handlers.setAppInDefaultBrowser({ app: "meet", on: true }),
+    ]);
+    await app.handlers.setAppInDefaultBrowser({ app: "drive", on: false });
+
+    expect(app.saved.at(-1)).toStrictEqual({
+      version: 1,
+      appsInDefaultBrowser: ["keep", "meet"],
+    });
+    app.dispose();
+  });
+
+  it("refuses Gmail, which always opens in Meru", async () => {
+    const app = setup(stateOf("Work"));
+
+    await expect(
+      app.handlers.setAppInDefaultBrowser({ app: "gmail", on: true })
+    ).rejects.toThrow("Gmail");
+    expect(app.saved).toStrictEqual([]);
+    app.dispose();
+  });
+
+  it("writes neither on the free version, and sends their free values with the stored ones kept", async () => {
+    const app = setup(
+      stateOf("Work"),
+      { version: 1, appsInDefaultBrowser: ["drive"] },
+      "darwin",
+      ["en"],
+      true
+    );
+
+    await expect(
+      app.handlers.update({ key: "openAppsInMeru", value: false })
+    ).rejects.toThrow("Meru Pro");
+    await expect(
+      app.handlers.setAppInDefaultBrowser({ app: "meet", on: true })
+    ).rejects.toThrow("Meru Pro");
+
+    expect([
+      app.read().settings.openAppsInMeru,
+      app.read().settings.appsInDefaultBrowser,
+      app.saved,
+    ]).toStrictEqual([false, [], []]);
     app.dispose();
   });
 });

@@ -76,6 +76,17 @@ describe(entitledSetting, () => {
     ]).toStrictEqual([false, ["https://example.com"]]);
   });
 
+  it("opens no Google app in Meru without Meru Pro and sends none out by name, as stored with it", () => {
+    expect([
+      entitledSetting("openAppsInMeru", true, free),
+      entitledSetting("appsInDefaultBrowser", ["drive"], free),
+      entitledSetting("openAppsInMeru", true, pro),
+      entitledSetting("appsInDefaultBrowser", ["drive"], pro),
+      settingWritable("openAppsInMeru", free),
+      settingWritable("appsInDefaultBrowser", free),
+    ]).toStrictEqual([false, [], true, ["drive"], false, false]);
+  });
+
   it("applies none of Gmail's page settings without Meru Pro but the inbox footer's hide, which was never Pro", () => {
     expect(
       gmailFeatures((feature) => entitledSetting(feature, true, free))
