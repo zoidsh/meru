@@ -99,6 +99,45 @@ describe(choiceProgIds, () => {
     ).toStrictEqual(["AppXydk58wgm44se4b399k9ye2m8pz8fyq6q"]);
     expect(choiceProgIds("")).toStrictEqual([]);
   });
+
+  it("never takes a key's unnamed value, printed in the system's language, for a class", () => {
+    const german = [
+      "",
+      String.raw`${KEY}\UserChoiceLatest`,
+      "    (Standard)    REG_SZ    (Wert nicht festgelegt)",
+      "    Hash    REG_SZ    z9x8c7v6=",
+      "",
+      String.raw`${KEY}\UserChoiceLatest\ProgId`,
+      "    (Standard)    REG_SZ    (Wert nicht festgelegt)",
+      "    ProgId    REG_SZ    Meru.mailto",
+      "",
+    ].join("\r\n");
+
+    expect(choiceProgIds(german)).toStrictEqual(["Meru.mailto"]);
+    expect(
+      choiceProgIds(
+        "    (Default)    REG_SZ    (value not set)\r\n    Hash    REG_SZ    a1=\r\n"
+      )
+    ).toStrictEqual([]);
+  });
+
+  it("reads a value of another type, or one with no data, as no choice", () => {
+    expect(
+      choiceProgIds(
+        "    ProgId    REG_EXPAND_SZ    Meru.mailto\n    ProgId    REG_SZ\n"
+      )
+    ).toStrictEqual([]);
+  });
+});
+
+describe(windowsMailRegistration, () => {
+  it("escapes a quote or backslash in a path the .reg way, keeping other characters as they are", () => {
+    expect(
+      windowsMailRegistration(String.raw`C:\Users\Zoë "Z"\Meru.exe`)
+    ).toContain(
+      String.raw`"ApplicationIcon"="C:\\Users\\Zoë \"Z\"\\Meru.exe,0"`
+    );
+  });
 });
 
 describe(choseMeruForMail, () => {

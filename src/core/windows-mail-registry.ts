@@ -7,9 +7,9 @@ export const MAILTO_PROG_ID = "Meru.mailto";
  */
 const APP_PAGE_BUILD = 22_621;
 
-/** A `.reg` string value: quoted, with its backslashes and quotes escaped. */
-const regString = (value: string) =>
-  `"${value.replaceAll("\\", "\\\\").replaceAll('"', String.raw`\"`)}"`;
+// A `.reg` string escapes only `\` and `"`, as JSON does; JSON's other
+// escapes are for control characters, which no Windows path can hold.
+const regString = (value: string) => JSON.stringify(value);
 
 /**
  * The per-user keys that make the executable at `executablePath` one of the
@@ -57,21 +57,28 @@ export const windowsMailRegistration = (executablePath: string) => {
   ].join("\r\n");
 };
 
+const PROG_ID_VALUE = "ProgId";
+const STRING_TYPE = "REG_SZ";
+
 /**
- * The class each `REG_SZ` value of a `reg query` of a choice key names, the
- * hash left out. Windows 11 24H2 keeps the choice as a `ProgId` subkey of
- * `UserChoiceLatest` rather than a value of `UserChoice`, so no value's name
- * is relied on.
+ * Every `ProgId` string in what `reg query /s` prints, a line of name, type
+ * and data per value, the subkeys searched too. Only that value's name is
+ * read: a key's unnamed value prints in the system's language with a
+ * translated "not set" as its data, which must never pass for a choice.
  */
 export const choiceProgIds = (output: string) =>
-  [
-    ...output.matchAll(/^\s*(?!Hash\s)\S+\s+REG_SZ\s+(?<progId>\S.*?)\s*$/gmu),
-  ].map((match) => match.groups?.progId ?? "");
+  output.split(/\r?\n/u).flatMap((line) => {
+    const [name, type, ...data] = line.trim().split(/\s+/u);
+
+    return name === PROG_ID_VALUE && type === STRING_TYPE && data.length > 0
+      ? [data.join(" ")]
+      : [];
+  });
 
 /**
  * Whether the person chose Meru for `mailto`, from `reg query` of
- * `UserChoiceLatest` and of `UserChoice`; the newer key, which Windows 11
- * 24H2 writes while leaving the older stale, answers whenever it holds one.
+ * `UserChoiceLatest` and of `UserChoice`. Where both hold a choice they can
+ * disagree, and the newer key is the one Windows acts on.
  */
 export const choseMeruForMail = (latest: string, legacy: string) => {
   const newer = choiceProgIds(latest);

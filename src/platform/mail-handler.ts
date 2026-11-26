@@ -64,19 +64,16 @@ const queryChoice = async (subKey: string) => {
   }
 };
 
-/**
- * Windows' portable build runs from a copy it extracts to the temporary
- * folder, gone by the next launch, so the registration names the portable
- * file itself, whose launcher passes a link on to the app.
- */
+// electron-builder's portable target sets this to the .exe the person
+// started; `execPath` there is an unpacked copy that does not outlive the run.
 const executablePath = () =>
   process.env.PORTABLE_EXECUTABLE_FILE ?? process.execPath;
 
 /**
- * Writes the per-user keys that let Default apps offer Meru for email links,
- * at each launch, since the path moves with an update or a moved portable
- * copy; writing them again changes nothing. UTF-16 with a byte order mark,
- * as regedit writes, so a path outside the system's code page arrives whole.
+ * Lets Default apps offer this executable for email links. Run at every
+ * launch rather than once, so the keys follow the executable wherever it now
+ * is. `reg import` reads a file with a byte order mark as UTF-16, so a path
+ * in any script survives.
  */
 export const registerWindowsMailHandler = async (userDataPath: string) => {
   const file = path.join(userDataPath, "mail-handler.reg");
@@ -90,9 +87,9 @@ export const registerWindowsMailHandler = async (userDataPath: string) => {
 };
 
 /**
- * The installed Meru's. On Windows the choice is the person's, read where
- * Windows keeps it; `app.isDefaultProtocolClient` reads back the key Electron
- * itself writes, so it would answer yes for a Meru no link reaches.
+ * A release's. On Windows only the person's own pick in Default apps sends
+ * links to Meru, so that pick is what is read; Electron's check there looks
+ * at class keys Meru can write itself.
  */
 export const createMailHandler = (platform: Platform): MailHandler => ({
   real: true,
