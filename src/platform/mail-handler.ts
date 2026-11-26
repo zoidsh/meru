@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { writeFile } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 import { release } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -83,7 +83,11 @@ export const registerWindowsMailHandler = async (userDataPath: string) => {
     `\uFEFF${windowsMailRegistration(executablePath())}`,
     "utf16le"
   );
-  await reg(["import", file]);
+  try {
+    await reg(["import", file]);
+  } finally {
+    await rm(file, { force: true });
+  }
 };
 
 /**
