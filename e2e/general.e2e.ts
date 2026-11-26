@@ -91,7 +91,7 @@ test("Open in the background starts Meru with its window hidden, its pages loadi
 
   // As a second launch, or a click on the Dock icon, would.
   await app.evaluate(({ app: electron }) => {
-    electron.emit("second-instance");
+    electron.emit("second-instance", {}, [process.execPath], process.cwd());
   });
 
   await expect
@@ -130,7 +130,7 @@ test("with no tray on Windows and Linux, Open in the background starts Meru mini
     .toStrictEqual({ visible: false, minimized: true });
 
   await app.evaluate(({ app: electron }) => {
-    electron.emit("second-instance");
+    electron.emit("second-instance", {}, [process.execPath], process.cwd());
   });
 
   await expect
