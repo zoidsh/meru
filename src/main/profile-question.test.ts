@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import type { Overlay } from "#core/overlay.ts";
 
@@ -30,12 +30,58 @@ const fakeOverlays = (initial?: Overlay) => {
   };
 };
 
+/** The main window's hide, which a test tells. */
+const windowHides = new Set<() => void>();
+const onWindowHide = (listener: () => void) => {
+  windowHides.add(listener);
+};
+const hideWindow = () => {
+  for (const listener of windowHides) {
+    listener();
+  }
+};
+
 const IDS = ["a", "c", "d"];
 
 describe(createProfileQuestion, () => {
+  beforeEach(() => {
+    windowHides.clear();
+  });
+
+  it("answers none and closes when the main window hides, so the next link asks again in a window shown for it", async () => {
+    const overlays = fakeOverlays();
+    const question = createProfileQuestion({ overlays, onWindowHide });
+    const first = question.ask(IDS);
+
+    hideWindow();
+
+    await expect(first).resolves.toBeUndefined();
+    expect(overlays.current()).toBeUndefined();
+
+    const second = question.ask(IDS);
+
+    expect(overlays.current()).toStrictEqual({
+      kind: "profile-question",
+      profileIds: IDS,
+    });
+    question.answer("d");
+
+    await expect(second).resolves.toBe("d");
+  });
+
+  it("leaves any other card open when the main window hides", () => {
+    const license: Overlay = { kind: "license" };
+    const overlays = fakeOverlays(license);
+
+    createProfileQuestion({ overlays, onWindowHide });
+    hideWindow();
+
+    expect(overlays.current()).toStrictEqual(license);
+  });
+
   it("opens the question over the main window and answers with the profile picked, closing it", async () => {
     const overlays = fakeOverlays();
-    const question = createProfileQuestion({ overlays });
+    const question = createProfileQuestion({ overlays, onWindowHide });
     const answered = question.ask(IDS);
 
     expect(overlays.current()).toStrictEqual({
@@ -50,7 +96,7 @@ describe(createProfileQuestion, () => {
 
   it("answers none when it closes without a pick, as Cancel, Escape and a press outside close it", async () => {
     const overlays = fakeOverlays();
-    const question = createProfileQuestion({ overlays });
+    const question = createProfileQuestion({ overlays, onWindowHide });
     const answered = question.ask(IDS);
 
     overlays.close();
@@ -60,7 +106,7 @@ describe(createProfileQuestion, () => {
 
   it("answers none when anything else opens in its place", async () => {
     const overlays = fakeOverlays();
-    const question = createProfileQuestion({ overlays });
+    const question = createProfileQuestion({ overlays, onWindowHide });
     const answered = question.ask(IDS);
 
     overlays.open({ kind: "downloads" });
@@ -70,7 +116,7 @@ describe(createProfileQuestion, () => {
 
   it("takes no profile it did not offer, and no answer once it is answered", async () => {
     const overlays = fakeOverlays();
-    const question = createProfileQuestion({ overlays });
+    const question = createProfileQuestion({ overlays, onWindowHide });
     const answered = question.ask(IDS);
 
     question.answer("b");
@@ -89,7 +135,7 @@ describe(createProfileQuestion, () => {
       { kind: "screen-picker", profileId: "a", tabId: "meet" },
     ] as const) {
       const overlays = fakeOverlays(shown);
-      const question = createProfileQuestion({ overlays });
+      const question = createProfileQuestion({ overlays, onWindowHide });
       const answered = question.ask(IDS);
 
       expect(overlays.current()).toStrictEqual(shown);
@@ -107,7 +153,7 @@ describe(createProfileQuestion, () => {
 
   it("replaces a toast, the update card or New tab rather than waiting", () => {
     const overlays = fakeOverlays({ kind: "toast", message: "no-room" });
-    const question = createProfileQuestion({ overlays });
+    const question = createProfileQuestion({ overlays, onWindowHide });
 
     void question.ask(IDS);
 

@@ -13,13 +13,16 @@ const waitsBehind = (overlay: Overlay | undefined) =>
 /**
  * Which profile writes an email, asked in a card in the main window's
  * overlay, one question at a time. A profile picked answers it; Cancel,
- * Escape, a press outside, or anything else opening in its place answers
- * none.
+ * Escape, a press outside, the window hidden, or anything else opening in
+ * its place answers none, so the next link shows the window and asks again
+ * rather than waiting behind a question nobody can see.
  */
 export const createProfileQuestion = ({
   overlays,
+  onWindowHide,
 }: {
   overlays: Pick<Overlays, "open" | "close" | "current" | "onChange">;
+  onWindowHide: (listener: () => void) => void;
 }) => {
   let asked:
     | { profileIds: readonly string[]; settle: (id?: string) => void }
@@ -41,6 +44,12 @@ export const createProfileQuestion = ({
 
       waiting = undefined;
       show();
+    }
+  });
+
+  onWindowHide(() => {
+    if (asked && overlays.current()?.kind === "profile-question") {
+      overlays.close();
     }
   });
 

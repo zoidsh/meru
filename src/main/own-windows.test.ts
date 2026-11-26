@@ -123,6 +123,7 @@ const setup = ({ background = true, holdSaves = false } = {}) => {
             fake.blur = listener;
           },
           onClosed: noop,
+          onHide: noop,
           onSessionEnd: (listener) => {
             fake.endSession = listener;
           },

@@ -756,7 +756,10 @@ const start = async () => {
     log: console.error,
   });
 
-  const profileQuestion = createProfileQuestion({ overlays });
+  const profileQuestion = createProfileQuestion({
+    overlays,
+    onWindowHide: shell.window.onHide,
+  });
 
   wireShellContract({
     platform,

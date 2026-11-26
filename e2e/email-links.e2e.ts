@@ -363,6 +363,43 @@ test("Cancel, Escape and a press beside the profile question each open nothing",
   expect(await composeWindows(app)).toStrictEqual([]);
 });
 
+test("closing the main window while the question waits drops that link, and the next one shows the window and asks again", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, standIn, ["Personal", "Work"]);
+  // With the tray shown, closing the main window hides it on every platform.
+  await writeSettings(userDataDir, { tray: true });
+
+  const app = await launchApp();
+  const overlay = await findOverlayDocument(app);
+  const card = question(overlay);
+  const second = "mailto:another@example.com";
+
+  await findPage(app, standIn.url);
+  await openUrl(app, LINK);
+  await expect(card).toBeVisible();
+  await app.evaluate(({ BrowserWindow }, shellUrl) => {
+    BrowserWindow.getAllWindows()
+      .find((window) => window.webContents.getURL().startsWith(shellUrl))
+      ?.close();
+  }, SHELL_URL);
+  await expect.poll(() => mainWindowVisible(app)).toBe(false);
+  await expect(card).toHaveCount(0);
+
+  await openUrl(app, second);
+  await expect.poll(() => mainWindowVisible(app)).toBe(true);
+  await expect(card).toBeVisible();
+  await card.getByRole("button", { name: "Work" }).click();
+
+  await expect
+    .poll(() => composeWindows(app))
+    .toMatchObject([
+      { url: composeUrl(standIn.url, second), profileId: "work" },
+    ]);
+});
+
 test("a second link while the question waits is asked about once the first is answered", async ({
   launchApp,
   userDataDir,

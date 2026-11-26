@@ -83,6 +83,8 @@ export interface PlainWindow {
   onFocus: (listener: () => void) => void;
   /** Told when keys stop going to it. */
   onBlur: (listener: () => void) => void;
+  /** Told when it is hidden, as closing the main window hides it. */
+  onHide: (listener: () => void) => void;
   /** Windows alone: the session ends, for a shutdown, restart or sign-out. */
   onSessionEnd: (listener: () => void) => void;
   /** Closes it at once, asking nothing. */
@@ -134,6 +136,9 @@ export const plainWindow = (
   },
   onBlur: (listener) => {
     window.on("blur", listener);
+  },
+  onHide: (listener) => {
+    window.on("hide", listener);
   },
   onSessionEnd: (listener) => {
     window.on("session-end", listener);
