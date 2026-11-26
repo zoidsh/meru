@@ -245,19 +245,19 @@ test("a second launch's link opens a compose window, and anything but mailto is 
 
   await findPage(app, standIn.url);
 
-  const second = spawnApp(["https://example.com/", LINK]);
+  // One URL per launch, as the last argument, as the system passes it:
+  // Electron on Windows guards what follows a URL on its command line. A
+  // second launch hands its arguments over and quits.
+  expect(await spawnApp(["https://example.com/"]).exited).toBe(0);
+  await delay(500);
+  expect(await composeWindows(app)).toStrictEqual([]);
 
-  // The second launch hands its arguments over and quits.
-  expect(await second.exited).toBe(0);
+  expect(await spawnApp([LINK]).exited).toBe(0);
   await expect
     .poll(() => composeWindows(app))
     .toMatchObject([
       { url: composeUrl(standIn.url, LINK), profileId: "personal" },
     ]);
-
-  // Only the one window: the web link opened nothing.
-  await delay(500);
-  expect(await composeWindows(app)).toHaveLength(1);
 });
 
 test("with two profiles Meru asks which one writes, and opens the compose window in the one chosen", async ({
