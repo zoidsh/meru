@@ -44,6 +44,7 @@ import {
 } from "./shell-pro.ts";
 import { createShellWindow } from "./shell-window.ts";
 import { createSpellcheck } from "./spellcheck.ts";
+import { createContactSupport } from "./support.ts";
 import { createTabViews } from "./tab-views.ts";
 import { followThemeSetting } from "./theme.ts";
 import { revealWindow } from "./windows.ts";
@@ -54,6 +55,7 @@ import {
   answerEmailLinks,
   receiveEmailLinks,
   registerAsMailApp,
+  wireComposeWindows,
 } from "./wiring/email-links.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
@@ -651,6 +653,15 @@ const start = async () => {
     systemBrowser,
   });
 
+  const composeWindows = wireComposeWindows({
+    background,
+    profiles,
+    views,
+    senders,
+    prepareSession,
+    gmailHome,
+  });
+
   const {
     openSettings,
     settingsFocused,
@@ -693,6 +704,13 @@ const start = async () => {
       await showGmail.jumpTo(profileId);
       revealGmail(profileId);
     },
+    contactSupport: createContactSupport({
+      state: profiles.get,
+      signedOut: (profileId) => mail.mail(profileId).status === "signedOut",
+      compose: composeWindows.open,
+      openExternal: systemBrowser.open,
+      log: console.error,
+    }),
   });
 
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({
@@ -808,10 +826,7 @@ const start = async () => {
     profiles,
     entitlement,
     overlays,
-    views,
-    senders,
-    prepareSession,
-    gmailHome,
+    composeWindows,
   });
 
   updates.start();

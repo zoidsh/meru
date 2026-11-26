@@ -94,6 +94,8 @@ export interface SettingsContractDeps {
    * the window forward.
    */
   signIn: (profileId: string) => Promise<void>;
+  /** Opens an email to Meru's support about the license. */
+  contactSupport: () => Promise<void>;
   doNotDisturb: Pick<
     ReturnType<typeof createDoNotDisturb>,
     "current" | "switchOn" | "switchOff"
@@ -217,6 +219,7 @@ export const settingsHandlers = ({
   removeProfile,
   deleteBrowsingData,
   signIn,
+  contactSupport,
   general,
   trustedSites,
   advanced,
@@ -511,6 +514,7 @@ export const settingsHandlers = ({
       Promise.try(() => {
         updates.openWhatsNew(null);
       }),
+    contactSupport: () => contactSupport(),
     ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };
 };

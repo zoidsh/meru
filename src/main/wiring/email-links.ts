@@ -61,28 +61,19 @@ export const registerAsMailApp = async (
 };
 
 /**
- * Answers email links once the main window can show a toast, the ones held
- * first: a compose window in the profile the person picks, or, without Meru
- * Pro, a toast in the main window, shown for it.
+ * The compose windows of email links and of Contact support, each closed with
+ * its profile.
  */
-export const answerEmailLinks = ({
-  incoming,
+export const wireComposeWindows = ({
   background,
-  shell,
   profiles,
-  entitlement,
-  overlays,
   views,
   senders,
   prepareSession,
   gmailHome,
 }: {
-  incoming: ReturnType<typeof receiveEmailLinks>;
   background: boolean;
-  shell: ReturnType<typeof createShellWindow>;
   profiles: Pick<Profiles, "get" | "onChange">;
-  entitlement: Pick<Entitlement, "can">;
-  overlays: Pick<Overlays, "open" | "hasView" | "onChange">;
   views: Pick<ReturnType<typeof createTabViews>, "windowOpening">;
   senders: Pick<SenderRegistry, "register">;
   prepareSession: (partition: string) => void;
@@ -101,6 +92,31 @@ export const answerEmailLinks = ({
 
   profiles.onChange(composeWindows.follow);
 
+  return composeWindows;
+};
+
+/**
+ * Answers email links once the main window can show a toast, the ones held
+ * first: a compose window in the profile the person picks, or, without Meru
+ * Pro, a toast in the main window, shown for it.
+ */
+export const answerEmailLinks = ({
+  incoming,
+  background,
+  shell,
+  profiles,
+  entitlement,
+  overlays,
+  composeWindows,
+}: {
+  incoming: ReturnType<typeof receiveEmailLinks>;
+  background: boolean;
+  shell: ReturnType<typeof createShellWindow>;
+  profiles: Pick<Profiles, "get">;
+  entitlement: Pick<Entitlement, "can">;
+  overlays: Pick<Overlays, "open" | "hasView" | "onChange">;
+  composeWindows: Pick<ReturnType<typeof wireComposeWindows>, "open">;
+}) => {
   const answer = answerIncomingLink({
     can: entitlement.can,
     state: profiles.get,

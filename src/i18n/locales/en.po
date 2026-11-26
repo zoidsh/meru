@@ -758,6 +758,11 @@ msgstr "Command"
 msgid "Compose"
 msgstr "Compose"
 
+#. Button on the Meru Pro page of Settings, when the license can't be used, that opens an email to Meru's support
+#: src/settings/pro-page.tsx
+msgid "Contact support"
+msgstr "Contact support"
+
 #. Second sentence about Meru Pro (in Settings) when the license server no longer accepts the license, after a refund or the device's removal
 #: src/shared/license-status.ts
 msgid "Contact support if you think this is a mistake."
@@ -1669,6 +1674,11 @@ msgstr "Meru opens email links. To change this, choose another app in your syste
 #: src/shared/license-status.ts
 msgid "Meru Pro"
 msgstr "Meru Pro"
+
+#. Subject of the email to Meru's support that Contact support on the Meru Pro page of Settings starts, when the license can't be used
+#: src/main/support.ts
+msgid "Meru Pro license"
+msgstr "Meru Pro license"
 
 #. Accessible name of the footer of the main window that counts the days left of the Meru Pro trial
 #. Status about Meru Pro (in Settings) during the trial

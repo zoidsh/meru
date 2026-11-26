@@ -7,6 +7,8 @@ import path from "node:path";
 import type { ElectronApplication, Page } from "@playwright/test";
 
 import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
+import { composeUrl } from "#core/mailto.ts";
+import { supportMailto } from "#core/support.ts";
 
 import {
   NO_TRIAL,
@@ -14,11 +16,18 @@ import {
   expect,
   findPage,
   readOpenedExternally,
+  readState,
   stubSystemBrowser,
   test,
 } from "./lib/app.ts";
-import { SETTINGS_URL, openSection, openSettings } from "./lib/settings.ts";
+import {
+  SETTINGS_URL,
+  openSection,
+  openSettings,
+  pollAll,
+} from "./lib/settings.ts";
 import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
+import { STAND_IN_ADDRESS, signIn } from "./lib/stand-in.ts";
 
 const KEY = "MERU-TEST-AAAA-BBBB-CCCC-7Q2K";
 const MASKED = "MERU-••••-••••-••••-••••-7Q2K";
@@ -347,9 +356,18 @@ test("a clock set well before the key was stored says the date looks wrong", asy
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
 });
 
-test("a license the server no longer takes ends Pro at the next launch, then reads as the free version", async ({
+/** The addresses of the compose windows open, the support email's among them. */
+const composeWindows = (app: ElectronApplication) =>
+  app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()
+      .map((window) => window.webContents.getURL())
+      .filter((url) => url.includes("extsrc=mailto"))
+  );
+
+test("a license the server no longer takes ends Pro at the next launch, then reads as the free version, with Contact support writing from Gmail in place of Upgrade", async ({
   launchApp,
   userDataDir,
+  standIn,
 }) => {
   await writeEntitlement(userDataDir, {
     licenseKey: KEY,
@@ -364,7 +382,36 @@ test("a license the server no longer takes ends Pro at the next launch, then rea
     "Your license can't be used",
     "Pro features turn off when you quit Meru. Contact support if you think this is a mistake."
   );
-  await expect(page.getByRole("button", { name: "Upgrade" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Upgrade" })).toHaveCount(0);
+
+  const support = page.getByRole("button", { name: "Contact support" });
+
+  await expect(support).toHaveAccessibleDescription(
+    "Pro features turn off when you quit Meru. Contact support if you think this is a mistake."
+  );
+  const mailto = supportMailto("Meru Pro license");
+
+  // Signed out, the selected profile's Gmail can compose nothing, so the link
+  // goes to the system's mail app, which the stub keeps from opening.
+  await stubSystemBrowser(first);
+  await support.click();
+  await expect.poll(() => readOpenedExternally(first)).toStrictEqual([mailto]);
+
+  const { selectedProfileId } = await readState<{ selectedProfileId: string }>(
+    userDataDir
+  );
+
+  standIn.setFeed(`persist:${selectedProfileId}`, { unreadCount: 0 });
+  await signIn(first, standIn, selectedProfileId);
+  await pollAll(first);
+  await openSection(page, "Profiles");
+  await expect(main(page).getByText(STAND_IN_ADDRESS)).toBeVisible();
+  await openSection(page, "Meru Pro");
+  await support.click();
+  await expect
+    .poll(() => composeWindows(first))
+    .toStrictEqual([composeUrl(standIn.url, mailto)]);
+  expect(await readOpenedExternally(first)).toStrictEqual([mailto]);
   await first.close();
 
   const second = await launchApp();

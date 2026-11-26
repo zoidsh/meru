@@ -3,17 +3,31 @@ import { useLingui } from "@lingui/react/macro";
 
 import type { LicenseStanding } from "#contract/entitlement.ts";
 
-/** What the status offers: Upgrade, Try again, or nothing to do but say so. */
-export type LicenseAction = "upgrade" | "retry" | "licensed";
-
 /**
- * What the install has of Meru Pro, in a line and a sentence, and what to do,
- * as Settings' Meru Pro page says it, and the main window's card at a launch
- * whose license could not be confirmed.
+ * What the status offers: Upgrade, Try again, Contact support, or nothing to
+ * do but say so.
  */
-export const useLicenseStatus = (
+export type LicenseAction = "upgrade" | "retry" | "support" | "licensed";
+
+/** What each status offers, the license refused sending the person to support. */
+export const licenseActionOf = (
+  status: LicenseStanding["status"]
+): LicenseAction =>
+  (
+    {
+      trial: "upgrade",
+      licensed: "licensed",
+      provisional: "retry",
+      trialEnded: "upgrade",
+      refused: "support",
+      unconfirmed: "retry",
+      none: "upgrade",
+    } satisfies Record<LicenseStanding["status"], LicenseAction>
+  )[status];
+
+const useLicenseWords = (
   standing: LicenseStanding
-): { title: string; description: string; action: LicenseAction } => {
+): { title: string; description: string } => {
   const { t } = useLingui();
   const { status, downgradePending, trialDaysLeft, hasLicenseKey } = standing;
   const endsAtQuit = t({
@@ -59,7 +73,6 @@ export const useLicenseStatus = (
           comment:
             "Second sentence about Meru Pro (in Settings) during the trial, beside the Upgrade button",
         })}`,
-        action: "upgrade",
       };
     }
     case "licensed": {
@@ -74,7 +87,6 @@ export const useLicenseStatus = (
             "You have every feature, and you can use Meru for work. Thanks for your support.",
           comment: "About Meru Pro (in Settings) with a license",
         }),
-        action: "licensed",
       };
     }
     case "provisional": {
@@ -89,7 +101,6 @@ export const useLicenseStatus = (
           comment:
             "About Meru Pro (in Settings) while a license key carried over from an earlier Meru is not yet confirmed, beside the Try again button",
         }),
-        action: "retry",
       };
     }
     case "trialEnded": {
@@ -111,7 +122,6 @@ export const useLicenseStatus = (
               comment:
                 "About Meru Pro (in Settings) after the trial, on the free version",
             }),
-        action: "upgrade",
       };
     }
     case "refused": {
@@ -136,7 +146,6 @@ export const useLicenseStatus = (
                   "First sentence about Meru Pro (in Settings) when the license can't be used, on the free version",
               })
         } ${support}`,
-        action: "upgrade",
       };
     }
     case "unconfirmed": {
@@ -160,7 +169,6 @@ export const useLicenseStatus = (
             comment:
               "Second sentence about Meru Pro (in Settings and in the main window's card at a launch it could not confirm) when the computer's date looks wrong, beside the Try again button",
           })}`,
-          action: "retry",
         };
       }
 
@@ -189,7 +197,6 @@ export const useLicenseStatus = (
           comment:
             "Second sentence about Meru Pro (in Settings and in the main window's card at a launch it could not confirm) when the license or trial could not be confirmed, beside the Try again button",
         })}`,
-        action: "retry",
       };
     }
     case "none": {
@@ -205,7 +212,6 @@ export const useLicenseStatus = (
           comment:
             "About Meru Pro (in Settings) on the free version with no trial",
         }),
-        action: "upgrade",
       };
     }
     default: {
@@ -213,3 +219,13 @@ export const useLicenseStatus = (
     }
   }
 };
+
+/**
+ * What the install has of Meru Pro, in a line and a sentence, and what to do,
+ * as Settings' Meru Pro page says it, and the main window's card at a launch
+ * whose license could not be confirmed.
+ */
+export const useLicenseStatus = (standing: LicenseStanding) => ({
+  ...useLicenseWords(standing),
+  action: licenseActionOf(standing.status),
+});

@@ -189,6 +189,25 @@ const Page = ({
       );
       break;
     }
+    case "support": {
+      control = (ids) => (
+        <Button
+          variant="outline"
+          size="sm"
+          aria-describedby={ids.description || undefined}
+          onClick={() => {
+            calls.contactSupport({}).catch(noop);
+          }}
+        >
+          {t({
+            message: "Contact support",
+            comment:
+              "Button on the Meru Pro page of Settings, when the license can't be used, that opens an email to Meru's support",
+          })}
+        </Button>
+      );
+      break;
+    }
     case "retry": {
       control = (ids) => (
         <Button

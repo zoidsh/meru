@@ -42,6 +42,7 @@ export const SETTINGS_CALL_NAMES = [
   "restartToUpdate",
   "openUpdateRelease",
   "openWhatsNew",
+  "contactSupport",
   ...ENTITLEMENT_CALL_NAMES,
 ] as const;
 

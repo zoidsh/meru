@@ -90,6 +90,7 @@ export const wireSettingsWindow = ({
   hardwareAccelerationAtLaunch,
   settingsFile,
   signIn,
+  contactSupport,
   trustedSites,
   entitlement,
   licenseRequests,
@@ -130,6 +131,7 @@ export const wireSettingsWindow = ({
   hardwareAccelerationAtLaunch: boolean;
   settingsFile: TextFile;
   signIn: (profileId: string) => Promise<void>;
+  contactSupport: () => Promise<void>;
   trustedSites: TrustedSites;
   entitlement: Entitlement;
   /** The one license request out, shared with every surface that sends one. */
@@ -255,6 +257,7 @@ export const wireSettingsWindow = ({
       showTestNotification,
       deleteBrowsingData,
       signIn,
+      contactSupport,
       general,
       trustedSites,
       advanced,

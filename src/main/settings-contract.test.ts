@@ -315,6 +315,7 @@ const setup = (
 
       return Promise.resolve();
     },
+    contactSupport: () => Promise.resolve(),
     general,
     language,
     trustedSites: createTrustedSites(settings),

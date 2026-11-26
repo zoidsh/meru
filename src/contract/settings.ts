@@ -464,6 +464,11 @@ export const SETTINGS_CALLS = {
   openUpdateRelease: { request: none, response: z.undefined() },
   /** Opens the list of Meru's releases, each with its notes, in the default browser. */
   openWhatsNew: { request: none, response: z.undefined() },
+  /**
+   * Opens an email to Meru's support about the license, from the selected
+   * profile's Gmail, or the system's mail app while that profile is signed out.
+   */
+  contactSupport: { request: none, response: z.undefined() },
   ...ENTITLEMENT_CALLS,
 } as const satisfies Record<
   SettingsCallName,
