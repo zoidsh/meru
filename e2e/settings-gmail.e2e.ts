@@ -34,7 +34,6 @@ const SWITCHES = [
   ["Newest message first", "reverseConversation"],
   ["Show attachments first", "moveAttachmentsToTop"],
   ["Show trimmed content", "showTrimmedContent"],
-  ["Close compose window after sending", "closeComposeWindowAfterSend"],
   ["Find verification codes", "verificationCodes"],
   ["Show during Do Not Disturb", "verificationCodesDuringDoNotDisturb"],
 ] as const;
@@ -96,6 +95,12 @@ test("each card is a group its heading names, holding its rows", async ({
   ).toHaveAccessibleDescription(
     "These change how Gmail looks in Meru. Your Gmail settings stay the same."
   );
+  // Closing a compose window after sending has no behaviour yet, so its
+  // setting has no row.
+  await expect(page.getByRole("group", { name: "Compose" })).toHaveCount(0);
+  await expect(
+    page.getByRole("switch", { name: "Close compose window after sending" })
+  ).toHaveCount(0);
 });
 
 test("each switch shows the stored value and writes the one it is turned to", async ({
@@ -117,7 +122,6 @@ test("each switch shows the stored value and writes the one it is turned to", as
     reverseConversation: true,
     moveAttachmentsToTop: false,
     showTrimmedContent: false,
-    closeComposeWindowAfterSend: false,
     verificationCodes: true,
     verificationCodesDuringDoNotDisturb: true,
   };
