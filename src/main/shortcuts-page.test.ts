@@ -3,9 +3,17 @@ import { describe, expect, it } from "vitest";
 import type { Platform } from "#core/platform.ts";
 
 import { COMMANDS } from "./commands.ts";
-import { isUnlisted, readShortcuts } from "./shortcuts-page.ts";
+import type { Command } from "./commands.ts";
+import { readShortcuts } from "./shortcuts-page.ts";
 
 const PLATFORMS = ["darwin", "win32", "linux"] as const;
+
+/**
+ * The commands no card lists: Do Not Disturb's, which its submenu and the
+ * title bar's button run, with no key and no item with an id in the menu.
+ */
+const isUnlisted = (command: Pick<Command, "id">) =>
+  command.id.startsWith("doNotDisturb.");
 
 const read = (platform: Platform) => readShortcuts(platform, "Meru", COMMANDS);
 
@@ -48,13 +56,6 @@ describe(readShortcuts, () => {
           "Select Pinned Tab 1 to 9",
           "Select Profile 1 to 9",
         ].toSorted()
-      );
-      expect(
-        COMMANDS.filter(isUnlisted).map((command) => command.id)
-      ).toStrictEqual(
-        COMMANDS.filter((command) =>
-          command.id.startsWith("doNotDisturb.")
-        ).map((command) => command.id)
       );
     }
   );

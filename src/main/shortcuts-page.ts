@@ -39,13 +39,6 @@ const LISTING: CommandContext = {
   ...NO_PAGE,
 };
 
-/**
- * Commands no card lists: Do Not Disturb's, which its submenu and the
- * title bar's button run, with no key and no item of their own in the menu.
- */
-export const isUnlisted = (command: Pick<Command, "id">) =>
-  command.id.startsWith("doNotDisturb.");
-
 /** A key's name as a screen reader says it, where its symbol would be read badly. */
 const spokenKey = (key: string, platform: Platform): string | undefined => {
   switch (key.toLowerCase()) {
