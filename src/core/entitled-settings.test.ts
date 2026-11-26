@@ -58,16 +58,15 @@ describe(entitledSetting, () => {
       entitledSetting("verificationCodes", true, free),
       entitledSetting("verificationCodesDuringDoNotDisturb", false, free),
       entitledSetting("verificationCodeCopyMode", "immediately", free),
-      entitledSetting("verificationCodeMarkRead", true, free),
-      entitledSetting("verificationCodeTrash", true, free),
-    ]).toStrictEqual([false, false, "immediately", true, true]);
+      entitledSetting("verificationCodeAfterCopy", "trash", free),
+    ]).toStrictEqual([false, false, "immediately", "trash"]);
   });
 
   it("writes Show during Do Not Disturb only with verification codes, as the rows beside it", () => {
     expect([
       settingWritable("verificationCodesDuringDoNotDisturb", free),
       settingWritable("verificationCodesDuringDoNotDisturb", pro),
-      settingWritable("verificationCodeTrash", free),
+      settingWritable("verificationCodeAfterCopy", free),
     ]).toStrictEqual([false, true, false]);
   });
 

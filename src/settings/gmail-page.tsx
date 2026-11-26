@@ -1,8 +1,14 @@
 import { useLingui } from "@lingui/react/macro";
 
 import type { GMAIL_PAGE_KEYS, SettingChange } from "#contract/settings.ts";
-import { VERIFICATION_CODE_COPY_MODES } from "#core/settings.ts";
-import type { VerificationCodeCopyMode } from "#core/settings.ts";
+import {
+  VERIFICATION_CODE_AFTER_COPY,
+  VERIFICATION_CODE_COPY_MODES,
+} from "#core/settings.ts";
+import type {
+  VerificationCodeAfterCopy,
+  VerificationCodeCopyMode,
+} from "#core/settings.ts";
 import {
   Select,
   SelectContent,
@@ -20,7 +26,7 @@ import { settingsCalls, useSettingsState } from "./sync.ts";
 
 type SwitchKey = Exclude<
   (typeof GMAIL_PAGE_KEYS)[number],
-  "verificationCodeCopyMode"
+  "verificationCodeCopyMode" | "verificationCodeAfterCopy"
 >;
 
 /**
@@ -94,6 +100,76 @@ export const GmailPage = () => {
       comment:
         "Choice of the Copy code menu in Settings: the code is copied as soon as the email with it arrives",
     }),
+  };
+
+  const afterCopy: Record<VerificationCodeAfterCopy, string> = {
+    nothing: t({
+      message: "Do nothing",
+      comment:
+        "Choice of the After copying menu in Settings: the email whose verification code was copied is left as it is",
+    }),
+    markRead: t({
+      message: "Mark as read",
+      comment:
+        "Choice of the After copying menu in Settings: the email whose verification code was copied is marked read",
+    }),
+    trash: t({
+      message: "Move to Trash",
+      comment:
+        "Choice of the After copying menu in Settings: the email whose verification code was copied is moved to Trash, Gmail's folder of that name",
+    }),
+  };
+
+  /** A menu under Find verification codes, disabled while it is off. */
+  const choiceRow = <Value extends string>(
+    key: string,
+    label: string,
+    description: string | undefined,
+    values: readonly Value[],
+    labels: Record<Value, string>,
+    value: Value,
+    onChange: (value: Value) => void
+  ) => {
+    const disabled = codesOff || codesPro;
+
+    return (
+      <SettingRow
+        key={key}
+        label={label}
+        description={codesOff ? codesOffReason : description}
+        disabled={disabled}
+        pro={codesPro}
+      >
+        {(ids) => (
+          <Select
+            items={values.map((each) => ({ value: each, label: labels[each] }))}
+            value={value}
+            disabled={disabled}
+            onValueChange={(chosen) => {
+              if (chosen !== null) {
+                onChange(chosen);
+              }
+            }}
+          >
+            <SelectTrigger
+              aria-labelledby={ids.label}
+              aria-describedby={ids.description || undefined}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              <SelectGroup>
+                {values.map((each) => (
+                  <SelectItem key={each} value={each}>
+                    {labels[each]}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        )}
+      </SettingRow>
+    );
   };
 
   return (
@@ -258,77 +334,40 @@ export const GmailPage = () => {
               }),
               true
             ),
-            <SettingRow
-              key="verificationCodeCopyMode"
-              label={t({
+            choiceRow(
+              "verificationCodeCopyMode",
+              t({
                 message: "Copy code",
                 comment:
                   "Label of the menu in Settings choosing when a verification code is copied",
-              })}
-              description={codesOff ? codesOffReason : undefined}
-              disabled={codesOff || codesPro}
-              pro={codesPro}
-            >
-              {(ids) => (
-                <Select
-                  items={VERIFICATION_CODE_COPY_MODES.map((mode) => ({
-                    value: mode,
-                    label: copyModes[mode],
-                  }))}
-                  value={settings.verificationCodeCopyMode}
-                  disabled={codesOff || codesPro}
-                  onValueChange={(mode) => {
-                    if (mode !== null) {
-                      write({ key: "verificationCodeCopyMode", value: mode });
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    aria-labelledby={ids.label}
-                    aria-describedby={ids.description || undefined}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent alignItemWithTrigger={false}>
-                    <SelectGroup>
-                      {VERIFICATION_CODE_COPY_MODES.map((mode) => (
-                        <SelectItem key={mode} value={mode}>
-                          {copyModes[mode]}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            </SettingRow>,
-            switchRow(
-              "verificationCodeMarkRead",
-              t({
-                message: "Mark as read after copying",
-                comment:
-                  "Label of the switch in Settings that marks the email with a verification code read once the code is copied",
               }),
-              t({
-                message: "Marks the email as read after you copy its code.",
-                comment:
-                  "Description of the Mark as read after copying switch in Settings",
-              }),
-              true
+              undefined,
+              VERIFICATION_CODE_COPY_MODES,
+              copyModes,
+              settings.verificationCodeCopyMode,
+              (value) => {
+                write({ key: "verificationCodeCopyMode", value });
+              }
             ),
-            switchRow(
-              "verificationCodeTrash",
+            choiceRow(
+              "verificationCodeAfterCopy",
               t({
-                message: "Move to Trash after copying",
+                message: "After copying",
                 comment:
-                  "Label of the switch in Settings that moves the email with a verification code to Trash once the code is copied; Trash is Gmail's folder of that name",
+                  "Label of the menu in Settings choosing what is done with the email whose verification code was copied",
               }),
               t({
                 message:
-                  "Moves the email to the Trash after you copy its code. Meru can occasionally mistake a regular email for one with a code.",
+                  "Meru can occasionally mistake a regular email for one with a code.",
                 comment:
-                  "Description of the Move to Trash after copying switch in Settings; Trash is Gmail's folder of that name, and the second sentence warns that a code found by mistake can move a real email",
+                  "Description of the After copying menu in Settings, which can mark the email read or move it to Trash; it warns that a code found by mistake can act on a real email",
               }),
-              true
+              VERIFICATION_CODE_AFTER_COPY,
+              afterCopy,
+              settings.verificationCodeAfterCopy,
+              (value) => {
+                write({ key: "verificationCodeAfterCopy", value });
+              }
             ),
           ]}
         </Rows>

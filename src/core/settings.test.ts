@@ -55,6 +55,14 @@ describe(decodeSettings, () => {
   });
 });
 
+/** After copying as a file holding `file` reads it. */
+const afterCopy = (file: Record<string, unknown>) =>
+  readSetting(
+    read({ version: 1, ...file }),
+    "verificationCodeAfterCopy",
+    "darwin"
+  );
+
 describe(readSetting, () => {
   it("is the default for a key the file does not hold", () => {
     expect(readSetting(read({ version: 1 }), "trayIconColor", "darwin")).toBe(
@@ -63,6 +71,55 @@ describe(readSetting, () => {
     expect(
       readSetting(read({ version: 1 }), "unreadBadge", "darwin")
     ).toBeTruthy();
+  });
+
+  it("reads After copying from the two switches a file before it held, Trash winning, until it holds a choice of its own", () => {
+    expect([
+      afterCopy({}),
+      afterCopy({
+        verificationCodeMarkRead: false,
+        verificationCodeTrash: false,
+      }),
+      afterCopy({ verificationCodeMarkRead: true }),
+      afterCopy({
+        verificationCodeMarkRead: true,
+        verificationCodeTrash: true,
+      }),
+      afterCopy({ verificationCodeTrash: "yes", verificationCodeMarkRead: 1 }),
+      afterCopy({
+        verificationCodeTrash: true,
+        verificationCodeAfterCopy: "nothing",
+      }),
+      afterCopy({
+        verificationCodeTrash: true,
+        verificationCodeAfterCopy: "later",
+      }),
+    ]).toStrictEqual([
+      "nothing",
+      "nothing",
+      "markRead",
+      "trash",
+      "nothing",
+      "nothing",
+      "trash",
+    ]);
+  });
+
+  it("writes After copying alone, the two switches a file before it held left as found", () => {
+    const written = writeSetting(
+      read({ version: 1, verificationCodeTrash: true }),
+      "verificationCodeAfterCopy",
+      "markRead"
+    );
+
+    expect(written).toStrictEqual({
+      version: 1,
+      verificationCodeTrash: true,
+      verificationCodeAfterCopy: "markRead",
+    });
+    expect(readSetting(written, "verificationCodeAfterCopy", "darwin")).toBe(
+      "markRead"
+    );
   });
 
   it("shows the tray by default everywhere but on macOS", () => {

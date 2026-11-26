@@ -35,8 +35,7 @@ export const GATED_SETTINGS: {
   verificationCodes: { capability: "verificationCodes", free: () => false },
   verificationCodesDuringDoNotDisturb: { capability: "verificationCodes" },
   verificationCodeCopyMode: { capability: "verificationCodes" },
-  verificationCodeMarkRead: { capability: "verificationCodes" },
-  verificationCodeTrash: { capability: "verificationCodes" },
+  verificationCodeAfterCopy: { capability: "verificationCodes" },
   // Linen at its volume, or nothing for a person who chose none: never the
   // system's sound, nor silence for a choice the run does not offer.
   notificationSound: {

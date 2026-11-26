@@ -36,14 +36,15 @@ const SWITCHES = [
   ["Show trimmed content", "showTrimmedContent"],
   ["Find verification codes", "verificationCodes"],
   ["Show during Do Not Disturb", "verificationCodesDuringDoNotDisturb"],
-  ["Mark as read after copying", "verificationCodeMarkRead"],
-  ["Move to Trash after copying", "verificationCodeTrash"],
 ] as const;
 
 const CODES_OFF = "Turn on Find verification codes first.";
 
 const copyMode = (page: Page) =>
   page.getByRole("combobox", { name: "Copy code" });
+
+const afterCopy = (page: Page) =>
+  page.getByRole("combobox", { name: "After copying" });
 
 const openGmail = async (page: Page) => {
   await openSection(page, "Gmail");
@@ -79,7 +80,7 @@ test("each card is a group its heading names, holding its rows", async ({
   for (const [group, label] of [
     ["Gmail appearance", "Hide promotions"],
     ["Conversations", "Show trimmed content"],
-    ["Verification codes", "Move to Trash after copying"],
+    ["Verification codes", "Show during Do Not Disturb"],
   ] as const) {
     // oxlint-disable-next-line no-await-in-loop -- one group after another
     await expect(
@@ -103,7 +104,6 @@ test("each switch shows the stored value and writes the one it is turned to", as
   await writeSettings(userDataDir, {
     hidePromoBanner: true,
     reverseConversation: true,
-    verificationCodeTrash: true,
   });
 
   const app = await launchApp();
@@ -118,8 +118,6 @@ test("each switch shows the stored value and writes the one it is turned to", as
     showTrimmedContent: false,
     verificationCodes: true,
     verificationCodesDuringDoNotDisturb: true,
-    verificationCodeMarkRead: false,
-    verificationCodeTrash: true,
   };
 
   await openGmail(page);
@@ -200,26 +198,66 @@ test("Copy code shows the stored mode and writes the one chosen", async ({
     .toBe("immediately");
 });
 
-test("with codes off the four rows under it are disabled and say why, and come back with their values", async ({
+test("After copying reads a file's earlier Move to Trash switch, and writes its own choice alone, the earlier switch left as found", async ({
+  launchApp,
+  userDataDir,
+}) => {
+  await writeSettings(userDataDir, {
+    verificationCodeMarkRead: true,
+    verificationCodeTrash: true,
+  });
+
+  const app = await launchApp();
+  const page = await openSettings(app);
+
+  await openGmail(page);
+  await expect(afterCopy(page)).toContainText("Move to Trash");
+  await expect(afterCopy(page)).toHaveAccessibleDescription(
+    "Meru can occasionally mistake a regular email for one with a code."
+  );
+  await afterCopy(page).click();
+  await expect(page.getByRole("option")).toHaveText([
+    "Do nothing",
+    "Mark as read",
+    "Move to Trash",
+  ]);
+  await page.getByRole("option", { name: "Do nothing" }).click();
+
+  await expect(afterCopy(page)).toContainText("Do nothing");
+  await expect
+    .poll(() => storedValue(userDataDir, "verificationCodeAfterCopy"))
+    .toBe("nothing");
+  expect(await readStored(userDataDir)).toMatchObject({
+    verificationCodeMarkRead: true,
+    verificationCodeTrash: true,
+  });
+});
+
+test("After copying is Do nothing on a fresh profile", async ({ app }) => {
+  const page = await openSettings(app);
+
+  await openGmail(page);
+  await expect(afterCopy(page)).toContainText("Do nothing");
+});
+
+test("with codes off the three rows under it are disabled and say why, and come back with their values", async ({
   launchApp,
   userDataDir,
 }) => {
   await writeSettings(userDataDir, {
     verificationCodesDuringDoNotDisturb: false,
     verificationCodeCopyMode: "immediately",
-    verificationCodeMarkRead: true,
+    verificationCodeAfterCopy: "markRead",
   });
 
   const app = await launchApp();
   const page = await openSettings(app);
   const duringDoNotDisturb = switchNamed(page, "Show during Do Not Disturb");
-  const markRead = switchNamed(page, "Mark as read after copying");
-  const trash = switchNamed(page, "Move to Trash after copying");
 
   await openGmail(page);
   await switchNamed(page, "Find verification codes").click();
 
-  for (const control of [duringDoNotDisturb, copyMode(page), markRead, trash]) {
+  for (const control of [duringDoNotDisturb, copyMode(page), afterCopy(page)]) {
     // oxlint-disable-next-line no-await-in-loop -- one row after another
     await expect(control).toBeDisabled();
     // oxlint-disable-next-line no-await-in-loop -- one row after another
@@ -239,17 +277,13 @@ test("with codes off the four rows under it are disabled and say why, and come b
   await expect(duringDoNotDisturb).toHaveAccessibleDescription(
     "Shows codes even when Do Not Disturb or quiet hours are on."
   );
-  await expect(markRead).toBeEnabled();
-  await expect(markRead).toBeChecked();
-  await expect(trash).not.toBeChecked();
-  await expect(trash).toHaveAccessibleDescription(
-    "Moves the email to the Trash after you copy its code. Meru can occasionally mistake a regular email for one with a code."
-  );
+  await expect(afterCopy(page)).toBeEnabled();
+  await expect(afterCopy(page)).toContainText("Mark as read");
   expect(await readStored(userDataDir)).toMatchObject({
     verificationCodes: true,
     verificationCodesDuringDoNotDisturb: false,
     verificationCodeCopyMode: "immediately",
-    verificationCodeMarkRead: true,
+    verificationCodeAfterCopy: "markRead",
   });
 });
 
@@ -257,11 +291,10 @@ test("the keyboard reaches every control in the page's order", async ({
   app,
 }) => {
   const page = await openSettings(app);
-  const labels = SWITCHES.map(([label]) => label);
   const order = [
-    ...labels.slice(0, 9).map((label) => switchNamed(page, label)),
+    ...SWITCHES.map(([label]) => switchNamed(page, label)),
     copyMode(page),
-    ...labels.slice(9).map((label) => switchNamed(page, label)),
+    afterCopy(page),
   ];
 
   await openGmail(page);
@@ -298,10 +331,7 @@ test.describe("shots", () => {
     await openGmail(page);
     await shoot("settings-gmail");
 
-    await switchNamed(
-      page,
-      "Move to Trash after copying"
-    ).scrollIntoViewIfNeeded();
+    await afterCopy(page).scrollIntoViewIfNeeded();
     await shoot("settings-gmail-bottom");
 
     await switchNamed(page, "Find verification codes").click();

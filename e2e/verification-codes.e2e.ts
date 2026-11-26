@@ -70,7 +70,7 @@ test("shows a code with a Copy button, copies nothing until it is pressed, then 
   standIn,
 }) => {
   await writeState(userDataDir, HOME);
-  await writeSettings(userDataDir, { verificationCodeMarkRead: true });
+  await writeSettings(userDataDir, { verificationCodeAfterCopy: "markRead" });
   standIn.setFeed(ANY_SESSION, { unreadCount: 1, mail: [plain] });
 
   const app = await launchApp();

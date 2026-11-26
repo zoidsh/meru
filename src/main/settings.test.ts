@@ -507,7 +507,7 @@ describe(createSettingsStore, () => {
       quietHours: [{ start: "22:00", end: "07:00" }],
       notificationImportantOnly: true,
       verificationCodes: true,
-      verificationCodeTrash: true,
+      verificationCodeAfterCopy: "trash",
       notificationSound: "system",
     };
     const settings = createSettingsStore({

@@ -628,7 +628,7 @@ describe("verification codes", () => {
   it("shows the code with a Copy button and copies nothing, touching no mail, until it is pressed", async () => {
     const app = setup();
 
-    app.set("verificationCodeMarkRead", true);
+    app.set("verificationCodeAfterCopy", "markRead");
     await arrive(app, codeEntry("1"));
 
     expect(content(app.shown)).toStrictEqual([
@@ -664,7 +664,7 @@ describe("verification codes", () => {
     const app = setup();
 
     app.set("verificationCodeCopyMode", "immediately");
-    app.set("verificationCodeMarkRead", true);
+    app.set("verificationCodeAfterCopy", "markRead");
     await arrive(app, codeEntry("1"));
 
     expect(content(app.shown)).toStrictEqual([
@@ -683,22 +683,11 @@ describe("verification codes", () => {
     expect(app.copied).toStrictEqual([CODE]);
   });
 
-  it("moves the mail to Trash rather than marking it read when both are on", async () => {
-    const app = setup();
-
-    app.set("verificationCodeCopyMode", "immediately");
-    app.set("verificationCodeMarkRead", true);
-    app.set("verificationCodeTrash", true);
-    await arrive(app, codeEntry("1"));
-
-    expect(app.acted).toStrictEqual([["a", "delete", "1"]]);
-  });
-
   it("when the copy as it arrives fails, touches no mail, logs no code and offers Copy instead", async () => {
     const app = setup({ copies: false });
 
     app.set("verificationCodeCopyMode", "immediately");
-    app.set("verificationCodeTrash", true);
+    app.set("verificationCodeAfterCopy", "trash");
     await arrive(app, codeEntry("1"));
 
     expect(content(app.shown)).toStrictEqual([
@@ -727,7 +716,7 @@ describe("verification codes", () => {
   it("copies and moves the mail once, however often it is asked", async () => {
     const app = setup();
 
-    app.set("verificationCodeTrash", true);
+    app.set("verificationCodeAfterCopy", "trash");
     await arrive(app, codeEntry("1"));
     app.shown[0]?.events.onAction?.(0);
     app.shown[0]?.events.onClick();
@@ -743,7 +732,7 @@ describe("verification codes", () => {
   it("copies once while a copy is still being written, after it lands, and again after one fails", async () => {
     const app = setup({ copies: false });
 
-    app.set("verificationCodeTrash", true);
+    app.set("verificationCodeAfterCopy", "trash");
     await arrive(app, codeEntry("1"));
 
     const press = () => app.shown[0]?.events.onAction?.(0);
@@ -774,7 +763,7 @@ describe("verification codes", () => {
     const app = setup({ state: two });
 
     app.set("verificationCodeCopyMode", "immediately");
-    app.set("verificationCodeMarkRead", true);
+    app.set("verificationCodeAfterCopy", "markRead");
     await app.notifications.polled("b", feed());
 
     const land = app.holdCopies();
@@ -810,7 +799,7 @@ describe("verification codes", () => {
 
     app.set("verificationCodesDuringDoNotDisturb", false);
     app.set("verificationCodeCopyMode", "immediately");
-    app.set("verificationCodeTrash", true);
+    app.set("verificationCodeAfterCopy", "trash");
     await arrive(app, codeEntry("1"));
 
     expect([app.shown, app.copied, app.acted, app.played]).toStrictEqual([
@@ -925,7 +914,7 @@ describe("verification codes", () => {
     const app = setup({ free: true });
 
     app.set("verificationCodeCopyMode", "immediately");
-    app.set("verificationCodeTrash", true);
+    app.set("verificationCodeAfterCopy", "trash");
     await arrive(app, codeEntry("1"));
 
     const shown = content(app.shown);
@@ -961,7 +950,7 @@ describe("verification codes", () => {
     const app = setup();
 
     app.set("verificationCodeCopyMode", "immediately");
-    app.set("verificationCodeTrash", true);
+    app.set("verificationCodeAfterCopy", "trash");
     await arrive(app, codeEntry("1"));
 
     expect(app.logs).toStrictEqual([

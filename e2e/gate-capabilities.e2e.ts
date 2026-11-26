@@ -363,7 +363,7 @@ const copied = (app: ElectronApplication) =>
       | undefined) ?? []),
   ]);
 
-test("the free version finds no verification code, so its mail is notified as any other, and its five rows are Pro rows", async ({
+test("the free version finds no verification code, so its mail is notified as any other, and its four rows are Pro rows", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -371,7 +371,7 @@ test("the free version finds no verification code, so its mail is notified as an
   await seedOneProfile(userDataDir, standIn);
   await writeSettings(userDataDir, {
     verificationCodeCopyMode: "immediately",
-    verificationCodeTrash: true,
+    verificationCodeAfterCopy: "trash",
   });
   standIn.setFeed(ANY_SESSION, { unreadCount: 1, mail: [plainMail] });
 
@@ -400,8 +400,12 @@ test("the free version finds no verification code, so its mail is notified as an
   await openSection(page, "Gmail");
   await expect(switchNamed(page, "Find verification codes")).toBeDisabled();
   await expect(switchNamed(page, "Find verification codes")).not.toBeChecked();
-  await expect(switchNamed(page, "Move to Trash after copying")).toBeChecked();
-  await expect(switchNamed(page, "Move to Trash after copying")).toBeDisabled();
+  await expect(
+    page.getByRole("combobox", { name: "After copying" })
+  ).toContainText("Move to Trash");
+  await expect(
+    page.getByRole("combobox", { name: "After copying" })
+  ).toBeDisabled();
   await expect(
     page.getByRole("combobox", { name: "Copy code" })
   ).toBeDisabled();
@@ -412,8 +416,7 @@ test("the free version finds no verification code, so its mail is notified as an
     "Find verification codes",
     "Show during Do Not Disturb",
     "Copy code",
-    "Mark as read after copying",
-    "Move to Trash after copying",
+    "After copying",
   ]) {
     // oxlint-disable-next-line no-await-in-loop -- one row after another
     await expect(badgeOf(page, label)).toBeVisible();
@@ -872,7 +875,7 @@ test.describe("shots", () => {
       notificationImportantOnly: true,
       notificationSound: "system",
       verificationCodes: true,
-      verificationCodeTrash: true,
+      verificationCodeAfterCopy: "trash",
       reverseConversation: true,
       trustedSites: ["https://example.org", "https://example.net"],
     });

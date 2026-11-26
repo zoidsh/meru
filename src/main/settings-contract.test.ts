@@ -775,8 +775,7 @@ describe("the Settings window's Gmail page", () => {
       verificationCodes: true,
       verificationCodesDuringDoNotDisturb: true,
       verificationCodeCopyMode: "immediately",
-      verificationCodeMarkRead: false,
-      verificationCodeTrash: false,
+      verificationCodeAfterCopy: "nothing",
     });
     app.dispose();
   });

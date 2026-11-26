@@ -335,6 +335,11 @@ msgstr "Adds a touch of the profile color to the title bar and sidebar."
 msgid "Advanced"
 msgstr "Advanced"
 
+#. Label of the menu in Settings choosing what is done with the email whose verification code was copied
+#: src/settings/gmail-page.tsx
+msgid "After copying"
+msgstr "After copying"
+
 #. A window of quiet hours whose start and end are the same, so it holds the whole day, in the Settings caption naming the value under All profiles; {days} is when, such as every day or weekdays
 #: src/settings/scope.ts
 msgid "all day {days}"
@@ -1010,6 +1015,11 @@ msgstr "Do Not Disturb is on until turned off"
 msgid "Do Not Disturb is on."
 msgstr "Do Not Disturb is on."
 
+#. Choice of the After copying menu in Settings: the email whose verification code was copied is left as it is
+#: src/settings/gmail-page.tsx
+msgid "Do nothing"
+msgstr "Do nothing"
+
 #. Heading of the group of Settings on macOS for Meru's icon in the Dock; the Dock is macOS's own name
 #: src/settings/menu-bar-page.tsx
 msgid "Dock"
@@ -1491,6 +1501,11 @@ msgstr "Manage trusted sites"
 msgid "Manage…"
 msgstr "Manage…"
 
+#. Choice of the After copying menu in Settings: the email whose verification code was copied is marked read
+#: src/settings/gmail-page.tsx
+msgid "Mark as read"
+msgstr "Mark as read"
+
 #. Button on a message in the unified inbox that marks it read. Gmail's own words for the action
 #: src/shell/inbox.tsx
 msgctxt "inbox action"
@@ -1502,20 +1517,10 @@ msgstr "Mark as read"
 msgid "Mark as Read"
 msgstr "Mark as Read"
 
-#. Label of the switch in Settings that marks the email with a verification code read once the code is copied
-#: src/settings/gmail-page.tsx
-msgid "Mark as read after copying"
-msgstr "Mark as read after copying"
-
 #. Button on a new email notification that reports the email as spam. Gmail's own words for the action
 #: src/main/notifications.ts
 msgid "Mark as Spam"
 msgstr "Mark as Spam"
-
-#. Description of the Mark as read after copying switch in Settings
-#: src/settings/gmail-page.tsx
-msgid "Marks the email as read after you copy its code."
-msgstr "Marks the email as read after you copy its code."
 
 #. Menu item, in the Tabs menu and a tab's context menu in a split view, that shows the pane alone, keeping the split
 #: src/main/menu-labels.ts
@@ -1561,6 +1566,11 @@ msgstr "Meru {version} is ready. Restart to finish installing it."
 #: src/settings/privacy-page.tsx
 msgid "Meru asks before a link opens in your default browser."
 msgstr "Meru asks before a link opens in your default browser."
+
+#. Description of the After copying menu in Settings, which can mark the email read or move it to Trash; it warns that a code found by mistake can act on a real email
+#: src/settings/gmail-page.tsx
+msgid "Meru can occasionally mistake a regular email for one with a code."
+msgstr "Meru can occasionally mistake a regular email for one with a code."
 
 #. First sentence about Meru Pro (in Settings and in the main window's card at a launch it could not confirm) when the computer's date looks wrong; it is the date
 #: src/shared/license-status.ts
@@ -1732,20 +1742,15 @@ msgstr "Move to Main Window"
 msgid "Move to New Window"
 msgstr "Move to New Window"
 
-#. Label of the switch in Settings that moves the email with a verification code to Trash once the code is copied; Trash is Gmail's folder of that name
+#. Choice of the After copying menu in Settings: the email whose verification code was copied is moved to Trash, Gmail's folder of that name
 #: src/settings/gmail-page.tsx
-msgid "Move to Trash after copying"
-msgstr "Move to Trash after copying"
+msgid "Move to Trash"
+msgstr "Move to Trash"
 
 #. Second line of a finished download in the Downloads card whose file is no longer where it was saved
 #: src/shell/downloads.tsx
 msgid "Moved or deleted"
 msgstr "Moved or deleted"
-
-#. Description of the Move to Trash after copying switch in Settings; Trash is Gmail's folder of that name, and the second sentence warns that a code found by mistake can move a real email
-#: src/settings/gmail-page.tsx
-msgid "Moves the email to the Trash after you copy its code. Meru can occasionally mistake a regular email for one with a code."
-msgstr "Moves the email to the Trash after you copy its code. Meru can occasionally mistake a regular email for one with a code."
 
 #. Label of a profile's name on its page in Settings
 #. Label of the field in Settings that takes the name of a new saved search

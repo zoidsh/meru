@@ -21,7 +21,11 @@ import type {
   NotificationCopy,
   Seen,
 } from "#core/notifications.ts";
-import type { SettingKey, SettingValue } from "#core/settings.ts";
+import type {
+  SettingKey,
+  SettingValue,
+  VerificationCodeAfterCopy,
+} from "#core/settings.ts";
 import { decideSound, sounds } from "#core/sounds.ts";
 import { enabledProfiles, mailChecked } from "#core/state.ts";
 import type { DoNotDisturb, Profile, State } from "#core/state.ts";
@@ -68,6 +72,12 @@ export interface MailNotificationsDeps {
   sound: SoundOutput;
   log: (message: string) => void;
 }
+
+const FOLLOW_UPS: Record<VerificationCodeAfterCopy, MailAction | undefined> = {
+  nothing: undefined,
+  markRead: "markAsRead",
+  trash: "delete",
+};
 
 const actionLabels = (): Record<MailAction, string> => ({
   archive: t({
@@ -318,13 +328,7 @@ export const createMailNotifications = ({
       return true;
     }
 
-    let followUp: MailAction | undefined;
-
-    if (setting("verificationCodeTrash")) {
-      followUp = "delete";
-    } else if (setting("verificationCodeMarkRead")) {
-      followUp = "markAsRead";
-    }
+    const followUp = FOLLOW_UPS[setting("verificationCodeAfterCopy")];
 
     if (followUp) {
       act(profileId, followUp, messageId);

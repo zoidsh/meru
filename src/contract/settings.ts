@@ -34,8 +34,7 @@ export const GMAIL_PAGE_KEYS = [
   "verificationCodes",
   "verificationCodesDuringDoNotDisturb",
   "verificationCodeCopyMode",
-  "verificationCodeMarkRead",
-  "verificationCodeTrash",
+  "verificationCodeAfterCopy",
 ] as const;
 
 /**

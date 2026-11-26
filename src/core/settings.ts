@@ -29,6 +29,12 @@ export interface SettingDefinition<Value = unknown> {
   default: Value | ((platform: Platform) => Value);
   /** A profile may hold a value of its own, which it reads in place of the app's. */
   overridable?: true;
+  /**
+   * The value a file written before this setting existed implies, read from
+   * the keys it replaced while the file holds none of its own that parses;
+   * `undefined` for the default.
+   */
+  earlier?: (settings: Settings) => Value | undefined;
 }
 
 /** What `SETTINGS` may declare: any name but the file's own. */
@@ -69,6 +75,16 @@ export const VERIFICATION_CODE_COPY_MODES = [
 
 export type VerificationCodeCopyMode =
   (typeof VERIFICATION_CODE_COPY_MODES)[number];
+
+/** What is done with the email once its code is copied, the default first. */
+export const VERIFICATION_CODE_AFTER_COPY = [
+  "nothing",
+  "markRead",
+  "trash",
+] as const;
+
+export type VerificationCodeAfterCopy =
+  (typeof VERIFICATION_CODE_AFTER_COPY)[number];
 
 /**
  * An absolute path on macOS, Linux or Windows (a drive or a network share),
@@ -143,18 +159,23 @@ export const SETTINGS = {
     schema: z.enum(VERIFICATION_CODE_COPY_MODES),
     default: "notificationClick",
   }),
-  /** Marks the message read once its code is copied, never on detection. */
-  verificationCodeMarkRead: setting<boolean>({
-    schema: z.boolean(),
-    default: false,
-  }),
   /**
-   * Moves the message to Trash once its code is copied, in place of marking
-   * it read when both are on.
+   * What is done with the message once its code is copied, never on
+   * detection. A file from before it holds two switches instead, Trash
+   * winning where both are on; they are read, never written.
    */
-  verificationCodeTrash: setting<boolean>({
-    schema: z.boolean(),
-    default: false,
+  verificationCodeAfterCopy: setting<VerificationCodeAfterCopy>({
+    schema: z.enum(VERIFICATION_CODE_AFTER_COPY),
+    default: "nothing",
+    earlier: (settings) => {
+      if (settings.verificationCodeTrash === true) {
+        return "trash";
+      }
+
+      return settings.verificationCodeMarkRead === true
+        ? "markRead"
+        : undefined;
+    },
   }),
   /**
    * Meru starts without showing its main window, at every launch as v3's
@@ -528,6 +549,12 @@ export const readSetting = <Key extends SettingKey>(
 
   if (parsed.success) {
     return parsed.data as SettingValue<Key>;
+  }
+
+  const earlier = definition.earlier?.(settings);
+
+  if (earlier !== undefined) {
+    return earlier as SettingValue<Key>;
   }
 
   return (
