@@ -229,7 +229,7 @@ const setup = async ({
       },
     },
     apps: APPS,
-    ...(tabApps && { tabApps }),
+    tabApps: tabApps ?? (() => APPS),
     signInOrigins: SIGN_IN_ORIGINS,
     background: true,
     systemBrowser: {

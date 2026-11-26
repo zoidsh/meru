@@ -57,9 +57,9 @@ export interface TabViewsDeps {
   /**
    * The apps a page's link may open a tab of, as they are now: `apps`, or
    * Gmail alone on the free version, whose links to another app leave
-   * Meru as any other site's do. `apps` when absent.
+   * Meru as any other site's do.
    */
-  tabApps?: () => readonly App[];
+  tabApps: () => readonly App[];
   /** Google's sign-in, or the suite's stand-in for it. */
   signInOrigins: readonly string[];
   background: boolean;
@@ -171,7 +171,7 @@ export const createTabViews = ({
   window,
   ownWindows,
   apps,
-  tabApps = () => apps,
+  tabApps,
   signInOrigins,
   background,
   systemBrowser,
