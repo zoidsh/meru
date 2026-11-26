@@ -1,8 +1,9 @@
 import { useLingui } from "@lingui/react/macro";
 import { debounce, noop } from "es-toolkit";
 import { PlayIcon } from "lucide-react";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo } from "react";
 
+import { NOTIFICATIONS_OVERRIDABLE_KEYS } from "#contract/settings.ts";
 import type {
   PageOverridableKey,
   PageSettings,
@@ -23,19 +24,10 @@ import { Switch } from "#ui/switch.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#ui/tooltip.tsx";
 
 import { doNotDisturbCaption } from "./do-not-disturb.ts";
+import { usePageScope } from "./page-scope.tsx";
 import { useNeedsPro } from "./pro-badge.tsx";
 import { QuietHoursField } from "./quiet-hours-field.tsx";
-import { DiffersLine, OverrideCaption, ResetButton } from "./row-scope.tsx";
-import type { RowScope } from "./row-scope.tsx";
-import { ScopeTabs } from "./scope-tabs.tsx";
-import {
-  appValueText,
-  differingProfiles,
-  effectiveSettings,
-  isScoped,
-  shownScope,
-} from "./scope.ts";
-import type { Scope } from "./scope.ts";
+import { appValueText, effectiveSettings } from "./scope.ts";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
@@ -65,7 +57,10 @@ export const NotificationsPage = () => {
   const doNotDisturb = useSettingsState("doNotDisturb");
   const profiles = useSettingsState("profiles");
   const needsPro = useNeedsPro();
-  const [chosenScope, setChosenScope] = useState<Scope>("all");
+  const { profile, rowScope, page } = usePageScope(
+    profiles,
+    NOTIFICATIONS_OVERRIDABLE_KEYS
+  );
   const testBlockedId = useId();
   const previewVolume = useMemo(
     () =>
@@ -82,16 +77,6 @@ export const NotificationsPage = () => {
   }
 
   const calls = settingsCalls();
-  const scoped = isScoped(profiles);
-  const scope = shownScope(chosenScope, profiles);
-
-  // A scope that fell back stays fallen back, even once its profile's id
-  // could show again.
-  if (scope !== chosenScope) {
-    setChosenScope(scope);
-  }
-
-  const profile = profiles.find((candidate) => candidate.id === scope);
   const values = effectiveSettings(settings, profile);
   const paused = doNotDisturb.on
     ? t({
@@ -147,46 +132,10 @@ export const NotificationsPage = () => {
       : calls.update(change));
   };
 
-  /** What the row adds in the scope shown; nothing while the page has no scopes. */
-  const rowScope = (key: PageOverridableKey, label: string): RowScope => {
-    if (!scoped) {
-      return {};
-    }
-
-    if (!profile) {
-      const differing = differingProfiles(profiles, key);
-
-      return differing.length > 0
-        ? {
-            line: <DiffersLine differing={differing} onShow={setChosenScope} />,
-          }
-        : {};
-    }
-
-    if (!Object.hasOwn(profile.overrides, key)) {
-      return {
-        line: <OverrideCaption name={profile.name} appValue={undefined} />,
-      };
-    }
-
-    return {
-      line: (
-        <OverrideCaption
-          name={profile.name}
-          appValue={appValueText(key, settings[key], soundNames, i18n.locale)}
-        />
-      ),
-      reset: (
-        <ResetButton
-          label={label}
-          onClick={() => {
-            calls.clearOverride({ profileId: profile.id, key }).catch(noop);
-          }}
-        />
-      ),
-      bar: profile.color,
-    };
-  };
+  const scopeOf = (key: PageOverridableKey, label: string) =>
+    rowScope(key, label, () =>
+      appValueText(key, settings[key], soundNames, i18n.locale)
+    );
 
   const switchRow = (
     key: BooleanKey,
@@ -199,7 +148,7 @@ export const NotificationsPage = () => {
       label={label}
       description={description}
       paused={pausable ? paused : undefined}
-      scope={rowScope(key, label)}
+      scope={scopeOf(key, label)}
       pro={needsPro.setting(key)}
       disabled={needsPro.setting(key)}
     >
@@ -314,7 +263,7 @@ export const NotificationsPage = () => {
                 key="notificationSound"
                 label={soundLabel}
                 paused={paused}
-                scope={rowScope("notificationSound", soundLabel)}
+                scope={scopeOf("notificationSound", soundLabel)}
                 pro={needsPro.capability("notificationSound")}
                 disabled={needsPro.capability("notificationSound")}
               >
@@ -407,7 +356,7 @@ export const NotificationsPage = () => {
                 label={quietHoursLabel}
                 list={values.quietHours}
                 paused={paused}
-                scope={rowScope("quietHours", quietHoursLabel)}
+                scope={scopeOf("quietHours", quietHoursLabel)}
                 pro={needsPro.setting("quietHours")}
                 onChange={(value) => {
                   write("quietHours", [...value]);
@@ -562,13 +511,5 @@ export const NotificationsPage = () => {
     </>
   );
 
-  if (!scoped) {
-    return cards;
-  }
-
-  return (
-    <ScopeTabs profiles={profiles} scope={scope} onScope={setChosenScope}>
-      {cards}
-    </ScopeTabs>
-  );
+  return page(cards);
 };

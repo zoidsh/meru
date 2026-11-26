@@ -14,7 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/tabs.tsx";
 
 import { overrideCount } from "./scope.ts";
-import type { ListedProfile, Scope } from "./scope.ts";
+import type { ListedProfile, PageKeys, Scope } from "./scope.ts";
 
 /** The folded trigger's value while All profiles is chosen, which it never selects. */
 const CHOOSE = "choose";
@@ -41,11 +41,14 @@ export const ProfileDot = ({
  */
 export const ScopeTabs = ({
   profiles,
+  keys,
   scope,
   onScope,
   children,
 }: {
   profiles: readonly ListedProfile[];
+  /** The page's settings a profile may hold a value of its own for. */
+  keys: PageKeys;
   scope: Scope;
   onScope: (scope: Scope) => void;
   children: ReactNode;
@@ -164,7 +167,7 @@ export const ScopeTabs = ({
                     }}
                   >
                     {profiles.map((profile) => {
-                      const count = overrideCount(profile);
+                      const count = overrideCount(profile, keys);
 
                       return (
                         <DropdownMenuRadioItem

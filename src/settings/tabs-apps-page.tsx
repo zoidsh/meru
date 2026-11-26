@@ -2,6 +2,7 @@ import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
 
+import { TABS_APPS_OVERRIDABLE_KEYS } from "#contract/settings.ts";
 import { APPS } from "#core/apps.ts";
 import { SLEEP_AFTER, SLEEP_IDLE_TABS } from "#core/settings.ts";
 import {
@@ -15,7 +16,9 @@ import {
 import { Switch } from "#ui/switch.tsx";
 
 import { AppsInBrowserDialog } from "./apps-in-browser-dialog.tsx";
+import { usePageScope } from "./page-scope.tsx";
 import { useNeedsPro } from "./pro-badge.tsx";
+import { effectiveSettings, switchValueText } from "./scope.ts";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
@@ -25,21 +28,45 @@ const OFFERED = APPS.filter((app) => app.id !== "gmail");
 
 /**
  * Whether a link or New tab opens a Google app in Meru, which always leave
- * for the default browser, and which idle tabs sleep after how long: app
- * settings alone, so the page has no scopes.
+ * for the default browser, each of which a profile may set for itself, and
+ * which idle tabs sleep after how long, which only the app sets and a
+ * profile's scope leaves out.
  */
 export const TabsAppsPage = () => {
   const { t } = useLingui();
   const settings = useSettingsState("settings");
+  const profiles = useSettingsState("profiles");
   const needsPro = useNeedsPro();
+  const { profile, rowScope, page } = usePageScope(
+    profiles,
+    TABS_APPS_OVERRIDABLE_KEYS
+  );
 
-  if (!settings) {
+  if (!settings || !profiles) {
     return null;
   }
 
-  const excluded = settings.appsInDefaultBrowser;
-  // An id this build does not know stays stored, uncounted.
-  const chosen = OFFERED.filter((app) => excluded.includes(app.id)).length;
+  const values = effectiveSettings(settings, profile);
+  const excluded = values.appsInDefaultBrowser;
+  const countText = (list: readonly string[]) => {
+    // An id this build does not know stays stored, uncounted.
+    const count = OFFERED.filter((app) => list.includes(app.id)).length;
+
+    return count === 0
+      ? t({
+          message: "None",
+          comment:
+            "Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser",
+        })
+      : t({
+          message: plural(count, {
+            one: "# Google app",
+            other: "# Google apps",
+          }),
+          comment:
+            "Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser",
+        });
+  };
   const excludedLabel = t({
     message: "Always open in your default browser",
     comment:
@@ -50,31 +77,19 @@ export const TabsAppsPage = () => {
   const inMeruPro = needsPro.setting("openAppsInMeru");
   const excludedPro = needsPro.setting("appsInDefaultBrowser");
   // On the free version the row says Pro, not to turn the switch on.
-  const excludedOff = !settings.openAppsInMeru && !excludedPro;
-  let excludedDescription: string;
-
-  if (excludedOff) {
-    excludedDescription = t({
-      message: "Turn on Open Google apps in Meru first.",
-      comment:
-        "Description of the Always open in your default browser row in Settings while Open Google apps in Meru, the switch above it, is off; it says what to do to use the row",
-    });
-  } else if (chosen === 0) {
-    excludedDescription = t({
-      message: "None",
-      comment:
-        "Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser",
-    });
-  } else {
-    excludedDescription = t({
-      message: plural(chosen, {
-        one: "# Google app",
-        other: "# Google apps",
-      }),
-      comment:
-        "Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser",
-    });
-  }
+  const excludedOff = !values.openAppsInMeru && !excludedPro;
+  const excludedDescription = excludedOff
+    ? t({
+        message: "Turn on Open Google apps in Meru first.",
+        comment:
+          "Description of the Always open in your default browser row in Settings while Open Google apps in Meru, the switch above it, is off; it says what to do to use the row",
+      })
+    : countText(excluded);
+  const inMeruLabel = t({
+    message: "Open Google apps in Meru",
+    comment:
+      "Label of the switch in Settings that has links to Google apps, such as Calendar or Drive, open as tabs in Meru rather than in the default browser",
+  });
 
   const sleepPro = needsPro.setting("sleepIdleTabs");
   const afterPro = needsPro.setting("sleepAfter");
@@ -118,7 +133,7 @@ export const TabsAppsPage = () => {
     }),
   };
 
-  return (
+  return page(
     <SettingGroups>
       <SettingGroup
         title={t({
@@ -131,13 +146,9 @@ export const TabsAppsPage = () => {
           {[
             <SettingRow
               key="openAppsInMeru"
-              label={t({
-                message: "Open Google apps in Meru",
-                comment:
-                  "Label of the switch in Settings that has links to Google apps, such as Calendar or Drive, open as tabs in Meru rather than in the default browser",
-              })}
+              label={inMeruLabel}
               description={
-                settings.openAppsInMeru
+                values.openAppsInMeru
                   ? undefined
                   : t({
                       message: "Google apps open in your default browser.",
@@ -145,19 +156,30 @@ export const TabsAppsPage = () => {
                         "Description of the Open Google apps in Meru switch in Settings while it is off",
                     })
               }
+              scope={rowScope("openAppsInMeru", inMeruLabel, () =>
+                switchValueText(settings.openAppsInMeru)
+              )}
               disabled={inMeruPro}
               pro={inMeruPro}
             >
               {(ids) => (
                 <Switch
-                  checked={settings.openAppsInMeru}
+                  checked={values.openAppsInMeru}
                   disabled={inMeruPro}
                   aria-labelledby={ids.label}
                   aria-describedby={ids.description || undefined}
                   onCheckedChange={(checked) => {
-                    calls
-                      .update({ key: "openAppsInMeru", value: checked })
-                      .catch(noop);
+                    const change = {
+                      key: "openAppsInMeru",
+                      value: checked,
+                    } as const;
+
+                    // Main refuses a profile removed since the page last
+                    // heard, and the page then shows main's state.
+                    (profile
+                      ? calls.setOverride({ ...change, profileId: profile.id })
+                      : calls.update(change)
+                    ).catch(noop);
                   }}
                 />
               )}
@@ -166,6 +188,9 @@ export const TabsAppsPage = () => {
               key="appsInDefaultBrowser"
               label={excludedLabel}
               description={excludedDescription}
+              scope={rowScope("appsInDefaultBrowser", excludedLabel, () =>
+                countText(settings.appsInDefaultBrowser)
+              )}
               disabled={excludedOff || excludedPro}
               pro={excludedPro}
             >
@@ -173,6 +198,7 @@ export const TabsAppsPage = () => {
                 <AppsInBrowserDialog
                   apps={OFFERED}
                   chosen={excluded}
+                  profileId={profile?.id ?? null}
                   title={excludedLabel}
                   disabled={excludedOff || excludedPro}
                   describedBy={ids.description}
@@ -182,118 +208,121 @@ export const TabsAppsPage = () => {
           ]}
         </Rows>
       </SettingGroup>
-      <SettingGroup
-        title={t({
-          message: "Sleep",
-          context: "settings group",
-          comment:
-            "Title of the group of Settings for tabs that sleep by themselves, freeing their memory, once they go unused",
-        })}
-      >
-        <Rows>
-          {[
-            <SettingRow
-              key="sleepIdleTabs"
-              label={t({
-                message: "Sleep idle tabs",
-                comment:
-                  "Label of the menu in Settings choosing which tabs sleep by themselves once they go unused",
-              })}
-              description={t({
-                message:
-                  "Sleeping tabs free up memory and reload when you open them.",
-                comment: "Description of the Sleep idle tabs menu in Settings",
-              })}
-              disabled={sleepPro}
-              pro={sleepPro}
-            >
-              {(ids) => (
-                <Select
-                  items={SLEEP_IDLE_TABS.map((which) => ({
-                    value: which,
-                    label: sleepIdleTabs[which],
-                  }))}
-                  value={settings.sleepIdleTabs}
-                  disabled={sleepPro}
-                  onValueChange={(which) => {
-                    if (which !== null) {
-                      calls
-                        .update({ key: "sleepIdleTabs", value: which })
-                        .catch(noop);
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    aria-labelledby={ids.label}
-                    aria-describedby={ids.description || undefined}
+      {!profile && (
+        <SettingGroup
+          title={t({
+            message: "Sleep",
+            context: "settings group",
+            comment:
+              "Title of the group of Settings for tabs that sleep by themselves, freeing their memory, once they go unused",
+          })}
+        >
+          <Rows>
+            {[
+              <SettingRow
+                key="sleepIdleTabs"
+                label={t({
+                  message: "Sleep idle tabs",
+                  comment:
+                    "Label of the menu in Settings choosing which tabs sleep by themselves once they go unused",
+                })}
+                description={t({
+                  message:
+                    "Sleeping tabs free up memory and reload when you open them.",
+                  comment:
+                    "Description of the Sleep idle tabs menu in Settings",
+                })}
+                disabled={sleepPro}
+                pro={sleepPro}
+              >
+                {(ids) => (
+                  <Select
+                    items={SLEEP_IDLE_TABS.map((which) => ({
+                      value: which,
+                      label: sleepIdleTabs[which],
+                    }))}
+                    value={settings.sleepIdleTabs}
+                    disabled={sleepPro}
+                    onValueChange={(which) => {
+                      if (which !== null) {
+                        calls
+                          .update({ key: "sleepIdleTabs", value: which })
+                          .catch(noop);
+                      }
+                    }}
                   >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent alignItemWithTrigger={false}>
-                    <SelectGroup>
-                      {SLEEP_IDLE_TABS.map((which) => (
-                        <SelectItem key={which} value={which}>
-                          {sleepIdleTabs[which]}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            </SettingRow>,
-            <SettingRow
-              key="sleepAfter"
-              label={t({
-                message: "Sleep after",
-                comment:
-                  "Label of the menu in Settings choosing how long a tab goes unused before it sleeps by itself",
-              })}
-              description={t({
-                message:
-                  "Your current tab, tabs in separate windows and tabs playing sound stay awake.",
-                comment:
-                  "Description of the Sleep after menu in Settings, naming the tabs that never sleep by themselves",
-              })}
-              disabled={afterPro}
-              pro={afterPro}
-            >
-              {(ids) => (
-                <Select
-                  items={SLEEP_AFTER.map((after) => ({
-                    value: after,
-                    label: sleepAfter[after],
-                  }))}
-                  value={settings.sleepAfter}
-                  disabled={afterPro}
-                  onValueChange={(after) => {
-                    if (after !== null) {
-                      calls
-                        .update({ key: "sleepAfter", value: after })
-                        .catch(noop);
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    aria-labelledby={ids.label}
-                    aria-describedby={ids.description || undefined}
+                    <SelectTrigger
+                      aria-labelledby={ids.label}
+                      aria-describedby={ids.description || undefined}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false}>
+                      <SelectGroup>
+                        {SLEEP_IDLE_TABS.map((which) => (
+                          <SelectItem key={which} value={which}>
+                            {sleepIdleTabs[which]}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              </SettingRow>,
+              <SettingRow
+                key="sleepAfter"
+                label={t({
+                  message: "Sleep after",
+                  comment:
+                    "Label of the menu in Settings choosing how long a tab goes unused before it sleeps by itself",
+                })}
+                description={t({
+                  message:
+                    "Your current tab, tabs in separate windows and tabs playing sound stay awake.",
+                  comment:
+                    "Description of the Sleep after menu in Settings, naming the tabs that never sleep by themselves",
+                })}
+                disabled={afterPro}
+                pro={afterPro}
+              >
+                {(ids) => (
+                  <Select
+                    items={SLEEP_AFTER.map((after) => ({
+                      value: after,
+                      label: sleepAfter[after],
+                    }))}
+                    value={settings.sleepAfter}
+                    disabled={afterPro}
+                    onValueChange={(after) => {
+                      if (after !== null) {
+                        calls
+                          .update({ key: "sleepAfter", value: after })
+                          .catch(noop);
+                      }
+                    }}
                   >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent alignItemWithTrigger={false}>
-                    <SelectGroup>
-                      {SLEEP_AFTER.map((after) => (
-                        <SelectItem key={after} value={after}>
-                          {sleepAfter[after]}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            </SettingRow>,
-          ]}
-        </Rows>
-      </SettingGroup>
+                    <SelectTrigger
+                      aria-labelledby={ids.label}
+                      aria-describedby={ids.description || undefined}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false}>
+                      <SelectGroup>
+                        {SLEEP_AFTER.map((after) => (
+                          <SelectItem key={after} value={after}>
+                            {sleepAfter[after]}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              </SettingRow>,
+            ]}
+          </Rows>
+        </SettingGroup>
+      )}
     </SettingGroups>
   );
 };

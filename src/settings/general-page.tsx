@@ -1,11 +1,13 @@
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
 
+import { GENERAL_OVERRIDABLE_KEYS } from "#contract/settings.ts";
 import type { SettingChange } from "#contract/settings.ts";
 import { Button } from "#ui/button.tsx";
 import { Switch } from "#ui/switch.tsx";
 
 import { LanguageGroup } from "./language-group.tsx";
+import { usePageScope } from "./page-scope.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
@@ -18,16 +20,22 @@ type SwitchKey =
 const platform = () => document.documentElement.dataset.platform;
 
 /**
- * Meru's language and spelling, how it starts and where downloads go. App
- * settings alone, so the page has no scopes; the spelling languages, the
- * login item and the folder are main's to set, through calls of their own.
+ * Meru's language and spelling, how it starts and where downloads go. Only
+ * the downloads folder may be a profile's own, so a profile's scope shows
+ * that row alone; the spelling languages, the login item and the folder are
+ * main's to set, through calls of their own.
  */
 export const GeneralPage = () => {
   const { t } = useLingui();
   const settings = useSettingsState("settings");
   const general = useSettingsState("general");
+  const profiles = useSettingsState("profiles");
+  const { profile, rowScope, page } = usePageScope(
+    profiles,
+    GENERAL_OVERRIDABLE_KEYS
+  );
 
-  if (!settings || !general) {
+  if (!settings || !general || !profiles) {
     return null;
   }
 
@@ -59,7 +67,15 @@ export const GeneralPage = () => {
     </SettingRow>
   );
 
-  const { openAtLogin, downloadsFolder } = general;
+  const { openAtLogin } = general;
+  const downloadsFolder =
+    (profile && general.profileDownloadsFolders[profile.id]) ??
+    general.downloadsFolder;
+  const folderLabel = t({
+    message: "Save downloads to",
+    comment:
+      "Label of the row in Settings showing the folder downloads are saved to, with a button to change it",
+  });
   const fileManager = {
     darwin: t({
       message: "Show files in Finder when done",
@@ -73,7 +89,69 @@ export const GeneralPage = () => {
     }),
   }[platform() ?? ""];
 
-  return (
+  const folderRow = (
+    <SettingRow
+      key="downloadsFolder"
+      label={folderLabel}
+      description={<span className="break-all">{downloadsFolder.path}</span>}
+      notice={
+        downloadsFolder.available
+          ? undefined
+          : t({
+              message:
+                "This folder isn't available. Downloads go to Downloads until it's back.",
+              comment:
+                "Description of the Save downloads to row in Settings while the chosen folder is missing or cannot be written; Downloads is the system's Downloads folder",
+            })
+      }
+      scope={rowScope(
+        "downloadsFolder",
+        folderLabel,
+        () => general.downloadsFolder.path
+      )}
+    >
+      {(ids) => (
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label={t({
+            message: "Change where downloads are saved",
+            comment:
+              "Accessible name of the Change… button in Settings that opens the system's folder picker for where downloads are saved",
+          })}
+          aria-describedby={ids.description || undefined}
+          onClick={() => {
+            calls
+              .chooseDownloadsFolder({ profileId: profile?.id ?? null })
+              .catch(noop);
+          }}
+        >
+          {t({
+            message: "Change…",
+            comment:
+              "Button in Settings beside the downloads folder that opens the system's folder picker",
+          })}
+        </Button>
+      )}
+    </SettingRow>
+  );
+  const downloadsTitle = t({
+    message: "Downloads",
+    comment:
+      "Heading of the group of Settings about where downloads are saved and what happens when one finishes",
+  });
+
+  if (profile) {
+    return page(
+      <SettingGroups>
+        <SettingGroup title={downloadsTitle}>
+          <Rows>{[folderRow]}</Rows>
+        </SettingGroup>
+      </SettingGroups>
+    );
+  }
+
+  return page(
     <SettingGroups>
       <LanguageGroup
         language={settings.language}
@@ -142,60 +220,10 @@ export const GeneralPage = () => {
           ]}
         </Rows>
       </SettingGroup>
-      <SettingGroup
-        title={t({
-          message: "Downloads",
-          comment:
-            "Heading of the group of Settings about where downloads are saved and what happens when one finishes",
-        })}
-      >
+      <SettingGroup title={downloadsTitle}>
         <Rows>
           {[
-            <SettingRow
-              key="downloadsFolder"
-              label={t({
-                message: "Save downloads to",
-                comment:
-                  "Label of the row in Settings showing the folder downloads are saved to, with a button to change it",
-              })}
-              description={
-                <span className="break-all">{downloadsFolder.path}</span>
-              }
-              notice={
-                downloadsFolder.available
-                  ? undefined
-                  : t({
-                      message:
-                        "This folder isn't available. Downloads go to Downloads until it's back.",
-                      comment:
-                        "Description of the Save downloads to row in Settings while the chosen folder is missing or cannot be written; Downloads is the system's Downloads folder",
-                    })
-              }
-            >
-              {(ids) => (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  aria-label={t({
-                    message: "Change where downloads are saved",
-                    comment:
-                      "Accessible name of the Change… button in Settings that opens the system's folder picker for where downloads are saved",
-                  })}
-                  aria-describedby={ids.description || undefined}
-                  onClick={() => {
-                    calls
-                      .chooseDownloadsFolder({ profileId: null })
-                      .catch(noop);
-                  }}
-                >
-                  {t({
-                    message: "Change…",
-                    comment:
-                      "Button in Settings beside the downloads folder that opens the system's folder picker",
-                  })}
-                </Button>
-              )}
-            </SettingRow>,
+            folderRow,
             switchRow({
               key: "downloadsSaveAs",
               label: t({

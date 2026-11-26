@@ -84,7 +84,8 @@ export const OverrideCaption = ({
   const { t } = useLingui();
 
   return (
-    <FieldDescription>
+    // The app value can be a folder's path, one long word.
+    <FieldDescription className="wrap-anywhere">
       {appValue === undefined
         ? t({
             message: "Same as All profiles.",

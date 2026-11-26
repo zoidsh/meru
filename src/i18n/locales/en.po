@@ -13,11 +13,6 @@ msgstr ""
 msgid "{0, plural, one {# message} other {# messages}}"
 msgstr "{0, plural, one {# message} other {# messages}}"
 
-#. Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser
-#: src/settings/tabs-apps-page.tsx
-msgid "{chosen, plural, one {# Google app} other {# Google apps}}"
-msgstr "{chosen, plural, one {# Google app} other {# Google apps}}"
-
 #. Accessible name of a profile's button in the title bar, read by screen readers, while its inbox has unread mail; {name} is the profile's name, # how many messages are unread
 #: src/shell/titlebar.tsx
 msgid "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}"
@@ -27,6 +22,11 @@ msgstr "{count, plural, one {{name}, # unread message} other {{name}, # unread m
 #: src/shell/titlebar.tsx
 msgid "{count, plural, one {{name}, asleep, # unread message} other {{name}, asleep, # unread messages}}"
 msgstr "{count, plural, one {{name}, asleep, # unread message} other {{name}, asleep, # unread messages}}"
+
+#. Description of the Always open in your default browser row in Settings: how many Google apps, such as Calendar or Drive, are chosen to open in the default browser
+#: src/settings/tabs-apps-page.tsx
+msgid "{count, plural, one {# Google app} other {# Google apps}}"
+msgstr "{count, plural, one {# Google app} other {# Google apps}}"
 
 #. Title of the one notification for several emails that arrived at once in a profile, which opens its inbox when clicked
 #: src/main/notifications.ts

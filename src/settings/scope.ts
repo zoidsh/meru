@@ -18,17 +18,20 @@ export type Scope = string;
 /** How many profiles a row names before it counts the rest. */
 export const SHOWN_DIFFERING = 3;
 
-/** How many of the page's settings the profile holds of its own. */
-export const overrideCount = (profile: ListedProfile) =>
-  Object.keys(profile.overrides).length;
+/** A page's settings a profile may hold a value of its own for. */
+export type PageKeys = readonly PageOverridableKey[];
+
+/** How many of the page's settings, `keys`, the profile holds of its own. */
+export const overrideCount = (profile: ListedProfile, keys: PageKeys) =>
+  keys.filter((key) => Object.hasOwn(profile.overrides, key)).length;
 
 /**
  * Whether the page has scopes: with two or more profiles, or one that still
- * holds a value of its own, until it holds none.
+ * holds a value of its own of the page's settings, until it holds none.
  */
-export const isScoped = (profiles: readonly ListedProfile[]) =>
+export const isScoped = (profiles: readonly ListedProfile[], keys: PageKeys) =>
   profiles.length >= 2 ||
-  profiles.some((profile) => overrideCount(profile) > 0);
+  profiles.some((profile) => overrideCount(profile, keys) > 0);
 
 /**
  * The scope to show: the chosen one while the page has scopes and its
@@ -36,9 +39,10 @@ export const isScoped = (profiles: readonly ListedProfile[]) =>
  */
 export const shownScope = (
   scope: Scope,
-  profiles: readonly ListedProfile[]
+  profiles: readonly ListedProfile[],
+  keys: PageKeys
 ): Scope =>
-  isScoped(profiles) && profiles.some((profile) => profile.id === scope)
+  isScoped(profiles, keys) && profiles.some((profile) => profile.id === scope)
     ? scope
     : "all";
 
@@ -140,7 +144,12 @@ export const appValueText = <Key extends PageOverridableKey>(
       : list.map((window) => windowText(window, locale)).join("; ");
   }
 
-  return value
+  return switchValueText(Boolean(value));
+};
+
+/** A switch's app value as a profile's caption names it. */
+export const switchValueText = (on: boolean) =>
+  on
     ? t({
         message: "On",
         comment:
@@ -151,7 +160,6 @@ export const appValueText = <Key extends PageOverridableKey>(
         comment:
           "A switch's value under All profiles in the Settings caption under a profile's own value: For all profiles, it's Off.",
       });
-};
 
 /** The muted line before a row's badges, counting the profiles that differ. */
 export const differsText = (count: number) =>

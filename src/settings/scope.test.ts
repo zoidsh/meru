@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  NOTIFICATIONS_OVERRIDABLE_KEYS,
+  TABS_APPS_OVERRIDABLE_KEYS,
+} from "#contract/settings.ts";
 import type { PageSettings } from "#contract/settings.ts";
 import type { SoundChoice } from "#core/sounds.ts";
 
@@ -94,14 +98,27 @@ const APP: PageSettings = {
   updateChannel: "stable",
 };
 
+const NOTIFICATIONS = NOTIFICATIONS_OVERRIDABLE_KEYS;
+
 describe(isScoped, () => {
   it("has scopes with two profiles, or one that holds a value of its own", () => {
     expect([
-      isScoped([profile("home"), profile("work")]),
-      isScoped([profile("work", { notifications: false })]),
-      isScoped([profile("work")]),
-      isScoped([]),
+      isScoped([profile("home"), profile("work")], NOTIFICATIONS),
+      isScoped([profile("work", { notifications: false })], NOTIFICATIONS),
+      isScoped([profile("work")], NOTIFICATIONS),
+      isScoped([], NOTIFICATIONS),
     ]).toStrictEqual([true, true, false, false]);
+  });
+
+  it("counts a lone profile's own values of the page's settings alone, so another page's keep no scopes on this one", () => {
+    const work = profile("work", { openAppsInMeru: false });
+
+    expect([
+      isScoped([work], TABS_APPS_OVERRIDABLE_KEYS),
+      isScoped([work], NOTIFICATIONS),
+      overrideCount(work, TABS_APPS_OVERRIDABLE_KEYS),
+      overrideCount(work, NOTIFICATIONS),
+    ]).toStrictEqual([true, false, 1, 0]);
   });
 });
 
@@ -110,11 +127,15 @@ describe(shownScope, () => {
     const two = [profile("home"), profile("work")];
 
     expect([
-      shownScope("work", two),
-      shownScope("gone", two),
-      shownScope("work", [profile("work")]),
-      shownScope("work", [profile("work", { unreadBadge: false })]),
-      shownScope("all", two),
+      shownScope("work", two, NOTIFICATIONS),
+      shownScope("gone", two, NOTIFICATIONS),
+      shownScope("work", [profile("work")], NOTIFICATIONS),
+      shownScope(
+        "work",
+        [profile("work", { unreadBadge: false })],
+        NOTIFICATIONS
+      ),
+      shownScope("all", two, NOTIFICATIONS),
     ]).toStrictEqual(["work", "all", "all", "work", "all"]);
   });
 });
@@ -151,7 +172,7 @@ describe(effectiveSettings, () => {
       effectiveSettings(APP, work).notificationSound,
       effectiveSettings(APP, work).notifications,
       effectiveSettings(APP, undefined),
-      overrideCount(work),
+      overrideCount(work, NOTIFICATIONS),
     ]).toStrictEqual(["chime", true, APP, 1]);
   });
 });

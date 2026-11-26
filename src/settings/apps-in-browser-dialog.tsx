@@ -22,7 +22,15 @@ import { Table, TableBody, TableCell, TableRow } from "#ui/table.tsx";
 
 import { settingsCalls } from "./sync.ts";
 
-const AppRow = ({ app, checked }: { app: App; checked: boolean }) => {
+const AppRow = ({
+  app,
+  checked,
+  profileId,
+}: {
+  app: App;
+  checked: boolean;
+  profileId: string | null;
+}) => {
   const id = useId();
 
   return (
@@ -33,7 +41,7 @@ const AppRow = ({ app, checked }: { app: App; checked: boolean }) => {
           checked={checked}
           onCheckedChange={(on) => {
             settingsCalls()
-              .setAppInDefaultBrowser({ profileId: null, app: app.id, on })
+              .setAppInDefaultBrowser({ profileId, app: app.id, on })
               .catch(noop);
           }}
         />
@@ -50,11 +58,14 @@ const AppRow = ({ app, checked }: { app: App; checked: boolean }) => {
 
 /**
  * Always open in your default browser's Manage… and its dialog, a checkbox
- * per app, each change saved as it is made.
+ * per app, each change saved as it is made to the list of the scope it was
+ * opened from: the app's, or the profile's, which starts from the app's
+ * until it has one of its own.
  */
 export const AppsInBrowserDialog = ({
   apps,
   chosen,
+  profileId,
   title,
   disabled,
   describedBy,
@@ -62,6 +73,8 @@ export const AppsInBrowserDialog = ({
   /** In the launcher's order. */
   apps: readonly App[];
   chosen: readonly string[];
+  /** The profile whose list it changes, `null` for the app's. */
+  profileId: string | null;
   /** The row's label, which the dialog is titled with. */
   title: string;
   disabled: boolean;
@@ -120,6 +133,7 @@ export const AppsInBrowserDialog = ({
                   key={app.id}
                   app={app}
                   checked={chosen.includes(app.id)}
+                  profileId={profileId}
                 />
               ))}
             </TableBody>
