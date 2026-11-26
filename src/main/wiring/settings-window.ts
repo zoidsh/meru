@@ -47,6 +47,7 @@ import { readShortcuts } from "../shortcuts-page.ts";
 import type { SoundOutput } from "../sounds.ts";
 import type { Spellcheck } from "../spellcheck.ts";
 import type { TrustedSites } from "../trusted-sites.ts";
+import type { Updates } from "../updates.ts";
 import { openingOptions } from "../windows.ts";
 import { folderPicker, pathOpener, systemLoginItem } from "./test-build.ts";
 
@@ -89,6 +90,7 @@ export const wireSettingsWindow = ({
   licenseRequests,
   systemBrowser,
   clipboard,
+  updates,
 }: {
   platform: Platform;
   /** The downloads' own, for the folder they are saved to. */
@@ -131,6 +133,8 @@ export const wireSettingsWindow = ({
   systemBrowser: SystemBrowser;
   /** For the About page's Copy. */
   clipboard: Clipboard;
+  /** Where updating stands, for the About page. */
+  updates: Updates;
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
@@ -240,6 +244,7 @@ export const wireSettingsWindow = ({
       trustedSites,
       advanced,
       about,
+      updates,
       shortcuts,
       entitlement,
       licenseRequests,
@@ -268,6 +273,7 @@ export const wireSettingsWindow = ({
           trustedSites,
           advanced,
           about,
+          updates,
           shortcuts,
           entitlement,
           licenseRequests,
@@ -283,6 +289,7 @@ export const wireSettingsWindow = ({
             language,
             entitlement,
             licenseRequests,
+            updates,
           },
           listener
         );

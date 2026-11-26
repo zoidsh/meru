@@ -58,6 +58,7 @@ import {
   createCapturedTrayFactory,
   createTrayFactory,
 } from "#platform/tray.ts";
+import { createCapturedUpdater, createUpdater } from "#platform/updater.ts";
 
 import type { Entitlement } from "../entitlement.ts";
 import { restorePerformanceGlobal } from "../performance-global.ts";
@@ -308,3 +309,16 @@ export const saveDialog = () =>
  */
 export const pathOpener = () =>
   MERU_E2E_BUILD ? createCapturedPathOpener() : createPathOpener();
+
+/**
+ * The installed Meru's updater alone, since only a release or a beta is
+ * published to a feed; the suite's build gets a stand-in its test drives,
+ * and every other build none, so it never checks.
+ */
+export const systemUpdater = () => {
+  if (MERU_E2E_BUILD) {
+    return createCapturedUpdater();
+  }
+
+  return isReleaseAppId(MERU_APP_ID) ? createUpdater() : undefined;
+};

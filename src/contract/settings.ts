@@ -9,6 +9,7 @@ import { SETTINGS_SECTIONS } from "#core/settings-pages.ts";
 import { OVERRIDABLE_SETTING_KEYS, SETTINGS } from "#core/settings.ts";
 import type { OverridableSettingKey, SettingValue } from "#core/settings.ts";
 import { NOTIFICATION_SOUNDS } from "#core/sounds.ts";
+import { UPDATE_STATUSES } from "#core/updates.ts";
 
 import type {
   ContractBridge,
@@ -98,6 +99,9 @@ export const ABOUT_ITEMS = ["version", "operatingSystem"] as const;
 
 export type AboutItem = (typeof ABOUT_ITEMS)[number];
 
+/** The About page's settings, in its order; the app holds them, never a profile. */
+export const ABOUT_PAGE_KEYS = ["autoUpdate", "updateChannel"] as const;
+
 /** The Advanced page's settings; the app holds them, never a profile. */
 export const ADVANCED_PAGE_KEYS = ["hardwareAcceleration"] as const;
 
@@ -122,6 +126,7 @@ const APP_ONLY_PAGE_KEYS = [
   ...MENU_BAR_PAGE_KEYS,
   ...PRIVACY_PAGE_KEYS,
   ...ADVANCED_PAGE_KEYS,
+  ...ABOUT_PAGE_KEYS,
 ] as const;
 
 /**
@@ -385,6 +390,21 @@ export const SETTINGS_CALLS = {
     request: z.object({ item: z.enum(ABOUT_ITEMS) }),
     response: z.undefined(),
   },
+  /**
+   * Checks for a new version now, whatever the automatic check says; none is
+   * started beside one that runs, nor where the build cannot update itself.
+   */
+  checkForUpdates: { request: none, response: z.undefined() },
+  /**
+   * Saves what quit saves, then quits and installs the version downloaded,
+   * relaunching after; nothing while none is ready.
+   */
+  restartToUpdate: { request: none, response: z.undefined() },
+  /**
+   * Opens the release page of the version that could not be verified in the
+   * default browser; nothing while none was refused.
+   */
+  openUpdateRelease: { request: none, response: z.undefined() },
   ...ENTITLEMENT_CALLS,
 } as const satisfies Record<
   SettingsCallName,
@@ -518,6 +538,16 @@ export const SETTINGS_STATE = {
    * architecture, such as `macOS 27.2 (arm64)`.
    */
   about: z.object({ version: z.string(), operatingSystem: z.string() }),
+  /**
+   * Where updating stands, held by main for the run: `version` the one
+   * downloading, ready or refused, else `null`; `lastChecked` when a check
+   * last finished, `null` before one has.
+   */
+  updates: z.object({
+    status: z.enum(UPDATE_STATUSES),
+    version: z.nullable(z.string()),
+    lastChecked: z.nullable(z.number()),
+  }),
   /**
    * The Shortcuts page: a card per menu of the application menu, in the menu
    * bar's order, and the keys bound outside the registry, all of this

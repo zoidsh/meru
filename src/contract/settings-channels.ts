@@ -36,6 +36,9 @@ export const SETTINGS_CALL_NAMES = [
   "openSettingsFile",
   "clearCache",
   "copyAboutValue",
+  "checkForUpdates",
+  "restartToUpdate",
+  "openUpdateRelease",
   ...ENTITLEMENT_CALL_NAMES,
 ] as const;
 

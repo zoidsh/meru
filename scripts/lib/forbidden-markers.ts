@@ -126,6 +126,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may switch settings from outside the app",
     },
     {
+      marker: "meruTestUpdater",
+      why: "only the end-to-end build may stand in for the updater, which a test drives",
+    },
+    {
       marker: "en-XA",
       why: "only the end-to-end build may show its pseudo-language",
     },

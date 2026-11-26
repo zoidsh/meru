@@ -22,6 +22,7 @@ import { setApplicationMenu } from "#platform/menu.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSpellChecker } from "#platform/spellcheck.ts";
 import { createSystemBrowser } from "#platform/system-browser.ts";
+import { createSystemInfo } from "#platform/system-info.ts";
 import { createTextFile } from "#platform/text-file.ts";
 import { createTheme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
@@ -75,6 +76,7 @@ import {
   testBuildSetup,
 } from "./wiring/test-build.ts";
 import { wireTray } from "./wiring/tray.ts";
+import { wireUpdates } from "./wiring/updates.ts";
 
 const { apps, signInOrigins, keepAliveUrl, keepAliveTiming, contextMenus } =
   testBuildSetup();
@@ -611,6 +613,13 @@ const start = async () => {
   entitlement.onChange(views.relayout);
   entitlement.onChange(overlays.relayout);
 
+  const updates = wireUpdates({
+    lifecycle,
+    settings,
+    runningVersion: createSystemInfo().appVersion(),
+    systemBrowser,
+  });
+
   const {
     openSettings,
     settingsFocused,
@@ -646,6 +655,7 @@ const start = async () => {
     licenseRequests,
     systemBrowser,
     clipboard,
+    updates,
     // Google's sign-in is in the profile's Gmail tab, so the window comes
     // forward with it, unless the background flags hold it back.
     signIn: async (profileId) => {
@@ -744,6 +754,8 @@ const start = async () => {
   if (!shellLoaded) {
     await shell.load();
   }
+
+  updates.start();
 
   failures.markStarted();
 };

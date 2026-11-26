@@ -7,6 +7,8 @@ import { SOUND_CHOICES, soundVolumeSchema } from "./sounds.ts";
 import type { SoundChoice } from "./sounds.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
+import { UPDATE_CHANNELS } from "./updates.ts";
+import type { UpdateChannel } from "./updates.ts";
 
 /**
  * Never changes. An older integer here reads as unreadable, so a bump would
@@ -382,6 +384,16 @@ export const SETTINGS = {
   hardwareAcceleration: setting<boolean>({
     schema: z.boolean(),
     default: true,
+  }),
+  /** Checks for a new version at launch and every three hours. */
+  autoUpdate: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
+  /** Which releases Meru updates to: stable ones, or betas too. */
+  updateChannel: setting<UpdateChannel>({
+    schema: z.enum(UPDATE_CHANNELS),
+    default: "stable",
   }),
 } satisfies SettingDeclarations;
 

@@ -21,6 +21,7 @@ import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { fakeSystemInfo } from "#platform/system-info.fake.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
+import { fakeUpdater } from "#platform/updater.fake.ts";
 
 import { createAboutPage } from "./about-page.ts";
 import { createAdvancedPage } from "./advanced-page.ts";
@@ -50,6 +51,7 @@ import { readShortcuts } from "./shortcuts-page.ts";
 import { createSpellcheck } from "./spellcheck.ts";
 import { holdEntitlementServer } from "./test-hooks.ts";
 import { createTrustedSites } from "./trusted-sites.ts";
+import { createUpdates } from "./updates.ts";
 
 const stateOf = (...names: string[]): State => ({
   version: 1,
@@ -237,7 +239,24 @@ const setup = (
     appVersion: "4.0.0-dev.0",
     osRelease: 'PRETTY_NAME="Ubuntu 24.04.3 LTS"\n',
   });
+  const updater = fakeUpdater();
+  const updates = createUpdates({
+    updater: updater.updater,
+    settings,
+    runningVersion: "4.1.0",
+    quitThen: (finish) => {
+      finish();
+    },
+    quit: () => false,
+    openExternal: (url) => {
+      opened.push(url);
+    },
+    home: "",
+    now: () => 1000,
+    log: () => false,
+  });
   const deps = {
+    updates,
     settings,
     profiles,
     mail,
@@ -351,6 +370,7 @@ const setup = (
     },
     copied,
     opened,
+    updater,
     /** How many times `/etc/os-release` was read. */
     osReleaseReads: system.osReleaseReads,
     /** Holds every call to the server until `release`. */
@@ -2101,5 +2121,63 @@ describe("the Settings window's Meru Pro page", () => {
       SETTINGS_CALLS.openMeruPro.request.safeParse("https://example.com")
         .success
     ).toBeFalsy();
+  });
+});
+
+describe("the Settings window's Updates", () => {
+  it("sends where updating stands, and again as it changes", async () => {
+    const app = setup(stateOf("Work"));
+    const sends = app.sends();
+
+    expect(app.read().updates).toStrictEqual({
+      status: "idle",
+      version: null,
+      lastChecked: null,
+    });
+
+    await app.handlers.checkForUpdates({});
+    await app.updater.emit({ kind: "checking" });
+    await app.updater.emit({ kind: "notAvailable" });
+
+    expect([app.read().updates, sends()]).toStrictEqual([
+      { status: "upToDate", version: null, lastChecked: 1000 },
+      2,
+    ]);
+    app.dispose();
+  });
+
+  it("installs a ready version, and opens a refused one's release page", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.checkForUpdates({});
+    await app.updater.emit({ kind: "available", version: "4.2.0" });
+    await app.updater.emit({ kind: "downloaded", version: "4.2.0" });
+    await app.handlers.restartToUpdate({});
+    await app.handlers.checkForUpdates({});
+    await app.updater.emit({ kind: "available", version: "4.3.0" });
+    await app.updater.emit({ kind: "error", signature: true });
+    await app.handlers.openUpdateRelease({});
+
+    expect([
+      app.updater.calls.includes("quitAndInstall"),
+      app.opened,
+    ]).toStrictEqual([
+      true,
+      ["https://github.com/zoidsh/meru/releases/tag/v4.3.0"],
+    ]);
+    app.dispose();
+  });
+
+  it("writes the switch and the channel as page settings", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.update({ key: "autoUpdate", value: false });
+    await app.handlers.update({ key: "updateChannel", value: "beta" });
+
+    expect([
+      app.read().settings.autoUpdate,
+      app.read().settings.updateChannel,
+    ]).toStrictEqual([false, "beta"]);
+    app.dispose();
   });
 });

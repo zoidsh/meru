@@ -50,6 +50,7 @@ import type { SettingsPages } from "./settings-pages.ts";
 import type { SettingsStore } from "./settings.ts";
 import type { SoundOutput } from "./sounds.ts";
 import type { TrustedSites } from "./trusted-sites.ts";
+import type { Updates } from "./updates.ts";
 
 export interface SettingsContractDeps {
   settings: Pick<
@@ -112,6 +113,7 @@ export interface SettingsContractDeps {
   trustedSites: Pick<TrustedSites, "list" | "remove">;
   advanced: Pick<AdvancedPage, "read" | "openSettingsFile" | "clearCache">;
   about: Pick<AboutPage, "read" | "copy">;
+  updates: Pick<Updates, "read" | "check" | "restart" | "openRelease">;
   /** The Shortcuts page's cards, in the language of the moment. */
   shortcuts: () => SettingsState["shortcuts"];
   entitlement: Pick<
@@ -202,6 +204,7 @@ export const settingsHandlers = ({
   trustedSites,
   advanced,
   about,
+  updates,
   entitlement,
   licenseRequests,
   systemBrowser,
@@ -440,6 +443,18 @@ export const settingsHandlers = ({
     openSettingsFile: () => advanced.openSettingsFile(),
     clearCache: () => advanced.clearCache(),
     copyAboutValue: ({ item }) => about.copy(item),
+    checkForUpdates: () =>
+      Promise.try(() => {
+        updates.check();
+      }),
+    restartToUpdate: () =>
+      Promise.try(() => {
+        updates.restart();
+      }),
+    openUpdateRelease: () =>
+      Promise.try(() => {
+        updates.openRelease();
+      }),
     ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };
 };
@@ -456,6 +471,7 @@ export const readSettingsState = ({
   trustedSites,
   advanced,
   about,
+  updates,
   shortcuts,
   entitlement,
   licenseRequests,
@@ -471,6 +487,7 @@ export const readSettingsState = ({
   | "trustedSites"
   | "advanced"
   | "about"
+  | "updates"
   | "shortcuts"
   | "entitlement"
   | "licenseRequests"
@@ -529,6 +546,7 @@ export const readSettingsState = ({
     trustedSites: trustedSites.list(),
     advanced: advanced.read(),
     about: about.read(),
+    updates: updates.read(),
     shortcuts: shortcuts(),
     language: language.current(),
     entitlement: entitlement.snapshot(),
@@ -546,7 +564,8 @@ export const readSettingsState = ({
  * the Settings window is sent the state again: each setting it shows and the
  * trusted sites, which the store announces by key, Do Not Disturb through the
  * profiles' state, the mail check, the General page's own values, the
- * language shown, the page shown, the entitlement and its request out.
+ * language shown, the page shown, the entitlement and its request out, and
+ * where updating stands.
  */
 export const onSettingsStateChange = (
   {
@@ -558,6 +577,7 @@ export const onSettingsStateChange = (
     language,
     entitlement,
     licenseRequests,
+    updates,
   }: {
     settings: Pick<SettingsStore, "onChange">;
     profiles: Pick<Profiles, "onChange">;
@@ -567,6 +587,7 @@ export const onSettingsStateChange = (
     language: Pick<Language, "onChange">;
     entitlement: Pick<Entitlement, "onChange">;
     licenseRequests: Pick<LicenseRequests, "onChange">;
+    updates: Pick<Updates, "onChange">;
   },
   listener: () => void
 ) => {
@@ -585,4 +606,5 @@ export const onSettingsStateChange = (
   language.onChange(listener);
   entitlement.onChange(listener);
   licenseRequests.onChange(listener);
+  updates.onChange(listener);
 };

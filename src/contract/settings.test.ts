@@ -382,6 +382,8 @@ describe("the settings contract", () => {
       sleepIdleTabs: "chosen",
       sleepAfter: "6h",
       hardwareAcceleration: false,
+      autoUpdate: false,
+      updateChannel: "beta",
     };
 
     expect([
