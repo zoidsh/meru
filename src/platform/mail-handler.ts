@@ -28,9 +28,9 @@ export interface MailHandler {
   readonly real: boolean;
   isDefault: () => Promise<boolean>;
   /**
-   * Makes Meru the handler, or gives the links back to another app, on macOS
-   * and Linux; Linux has no way to give them back, and Windows lets no app
-   * make itself the default.
+   * Makes Meru the handler, or gives the links back to another app. The
+   * General page asks only where the system allows it: never on Windows, and
+   * never to give them back on Linux.
    */
   set: (on: boolean) => void;
   /** Windows: Default apps, where Meru is chosen for email links. */
@@ -106,23 +106,13 @@ export const createMailHandler = (platform: Platform): MailHandler => ({
     return choseMeruForMail(latest, legacy);
   },
   set: (on) => {
-    if (platform === "win32") {
-      throw new Error("Windows lets no app make itself the mail handler");
-    }
-
     if (on) {
       app.setAsDefaultProtocolClient(MAILTO);
-    } else if (platform === "darwin") {
-      app.removeAsDefaultProtocolClient(MAILTO);
     } else {
-      throw new Error("Linux gives email links back to no other app");
+      app.removeAsDefaultProtocolClient(MAILTO);
     }
   },
   openSettings: async () => {
-    if (platform !== "win32") {
-      throw new Error("Only Windows chooses the mail handler in its settings");
-    }
-
     await shell.openExternal(defaultAppsUrl(release()));
   },
 });
