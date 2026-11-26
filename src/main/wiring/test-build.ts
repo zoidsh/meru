@@ -69,11 +69,16 @@ import {
   createScreenSources,
 } from "#platform/screen-sources.ts";
 import {
+  createCapturedSystemBrowser,
+  createSystemBrowser,
+} from "#platform/system-browser.ts";
+import {
   createCapturedTrayFactory,
   createTrayFactory,
 } from "#platform/tray.ts";
 import { createCapturedUpdater, createUpdater } from "#platform/updater.ts";
 import { withheldScreenSources } from "#platform/withheld-screen-sources.ts";
+import { withholdSystemSurfaces } from "#platform/withheld-system.ts";
 
 import type { Entitlement } from "../entitlement.ts";
 import { restorePerformanceGlobal } from "../performance-global.ts";
@@ -130,6 +135,7 @@ export const testBuildSetup = () => {
   // is refused and said, so no test loads a real Google page.
   if (MERU_E2E_BUILD) {
     keepToLoopback();
+    withholdSystemSurfaces();
     // Playwright evaluates in main through the inspector, which a release
     // never opens.
     restorePerformanceGlobal(globalThis);
@@ -224,6 +230,9 @@ export const gmailPageCapture = () => MERU_E2E_BUILD && captureGmailPage();
  * The suite's build never writes the clipboard, which the whole desktop
  * shares.
  */
+export const systemBrowser = () =>
+  MERU_E2E_BUILD ? createCapturedSystemBrowser() : createSystemBrowser();
+
 export const systemClipboard = () =>
   MERU_E2E_BUILD ? createCapturedClipboard() : createClipboard();
 

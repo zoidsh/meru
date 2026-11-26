@@ -347,21 +347,20 @@ export const shownViews = async (app: ElectronApplication) => {
     .map(({ url, partition }) => ({ url, partition }));
 };
 
-/** Records what would open in the system browser, opening nothing. */
+/**
+ * Starts the record of what would open in the default browser afresh. The
+ * suite's build opens nothing there from launch, so this only forgets what
+ * was recorded before.
+ */
 export const stubSystemBrowser = (app: ElectronApplication) =>
-  app.evaluate(({ shell }) => {
-    const opened: string[] = [];
-
-    Reflect.set(globalThis, "openedExternally", opened);
-    shell.openExternal = (url) => {
-      opened.push(url);
-
-      return Promise.resolve();
-    };
+  app.evaluate(() => {
+    Reflect.set(globalThis, "meruTestOpenedExternally", []);
   });
 
 export const readOpenedExternally = (app: ElectronApplication) =>
-  app.evaluate(() => Reflect.get(globalThis, "openedExternally") as string[]);
+  app.evaluate(
+    () => Reflect.get(globalThis, "meruTestOpenedExternally") as string[]
+  );
 
 /**
  * Clicks the application menu's item, as a person choosing it would with

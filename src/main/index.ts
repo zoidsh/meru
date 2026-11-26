@@ -20,7 +20,6 @@ import { createIpc } from "#platform/ipc.ts";
 import { setApplicationMenu } from "#platform/menu.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSpellChecker } from "#platform/spellcheck.ts";
-import { createSystemBrowser } from "#platform/system-browser.ts";
 import { createSystemInfo } from "#platform/system-info.ts";
 import { createTextFile } from "#platform/text-file.ts";
 import { createTheme } from "#platform/theme.ts";
@@ -78,6 +77,7 @@ import { wireStores } from "./wiring/stores.ts";
 import {
   soundOutput,
   suiteRunsInBackground,
+  systemBrowser as suiteSystemBrowser,
   systemClipboard,
   systemNotifier,
   testBuildSetup,
@@ -245,7 +245,7 @@ const start = async () => {
   } = wireLinks({
     platform,
     settings,
-    systemBrowser: createSystemBrowser(),
+    systemBrowser: suiteSystemBrowser(),
     clipboard,
   });
   const launchHandlers = pick(

@@ -78,6 +78,14 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may capture Dock and taskbar progress in place of showing it",
     },
     {
+      marker: "meruTestOpenedExternally",
+      why: "only the end-to-end build may capture what it would open in the default browser in place of opening it",
+    },
+    {
+      marker: "meruTestWithheld",
+      why: "only the end-to-end build may answer Electron's dialogs and openers as canceled in place of showing or opening anything",
+    },
+    {
       marker: "meruTestClipboard",
       why: "only the end-to-end build may capture clipboard writes in place of making them",
     },
