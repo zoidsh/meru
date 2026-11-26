@@ -15,9 +15,11 @@ import type { Displays } from "#platform/displays.ts";
 import type { DownloadFiles } from "#platform/downloads.ts";
 import type { Ipc } from "#platform/ipc.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
+import type { TextFile } from "#platform/text-file.ts";
 import type { Theme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
+import { createAdvancedPage } from "../advanced-page.ts";
 import { serveContract } from "../contract-ipc.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Entitlement } from "../entitlement.ts";
@@ -41,7 +43,7 @@ import type { SoundOutput } from "../sounds.ts";
 import type { Spellcheck } from "../spellcheck.ts";
 import type { TrustedSites } from "../trusted-sites.ts";
 import { openingOptions } from "../windows.ts";
-import { folderPicker, systemLoginItem } from "./test-build.ts";
+import { folderPicker, pathOpener, systemLoginItem } from "./test-build.ts";
 
 /** As the approved prototype draws it. */
 const SETTINGS_SIZE = { width: 800, height: 600 };
@@ -74,6 +76,8 @@ export const wireSettingsWindow = ({
   sound,
   showTestNotification,
   deleteBrowsingData,
+  hardwareAccelerationAtLaunch,
+  settingsFile,
   signIn,
   trustedSites,
   entitlement,
@@ -109,6 +113,9 @@ export const wireSettingsWindow = ({
     profileId: string,
     kinds: BrowsingDataKinds
   ) => Promise<void>;
+  /** Whether this run started with hardware acceleration. */
+  hardwareAccelerationAtLaunch: boolean;
+  settingsFile: TextFile;
   signIn: (profileId: string) => Promise<void>;
   trustedSites: TrustedSites;
   entitlement: Entitlement;
@@ -172,6 +179,16 @@ export const wireSettingsWindow = ({
     spellcheck,
   });
 
+  const advanced = createAdvancedPage({
+    hardwareAccelerationAtLaunch,
+    settingsFile,
+    settings,
+    opener: pathOpener(),
+    profiles,
+    deleteBrowsingData,
+    log: console.error,
+  });
+
   profiles.onChange(() => {
     pages.follow(profiles.get().profiles.map((profile) => profile.id));
   });
@@ -205,6 +222,7 @@ export const wireSettingsWindow = ({
       signIn,
       general,
       trustedSites,
+      advanced,
       entitlement,
       licenseRequests,
       systemBrowser,
@@ -230,6 +248,7 @@ export const wireSettingsWindow = ({
           general,
           language,
           trustedSites,
+          advanced,
           entitlement,
           licenseRequests,
         }),

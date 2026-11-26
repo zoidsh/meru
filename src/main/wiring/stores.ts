@@ -112,6 +112,8 @@ export const wireStores = async ({
     sidebar,
     doNotDisturb,
     settings,
+    /** Where the settings are kept, for the Advanced page to open. */
+    settingsFile,
     entitlement,
     licenseRequests,
     firstRefresh,

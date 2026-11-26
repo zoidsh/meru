@@ -230,6 +230,19 @@ export const createSettingsStore = ({
       writing(key, () =>
         commit((current) => clearOverride(current, profileId, key))
       ),
+    /**
+     * Saves the settings as they are, after every change queued before, for
+     * a file that must exist.
+     */
+    saveAsIs: async () => {
+      await mutex.acquire();
+
+      try {
+        await save(settings);
+      } finally {
+        mutex.release();
+      }
+    },
     /** Settles once every change asked for so far is written, for a quit to wait on. */
     settled: async () => {
       await mutex.acquire();

@@ -375,6 +375,14 @@ export const SETTINGS = {
     schema: z.array(z.string()),
     default: [],
   }),
+  /**
+   * Read once before the app is ready, by `hardwareAccelerationAtLaunch`, so
+   * a change applies at the next launch.
+   */
+  hardwareAcceleration: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
+  }),
 } satisfies SettingDeclarations;
 
 export type SettingKey = keyof typeof SETTINGS;

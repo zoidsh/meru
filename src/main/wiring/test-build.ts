@@ -51,6 +51,10 @@ import {
   createNotifier,
 } from "#platform/notifications.ts";
 import {
+  createCapturedPathOpener,
+  createPathOpener,
+} from "#platform/path-opener.ts";
+import {
   createCapturedTrayFactory,
   createTrayFactory,
 } from "#platform/tray.ts";
@@ -297,3 +301,10 @@ export const folderPicker = () =>
  */
 export const saveDialog = () =>
   MERU_E2E_BUILD ? createCapturedSaveDialog() : undefined;
+
+/**
+ * The suite's build records each file it would open, so a test never opens
+ * an editor on the desktop it shares.
+ */
+export const pathOpener = () =>
+  MERU_E2E_BUILD ? createCapturedPathOpener() : createPathOpener();

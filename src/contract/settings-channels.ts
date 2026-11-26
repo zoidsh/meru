@@ -33,6 +33,8 @@ export const SETTINGS_CALL_NAMES = [
   "setSpellcheckLanguage",
   "setAppInDefaultBrowser",
   "removeTrustedSite",
+  "openSettingsFile",
+  "clearCache",
   ...ENTITLEMENT_CALL_NAMES,
 ] as const;
 

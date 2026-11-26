@@ -381,6 +381,7 @@ describe("the settings contract", () => {
       appsInDefaultBrowser: ["drive"],
       sleepIdleTabs: "chosen",
       sleepAfter: "6h",
+      hardwareAcceleration: false,
     };
 
     expect([

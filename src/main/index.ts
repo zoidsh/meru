@@ -7,6 +7,7 @@ import { entitledApps } from "#core/apps.ts";
 import { launchWindow } from "#core/launch-window.ts";
 import { coversPage, overlayRectangle } from "#core/overlay.ts";
 import { allowsPermission } from "#core/permissions.ts";
+import type { Platform } from "#core/platform.ts";
 import { tabKey } from "#core/tabs.ts";
 import {
   activateLanguage,
@@ -49,6 +50,7 @@ import { wireContentBlocker } from "./wiring/content-blocker.ts";
 import { wireDownloads } from "./wiring/downloads.ts";
 import { wireFind } from "./wiring/find.ts";
 import { wireGmail } from "./wiring/gmail.ts";
+import { wireHardwareAcceleration } from "./wiring/hardware-acceleration.ts";
 import { wireIdleSleep } from "./wiring/idle-sleep.ts";
 import { wireKeepAlive } from "./wiring/keep-alive.ts";
 import { wireLauncher } from "./wiring/launcher.ts";
@@ -123,6 +125,12 @@ const start = async () => {
     lifecycle.setAppUserModelId(MERU_APP_ID);
   }
 
+  // Synchronous and before the first await, so it is done before `ready`.
+  const hardwareAccelerationAtLaunch = wireHardwareAcceleration(
+    lifecycle,
+    process.platform as Platform
+  );
+
   const appProtocol = createAppProtocol();
 
   appProtocol.registerPrivilegedScheme(APP_SCHEME);
@@ -143,6 +151,7 @@ const start = async () => {
     sidebar,
     doNotDisturb,
     settings,
+    settingsFile,
     entitlement,
     licenseRequests,
     firstRefresh,
@@ -625,6 +634,8 @@ const start = async () => {
     sound,
     showTestNotification,
     deleteBrowsingData: createDeleteBrowsingData({ sessions, views, mail }),
+    hardwareAccelerationAtLaunch,
+    settingsFile,
     trustedSites,
     entitlement,
     licenseRequests,

@@ -86,6 +86,7 @@ const APP: PageSettings = {
   appsInDefaultBrowser: [],
   sleepIdleTabs: "unpinned",
   sleepAfter: "1h",
+  hardwareAcceleration: true,
 };
 
 describe(isScoped, () => {

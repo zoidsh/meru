@@ -33,6 +33,7 @@ import {
 import type { Profile, State } from "#core/state.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
 
+import type { AdvancedPage } from "./advanced-page.ts";
 import type { ContractHandlers } from "./contract-ipc.ts";
 import type { createDoNotDisturb } from "./do-not-disturb.ts";
 import { checkedDockChange } from "./dock.ts";
@@ -108,6 +109,7 @@ export interface SettingsContractDeps {
     | "setSpellcheckLanguage"
   >;
   trustedSites: Pick<TrustedSites, "list" | "remove">;
+  advanced: Pick<AdvancedPage, "read" | "openSettingsFile" | "clearCache">;
   entitlement: Pick<
     Entitlement,
     | "snapshot"
@@ -194,6 +196,7 @@ export const settingsHandlers = ({
   signIn,
   general,
   trustedSites,
+  advanced,
   entitlement,
   licenseRequests,
   systemBrowser,
@@ -429,6 +432,8 @@ export const settingsHandlers = ({
       });
     },
     removeTrustedSite: ({ site }) => trustedSites.remove(site),
+    openSettingsFile: () => advanced.openSettingsFile(),
+    clearCache: () => advanced.clearCache(),
     ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };
 };
@@ -443,6 +448,7 @@ export const readSettingsState = ({
   general,
   language,
   trustedSites,
+  advanced,
   entitlement,
   licenseRequests,
 }: Pick<
@@ -455,6 +461,7 @@ export const readSettingsState = ({
   | "general"
   | "language"
   | "trustedSites"
+  | "advanced"
   | "entitlement"
   | "licenseRequests"
 >): SettingsState => {
@@ -510,6 +517,7 @@ export const readSettingsState = ({
     ),
     general: general.read(),
     trustedSites: trustedSites.list(),
+    advanced: advanced.read(),
     language: language.current(),
     entitlement: entitlement.snapshot(),
     licenseRequest: licenseRequests.busy(),

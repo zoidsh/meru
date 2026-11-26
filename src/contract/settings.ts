@@ -93,6 +93,9 @@ export const TABS_APPS_PAGE_KEYS = [
   "sleepAfter",
 ] as const;
 
+/** The Advanced page's settings; the app holds them, never a profile. */
+export const ADVANCED_PAGE_KEYS = ["hardwareAcceleration"] as const;
+
 /**
  * The settings a profile may hold a value of its own for, as the
  * Notifications page shows them. `unifiedInbox` is a profile's own switch on
@@ -113,6 +116,7 @@ const APP_ONLY_PAGE_KEYS = [
   ...APPEARANCE_PAGE_KEYS,
   ...MENU_BAR_PAGE_KEYS,
   ...PRIVACY_PAGE_KEYS,
+  ...ADVANCED_PAGE_KEYS,
 ] as const;
 
 /**
@@ -361,6 +365,16 @@ export const SETTINGS_CALLS = {
     request: z.object({ site: z.string() }),
     response: z.undefined(),
   },
+  /**
+   * Opens `settings.json` in the system's handler, saved first when there is
+   * no file yet; a failure is logged, never answered.
+   */
+  openSettingsFile: { request: none, response: z.undefined() },
+  /**
+   * Clears the cache alone of every stored profile and reloads each one's
+   * pages; rejects when any could not be cleared.
+   */
+  clearCache: { request: none, response: z.undefined() },
   ...ENTITLEMENT_CALLS,
 } as const satisfies Record<
   SettingsCallName,
@@ -471,6 +485,14 @@ export const SETTINGS_STATE = {
    * such as `https://example.com`, in the order trusted.
    */
   trustedSites: z.array(z.string()),
+  /** What the Advanced page shows that is not a setting. */
+  advanced: z.object({
+    /**
+     * Whether this run started with hardware acceleration, which a change
+     * of the setting leaves as it is until the next launch.
+     */
+    hardwareAccelerationAtLaunch: z.boolean(),
+  }),
   /** The language Meru shows, as a catalog's tag. */
   language: z.string(),
   ...ENTITLEMENT_STATE,

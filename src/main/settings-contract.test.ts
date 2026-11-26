@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ADVANCED_PAGE_KEYS,
   APPEARANCE_PAGE_KEYS,
   GENERAL_PAGE_KEYS,
   GMAIL_PAGE_KEYS,
@@ -20,6 +21,7 @@ import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
 
+import { createAdvancedPage } from "./advanced-page.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import {
   DEV_PUBLIC_KEY,
@@ -220,6 +222,12 @@ const setup = (
     language,
     spellcheck,
   });
+  const deleteBrowsingData = (profileId: string, kinds: BrowsingDataKinds) => {
+    deleted.push([profileId, kinds]);
+
+    return Promise.resolve();
+  };
+  const openedFiles: string[] = [];
   const deps = {
     settings,
     profiles,
@@ -252,11 +260,7 @@ const setup = (
       },
       log: () => false,
     }),
-    deleteBrowsingData: (profileId: string, kinds: BrowsingDataKinds) => {
-      deleted.push([profileId, kinds]);
-
-      return Promise.resolve();
-    },
+    deleteBrowsingData,
     signIn: (profileId: string) => {
       signedIn.push(profileId);
 
@@ -265,6 +269,24 @@ const setup = (
     general,
     language,
     trustedSites: createTrustedSites(settings),
+    advanced: createAdvancedPage({
+      hardwareAccelerationAtLaunch: false,
+      settingsFile: fakeTextFile(
+        "/settings.json",
+        new Map([["/settings.json", "{}"]])
+      ),
+      settings,
+      opener: {
+        open: (file) => {
+          openedFiles.push(file);
+
+          return Promise.resolve();
+        },
+      },
+      profiles,
+      deleteBrowsingData,
+      log: () => false,
+    }),
     entitlement,
     licenseRequests: createLicenseRequests(),
     systemBrowser: {
@@ -301,6 +323,7 @@ const setup = (
     asked,
     addedBy,
     deleted,
+    openedFiles,
     signedIn,
     loginCalls,
     activated,
@@ -953,6 +976,67 @@ describe("the Settings window's Language and Spelling", () => {
       app.handlers.setSpellcheckLanguage({ code: "de", on: true })
     ).rejects.toThrow("macOS");
     expect(app.saved).toStrictEqual([]);
+    app.dispose();
+  });
+});
+
+describe("the Settings window's Advanced page", () => {
+  it("sends hardware acceleration on where none is stored, beside what the run started with", () => {
+    const app = setup(stateOf("Work"));
+
+    expect(
+      Object.fromEntries(
+        ADVANCED_PAGE_KEYS.map((key) => [key, app.read().settings[key]])
+      )
+    ).toStrictEqual({ hardwareAcceleration: true });
+    expect(app.read().advanced).toStrictEqual({
+      hardwareAccelerationAtLaunch: false,
+    });
+    app.dispose();
+  });
+
+  it("stores hardware acceleration off and resends the state", async () => {
+    const app = setup(stateOf("Work"));
+    const sends = app.sends();
+
+    await app.handlers.update({ key: "hardwareAcceleration", value: false });
+
+    expect(app.saved.at(-1)).toStrictEqual({
+      version: 1,
+      hardwareAcceleration: false,
+    });
+    expect(sends()).toBe(1);
+    app.dispose();
+  });
+
+  it("opens the settings file", async () => {
+    const app = setup(stateOf("Work"));
+
+    await app.handlers.openSettingsFile({});
+
+    expect(app.openedFiles).toStrictEqual(["/settings.json"]);
+    app.dispose();
+  });
+
+  it("clears the cache alone of every stored profile, those the free version does not use included", async () => {
+    const app = setup(
+      stateOf("Work", "Home"),
+      undefined,
+      "darwin",
+      ["en"],
+      true
+    );
+
+    expect(
+      app.read().lockedProfiles.map((profile) => profile.id)
+    ).toStrictEqual(["home"]);
+
+    await app.handlers.clearCache({});
+
+    expect(app.deleted).toStrictEqual([
+      ["work", { cookies: false, cache: true }],
+      ["home", { cookies: false, cache: true }],
+    ]);
     app.dispose();
   });
 });

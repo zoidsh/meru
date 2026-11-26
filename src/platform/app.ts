@@ -6,6 +6,8 @@ export interface AppLifecycle {
   /** Where this run keeps its data, a `--user-data-dir` given to it included. */
   readonly userDataPath: string;
   appendSwitch: (name: string, value?: string) => void;
+  /** Only before the app is ready, for the whole run. */
+  disableHardwareAcceleration: () => void;
   /** False when another instance already holds this user data directory. */
   requestSingleInstanceLock: () => boolean;
   whenReady: () => Promise<void>;
@@ -41,6 +43,9 @@ export const createAppLifecycle = (): AppLifecycle => ({
     return app.getPath("userData");
   },
   appendSwitch: (name, value) => app.commandLine.appendSwitch(name, value),
+  disableHardwareAcceleration: () => {
+    app.disableHardwareAcceleration();
+  },
   requestSingleInstanceLock: () => app.requestSingleInstanceLock(),
   whenReady: () => app.whenReady(),
   onSecondInstance: (listener) => {
