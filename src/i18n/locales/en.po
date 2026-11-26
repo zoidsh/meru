@@ -1005,6 +1005,11 @@ msgstr "Do Not Disturb is off"
 msgid "Do Not Disturb is on until {time}"
 msgstr "Do Not Disturb is on until {time}"
 
+#. Tooltip of the moon button in the title bar while it holds new mail notifications until a time tomorrow; {time} is the time of day it ends, such as 8:00
+#: src/shell/titlebar.tsx
+msgid "Do Not Disturb is on until tomorrow, {time}"
+msgstr "Do Not Disturb is on until tomorrow, {time}"
+
 #. Tooltip of the moon button in the title bar while it holds new mail notifications until the person turns it off
 #: src/shell/titlebar.tsx
 msgid "Do Not Disturb is on until turned off"
@@ -1930,10 +1935,15 @@ msgstr "On Until {time}"
 msgid "On until {time}. {holds}"
 msgstr "On until {time}. {holds}"
 
-#. Description of the Do Not Disturb switch in Settings while it is on until midnight; {holds} is what it does, such as Silences all notifications.
+#. Line, not clickable, atop the Do Not Disturb menu while it holds notifications until a time tomorrow; {time} is the time of day it ends, such as 8:00
+#: src/main/do-not-disturb.ts
+msgid "On Until Tomorrow, {time}"
+msgstr "On Until Tomorrow, {time}"
+
+#. Description of the Do Not Disturb switch in Settings while it is on until a time tomorrow; {time} is the time of day it ends, such as 8:00, and {holds} what it does, such as Silences all notifications.
 #: src/settings/do-not-disturb.ts
-msgid "On until tomorrow. {holds}"
-msgstr "On until tomorrow. {holds}"
+msgid "On until tomorrow, {time}. {holds}"
+msgstr "On until tomorrow, {time}. {holds}"
 
 #. Line, not clickable, atop the Do Not Disturb menu while it holds notifications until the person turns it off
 #: src/main/do-not-disturb.ts
@@ -3215,10 +3225,10 @@ msgstr "Unread mail from all your profiles shows here. A message leaves the list
 msgid "Unread messages"
 msgstr "Unread messages"
 
-#. Item in the Do Not Disturb menu that holds notifications until midnight tonight
+#. Item in the Do Not Disturb menu that holds notifications until the next morning; {time} is the time of day it ends, such as 8:00
 #: src/main/commands.ts
-msgid "Until Tomorrow"
-msgstr "Until Tomorrow"
+msgid "Until Tomorrow, {time}"
+msgstr "Until Tomorrow, {time}"
 
 #. Item in the Do Not Disturb menu that holds notifications until the person turns Do Not Disturb off
 #: src/main/commands.ts

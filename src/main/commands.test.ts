@@ -1152,7 +1152,7 @@ describe("Do Not Disturb's commands", () => {
     await app.run("doNotDisturb.untilTomorrow");
 
     expect(app.profiles.get().doNotDisturb).toStrictEqual({
-      until: new Date(2026, 10, 18).getTime(),
+      until: new Date(2026, 10, 18, 8).getTime(),
     });
   });
 

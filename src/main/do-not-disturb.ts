@@ -3,6 +3,7 @@ import { t } from "@lingui/core/macro";
 import {
   DO_NOT_DISTURB_DURATIONS,
   doNotDisturbEnd,
+  endsTomorrow,
   isDoNotDisturbOn,
 } from "#core/notification-gate.ts";
 import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
@@ -114,7 +115,11 @@ export const createDoNotDisturb = ({
 };
 
 /** What the Do Not Disturb menus say while it holds, by the local clock. */
-const doNotDisturbStatus = (doNotDisturb: DoNotDisturb, locale: string) => {
+const doNotDisturbStatus = (
+  doNotDisturb: DoNotDisturb,
+  locale: string,
+  now: number
+) => {
   if (doNotDisturb.until === null) {
     return t({
       message: "On Until Turned Off",
@@ -127,6 +132,14 @@ const doNotDisturbStatus = (doNotDisturb: DoNotDisturb, locale: string) => {
     hour: "numeric",
     minute: "2-digit",
   }).format(doNotDisturb.until);
+
+  if (endsTomorrow(doNotDisturb.until, now)) {
+    return t({
+      message: `On Until Tomorrow, ${time}`,
+      comment:
+        "Line, not clickable, atop the Do Not Disturb menu while it holds notifications until a time tomorrow; {time} is the time of day it ends, such as 8:00",
+    });
+  }
 
   return t({
     message: `On Until ${time}`,
@@ -144,7 +157,8 @@ export const doNotDisturbItems = (
   commands: readonly Command[],
   context: CommandContext,
   locale: string,
-  run: (command: Command) => void
+  run: (command: Command) => void,
+  now = Date.now()
 ): ContextMenuItem[] => {
   const item = (id: string): ContextMenuItem[] => {
     const command = commands.find((candidate) => candidate.id === id);
@@ -168,7 +182,7 @@ export const doNotDisturbItems = (
   return context.doNotDisturb
     ? [
         {
-          label: doNotDisturbStatus(context.doNotDisturb, locale),
+          label: doNotDisturbStatus(context.doNotDisturb, locale, now),
           enabled: false,
         },
         ...item("doNotDisturb.off"),

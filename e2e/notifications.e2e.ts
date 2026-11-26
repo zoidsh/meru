@@ -14,6 +14,7 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
+import { openSection, openSettings } from "./lib/settings.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import {
   ANY_SESSION,
@@ -450,6 +451,77 @@ test("a right-click on the Do Not Disturb button pops up its native menu at the 
   ]);
   await chooseContextMenuItem(app, "Turn Off");
   await expect(button).toHaveAttribute("aria-pressed", "false");
+});
+
+test("Until Tomorrow holds until the next 8:00, which the menu, the moon's tooltip and the Settings row name, tomorrow said only for a later day", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await seedProfiles(userDataDir, [{ id: "p0", name: "Home" }]);
+
+  const { app, shell } = await launchOn(launchApp, standIn);
+  const button = doNotDisturbButton(shell);
+  const off = await openContextMenu(app, () =>
+    button.click({ button: "right" })
+  );
+  // English puts a narrow space before AM.
+  const eight = String.raw`8:00\sAM`;
+  const untilTomorrow = off.items.find((label) =>
+    label.startsWith("Until Tomorrow")
+  );
+
+  expect(untilTomorrow).toMatch(new RegExp(`^Until Tomorrow, ${eight}$`, "u"));
+  await chooseContextMenuItem(app, untilTomorrow ?? "");
+  await expect(button).toHaveAttribute("aria-pressed", "true");
+
+  const chosen = new Date();
+  const morning = new Date(
+    chosen.getFullYear(),
+    chosen.getMonth(),
+    chosen.getDate(),
+    8
+  );
+  const later = morning <= chosen;
+
+  if (later) {
+    morning.setDate(morning.getDate() + 1);
+  }
+
+  await expect
+    .poll(async () => {
+      const { doNotDisturb } = await readState<{
+        doNotDisturb?: { until: number | null };
+      }>(userDataDir);
+
+      return doNotDisturb?.until;
+    })
+    .toBe(morning.getTime());
+
+  const tomorrow = later ? "tomorrow, " : "";
+  const on = await openContextMenu(app, () =>
+    button.click({ button: "right" })
+  );
+
+  expect(on.items[0]).toMatch(
+    new RegExp(`^On Until ${later ? "Tomorrow, " : ""}${eight} \\(off\\)$`, "u")
+  );
+
+  await expect(button).toHaveAccessibleDescription(
+    new RegExp(`^Do Not Disturb is on until ${tomorrow}${eight}$`, "u")
+  );
+
+  const page = await openSettings(app);
+
+  await openSection(page, "Notifications");
+  await expect(
+    page.getByText(
+      new RegExp(
+        `^On until ${tomorrow}${eight}\\. Silences all notifications\\.$`,
+        "u"
+      )
+    )
+  ).toBeVisible();
 });
 
 test("with important only, notifies just the new mail the Important feed lists", async ({

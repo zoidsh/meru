@@ -1,21 +1,7 @@
 import { t } from "@lingui/core/macro";
 
 import type { SettingsState } from "#contract/settings.ts";
-
-/**
- * Until tomorrow ends at a local midnight, which a duration from the moment it
- * was turned on, to the millisecond, all but never does.
- */
-const isMidnight = (time: number) => {
-  const date = new Date(time);
-
-  return (
-    date.getHours() === 0 &&
-    date.getMinutes() === 0 &&
-    date.getSeconds() === 0 &&
-    date.getMilliseconds() === 0
-  );
-};
+import { endsTomorrow } from "#core/notification-gate.ts";
 
 /**
  * What the Do Not Disturb row says: off, what it does and where the timed
@@ -23,7 +9,8 @@ const isMidnight = (time: number) => {
  */
 export const doNotDisturbCaption = (
   { on, until }: SettingsState["doNotDisturb"],
-  locale: string
+  locale: string,
+  now: number
 ) => {
   const holds = t({
     message: "Silences all notifications.",
@@ -46,18 +33,18 @@ export const doNotDisturbCaption = (
     });
   }
 
-  if (isMidnight(until)) {
-    return t({
-      message: `On until tomorrow. ${holds}`,
-      comment:
-        "Description of the Do Not Disturb switch in Settings while it is on until midnight; {holds} is what it does, such as Silences all notifications.",
-    });
-  }
-
   const time = new Intl.DateTimeFormat(locale, {
     hour: "numeric",
     minute: "2-digit",
   }).format(until);
+
+  if (endsTomorrow(until, now)) {
+    return t({
+      message: `On until tomorrow, ${time}. ${holds}`,
+      comment:
+        "Description of the Do Not Disturb switch in Settings while it is on until a time tomorrow; {time} is the time of day it ends, such as 8:00, and {holds} what it does, such as Silences all notifications.",
+    });
+  }
 
   return t({
     message: `On until ${time}. ${holds}`,

@@ -11,6 +11,7 @@ import {
 } from "#core/gmail-hash.ts";
 import {
   DO_NOT_DISTURB_DURATIONS,
+  DO_NOT_DISTURB_MORNING_HOUR,
   UNTIL_OFF,
 } from "#core/notification-gate.ts";
 import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
@@ -53,6 +54,7 @@ import {
   findTab,
 } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
+import { i18n } from "#i18n/index.ts";
 import type { Navigation } from "#platform/content-view.ts";
 
 import { MENU_LABELS } from "./menu-labels.ts";
@@ -282,10 +284,15 @@ const durationTitle = (duration: DoNotDisturbDuration) => {
       });
     }
     case "untilTomorrow": {
+      const time = new Intl.DateTimeFormat(i18n.locale, {
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(new Date(2000, 0, 1, DO_NOT_DISTURB_MORNING_HOUR));
+
       return t({
-        message: "Until Tomorrow",
+        message: `Until Tomorrow, ${time}`,
         comment:
-          "Item in the Do Not Disturb menu that holds notifications until midnight tonight",
+          "Item in the Do Not Disturb menu that holds notifications until the next morning; {time} is the time of day it ends, such as 8:00",
       });
     }
     default: {

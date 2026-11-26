@@ -11,6 +11,7 @@ import type {
 } from "#contract/settings.ts";
 import { NOTIFICATION_SOUNDS, isNotificationSound } from "#core/sounds.ts";
 import type { NotificationSound, SoundChoice } from "#core/sounds.ts";
+import { useNowByTheDay } from "#shared/now-by-the-day.ts";
 import { Button } from "#ui/button.tsx";
 import {
   Select,
@@ -55,6 +56,7 @@ export const NotificationsPage = () => {
   const { t, i18n } = useLingui();
   const settings = useSettingsState("settings");
   const doNotDisturb = useSettingsState("doNotDisturb");
+  const now = useNowByTheDay();
   const profiles = useSettingsState("profiles");
   const needsPro = useNeedsPro();
   const { profile, rowScope, page } = usePageScope(
@@ -203,7 +205,11 @@ export const NotificationsPage = () => {
                     comment:
                       "Label of the switch in Settings that holds every notification until turned off",
                   })}
-                  description={doNotDisturbCaption(doNotDisturb, i18n.locale)}
+                  description={doNotDisturbCaption(
+                    doNotDisturb,
+                    i18n.locale,
+                    now
+                  )}
                   paused={undefined}
                   scope={{}}
                   pro={needsPro.capability("notificationGates")}

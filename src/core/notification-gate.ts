@@ -159,9 +159,14 @@ export const DO_NOT_DISTURB_DURATIONS = [
 
 export type DoNotDisturbDuration = (typeof DO_NOT_DISTURB_DURATIONS)[number];
 
+/** The local hour until tomorrow ends at, the morning after the night. */
+export const DO_NOT_DISTURB_MORNING_HOUR = 8;
+
 /**
  * When Do Not Disturb switched on at `now` for `duration` ends: `null` for
- * until turned off, and the next local midnight for until tomorrow.
+ * until turned off, and for until tomorrow the next local 8:00, the same
+ * day's when chosen in the hours after midnight, which a person still counts
+ * as the night before.
  */
 export const doNotDisturbEnd = (
   duration: DoNotDisturbDuration,
@@ -172,12 +177,33 @@ export const doNotDisturbEnd = (
   }
 
   if (duration.id === "untilTomorrow") {
-    return new Date(
+    const morning = new Date(
       now.getFullYear(),
       now.getMonth(),
-      now.getDate() + 1
-    ).getTime();
+      now.getDate(),
+      DO_NOT_DISTURB_MORNING_HOUR
+    );
+
+    if (morning <= now) {
+      morning.setDate(morning.getDate() + 1);
+    }
+
+    return morning.getTime();
   }
 
   return now.getTime() + duration.minutes * 60_000;
 };
+
+const dayOf = (time: number) => {
+  const date = new Date(time);
+
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  ).getTime();
+};
+
+/** Whether Do Not Disturb ending at `until` ends on a later local day than `now`. */
+export const endsTomorrow = (until: number, now: number) =>
+  dayOf(until) > dayOf(now);

@@ -193,7 +193,10 @@ describe(createDoNotDisturb, () => {
   });
 });
 
-const labels = (context: Partial<CommandContext>) =>
+const labels = (
+  context: Partial<CommandContext>,
+  now = new Date(2026, 10, 17, 9).getTime()
+) =>
   doNotDisturbItems(
     COMMANDS,
     {
@@ -216,7 +219,8 @@ const labels = (context: Partial<CommandContext>) =>
       ...context,
     },
     "en-GB",
-    () => false
+    () => false,
+    now
   ).map((item) => ("label" in item ? item.label : "—"));
 
 describe(doNotDisturbItems, () => {
@@ -231,7 +235,8 @@ describe(doNotDisturbItems, () => {
     "For 4 Hours",
     "For 8 Hours",
     "For 12 Hours",
-    "Until Tomorrow",
+    // Node's English puts a narrow space before AM.
+    expect.stringMatching(/^Until Tomorrow, 8:00\sAM$/u),
   ];
 
   it("offers the durations while off", () => {
@@ -243,19 +248,26 @@ describe(doNotDisturbItems, () => {
       labels({
         doNotDisturb: { until: new Date(2026, 10, 17, 14, 30).getTime() },
       }),
+      labels({
+        doNotDisturb: { until: new Date(2026, 10, 18, 8).getTime() },
+      }),
       labels({ doNotDisturb: { until: null } }),
     ]).toStrictEqual([
       ["On Until 14:30", "Turn Off", "—", ...DURATIONS],
+      ["On Until Tomorrow, 8:00", "Turn Off", "—", ...DURATIONS],
       ["On Until Turned Off", "Turn Off", "—", ...DURATIONS],
     ]);
   });
 });
 
+/** Ends past the last moment a Date holds. */
+const NO_DATE = [1e300, 8.64e15 + 1];
+
 describe("an end no date holds", () => {
   it("never reaches the menu's or the tooltip's time formatter", () => {
     const formatter = vi.spyOn(Intl, "DateTimeFormat");
 
-    for (const until of [1e300, 8.64e15 + 1]) {
+    for (const until of NO_DATE) {
       const decoded = decodeState({
         ...one,
         profiles: [{ id: "a", name: "Default" }],
@@ -325,12 +337,13 @@ describe("an end no date holds", () => {
       doNotDisturb.dispose();
     }
 
-    expect(formatter).not.toHaveBeenCalled();
+    // One formatter for each menu, Until Tomorrow's own 8:00.
+    expect(formatter).toHaveBeenCalledTimes(NO_DATE.length);
 
     // The spy sees the formatter an end in range does reach.
     labels({ doNotDisturb: { until: START } });
 
-    expect(formatter).toHaveBeenCalledOnce();
+    expect(formatter).toHaveBeenCalledTimes(NO_DATE.length + 2);
     formatter.mockRestore();
   });
 });

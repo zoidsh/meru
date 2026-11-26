@@ -5,6 +5,7 @@ import {
   DO_NOT_DISTURB_DURATIONS,
   decideNotification,
   doNotDisturbEnd,
+  endsTomorrow,
   importantOnly,
   momentOf,
   quietWindowSchema,
@@ -285,6 +286,9 @@ const duration = (id: string) => {
   return found;
 };
 
+const tomorrow = (date: Date) =>
+  doNotDisturbEnd(duration("untilTomorrow"), date);
+
 describe(doNotDisturbEnd, () => {
   const now = new Date(2026, 10, 17, 23, 50);
 
@@ -300,9 +304,33 @@ describe(doNotDisturbEnd, () => {
     ]);
   });
 
-  it("ends until tomorrow at the next local midnight", () => {
-    expect(doNotDisturbEnd(duration("untilTomorrow"), now)).toBe(
-      new Date(2026, 10, 18).getTime()
-    );
+  it("ends until tomorrow at the next local 8:00, the same morning's when chosen after midnight", () => {
+    expect([
+      tomorrow(now),
+      tomorrow(new Date(2026, 10, 17, 8)),
+      tomorrow(new Date(2026, 10, 18, 0, 0)),
+      tomorrow(new Date(2026, 10, 18, 7, 59)),
+    ]).toStrictEqual([
+      new Date(2026, 10, 18, 8).getTime(),
+      new Date(2026, 10, 18, 8).getTime(),
+      new Date(2026, 10, 18, 8).getTime(),
+      new Date(2026, 10, 18, 8).getTime(),
+    ]);
+  });
+});
+
+describe(endsTomorrow, () => {
+  it("is whether the end falls on a later local day than now", () => {
+    const evening = new Date(2026, 10, 17, 23, 50).getTime();
+
+    expect([
+      endsTomorrow(new Date(2026, 10, 18, 8).getTime(), evening),
+      endsTomorrow(new Date(2026, 10, 18, 0, 0).getTime(), evening),
+      endsTomorrow(new Date(2026, 10, 17, 23, 59).getTime(), evening),
+      endsTomorrow(
+        new Date(2026, 10, 18, 8).getTime(),
+        new Date(2026, 10, 18, 2).getTime()
+      ),
+    ]).toStrictEqual([true, true, false, false]);
   });
 });

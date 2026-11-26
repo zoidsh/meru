@@ -18,9 +18,11 @@ import type { CSSProperties, KeyboardEvent } from "react";
 
 import type { ShellCalls, ShellState } from "#contract/shell.ts";
 import { TITLEBAR_HEIGHT } from "#core/layout.ts";
+import { endsTomorrow } from "#core/notification-gate.ts";
 import { selectProfileCommandId } from "#core/profile-shortcuts.ts";
 import { titlebarButtonsShown } from "#core/titlebar-buttons.ts";
 import { titlebarStart } from "#core/titlebar.ts";
+import { useNowByTheDay } from "#shared/now-by-the-day.ts";
 import { Button } from "#ui/button.tsx";
 
 import { isKeyMadeMenu, isMenuKey, wholePoint } from "./context-menu.ts";
@@ -556,6 +558,7 @@ const ProfileRow = ({
 const DoNotDisturbButton = () => {
   const { i18n, t } = useLingui();
   const doNotDisturb = useShellState("doNotDisturb");
+  const now = useNowByTheDay();
   const timeFormat = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.locale, {
@@ -585,11 +588,17 @@ const DoNotDisturbButton = () => {
   } else if (on && until !== null) {
     const time = timeFormat.format(until);
 
-    tooltip = t({
-      message: `Do Not Disturb is on until ${time}`,
-      comment:
-        "Tooltip of the moon button in the title bar while it holds new mail notifications; {time} is the time of day it ends, such as 14:30",
-    });
+    tooltip = endsTomorrow(until, now)
+      ? t({
+          message: `Do Not Disturb is on until tomorrow, ${time}`,
+          comment:
+            "Tooltip of the moon button in the title bar while it holds new mail notifications until a time tomorrow; {time} is the time of day it ends, such as 8:00",
+        })
+      : t({
+          message: `Do Not Disturb is on until ${time}`,
+          comment:
+            "Tooltip of the moon button in the title bar while it holds new mail notifications; {time} is the time of day it ends, such as 14:30",
+        });
   }
 
   return (
