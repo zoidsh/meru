@@ -13,6 +13,7 @@ import {
   readMenuItem,
   readOpenedExternally,
   stubSystemBrowser,
+  readState,
   test,
   writeState,
 } from "./lib/app.ts";
@@ -142,9 +143,34 @@ test("shows a ready version at the page's bottom right without taking the keys; 
   await expect(overlay.getByRole("status")).toHaveCount(0);
 });
 
-test("Restart now installs once the quit has saved what it saves", async ({
+/** Ten Calendar tabs after Gmail, none of them loaded. */
+const CALENDARS = Array.from({ length: 10 }, (_, index) => `c${index}`);
+
+test("Restart now installs only once the quit has saved what it saves", async ({
   launchApp,
+  userDataDir,
+  standIn,
 }) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          ...CALENDARS.map((id) => ({
+            id,
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: "",
+          })),
+        ],
+        selectedTabId: "gmail",
+      },
+    ],
+    selectedProfileId: "p",
+  });
+
   const { app, overlay } = await launch(launchApp);
   const log: string[] = [];
 
@@ -152,14 +178,39 @@ test("Restart now installs once the quit has saved what it saves", async ({
     log.push(chunk.toString());
   });
   await ready(app);
+  await expect(overlay.getByRole("status")).toHaveText(READY);
 
   const closed = app.waitForEvent("close");
 
-  // The app can exit before the click answers, which then rejects with the
+  // Nine moves that reverse the Calendar tabs are sent in the same turn as
+  // the click, so their writes, each after the one ahead of it and no two
+  // leaving the same order, are still out as the quit begins. The overlay's
+  // document reaches the shell's calls through its opener, the shell. The
+  // app can exit before the evaluation answers, which then rejects with the
   // closed target, and only with that.
   await overlay
     .getByRole("button", { name: "Restart now" })
-    .click()
+    .evaluate((button: HTMLElement, ids) => {
+      const { calls } = Reflect.get(window.opener as object, "meru") as {
+        calls: {
+          moveTab: (request: {
+            profileId: string;
+            tabId: string;
+            before?: string;
+          }) => Promise<void>;
+        };
+      };
+
+      for (const [index, tabId] of ids.entries()) {
+        const before = ids[index - 1];
+
+        if (before !== undefined) {
+          void calls.moveTab({ profileId: "p", tabId, before });
+        }
+      }
+
+      button.click();
+    }, CALENDARS)
     .catch((error: unknown) => {
       if (
         !(error instanceof Error) ||
@@ -172,7 +223,14 @@ test("Restart now installs once the quit has saved what it saves", async ({
     });
   await closed;
 
+  const stored = await readState<{ profiles: { tabs: { id: string }[] }[] }>(
+    userDataDir
+  );
+
   expect(log.join("")).toContain("meruTestUpdater: quit and install");
+  expect(
+    stored.profiles[0]?.tabs.map(({ id }) => id).filter((id) => id !== "gmail")
+  ).toStrictEqual(CALENDARS.toReversed());
 });
 
 test("says a version could not be verified, Download opening its release page and Close putting it away", async ({
