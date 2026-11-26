@@ -13,10 +13,10 @@ export const SettingGroups = ({ children }: { children: ReactNode }) => (
 );
 
 /**
- * A card of rows with its heading above it, as System Settings draws a
- * group: the fieldset groups the rows for assistive technology and its legend
- * names them, its description describing them. With no title it is the
- * card alone.
+ * A card of rows with its heading above it at the card's edge, as System
+ * Settings draws a group: the fieldset groups the rows for assistive
+ * technology and its legend names them, its description describing them.
+ * With no title it is the card alone.
  */
 export const SettingGroup = ({
   title,
@@ -39,15 +39,15 @@ export const SettingGroup = ({
   }
 
   return (
-    <FieldSet aria-describedby={description ? descriptionId : undefined}>
-      {/* px-4 meets the card's inner edge. */}
-      <FieldLegend variant="label" className="px-4">
-        {title}
-      </FieldLegend>
+    // The legend is no flex item, so its own 6px margin is what parts it from
+    // the card; the gap is the same 6px under a description.
+    <FieldSet
+      aria-describedby={description ? descriptionId : undefined}
+      className="gap-1.5"
+    >
+      <FieldLegend variant="label">{title}</FieldLegend>
       {description && (
-        <FieldDescription id={descriptionId} className="px-4">
-          {description}
-        </FieldDescription>
+        <FieldDescription id={descriptionId}>{description}</FieldDescription>
       )}
       {card}
     </FieldSet>

@@ -185,7 +185,7 @@ export const UpdatesGroup = ({
 
   if (updates.status === "unsupported") {
     return (
-      <p className="px-4 text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         {t({
           message: "This build doesn't update itself.",
           comment:
