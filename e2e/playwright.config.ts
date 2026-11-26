@@ -41,6 +41,8 @@ const NEEDS_THE_FOCUS = [
   "**/trial.e2e.ts",
   // Its free version's Add another account shows a toast the blur closes.
   "**/gate-profiles.e2e.ts",
+  // Its New tab test opens the launcher twice, which the blur closes.
+  "**/settings-tabs-apps.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 
