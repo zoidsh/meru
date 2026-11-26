@@ -1,6 +1,6 @@
 import { dialog, shell } from "electron";
 
-import { WITHHELD_MARKER } from "#core/withheld.ts";
+import { WITHHELD_MARKER, defaultCancelId } from "#core/withheld.ts";
 
 /**
  * For the end-to-end build, from launch: Electron's own calls that open
@@ -11,6 +11,16 @@ import { WITHHELD_MARKER } from "#core/withheld.ts";
  * one never opens the system's mail app, a browser or a dialog. A test may
  * still put its own answer in place, as the removal confirmation's does.
  */
+/** What a message box answers when canceled, as Electron decides it. */
+const cancelOf = (args: readonly unknown[]) => {
+  const { cancelId, buttons } = args.at(-1) as {
+    cancelId?: number;
+    buttons?: string[];
+  };
+
+  return cancelId ?? defaultCancelId(buttons);
+};
+
 export const withholdSystemSurfaces = () => {
   const withheld: string[] = [];
 
@@ -37,17 +47,15 @@ export const withholdSystemSurfaces = () => {
   dialog.showMessageBox = ((...args: unknown[]) => {
     withhold("dialog.showMessageBox");
 
-    const options = args.at(-1) as { cancelId?: number };
-
     return Promise.resolve({
-      response: options.cancelId ?? 0,
+      response: cancelOf(args),
       checkboxChecked: false,
     });
   }) as typeof dialog.showMessageBox;
   dialog.showMessageBoxSync = ((...args: unknown[]) => {
     withhold("dialog.showMessageBoxSync");
 
-    return (args.at(-1) as { cancelId?: number }).cancelId ?? 0;
+    return cancelOf(args);
   }) as typeof dialog.showMessageBoxSync;
   dialog.showErrorBox = () => {
     withhold("dialog.showErrorBox");
