@@ -90,7 +90,7 @@ export interface CapturedUpdater {
  * The end-to-end build's, which never reaches a feed: a test reads and drives
  * it on the main process's global under `meruTestUpdater`, and it can update
  * unless the launch sets `MERU_TEST_UPDATER=unsupported`. Its install records
- * the call, then quits as the real one does, without relaunching.
+ * the call, then ends the app without its quit, and without relaunching.
  */
 export const createCapturedUpdater = (): Updater => {
   const listeners: ((event: UpdateEvent, message?: string) => void)[] = [];
@@ -126,11 +126,15 @@ export const createCapturedUpdater = (): Updater => {
 
       return pending.promise;
     },
-    // Said on main's log too, which a test still reads once the app is gone.
+    // Ends the app at once, skipping what a quit holds for, so a test sees
+    // only what was written before the install. Said on main's log first,
+    // which a test reads once the app is gone, and which a pipe on macOS
+    // writes asynchronously.
     quitAndInstall: () => {
       captured.installs.push(Date.now());
-      console.error("meruTestUpdater: quit and install");
-      app.quit();
+      process.stderr.write("meruTestUpdater: quit and install\n", () => {
+        app.exit(0);
+      });
     },
     onEvent: (listener) => {
       listeners.push(listener);
