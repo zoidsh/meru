@@ -79,12 +79,9 @@ const readStored = async (userDataDir: string) =>
     await readFile(path.join(userDataDir, "settings.json"), "utf-8")
   ) as Record<string, unknown>;
 
-/** The Updates group's status row: its live region, holding its one button. */
-const statusRow = (page: Page) =>
-  page
-    .getByRole("main")
-    .getByRole("status")
-    .filter({ has: page.getByRole("button") });
+/** The Updates group's status row's one button, which no other row has. */
+const statusButton = (page: Page, name: string) =>
+  page.getByRole("main").getByRole("button", { name, exact: true });
 
 /** The row's title, description and button as shown. */
 const expectStatus = async (
@@ -101,10 +98,14 @@ const expectStatus = async (
     enabled?: boolean;
   }
 ) => {
-  const row = statusRow(page);
-  const action = row.getByRole("button", { name: button, exact: true });
+  const live = page
+    .getByRole("main")
+    .getByRole("status")
+    .filter({ hasText: title });
+  const action = statusButton(page, button);
 
-  await expect(row.getByText(title, { exact: true })).toBeVisible();
+  await expect(live.getByText(title, { exact: true })).toBeVisible();
+  await expect(live.getByRole("button")).toHaveCount(0);
   await expect(action).toBeVisible();
   await expect(action).toHaveAccessibleDescription(description ?? "");
   await (enabled
@@ -230,7 +231,7 @@ test.describe("updates", () => {
       button: "Check now",
     });
 
-    await statusRow(page).getByRole("button", { name: "Check now" }).click();
+    await statusButton(page, "Check now").click();
     await expect.poll(() => askedUpdater(app)).toMatchObject({ checks: 2 });
     await expectStatus(page, {
       title: "Checking for updates…",
@@ -258,7 +259,7 @@ test.describe("updates", () => {
       button: "Download",
     });
     await stubSystemBrowser(app);
-    await statusRow(page).getByRole("button", { name: "Download" }).click();
+    await statusButton(page, "Download").click();
     await expect
       .poll(() => readOpenedExternally(app))
       .toStrictEqual(["https://github.com/zoidsh/meru/releases/tag/v4.2.0"]);
@@ -339,21 +340,19 @@ test.describe("updates", () => {
 
     // The changes are sent in the same turn as the click, so their writes are
     // still out as the quit begins; each is written after those ahead of it.
-    await statusRow(page)
-      .getByRole("button", { name: "Restart now" })
-      .evaluate((button: HTMLElement) => {
-        const { calls } = Reflect.get(window, "meru") as {
-          calls: {
-            update: (change: { key: string; value: unknown }) => Promise<void>;
-          };
+    await statusButton(page, "Restart now").evaluate((button: HTMLElement) => {
+      const { calls } = Reflect.get(window, "meru") as {
+        calls: {
+          update: (change: { key: string; value: unknown }) => Promise<void>;
         };
+      };
 
-        for (const key of ["unreadBadge", "hidePromoBanner", "autoUpdate"]) {
-          void calls.update({ key, value: false });
-        }
+      for (const key of ["unreadBadge", "hidePromoBanner", "autoUpdate"]) {
+        void calls.update({ key, value: false });
+      }
 
-        button.click();
-      });
+      button.click();
+    });
     await closed;
 
     expect(log.join("")).toContain("meruTestUpdater: quit and install");

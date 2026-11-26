@@ -47,6 +47,14 @@ export const RowLabel = ({
   );
 };
 
+const LiveText = ({
+  live,
+  children,
+}: {
+  live: boolean | undefined;
+  children: ReactNode;
+}) => (live ? <output className="flex flex-1">{children}</output> : children);
+
 /**
  * A row of the page: its label and descriptions, and its control. While Do
  * Not Disturb outranks it, it dims, says so and still works. In a profile's
@@ -63,6 +71,7 @@ export const SettingRow = ({
   disabled = false,
   pro,
   center = false,
+  live,
   children,
 }: {
   /**
@@ -86,6 +95,11 @@ export const SettingRow = ({
    * taller than its line; for a row with no scope, whose line it would drop.
    */
   center?: boolean;
+  /**
+   * Makes the label and descriptions a live region, so a change to them is
+   * read out once; the control stays outside it.
+   */
+  live?: boolean | undefined;
   children: (ids: { label: string; description: string }) => ReactNode;
 }) => {
   const labelId = useId();
@@ -104,45 +118,44 @@ export const SettingRow = ({
   const dims = paused !== undefined;
   // Nothing under the label, so no line describes the control.
   const centered = center && describedBy === "";
+  const text = centered ? (
+    <RowLabel id={labelId} label={label} pro={pro} />
+  ) : (
+    <FieldContent>
+      <RowLabel
+        id={labelId}
+        label={label}
+        pro={pro}
+        className={cn(dims && "opacity-50")}
+      />
+      {description && (
+        <FieldDescription
+          id={descriptionId}
+          className={cn(dims && "opacity-50")}
+        >
+          {description}
+        </FieldDescription>
+      )}
+      {notice && <FieldDescription id={noticeId}>{notice}</FieldDescription>}
+      {paused && <FieldDescription id={pausedId}>{paused}</FieldDescription>}
+      {error && <FieldError id={errorId}>{error}</FieldError>}
+      {scope.line}
+    </FieldContent>
+  );
 
   return (
     <Field
       orientation="horizontal"
-      className="relative"
+      // Field aligns the row to its top by a child of its own holding
+      // content, which a live region wraps.
+      className="relative has-[>output>[data-slot=field-content]]:items-start"
       data-disabled={disabled || undefined}
       data-invalid={error ? true : undefined}
     >
       {scope.bar && <OverrideBar color={scope.bar} />}
       {/* A label alone is the field's own child, which Field centers on the
           controls; content under it aligns the row to its top. */}
-      {centered ? (
-        <RowLabel id={labelId} label={label} pro={pro} />
-      ) : (
-        <FieldContent>
-          <RowLabel
-            id={labelId}
-            label={label}
-            pro={pro}
-            className={cn(dims && "opacity-50")}
-          />
-          {description && (
-            <FieldDescription
-              id={descriptionId}
-              className={cn(dims && "opacity-50")}
-            >
-              {description}
-            </FieldDescription>
-          )}
-          {notice && (
-            <FieldDescription id={noticeId}>{notice}</FieldDescription>
-          )}
-          {paused && (
-            <FieldDescription id={pausedId}>{paused}</FieldDescription>
-          )}
-          {error && <FieldError id={errorId}>{error}</FieldError>}
-          {scope.line}
-        </FieldContent>
-      )}
+      <LiveText live={live}>{text}</LiveText>
       <div className="flex flex-col items-end gap-1.5">
         <div className={cn("flex items-center gap-2", dims && "opacity-50")}>
           {children({ label: labelId, description: describedBy })}

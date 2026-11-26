@@ -144,30 +144,28 @@ const useStatusRow = ({ status, version: offered, lastChecked }: Updates) => {
 };
 
 /**
- * The status row, a live region so each change is read out once, with the
- * one thing to do where updating stands.
+ * The status row, its text a live region so each change is read out once,
+ * with the one thing to do where updating stands.
  */
 const StatusRow = ({ updates }: { updates: Updates }) => {
   const { title, description, button, busy } = useStatusRow(updates);
 
   return (
-    <output className="block">
-      <SettingRow center label={title} description={description}>
-        {(ids) => (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={busy}
-            aria-describedby={ids.description || undefined}
-            onClick={() => {
-              settingsCalls()[button.call]({}).catch(noop);
-            }}
-          >
-            {button.label}
-          </Button>
-        )}
-      </SettingRow>
-    </output>
+    <SettingRow center live label={title} description={description}>
+      {(ids) => (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy}
+          aria-describedby={ids.description || undefined}
+          onClick={() => {
+            settingsCalls()[button.call]({}).catch(noop);
+          }}
+        >
+          {button.label}
+        </Button>
+      )}
+    </SettingRow>
   );
 };
 
