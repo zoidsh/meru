@@ -455,8 +455,8 @@ export const SHELL_STATE = {
      */
     buttons: z.object({
       /**
-       * Whether the sidebar and its toggle may show: not on the free
-       * version, which has the Gmail tab alone.
+       * Whether the Sidebar button may show: not on the free version,
+       * which has the Gmail tab alone and so no sidebar to toggle.
        */
       sidebar: z.boolean(),
       newTab: z.boolean(),
