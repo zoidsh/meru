@@ -100,15 +100,15 @@ export const GmailPage = () => {
     <SettingGroups>
       <SettingGroup
         title={t({
-          message: "Gmail page",
+          message: "Gmail appearance",
           comment:
-            "Title of the group of Settings that hide or change parts of the Gmail page",
+            "Title of the group of Settings that hide or change parts of how the Gmail page looks",
         })}
         description={t({
           message:
             "These change how Gmail looks in Meru. Your Gmail settings stay the same.",
           comment:
-            "Description of the Gmail page group in Settings: these settings change only what Meru shows, never the person's settings in Gmail",
+            "Description of the Gmail appearance group in Settings: these settings change only what Meru shows, never the person's settings in Gmail",
         })}
       >
         <Rows>

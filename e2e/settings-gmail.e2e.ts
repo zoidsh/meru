@@ -76,7 +76,7 @@ test("each card is a group its heading names, holding its rows", async ({
   await openGmail(page);
 
   for (const [group, label] of [
-    ["Gmail page", "Hide promotions"],
+    ["Gmail appearance", "Hide promotions"],
     ["Conversations", "Show trimmed content"],
     ["Verification codes", "Move to Trash after copying"],
   ] as const) {
@@ -89,7 +89,7 @@ test("each card is a group its heading names, holding its rows", async ({
   }
 
   await expect(
-    page.getByRole("group", { name: "Gmail page" })
+    page.getByRole("group", { name: "Gmail appearance" })
   ).toHaveAccessibleDescription(
     "These change how Gmail looks in Meru. Your Gmail settings stay the same."
   );

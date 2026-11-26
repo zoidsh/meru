@@ -1150,15 +1150,15 @@ msgstr "General"
 msgid "Gmail"
 msgstr "Gmail"
 
+#. Title of the group of Settings that hide or change parts of how the Gmail page looks
+#: src/settings/gmail-page.tsx
+msgid "Gmail appearance"
+msgstr "Gmail appearance"
+
 #. Description of the Theme menu in Settings; Meru's theme does not change Gmail's, which is set in Gmail's own settings
 #: src/settings/appearance-page.tsx
 msgid "Gmail has its own theme, which you set in Gmail."
 msgstr "Gmail has its own theme, which you set in Gmail."
-
-#. Title of the group of Settings that hide or change parts of the Gmail page
-#: src/settings/gmail-page.tsx
-msgid "Gmail page"
-msgstr "Gmail page"
 
 #. Menu item in the Mail menu that opens Gmail's own settings in the selected profile's Gmail tab
 #: src/main/commands.ts
@@ -2733,7 +2733,7 @@ msgstr "There's no license with this key. Check it and try again, or contact sup
 msgid "These apply to every profile unless you change them for one."
 msgstr "These apply to every profile unless you change them for one."
 
-#. Description of the Gmail page group in Settings: these settings change only what Meru shows, never the person's settings in Gmail
+#. Description of the Gmail appearance group in Settings: these settings change only what Meru shows, never the person's settings in Gmail
 #: src/settings/gmail-page.tsx
 msgid "These change how Gmail looks in Meru. Your Gmail settings stay the same."
 msgstr "These change how Gmail looks in Meru. Your Gmail settings stay the same."
