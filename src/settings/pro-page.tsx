@@ -247,7 +247,6 @@ const Page = ({
           {[
             <SettingRow
               key="licenseKey"
-              center
               label={t({
                 message: "License key",
                 comment:

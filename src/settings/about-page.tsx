@@ -90,7 +90,7 @@ export const AboutPage = () => {
       <SettingGroup>
         <Rows>
           {rows.map(({ item, label, copy }) => (
-            <SettingRow key={item} center label={label}>
+            <SettingRow key={item} label={label}>
               {() => (
                 <CopyableValue item={item} value={about[item]} name={copy} />
               )}

@@ -70,7 +70,6 @@ export const SettingRow = ({
   scope = NO_SCOPE,
   disabled = false,
   pro,
-  center = false,
   live,
   children,
 }: {
@@ -90,11 +89,6 @@ export const SettingRow = ({
   error?: string | undefined;
   scope?: RowScope;
   disabled?: boolean;
-  /**
-   * Centers the label on the controls while it stands alone, for controls
-   * taller than its line; for a row with no scope, whose line it would drop.
-   */
-  center?: boolean;
   /**
    * Makes the label and descriptions a live region, so a change to them is
    * read out once; the control stays outside it.
@@ -116,8 +110,9 @@ export const SettingRow = ({
     .filter(Boolean)
     .join(" ");
   const dims = paused !== undefined;
-  // Nothing under the label, so no line describes the control.
-  const centered = center && describedBy === "";
+  // Nothing under the label, so it is centered on the controls; a row with
+  // a line under it keeps its label at the top.
+  const centered = describedBy === "" && scope.line === undefined;
   const text = centered ? (
     <RowLabel id={labelId} label={label} pro={pro} />
   ) : (

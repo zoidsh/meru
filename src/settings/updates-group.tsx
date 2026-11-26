@@ -151,7 +151,7 @@ const StatusRow = ({ updates }: { updates: Updates }) => {
   const { title, description, button, busy } = useStatusRow(updates);
 
   return (
-    <SettingRow center live label={title} description={description}>
+    <SettingRow live label={title} description={description}>
       {(ids) => (
         // Still focusable while it checks, so focus stays where it was;
         // shadcn's Button dims only a `:disabled` one, hence the class.
