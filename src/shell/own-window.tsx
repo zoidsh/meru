@@ -10,7 +10,7 @@ import { TITLEBAR_HEIGHT } from "#core/layout.ts";
 import {
   OWN_WINDOW_INSET,
   OWN_WINDOW_RADIUS,
-  ownWindowDownloadsFrameName,
+  ownWindowCardFrameName,
   ownWindowFindFrameName,
   ownWindowFrameName,
 } from "#core/own-window.ts";
@@ -251,25 +251,42 @@ const OwnWindowFind = ({
     : null;
 };
 
+type ShownCard = NonNullable<OwnWindow["card"]>;
+
 const closeDownloads = () => {
   shellCalls().setDownloadsOpen({ open: false });
 };
 
+/** What closes the card, and the titlebar button that opens it, if any. */
+const cardClosing = (
+  _card: ShownCard
+): { close: () => void; opener: string | undefined } => ({
+  close: closeDownloads,
+  opener: '[data-opens="downloads"]',
+});
+
+/** The card as its kind draws it. */
+const DrawnCard = (_props: { card: ShownCard }) => {
+  const downloads = useShellState("downloads");
+
+  return downloads?.open ? <Downloads downloads={downloads} /> : null;
+};
+
 /**
- * The Downloads card in a tab's own window, in a document of its own that
- * main lays over the whole page while the card is open there, as the main
- * window's overlay covers its pages. Escape in it, a press beside the card
- * and a press on the window's titlebar but on its Downloads button close it.
+ * The card open in a tab's own window, in a document of its own that main
+ * lays over the whole page while one is open there, as the main window's
+ * overlay covers its pages. Escape in it, a press beside the card and a
+ * press on the window's titlebar but on the button that opened it close it.
  */
-const OwnWindowDownloads = ({ own }: { own: OwnWindow }) => {
-  const name = ownWindowDownloadsFrameName(own);
+const OwnWindowCard = ({ own, card }: { own: OwnWindow; card: ShownCard }) => {
+  const name = ownWindowCardFrameName(own);
   const target = useSyncExternalStore(subscribeShellDocuments, () =>
     shellDocument(name)
   );
   const titlebar = useSyncExternalStore(subscribeShellDocuments, () =>
     shellDocument(ownWindowFrameName(own))
   );
-  const downloads = useShellState("downloads");
+  const { close, opener } = cardClosing(card);
 
   useEffect(() => {
     openShellDocument(name);
@@ -287,7 +304,7 @@ const OwnWindowDownloads = ({ own }: { own: OwnWindow }) => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !event.defaultPrevented) {
         event.preventDefault();
-        closeDownloads();
+        close();
       }
     };
     const onPointerDown = (event: PointerEvent) => {
@@ -295,7 +312,7 @@ const OwnWindowDownloads = ({ own }: { own: OwnWindow }) => {
       const pressed = event.target as Partial<Element> | null;
 
       if (!pressed?.closest?.("[data-overlay-card]")) {
-        closeDownloads();
+        close();
       }
     };
 
@@ -306,7 +323,7 @@ const OwnWindowDownloads = ({ own }: { own: OwnWindow }) => {
       target.removeEventListener("keydown", onKeyDown);
       target.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [target]);
+  }, [target, close]);
 
   useEffect(() => {
     if (!titlebar) {
@@ -316,8 +333,8 @@ const OwnWindowDownloads = ({ own }: { own: OwnWindow }) => {
     const onPointerDown = (event: PointerEvent) => {
       const pressed = event.target as Partial<Element> | null;
 
-      if (!pressed?.closest?.('[data-opens="downloads"]')) {
-        closeDownloads();
+      if (opener === undefined || !pressed?.closest?.(opener)) {
+        close();
       }
     };
 
@@ -326,11 +343,9 @@ const OwnWindowDownloads = ({ own }: { own: OwnWindow }) => {
     return () => {
       titlebar.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [titlebar]);
+  }, [titlebar, close, opener]);
 
-  return target && downloads?.open
-    ? createPortal(<Downloads downloads={downloads} />, target.body)
-    : null;
+  return target ? createPortal(<DrawnCard card={card} />, target.body) : null;
 };
 
 /** The frame of each tab's own window, in a document of the shell's each. */
@@ -339,11 +354,12 @@ export const OwnWindows = () => {
 
   return windows.flatMap((own) => [
     <OwnWindowDocument key={ownWindowFrameName(own)} own={own} />,
-    ...(own.downloads
+    ...(own.card
       ? [
-          <OwnWindowDownloads
-            key={ownWindowDownloadsFrameName(own)}
+          <OwnWindowCard
+            key={ownWindowCardFrameName(own)}
             own={own}
+            card={own.card}
           />,
         ]
       : []),

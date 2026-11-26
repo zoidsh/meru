@@ -250,7 +250,7 @@ export const wireShellContract = ({
               const tab = findTab(profiles.get(), key);
               const navigation = views.navigation(key);
               const bar = find.bar(key);
-              const card = downloads.window();
+              const downloadsIn = downloads.window();
 
               return tab && navigation
                 ? [
@@ -261,8 +261,11 @@ export const wireShellContract = ({
                       status: shellTabStatus(views.status(key)),
                       navigation,
                       bookmarked: bookmarks.bookmarked(key) ?? null,
-                      downloads:
-                        card !== undefined && tabKey(card) === tabKey(key),
+                      card:
+                        downloadsIn !== undefined &&
+                        tabKey(downloadsIn) === tabKey(key)
+                          ? { kind: "downloads" as const }
+                          : null,
                       find: bar
                         ? {
                             term: bar.term,

@@ -438,8 +438,12 @@ export const SHELL_STATE = {
         loading: z.boolean(),
       }),
       bookmarked,
-      /** Whether the Downloads card is open in it, drawn over the page. */
-      downloads: z.boolean(),
+      /** The card open in it, drawn over the page, one at a time. */
+      card: z.nullable(
+        z.discriminatedUnion("kind", [
+          z.object({ kind: z.literal("downloads") }),
+        ])
+      ),
       /** Its find bar while it is open, drawn over the page in that window. */
       find: z.nullable(
         z.object({

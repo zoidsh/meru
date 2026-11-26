@@ -18,7 +18,7 @@ import { revealWindow } from "../windows.ts";
 const QUIT_WAIT_MS = 3000;
 
 /**
- * Where keys go in a tab's own window: its Downloads card while open there,
+ * Where keys go in a tab's own window: its card while one is open there,
  * else its find bar while open, else its page.
  */
 export const inOwnWindow = (key: TabKey): FocusTarget[] => [

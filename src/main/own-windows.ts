@@ -49,7 +49,7 @@ interface Entry {
   titlebar: OverlayView | undefined;
   /** The find bar's view, over the page while the bar is open. */
   find: OverlayView | undefined;
-  /** The Downloads card's view, over the page while the card is open there. */
+  /** The view of its card, Downloads or another, over the page while one is open there. */
   card: OverlayView | undefined;
   saveBounds: ReturnType<typeof keepBounds>;
 }
@@ -318,7 +318,7 @@ export const createOwnWindows = ({
       adoptOver(key, view, "find");
     },
     /**
-     * Puts the shell's Downloads card document for the tab's window over its
+     * Puts the shell's card document for the tab's window over its
      * whole page; one for a window that is not open is closed. It goes as
      * the shell closes it. Focus is the caller's.
      */
@@ -327,9 +327,9 @@ export const createOwnWindows = ({
     },
     /** What focuses the tab's window's find bar, while it is there. */
     findFocuser: (key: TabKey) => entries.get(tabKey(key))?.find?.focus,
-    /** What focuses the tab's window's Downloads card, while it is there. */
+    /** What focuses the tab's window's card, while one is there. */
     cardFocuser: (key: TabKey) => entries.get(tabKey(key))?.card?.focus,
-    /** The web contents of the tab's window's Downloads card, while it is there. */
+    /** The web contents of the tab's window's card, while one is there. */
     cardContentsId: (key: TabKey) =>
       entries.get(tabKey(key))?.card?.webContentsId,
     /** The tab's window, while it is open, for whether it holds the keys. */

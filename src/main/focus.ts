@@ -12,7 +12,7 @@ export type FocusTarget =
   | { kind: "window"; key: TabKey }
   /** The find bar of a tab's own window, while it is open there. */
   | { kind: "windowFind"; key: TabKey }
-  /** The Downloads card in a tab's own window, while it is open there. */
+  /** The card in a tab's own window, while one is open there. */
   | { kind: "windowCard"; key: TabKey };
 
 export interface FocusDeps {

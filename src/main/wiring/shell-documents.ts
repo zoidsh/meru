@@ -1,6 +1,6 @@
 import { OVERLAY_FRAME_NAME, staysOpenOutside } from "#core/overlay.ts";
 import {
-  ownWindowDownloadsOfFrame,
+  ownWindowCardOfFrame,
   ownWindowFindOfFrame,
   ownWindowOfFrame,
 } from "#core/own-window.ts";
@@ -79,7 +79,7 @@ export const wireShellDocuments = ({
       return;
     }
 
-    const cardWindow = ownWindowDownloadsOfFrame(frameName);
+    const cardWindow = ownWindowCardOfFrame(frameName);
 
     if (cardWindow) {
       view.onFocus(() => {

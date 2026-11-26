@@ -6,7 +6,7 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { FIND_INSET } from "#core/find.ts";
 import {
-  OWN_WINDOW_DOWNLOADS_FRAME_PREFIX,
+  OWN_WINDOW_CARD_FRAME_PREFIX,
   OWN_WINDOW_FIND_FRAME_PREFIX,
 } from "#core/own-window.ts";
 
@@ -224,7 +224,7 @@ const ownWindowCardOpen = async (app: ElectronApplication) => {
 
   return (
     window?.views.some((view) =>
-      view.name.startsWith(OWN_WINDOW_DOWNLOADS_FRAME_PREFIX)
+      view.name.startsWith(OWN_WINDOW_CARD_FRAME_PREFIX)
     ) ?? false
   );
 };

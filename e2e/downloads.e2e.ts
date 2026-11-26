@@ -5,7 +5,7 @@ import path from "node:path";
 import type { ElectronApplication, Locator, Page } from "@playwright/test";
 import { delay, escapeRegExp } from "es-toolkit";
 
-import { OWN_WINDOW_DOWNLOADS_FRAME_PREFIX } from "#core/own-window.ts";
+import { OWN_WINDOW_CARD_FRAME_PREFIX } from "#core/own-window.ts";
 
 import {
   clickMenuItem,
@@ -586,7 +586,7 @@ const windowCardOpen = async (app: ElectronApplication) => {
 
   return (
     window?.views.some((view) =>
-      view.name.startsWith(OWN_WINDOW_DOWNLOADS_FRAME_PREFIX)
+      view.name.startsWith(OWN_WINDOW_CARD_FRAME_PREFIX)
     ) ?? false
   );
 };

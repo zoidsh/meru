@@ -14,7 +14,7 @@ import {
 import type { Overlay } from "./overlay.ts";
 import {
   OWN_WINDOW_FRAME_PREFIX,
-  ownWindowDownloadsFrameName,
+  ownWindowCardFrameName,
   ownWindowFindFrameName,
   ownWindowFrameName,
 } from "./own-window.ts";
@@ -249,7 +249,7 @@ describe(isShellDocument, () => {
         OVERLAY_FRAME_NAME,
         ownWindowFrameName({ profileId: "a", tabId: "t" }),
         ownWindowFindFrameName({ profileId: "a", tabId: "t" }),
-        ownWindowDownloadsFrameName({ profileId: "a", tabId: "t" }),
+        ownWindowCardFrameName({ profileId: "a", tabId: "t" }),
         `${OWN_WINDOW_FRAME_PREFIX}["a"]`,
         "another-name",
         "",

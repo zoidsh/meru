@@ -3,7 +3,7 @@ import { findRectangle } from "./find.ts";
 import { contentViewBounds } from "./layout.ts";
 import type { ShellFrame } from "./layout.ts";
 import {
-  ownWindowDownloadsOfFrame,
+  ownWindowCardOfFrame,
   ownWindowFindOfFrame,
   ownWindowOfFrame,
 } from "./own-window.ts";
@@ -234,4 +234,4 @@ export const isShellDocument = ({
   (frameName === OVERLAY_FRAME_NAME ||
     ownWindowOfFrame(frameName) !== undefined ||
     ownWindowFindOfFrame(frameName) !== undefined ||
-    ownWindowDownloadsOfFrame(frameName) !== undefined);
+    ownWindowCardOfFrame(frameName) !== undefined);
