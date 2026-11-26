@@ -124,7 +124,10 @@ test("sits first in Privacy & Security's group, a card per menu in the menu bar'
     mac: ["⌘M", "Command M"],
     other: ["CtrlM", "Control M"],
   });
-  await expect(row(builtIn, "Close Window")).toHaveCount(isMacOS ? 1 : 0);
+  // Close has no key off macOS, where its item reads Close.
+  await expect(row(builtIn, isMacOS ? "Close Window" : "Close")).toHaveCount(
+    isMacOS ? 1 : 0
+  );
   await expect(row(builtIn, "Undo")).toHaveCount(0);
 });
 
