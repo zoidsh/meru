@@ -25,7 +25,7 @@ import {
 } from "./lib/app.ts";
 import {
   findTitlebar,
-  findWindowDownloads,
+  findWindowCard,
   findWindowFind,
   readOwnWindows,
 } from "./lib/own-window.ts";
@@ -906,7 +906,7 @@ test("the shell's renderer lets go of the documents of find bars, Downloads card
   });
   const cardOpen = async () => {
     await downloads.click();
-    await findWindowDownloads(app);
+    await findWindowCard(app);
   };
   const cardClose = async () => {
     await downloads.click();

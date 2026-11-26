@@ -19,7 +19,7 @@ import {
 } from "./lib/app.ts";
 import {
   findTitlebar,
-  findWindowDownloads,
+  findWindowCard,
   findWindowFind,
   readOwnWindows,
 } from "./lib/own-window.ts";
@@ -1346,7 +1346,7 @@ test("the Downloads card over a tab's page in its own window", async ({
     .getByRole("button", { name: "Downloads", exact: true })
     .click();
 
-  const document = await findWindowDownloads(app);
+  const document = await findWindowCard(app);
 
   await expect(
     document.getByRole("dialog", { name: "Downloads" }).getByRole("row")

@@ -5,8 +5,6 @@ import path from "node:path";
 import type { ElectronApplication, Locator, Page } from "@playwright/test";
 import { delay, escapeRegExp } from "es-toolkit";
 
-import { OWN_WINDOW_CARD_FRAME_PREFIX } from "#core/own-window.ts";
-
 import {
   clickMenuItem,
   expect,
@@ -21,8 +19,8 @@ import {
 } from "./lib/app.ts";
 import {
   findTitlebar,
-  findWindowDownloads,
-  readOwnWindows,
+  findWindowCard,
+  windowCardOpen,
 } from "./lib/own-window.ts";
 import {
   THEMES,
@@ -580,17 +578,6 @@ test("drags a finished row out as its file, and reads one no longer there as mov
   expect(await readOpened(app)).toStrictEqual([]);
 });
 
-/** Whether the own window has a Downloads card document over its page. */
-const windowCardOpen = async (app: ElectronApplication) => {
-  const [window] = await readOwnWindows(app);
-
-  return (
-    window?.views.some((view) =>
-      view.name.startsWith(OWN_WINDOW_CARD_FRAME_PREFIX)
-    ) ?? false
-  );
-};
-
 test("opens the card in a tab's own window from its titlebar, the one card moving between windows, closing on Escape or a press beside it, and counting a finish as seen", async ({
   launchApp,
   userDataDir,
@@ -631,7 +618,7 @@ test("opens the card in a tab's own window from its titlebar, the one card movin
 
   await inWindow.click();
 
-  let document = await findWindowDownloads(app);
+  let document = await findWindowCard(app);
 
   await expect(row(document, "kept.pdf")).toContainText("1 kB · ");
   await expect(row(document, DOWNLOAD_FILES.small.name)).toBeFocused();
@@ -655,20 +642,20 @@ test("opens the card in a tab's own window from its titlebar, the one card movin
 
   // Its button again closes it, and opening in the main window moves it there.
   await inWindow.click();
-  document = await findWindowDownloads(app);
+  document = await findWindowCard(app);
   await expect(card(document)).toBeVisible();
   await inWindow.click();
   await expect.poll(() => windowCardOpen(app)).toBe(false);
 
   await inWindow.click();
-  await findWindowDownloads(app);
+  await findWindowCard(app);
   await openCard(shell, overlay);
   await expect.poll(() => windowCardOpen(app)).toBe(false);
   await expect(inMain).toHaveAttribute("aria-pressed", "true");
   await expect(inWindow).toHaveAttribute("aria-pressed", "false");
 
   await inWindow.click();
-  document = await findWindowDownloads(app);
+  document = await findWindowCard(app);
   await expect(card(overlay)).toBeHidden();
   await document.mouse.move(8, 8);
   await document.mouse.down();
@@ -677,7 +664,7 @@ test("opens the card in a tab's own window from its titlebar, the one card movin
   // A press on the titlebar closes it too; released away from Reload, it
   // reloads nothing.
   await inWindow.click();
-  await findWindowDownloads(app);
+  await findWindowCard(app);
   await titlebar.getByRole("button", { name: "Reload" }).hover();
   await titlebar.mouse.down();
   await expect.poll(() => windowCardOpen(app)).toBe(false);

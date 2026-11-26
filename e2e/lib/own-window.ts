@@ -40,9 +40,20 @@ export const findTitlebar = (app: ElectronApplication) =>
 export const findWindowFind = (app: ElectronApplication) =>
   findDocument(app, OWN_WINDOW_FIND_FRAME_PREFIX);
 
-/** The Downloads card document of the tab's own window, while it is open there. */
-export const findWindowDownloads = (app: ElectronApplication) =>
+/** The card document of the tab's own window (Downloads, or the screen picker), while one is open there. */
+export const findWindowCard = (app: ElectronApplication) =>
   findDocument(app, OWN_WINDOW_CARD_FRAME_PREFIX);
+
+/** Whether the tab's own window has a card document over its page. */
+export const windowCardOpen = async (app: ElectronApplication) => {
+  const [window] = await readOwnWindows(app);
+
+  return (
+    window?.views.some((view) =>
+      view.name.startsWith(OWN_WINDOW_CARD_FRAME_PREFIX)
+    ) ?? false
+  );
+};
 
 const findDocument = async (app: ElectronApplication, prefix: string) => {
   let found: Page | undefined;
