@@ -14,6 +14,8 @@ const SCHEME = /^(?<scheme>[a-z][\d+.a-z-]+):/iu;
 export const isMailtoUrl = (url: string) =>
   url.length <= MAILTO_MAX_LENGTH &&
   url.slice(0, "mailto:".length).toLowerCase() === "mailto:" &&
+  // A lone surrogate makes `encodeURIComponent` throw.
+  url.isWellFormed() &&
   !CONTROL_CHARACTERS.test(url);
 
 /**

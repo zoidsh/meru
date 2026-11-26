@@ -51,6 +51,15 @@ describe(isMailtoUrl, () => {
     expect(isMailtoUrl("mailto:a@example.com\u0085")).toBeFalsy();
     expect(isMailtoUrl("mailto:a@example.com?body=Line%0Atwo")).toBeTruthy();
   });
+
+  it("refuses a lone surrogate, which no compose address can encode", () => {
+    expect(isMailtoUrl("mailto:\uD800")).toBeFalsy();
+    expect(isMailtoUrl("mailto:a@example.com?subject=\uDC00")).toBeFalsy();
+    expect(isMailtoUrl("mailto:a@example.com?subject=😀")).toBeTruthy();
+    expect(() =>
+      composeUrl(GMAIL_HOME, "mailto:a@example.com?subject=😀")
+    ).not.toThrow();
+  });
 });
 
 describe(composeUrl, () => {
