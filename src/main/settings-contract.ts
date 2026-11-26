@@ -113,6 +113,7 @@ export interface SettingsContractDeps {
     | "onChange"
     | "setOpenAtLogin"
     | "setEmailLinks"
+    | "emailLinksOn"
     | "openDefaultApps"
     | "chooseDownloadsFolder"
     | "setSpellcheckLanguage"
@@ -439,12 +440,20 @@ export const settingsHandlers = ({
       Promise.try(() => {
         general.setOpenAtLogin(on);
       }),
+    // Without Meru Pro, a person who made Meru the handler can still give
+    // the links back, or a lapsed trial would leave them stuck with it.
     setEmailLinks: async ({ on }) => {
-      assertEmailLinks(entitlement);
+      if (on) {
+        assertEmailLinks(entitlement);
+      }
+
       await general.setEmailLinks(on);
     },
     openDefaultApps: async () => {
-      assertEmailLinks(entitlement);
+      if (!general.emailLinksOn()) {
+        assertEmailLinks(entitlement);
+      }
+
       await general.openDefaultApps();
     },
     chooseDownloadsFolder: async ({ profileId }) => {

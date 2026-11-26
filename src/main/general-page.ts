@@ -127,6 +127,8 @@ export const createGeneralPage = ({
     },
     /** Asks the system again whether it sends email links to Meru. */
     readEmailLinks: readMailDefault,
+    /** Whether the system sent email links to Meru when it was last asked. */
+    emailLinksOn: () => mailDefault,
     /**
      * Makes Meru the system's handler for email links, or gives them back,
      * on macOS and Linux; Linux has no way to give them back.

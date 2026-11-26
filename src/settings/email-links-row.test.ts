@@ -57,14 +57,30 @@ describe(emailLinksRow, () => {
     });
   });
 
-  it("is disabled on the free version, on every system", () => {
+  it("is disabled on the free version while Meru does not hold the links, on every system", () => {
     for (const platform of ["darwin", "linux", "win32"]) {
       expect(row(platform, { needsPro: true }).disabled).toBeTruthy();
     }
+  });
 
-    expect(row("darwin", { needsPro: true, isDefault: true })).toMatchObject({
+  it("still gives the links back on the free version while Meru holds them, where the system allows it", () => {
+    expect(row("darwin", { needsPro: true, isDefault: true })).toStrictEqual({
+      control: "switch",
       checked: true,
+      disabled: false,
       description: "asks",
+    });
+    expect(row("win32", { needsPro: true, isDefault: true })).toStrictEqual({
+      control: "button",
+      checked: true,
+      disabled: false,
+      description: "meru-opens",
+    });
+    expect(row("linux", { needsPro: true, isDefault: true })).toStrictEqual({
+      control: "switch",
+      checked: true,
+      disabled: true,
+      description: "meru-opens-change-in-system",
     });
   });
 

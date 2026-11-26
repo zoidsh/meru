@@ -527,7 +527,7 @@ test.describe("the General page's Email links", () => {
     );
   });
 
-  test("on the free version the row is a Pro row, disabled", async ({
+  test("on the free version the row is a Pro row, disabled while Meru does not hold the links", async ({
     launchApp,
     userDataDir,
     standIn,
@@ -552,6 +552,57 @@ test.describe("the General page's Email links", () => {
       page.getByRole("button", { name: `Meru Pro ${label}`, exact: true })
     ).toBeVisible();
     await expect(control).toBeDisabled();
+  });
+
+  test("after the trial ends, a person who made Meru the mail app can still give the links back", async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    await seedProfiles(userDataDir, standIn, ["Personal"]);
+    await writeStub(userDataDir, { trialStartedAt: Date.now() - 15 * DAY });
+
+    const app = await launchApp(NO_TRIAL);
+
+    await findPage(app, SHELL_URL);
+    await expect
+      .poll(() => entitlementSnapshot(app))
+      .toMatchObject({ status: "trialEnded" });
+    const page = await openGeneral(app);
+
+    // Turned on during the trial, as the system still holds it, and read
+    // again as the Settings window regains the focus.
+    await setMailHandler(app, { isDefault: true });
+    await emitSettingsFocus(app, "blur");
+    await emitSettingsFocus(app, "focus");
+
+    if (onWindows) {
+      const button = page.getByRole("button", { name: WINDOWS_BUTTON });
+
+      await expect(button).toBeEnabled();
+      await button.click();
+      await expect.poll(() => mailHandler(app, "settingsOpened")).toBe(1);
+
+      return;
+    }
+
+    const toggle = switchNamed(page, SWITCH);
+
+    await expect(toggle).toBeChecked();
+
+    if (process.platform === "linux") {
+      await expect(toggle).toBeDisabled();
+      await expect(toggle).toHaveAccessibleDescription(
+        "Meru opens email links. To change this, choose another app in your system settings."
+      );
+
+      return;
+    }
+
+    await toggle.click();
+    await expect(toggle).not.toBeChecked();
+    expect(await mailHandler(app, "calls")).toStrictEqual([false]);
+    await expect(toggle).toBeDisabled();
   });
 
   test("are left out of a profile's scope", async ({

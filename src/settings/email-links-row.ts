@@ -46,11 +46,15 @@ export const emailLinksRow = ({
     };
   }
 
+  // Without Meru Pro the row still gives the links back, so a lapsed trial
+  // never leaves Meru holding them.
+  const refused = needsPro && !isDefault;
+
   if (control === "button") {
     return {
       control,
       checked: isDefault,
-      disabled: needsPro,
+      disabled: refused,
       description: isDefault ? "meru-opens" : "choose-in-windows",
     };
   }
@@ -61,7 +65,7 @@ export const emailLinksRow = ({
   return {
     control,
     checked: isDefault,
-    disabled: needsPro || stuck,
+    disabled: refused || stuck,
     description: stuck ? "meru-opens-change-in-system" : "asks",
   };
 };

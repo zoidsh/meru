@@ -1109,6 +1109,39 @@ describe("the Settings window's General page", () => {
     windows.dispose();
   });
 
+  it("still gives the links back on the free version while Meru holds them, never taking them again", async () => {
+    const app = setup(stateOf("Work"), undefined, "darwin", ["en"], true);
+    const windows = setup(stateOf("Work"), undefined, "win32", ["en"], true);
+    const linux = setup(stateOf("Work"), undefined, "linux", ["en"], true);
+
+    await Promise.all(
+      [app, windows, linux].map((each) => {
+        each.systemMail.isDefault = true;
+
+        return each.deps.general.readEmailLinks();
+      })
+    );
+
+    await app.handlers.setEmailLinks({ on: false });
+    await windows.handlers.openDefaultApps({});
+    await expect(linux.handlers.setEmailLinks({ on: false })).rejects.toThrow(
+      "Linux gives email links back to no other app"
+    );
+    await expect(app.handlers.setEmailLinks({ on: true })).rejects.toThrow(
+      "Opening email links in Meru needs Meru Pro"
+    );
+
+    expect([
+      app.systemMail.calls,
+      app.read().general.emailLinks.isDefault,
+      windows.systemMail.settingsOpened,
+      linux.systemMail.calls,
+    ]).toStrictEqual([[false], false, 1, []]);
+    app.dispose();
+    windows.dispose();
+    linux.dispose();
+  });
+
   it("has no login item on Linux, as v3, and refuses to set one", async () => {
     const app = setup(stateOf("Work"), undefined, "linux");
 
