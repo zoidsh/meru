@@ -320,12 +320,19 @@ test("shows the picker in a Meet tab's own window, in the slot the Downloads car
   await card.getByRole("button", { name: "Share" }).click();
   await expect(sharing(meet)).toHaveText("Sharing 1 video, 0 audio");
   await expect.poll(() => windowCardOpen(app)).toBe(false);
+  // Each opening of the card is a document of its own, and the last one's
+  // can still be listed while it closes.
+  await expect.poll(() => document.isClosed()).toBe(true);
 
   // Escape, a press beside it and one on the titlebar each share nothing.
-  // Each opening of the card is a document of its own.
+  // The card's document goes on the key or button going down, so a release
+  // would be sent to a closed page.
   for (const dismiss of [
-    (shown: Page) => shown.keyboard.press("Escape"),
-    (shown: Page) => shown.mouse.click(4, 4),
+    (shown: Page) => shown.keyboard.down("Escape"),
+    async (shown: Page) => {
+      await shown.mouse.move(4, 4);
+      await shown.mouse.down();
+    },
     () => titlebar.getByText("Meet stand-in").click(),
   ]) {
     // oxlint-disable-next-line no-await-in-loop -- one request at a time
@@ -343,6 +350,8 @@ test("shows the picker in a Meet tab's own window, in the slot the Downloads car
     await expect(sharing(meet)).toHaveText("Not shared: AbortError");
     // oxlint-disable-next-line no-await-in-loop -- one request at a time
     await expect.poll(() => windowCardOpen(app)).toBe(false);
+    // oxlint-disable-next-line no-await-in-loop -- one request at a time
+    await expect.poll(() => shown.isClosed()).toBe(true);
   }
 
   // Opening Downloads there takes the slot, sharing nothing.
@@ -352,6 +361,7 @@ test("shows the picker in a Meet tab's own window, in the slot the Downloads car
   await expect(picker(shown)).toBeVisible();
   await titlebar.getByRole("button", { name: "Downloads" }).click();
   await expect(sharing(meet)).toHaveText("Not shared: AbortError");
+  await expect.poll(() => shown.isClosed()).toBe(true);
 
   const downloads = await findWindowCard(app);
 
