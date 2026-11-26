@@ -548,6 +548,7 @@ const start = async () => {
 
   const { screenPicker, hasWindowCard } = wireScreenPicker({
     platform,
+    background,
     apps,
     sessions,
     senders,

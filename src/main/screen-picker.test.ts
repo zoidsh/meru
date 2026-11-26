@@ -8,6 +8,8 @@ import type { ScreenCaptureStatus, ScreenSource } from "#core/screen-picker.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { fakeScreenSources } from "#platform/screen-sources.fake.ts";
+import type { ScreenSources } from "#platform/screen-sources.ts";
+import { withheldScreenSources } from "#platform/withheld-screen-sources.ts";
 
 import { createScreenPicker } from "./screen-picker.ts";
 import type { SenderIdentity } from "./senders.ts";
@@ -40,6 +42,7 @@ const setup = ({
   status = "granted" as ScreenCaptureStatus,
   inWindows = [] as TabKey[],
   overlay = undefined as Overlay | undefined,
+  sources = undefined as ScreenSources | undefined,
 } = {}) => {
   const fake = fakeScreenSources({ status, sources: [NOTES, SCREEN] });
   const identities = new Map<number, SenderIdentity>([
@@ -79,7 +82,7 @@ const setup = ({
   const picker = createScreenPicker({
     apps: APPS,
     platform,
-    sources: fake.screenSources,
+    sources: sources ?? fake.screenSources,
     identify: (id) => identities.get(id),
     inOwnWindow: (key) => owned.has(tabKey(key)),
     ownWindowOpen: (key) => owned.has(tabKey(key)),
@@ -117,6 +120,26 @@ const setup = ({
 const settled = () => delay(0);
 
 describe(createScreenPicker, () => {
+  it("in a run under the background flag, asks the system nothing and shows that listing failed", async () => {
+    const withheld = withheldScreenSources();
+    const { picker, ask, logged } = setup({
+      platform: "darwin",
+      sources: withheld.sources,
+    });
+
+    const answers = ask(PAGE);
+
+    await settled();
+
+    expect(picker.mainCard()).toStrictEqual({ kind: "failed" });
+    expect(logged).toHaveLength(1);
+    expect(withheld.streams.systemPicker("persist:a", true)).toBeFalsy();
+
+    picker.cancel();
+
+    expect(answers).toStrictEqual([undefined]);
+  });
+
   it.each([
     ["a web contents Meru does not know", 99, MEET],
     ["no web contents", undefined, MEET],

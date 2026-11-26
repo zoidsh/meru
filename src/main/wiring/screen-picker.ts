@@ -23,6 +23,7 @@ import { screenSources } from "./test-build.ts";
  */
 export const wireScreenPicker = ({
   platform,
+  background,
   apps,
   sessions,
   senders,
@@ -35,6 +36,8 @@ export const wireScreenPicker = ({
   settings,
 }: {
   platform: Platform;
+  /** A run sharing its desktop with other automated sessions, which asks the system nothing. */
+  background: boolean;
   apps: readonly App[];
   sessions: ReturnType<typeof createSessions>;
   senders: Pick<SenderRegistry, "identify" | "onDropped">;
@@ -46,7 +49,7 @@ export const wireScreenPicker = ({
   focus: Focus;
   settings: Pick<SettingsStore, "get" | "onChange">;
 }) => {
-  const { sources, streams } = screenSources(platform);
+  const { sources, streams } = screenSources(platform, background);
   const picker = createScreenPicker({
     apps,
     platform,

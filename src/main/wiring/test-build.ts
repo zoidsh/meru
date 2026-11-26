@@ -73,6 +73,7 @@ import {
   createTrayFactory,
 } from "#platform/tray.ts";
 import { createCapturedUpdater, createUpdater } from "#platform/updater.ts";
+import { withheldScreenSources } from "#platform/withheld-screen-sources.ts";
 
 import type { Entitlement } from "../entitlement.ts";
 import { restorePerformanceGlobal } from "../performance-global.ts";
@@ -380,9 +381,12 @@ export const systemUpdater = async () => {
 /**
  * What can be shared and the stand-in for it: the suite's build lists fixed
  * sources and never asks the system, so no test shows its Screen Recording
- * prompt or settings.
+ * prompt or settings; nor does a run under the background flag.
  */
-export const screenSources = (platform: Platform) =>
-  MERU_E2E_BUILD
-    ? createCapturedScreenSources()
-    : createScreenSources(platform);
+export const screenSources = (platform: Platform, background: boolean) => {
+  if (MERU_E2E_BUILD) {
+    return createCapturedScreenSources();
+  }
+
+  return background ? withheldScreenSources() : createScreenSources(platform);
+};
