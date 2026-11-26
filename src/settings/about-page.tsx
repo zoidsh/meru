@@ -1,18 +1,16 @@
 import { useLingui } from "@lingui/react/macro";
-import { CheckIcon, CopyIcon } from "lucide-react";
 import { useId } from "react";
 
 import type { AboutItem } from "#contract/settings.ts";
-import { Button } from "#ui/button.tsx";
 
-import { useDoneBriefly } from "./done-briefly.ts";
+import { CopyButton } from "./copy-button.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
 
 /**
- * A value and its Copy, which has main put its own string on the clipboard;
- * the value describes the button, so a screen reader says what it copies.
+ * A value and its Copy; the value describes the button, so a screen reader
+ * says what it copies.
  */
 const CopyableValue = ({
   item,
@@ -23,8 +21,6 @@ const CopyableValue = ({
   value: string;
   name: string;
 }) => {
-  const { t } = useLingui();
-  const [copied, showCopied] = useDoneBriefly();
   const valueId = useId();
 
   return (
@@ -32,37 +28,15 @@ const CopyableValue = ({
       <span id={valueId} className="text-sm text-muted-foreground">
         {value}
       </span>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label={name}
-        aria-describedby={valueId}
-        title={t({
-          message: "Copy",
-          comment:
-            "Tooltip of the buttons on the About page of Settings that copy Meru's version or the operating system",
-        })}
-        onClick={async () => {
-          const done = await settingsCalls()
+      <CopyButton
+        name={name}
+        describedBy={valueId}
+        copy={() =>
+          settingsCalls()
             .copyAboutValue({ item })
             .then(() => true)
-            .catch(() => false);
-
-          if (done) {
-            showCopied();
-          }
-        }}
-      >
-        {copied ? <CheckIcon /> : <CopyIcon />}
-      </Button>
-      <output className="sr-only">
-        {copied &&
-          t({
-            message: "Copied",
-            comment:
-              "Read out by screen readers once Meru's version or the operating system is on the clipboard, from the About page of Settings",
-          })}
-      </output>
+        }
+      />
     </>
   );
 };

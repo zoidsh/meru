@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
-import { BadgeCheckIcon, CheckIcon, CopyIcon } from "lucide-react";
+import { BadgeCheckIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -12,54 +12,10 @@ import { Badge } from "#ui/badge.tsx";
 import { Button } from "#ui/button.tsx";
 import { Input } from "#ui/input.tsx";
 
-import { useDoneBriefly } from "./done-briefly.ts";
+import { CopyButton } from "./copy-button.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
-
-/** Copy beside the masked key, which has main put the whole key on the clipboard. */
-const CopyKey = () => {
-  const { t } = useLingui();
-  const [copied, showCopied] = useDoneBriefly();
-
-  return (
-    <>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label={t({
-          message: "Copy license key",
-          comment:
-            "Accessible name of the button beside the license key on the Meru Pro page of Settings that copies the whole key",
-        })}
-        title={t({
-          message: "Copy",
-          comment:
-            "Tooltip of the button beside the license key on the Meru Pro page of Settings that copies the whole key",
-        })}
-        onClick={async () => {
-          const result = await settingsCalls()
-            .copyLicenseKey(undefined)
-            .catch(noop);
-
-          if (result?.ok) {
-            showCopied();
-          }
-        }}
-      >
-        {copied ? <CheckIcon /> : <CopyIcon />}
-      </Button>
-      <output className="sr-only">
-        {copied &&
-          t({
-            message: "Copied",
-            comment:
-              "Read out by screen readers once the license key is on the clipboard, from the Meru Pro page of Settings",
-          })}
-      </output>
-    </>
-  );
-};
 
 /** Device name and its Save, sent only once the person saves. */
 const DeviceName = ({
@@ -315,7 +271,20 @@ const Page = ({
                       {key}
                     </span>
                   )}
-                  {key !== null && <CopyKey />}
+                  {key !== null && (
+                    <CopyButton
+                      name={t({
+                        message: "Copy license key",
+                        comment:
+                          "Accessible name of the button beside the license key on the Meru Pro page of Settings that copies the whole key",
+                      })}
+                      copy={() =>
+                        calls
+                          .copyLicenseKey(undefined)
+                          .then((result) => result.ok)
+                      }
+                    />
+                  )}
                   <LicenseDialog
                     changing={key !== null}
                     disabled={busy && pending !== "activate"}

@@ -745,10 +745,8 @@ msgstr "Conversations"
 msgid "Cookies and other site data"
 msgstr "Cookies and other site data"
 
-#. Read out by screen readers once Meru's version or the operating system is on the clipboard, from the About page of Settings
-#. Read out by screen readers once the license key is on the clipboard, from the Meru Pro page of Settings
-#: src/settings/about-page.tsx
-#: src/settings/pro-page.tsx
+#. Read out by screen readers in Settings once the license key, Meru's version or the operating system is on the clipboard
+#: src/settings/copy-button.tsx
 msgid "Copied"
 msgstr "Copied"
 
@@ -759,12 +757,10 @@ msgstr "Copied verification code {verificationCode}"
 
 #. Button on a notification that copies the verification code
 #. Menu item in the Edit menu
-#. Tooltip of the button beside the license key on the Meru Pro page of Settings that copies the whole key
-#. Tooltip of the buttons on the About page of Settings that copy Meru's version or the operating system
+#. Tooltip of the buttons in Settings that copy a value shown beside them: the license key on the Meru Pro page, Meru's version or the operating system on the About page
 #: src/main/application-menu.ts
 #: src/main/notifications.ts
-#: src/settings/about-page.tsx
-#: src/settings/pro-page.tsx
+#: src/settings/copy-button.tsx
 msgid "Copy"
 msgstr "Copy"
 
