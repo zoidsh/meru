@@ -5,6 +5,7 @@ import {
   SOUND_RECHECK_MS,
   followIdle,
   idleSleepPlan,
+  inMeetCall,
 } from "./idle-sleep.ts";
 import type { IdleSleepInput } from "./idle-sleep.ts";
 import type { Split } from "./pane-tree.ts";
@@ -73,6 +74,32 @@ const plan = (input: Partial<IdleSleepInput> & { state: State }) =>
     audible: () => false,
     ...input,
   });
+
+const meet = (url: string, app = "meet") => inMeetCall({ app, url });
+
+describe(inMeetCall, () => {
+  it("is a Meet tab at a meeting's code, never Meet's home, landing or lookup pages, nor another app", () => {
+    expect({
+      meeting: meet("https://meet.google.com/abc-defg-hij"),
+      withQuery: meet("https://meet.google.com/abc-defg-hij?authuser=1"),
+      slash: meet("https://meet.google.com/abc-defg-hij/"),
+      home: meet("https://meet.google.com/"),
+      landing: meet("https://meet.google.com/landing"),
+      lookup: meet("https://meet.google.com/lookup/team-standup"),
+      notAUrl: meet("meet"),
+      otherApp: meet("https://meet.google.com/abc-defg-hij", "calendar"),
+    }).toStrictEqual({
+      meeting: true,
+      withQuery: true,
+      slash: true,
+      home: false,
+      landing: false,
+      lookup: false,
+      notAUrl: false,
+      otherApp: false,
+    });
+  });
+});
 
 describe(followIdle, () => {
   it("starts the clock of each hidden tab, the other profile's selected one included, and of none on screen or in its own window", () => {
@@ -169,6 +196,15 @@ describe(idleSleepPlan, () => {
         }).due
       )
     ).toStrictEqual(["p/marked", "p/markedPinned"]);
+  });
+
+  it("never takes a Meet tab in a call, sounding or not, while one at Meet's home sleeps", () => {
+    const current = state([
+      tab("call", { app: "meet", url: "https://meet.google.com/abc-defg-hij" }),
+      tab("home", { app: "meet", url: "https://meet.google.com/" }),
+    ]);
+
+    expect(ids(plan({ state: current }).due)).toStrictEqual(["p/home", "q/q1"]);
   });
 
   it("never takes a tab shown, in a split pane on screen, in its own window, playing sound, asleep or not loaded", () => {

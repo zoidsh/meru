@@ -4,7 +4,7 @@ import { menuOfGroups, menuPointInside } from "./context-menu.ts";
 import type { MenuEntry, MenuItemEntry, MenuPoint } from "./context-menu.ts";
 import { drawnTabs } from "./drawn-tabs.ts";
 import { isWebUrl } from "./google-redirect.ts";
-import { marksSleepWhenIdle, mayIdleSleep } from "./idle-sleep.ts";
+import { canMarkSleepWhenIdle, marksSleepWhenIdle } from "./idle-sleep.ts";
 import type { SleepIdleTabs } from "./settings.ts";
 import { isInSplit, isMaximized, splitPanes } from "./split.ts";
 import { inOwnWindow, isPinned, knownTabs } from "./state.ts";
@@ -144,7 +144,7 @@ export const tabMenu = (
       ? []
       : [
           item(page.loaded ? "sleep" : "wake", true),
-          ...(sleepIdleTabs === "chosen" && mayIdleSleep(tab)
+          ...(sleepIdleTabs === "chosen" && canMarkSleepWhenIdle(tab)
             ? [
                 item("sleepWhenIdle", true, {
                   checked: marksSleepWhenIdle(tab),

@@ -24,12 +24,29 @@ export const SOUND_RECHECK_MS = MINUTE;
 /** Whether the tab carries Sleep When Idle; anything but `true` reads as not. */
 export const marksSleepWhenIdle = (tab: Tab) => tab.sleepWhenIdle === true;
 
+/** A meeting's own address on Meet, as `abc-defg-hij`. */
+const MEETING_PATH = /^\/[a-z]{3}-[a-z]{4}-[a-z]{3}\/?$/u;
+
 /**
- * Whether the tab may ever sleep by itself: never Gmail's, as in v3, nor one
- * in its own window, which is a window the person left open.
+ * Whether the Meet tab is at a meeting rather than Meet's home, landing or
+ * lookup pages. A muted call is silent, so sound alone cannot keep it awake.
  */
-export const mayIdleSleep = (tab: Tab) =>
+export const inMeetCall = (tab: Pick<Tab, "app" | "url">) =>
+  tab.app === "meet" &&
+  URL.canParse(tab.url) &&
+  MEETING_PATH.test(new URL(tab.url).pathname);
+
+/**
+ * Whether the tab can carry Sleep When Idle: never Gmail's, which never
+ * sleeps by itself, as in v3, nor one in its own window, which is a window
+ * the person left open.
+ */
+export const canMarkSleepWhenIdle = (tab: Tab) =>
   tab.app !== "gmail" && !inOwnWindow(tab);
+
+/** Whether the tab may sleep by itself now: as `canMarkSleepWhenIdle`, and not in a call. */
+export const mayIdleSleep = (tab: Tab) =>
+  canMarkSleepWhenIdle(tab) && !inMeetCall(tab);
 
 /** Whether the setting puts the tab to sleep once it is idle. */
 export const coveredByIdleSleep = (tab: Tab, which: SleepIdleTabs) => {
