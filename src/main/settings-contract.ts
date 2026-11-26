@@ -110,6 +110,8 @@ export interface SettingsContractDeps {
   >;
   trustedSites: Pick<TrustedSites, "list" | "remove">;
   advanced: Pick<AdvancedPage, "read" | "openSettingsFile" | "clearCache">;
+  /** The Shortcuts page's cards, in the language of the moment. */
+  shortcuts: () => SettingsState["shortcuts"];
   entitlement: Pick<
     Entitlement,
     | "snapshot"
@@ -449,6 +451,7 @@ export const readSettingsState = ({
   language,
   trustedSites,
   advanced,
+  shortcuts,
   entitlement,
   licenseRequests,
 }: Pick<
@@ -462,6 +465,7 @@ export const readSettingsState = ({
   | "language"
   | "trustedSites"
   | "advanced"
+  | "shortcuts"
   | "entitlement"
   | "licenseRequests"
 >): SettingsState => {
@@ -518,6 +522,7 @@ export const readSettingsState = ({
     general: general.read(),
     trustedSites: trustedSites.list(),
     advanced: advanced.read(),
+    shortcuts: shortcuts(),
     language: language.current(),
     entitlement: entitlement.snapshot(),
     licenseRequest: licenseRequests.busy(),

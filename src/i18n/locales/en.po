@@ -350,6 +350,11 @@ msgstr "Along the whole view"
 msgid "Already bought Meru Pro? Enter your key to unlock it."
 msgstr "Already bought Meru Pro? Enter your key to unlock it."
 
+#. The Alt key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Alt"
+msgstr "Alt"
+
 #. Label of the menu in Settings choosing the Google apps whose links always open in the default browser rather than in Meru
 #: src/settings/tabs-apps-page.tsx
 msgid "Always open in your default browser"
@@ -670,6 +675,16 @@ msgstr "Collapse sidebar"
 msgid "Color"
 msgstr "Color"
 
+#. The , key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Comma"
+msgstr "Comma"
+
+#. The Command key on a Mac, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Command"
+msgstr "Command"
+
 #. Menu item in the Mail menu that opens a new message in the selected profile's Gmail
 #: src/main/commands.ts
 msgid "Compose"
@@ -699,6 +714,11 @@ msgstr "Continue with free version"
 #: src/shell/trial-ended.tsx
 msgid "Continue with Free Version"
 msgstr "Continue with Free Version"
+
+#. The Control key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Control"
+msgstr "Control"
 
 #. Title of the group of Settings for how Gmail shows an open conversation
 #: src/settings/gmail-page.tsx
@@ -964,6 +984,11 @@ msgstr "Edit"
 msgid "Enabled"
 msgstr "Enabled"
 
+#. The Enter key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Enter"
+msgstr "Enter"
+
 #. Shown under the Search field in Settings when Save is pressed with it empty
 #: src/settings/saved-searches-card.tsx
 msgid "Enter a search."
@@ -1211,6 +1236,16 @@ msgstr "label:receipts is:unread"
 msgid "Language"
 msgstr "Language"
 
+#. The left arrow key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Left Arrow"
+msgstr "Left Arrow"
+
+#. The [ key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Left Bracket"
+msgstr "Left Bracket"
+
 #. Said by screen readers of the gap between two panes side by side: how much of the two the left one takes; {percent} is a percentage, such as 60%
 #: src/shell/pane-handle.tsx
 msgid "Left pane {percent}"
@@ -1445,6 +1480,11 @@ msgstr "MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
 #: src/main/application-menu.ts
 msgid "Minimize"
 msgstr "Minimize"
+
+#. The - key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Minus"
+msgstr "Minus"
 
 #. Accessible name and tooltip of the button at the right of a tab's own window's title bar that opens a menu: Move to main window, Copy URL and the like
 #: src/shell/own-window.tsx
@@ -1745,6 +1785,11 @@ msgstr "Opening Google apps"
 msgid "Opens settings.json in your text editor."
 msgstr "Opens settings.json in your text editor."
 
+#. The Option key on a Mac, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Option"
+msgstr "Option"
+
 #. Placeholder of the Name field of a new saved search in Settings, which may stay empty
 #: src/settings/saved-searches-card.tsx
 msgid "Optional"
@@ -1789,6 +1834,11 @@ msgstr "Pink"
 #: src/settings/notifications-page.tsx
 msgid "Play sound"
 msgstr "Play sound"
+
+#. The + key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Plus"
+msgstr "Plus"
 
 #. Button in the find bar that shows the match before this one
 #: src/shell/find-bar.tsx
@@ -1992,6 +2042,21 @@ msgstr "Restore panes"
 msgid "Restore Panes"
 msgstr "Restore Panes"
 
+#. The Return key on a Mac, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Return"
+msgstr "Return"
+
+#. The right arrow key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Right Arrow"
+msgstr "Right Arrow"
+
+#. The ] key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Right Bracket"
+msgstr "Right Bracket"
+
 #. Caption under a Settings row in a profile's scope while the profile has no value of its own
 #: src/settings/row-scope.tsx
 msgid "Same as All profiles."
@@ -2069,6 +2134,11 @@ msgstr "Select Next Profile"
 msgid "Select Next Tab"
 msgstr "Select Next Tab"
 
+#. Row of the Shortcuts page in Settings standing for the commands that select the pinned tab at each place, from {first} to {last}
+#: src/main/shortcuts-page.ts
+msgid "Select Pinned Tab {first} to {last}"
+msgstr "Select Pinned Tab {first} to {last}"
+
 #. Command that selects the selected profile's pinned tab at this place in the sidebar's pinned area, counting from 1; the Tabs menu shows the tab's Google app instead
 #: src/main/commands.ts
 msgid "Select Pinned Tab {position}"
@@ -2083,6 +2153,11 @@ msgstr "Select Previous Profile"
 #: src/main/commands.ts
 msgid "Select Previous Tab"
 msgstr "Select Previous Tab"
+
+#. Row of the Shortcuts page in Settings standing for the commands that select the profile at each place, from {first} to {last}
+#: src/main/shortcuts-page.ts
+msgid "Select Profile {first} to {last}"
+msgstr "Select Profile {first} to {last}"
 
 #. Command that selects the profile at this place in the title bar's row, counting from 1; the Window menu shows the profile's name instead
 #: src/main/commands.ts
@@ -2128,6 +2203,11 @@ msgstr "Settings sections"
 #: src/main/commands.ts
 msgid "Settings…"
 msgstr "Settings…"
+
+#. The Shift key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Shift"
+msgstr "Shift"
 
 #. Read by screen readers once for the New tab launcher's list: the key that deletes the bookmark highlighted in it
 #: src/shell/open-app.tsx
@@ -2465,6 +2545,11 @@ msgstr "System language"
 #: src/settings/menu-bar-page.tsx
 msgid "System tray"
 msgstr "System tray"
+
+#. The Tab key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Tab"
+msgstr "Tab"
 
 #. Accessible name of the list of the profile's tabs down the left of the window, read by screen readers
 #. Name of the menu of commands on the selected profile's tabs

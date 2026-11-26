@@ -22,6 +22,7 @@ import type { State } from "#core/state.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
 
 import { createAdvancedPage } from "./advanced-page.ts";
+import { COMMANDS } from "./commands.ts";
 import { createDoNotDisturb } from "./do-not-disturb.ts";
 import {
   DEV_PUBLIC_KEY,
@@ -43,6 +44,7 @@ import {
 } from "./settings-contract.ts";
 import { createSettingsPages } from "./settings-pages.ts";
 import { createSettingsStore } from "./settings.ts";
+import { readShortcuts } from "./shortcuts-page.ts";
 import { createSpellcheck } from "./spellcheck.ts";
 import { holdEntitlementServer } from "./test-hooks.ts";
 import { createTrustedSites } from "./trusted-sites.ts";
@@ -287,6 +289,7 @@ const setup = (
       deleteBrowsingData,
       log: () => false,
     }),
+    shortcuts: () => readShortcuts(platform, "Meru", COMMANDS),
     entitlement,
     licenseRequests: createLicenseRequests(),
     systemBrowser: {

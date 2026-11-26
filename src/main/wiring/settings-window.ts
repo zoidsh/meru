@@ -20,6 +20,7 @@ import type { Theme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
 import { createAdvancedPage } from "../advanced-page.ts";
+import { COMMANDS } from "../commands.ts";
 import { serveContract } from "../contract-ipc.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Entitlement } from "../entitlement.ts";
@@ -39,6 +40,7 @@ import { createSettingsPages } from "../settings-pages.ts";
 import { createSettingsWindow } from "../settings-window.ts";
 import type { SettingsStore } from "../settings.ts";
 import { createRendererRecovery } from "../shell-recovery.ts";
+import { readShortcuts } from "../shortcuts-page.ts";
 import type { SoundOutput } from "../sounds.ts";
 import type { Spellcheck } from "../spellcheck.ts";
 import type { TrustedSites } from "../trusted-sites.ts";
@@ -189,6 +191,8 @@ export const wireSettingsWindow = ({
     log: console.error,
   });
 
+  const shortcuts = () => readShortcuts(platform, lifecycle.name, COMMANDS);
+
   profiles.onChange(() => {
     pages.follow(profiles.get().profiles.map((profile) => profile.id));
   });
@@ -223,6 +227,7 @@ export const wireSettingsWindow = ({
       general,
       trustedSites,
       advanced,
+      shortcuts,
       entitlement,
       licenseRequests,
       systemBrowser,
@@ -249,6 +254,7 @@ export const wireSettingsWindow = ({
           language,
           trustedSites,
           advanced,
+          shortcuts,
           entitlement,
           licenseRequests,
         }),

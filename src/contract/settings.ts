@@ -381,6 +381,15 @@ export const SETTINGS_CALLS = {
   { request: z.ZodMiniType; response: z.ZodMiniType }
 >;
 
+const shortcutKey = z.object({
+  /** One per key, in the platform's order and symbols: `⇧` `⌘` `G`. */
+  parts: z.array(z.string()),
+  /** The keys as a screen reader says them: `Shift Command G`. */
+  spoken: z.string(),
+});
+
+const shortcutKeys = z.nullable(shortcutKey);
+
 /** The slices of main's state the Settings window may subscribe to. */
 export const SETTINGS_STATE = {
   /** The app value of each of the page's settings. */
@@ -492,6 +501,29 @@ export const SETTINGS_STATE = {
      * of the setting leaves as it is until the next launch.
      */
     hardwareAccelerationAtLaunch: z.boolean(),
+  }),
+  /**
+   * The Shortcuts page: a card per menu of the application menu, in the menu
+   * bar's order, and the keys bound outside the registry, all of this
+   * platform and in the app's language. A key is its parts as shown, one
+   * per key, and how a screen reader says it.
+   */
+  shortcuts: z.object({
+    cards: z.array(
+      z.object({
+        title: z.string(),
+        rows: z.array(
+          z.object({
+            title: z.string(),
+            /** None where the command has no key on this platform. */
+            keys: shortcutKeys,
+            /** A family's last command's key, its first's being `keys`; else none. */
+            to: shortcutKeys,
+          })
+        ),
+      })
+    ),
+    builtIn: z.array(z.object({ title: z.string(), keys: shortcutKey })),
   }),
   /** The language Meru shows, as a catalog's tag. */
   language: z.string(),
