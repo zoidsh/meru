@@ -284,7 +284,7 @@ export const App = () => {
         </nav>
         <main aria-label={title} className="flex min-w-0 flex-1 pr-2 pb-2">
           <div
-            key={`${sectionId}/${profile?.id ?? ""}`}
+            key={`${sectionId}/${profile?.id}/${page?.opened}`}
             className="min-w-0 flex-1 overflow-y-auto rounded-lg bg-background p-6 select-text"
           >
             <div className="flex flex-col gap-4">

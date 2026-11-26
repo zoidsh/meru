@@ -105,7 +105,7 @@ export interface SettingsContractDeps {
   language: Pick<Language, "current">;
   pages: Pick<
     SettingsPages,
-    "current" | "canGoBack" | "canGoForward" | "open" | "step"
+    "current" | "opened" | "canGoBack" | "canGoForward" | "open" | "step"
   >;
   /** For a profile, or the app with none. */
   showTestNotification: (profileId: string | undefined) => void;
@@ -613,6 +613,7 @@ export const readSettingsState = ({
     licenseRequest: licenseRequests.busy(),
     page: {
       ...pages.current(),
+      opened: pages.opened(),
       canGoBack: pages.canGoBack(),
       canGoForward: pages.canGoForward(),
     },

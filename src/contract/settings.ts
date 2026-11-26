@@ -663,6 +663,11 @@ export const SETTINGS_STATE = {
   /** The page shown, and whether Back and Forward have one to go to. */
   page: z.object({
     ...page.shape,
+    /**
+     * Counts the pages opened, so a page opened again while it shows starts
+     * again from its top, as About does for Check for Updates….
+     */
+    opened: z.number(),
     canGoBack: z.boolean(),
     canGoForward: z.boolean(),
   }),

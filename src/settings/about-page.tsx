@@ -7,7 +7,7 @@ import { CopyButton } from "./copy-button.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows, SettingRow } from "./setting-row.tsx";
 import { settingsCalls, useSettingsState } from "./sync.ts";
-import { UpdatesGroup } from "./updates-group.tsx";
+import { UpdateStatusGroup, UpdatesGroup } from "./updates-group.tsx";
 
 /**
  * A value and its Copy; the value describes the button, so a screen reader
@@ -43,8 +43,9 @@ const CopyableValue = ({
 };
 
 /**
- * About: this build's version and the system it runs on, each with Copy,
- * for a support message, neither translated; then its updates.
+ * About: where updating stands first, then this build's version and the
+ * system it runs on, each with Copy, for a support message, neither
+ * translated; then how it updates.
  */
 export const AboutPage = () => {
   const { t } = useLingui();
@@ -87,6 +88,7 @@ export const AboutPage = () => {
 
   return (
     <SettingGroups>
+      <UpdateStatusGroup updates={updates} />
       <SettingGroup>
         <Rows>
           {rows.map(({ item, label, copy }) => (

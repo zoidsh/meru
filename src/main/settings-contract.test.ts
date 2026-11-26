@@ -569,12 +569,14 @@ describe("the Settings window's pages", () => {
       {
         section: "profiles",
         profileId: null,
+        opened: 2,
         canGoBack: true,
         canGoForward: true,
       },
       {
         section: "profiles",
         profileId: "work",
+        opened: 2,
         canGoBack: true,
         canGoForward: false,
       },
@@ -594,6 +596,7 @@ describe("the Settings window's pages", () => {
     expect(app.read().page).toStrictEqual({
       section: "notifications",
       profileId: null,
+      opened: 0,
       canGoBack: false,
       canGoForward: false,
     });
@@ -635,6 +638,7 @@ describe("the Settings window's profile calls", () => {
       {
         section: "profiles",
         profileId: "new",
+        opened: 2,
         canGoBack: true,
         canGoForward: false,
       },

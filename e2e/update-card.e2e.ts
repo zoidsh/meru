@@ -315,6 +315,29 @@ test.describe("Check for Updates…", () => {
       page.getByRole("main").getByText("Checking for updates…")
     ).toBeVisible();
     expect(await askedUpdater(app)).toMatchObject({ checks: 2 });
+
+    // About already shown and scrolled down: chosen again, it shows from its
+    // top, where the check's status is.
+    const main = page.getByRole("main");
+
+    await emitUpdate(app, { kind: "notAvailable" });
+    // The page's scroller is the one child of main.
+    await main.evaluate((element) => {
+      const scroller = element.firstElementChild as HTMLElement;
+      const spacer = document.createElement("div");
+
+      spacer.style.height = "4000px";
+      scroller.append(spacer);
+      scroller.scrollTop = scroller.scrollHeight;
+    });
+    expect(
+      await main.evaluate((element) => element.firstElementChild?.scrollTop)
+    ).toBeGreaterThan(0);
+    await clickMenuItem(app, "app.checkForUpdates");
+    await expect(main.getByText("Checking for updates…")).toBeInViewport();
+    expect(
+      await main.evaluate((element) => element.firstElementChild?.scrollTop)
+    ).toBe(0);
   });
 });
 

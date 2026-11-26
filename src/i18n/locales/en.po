@@ -2936,7 +2936,7 @@ msgstr "These apply to every profile unless you change them for one."
 msgid "These change how Gmail looks in Meru. Your Gmail settings stay the same."
 msgstr "These change how Gmail looks in Meru. Your Gmail settings stay the same."
 
-#. On the About page of Settings in place of the Updates group, for a build of Meru that cannot install new versions
+#. The first card of the About page of Settings, in place of where updating stands, for a build of Meru that cannot install new versions
 #: src/settings/updates-group.tsx
 msgid "This build doesn't update itself."
 msgstr "This build doesn't update itself."

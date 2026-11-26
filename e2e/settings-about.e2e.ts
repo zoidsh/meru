@@ -51,7 +51,25 @@ const readStored = async (userDataDir: string) =>
     await readFile(path.join(userDataDir, "settings.json"), "utf-8")
   ) as Record<string, unknown>;
 
-/** The Updates group's status row's one button, which no other row has. */
+/**
+ * Where each of `texts` first shows in the page's text, in order, so a test
+ * can say which card comes first.
+ */
+const placesOf = (page: Page, texts: readonly string[]) =>
+  page
+    .getByRole("main")
+    .evaluate(
+      (main, wanted) => wanted.map((text) => main.textContent.indexOf(text)),
+      texts
+    );
+
+/** Whether `places` are all found and in rising order. */
+const inOrder = (places: readonly number[]) =>
+  places.every(
+    (place, index) => place >= 0 && place > (places[index - 1] ?? -1)
+  );
+
+/** The status row's one button, which no other row has. */
 const statusButton = (page: Page, name: string) =>
   page.getByRole("main").getByRole("button", { name, exact: true });
 
@@ -107,19 +125,19 @@ const expectRows = async (app: ElectronApplication, page: Page) => {
   const systemText =
     (await main.getByText(OPERATING_SYSTEM).textContent()) ?? "";
 
-  // The third is the Updates group's status row.
+  // The first is where updating stands, the page's first card.
   const statuses = main.getByRole("status");
 
   await version.click();
-  await expect(statuses.nth(0)).toHaveText("Copied");
-  await expect(statuses.nth(1)).toHaveText("");
-  await system.click();
   await expect(statuses.nth(1)).toHaveText("Copied");
+  await expect(statuses.nth(2)).toHaveText("");
+  await system.click();
+  await expect(statuses.nth(2)).toHaveText("Copied");
   await expect
     .poll(() => copied(app))
     .toStrictEqual([await buildVersion(), systemText]);
-  await expect(statuses.nth(0)).toHaveText("", { timeout: 5000 });
-  await expect(statuses.nth(1)).toHaveText("");
+  await expect(statuses.nth(1)).toHaveText("", { timeout: 5000 });
+  await expect(statuses.nth(2)).toHaveText("");
 };
 
 test("is the nav's last section, after Meru Pro, with no scopes", async ({
@@ -156,11 +174,29 @@ test("is the same on the free version, with no Meru Pro badge", async ({
 });
 
 test.describe("updates", () => {
-  test("has the switch, the channel and the launch's check, under the version", async ({
+  test("has where updating stands first, in a card with no title, then the version, then the switch and the channel", async ({
     app,
   }) => {
     const page = await openAbout(app);
     const updates = page.getByRole("group", { name: "Updates" });
+
+    await expect(
+      page.getByRole("main").getByText("Checking for updates…")
+    ).toBeVisible();
+    expect(
+      inOrder(
+        await placesOf(page, [
+          "Checking for updates…",
+          "Version",
+          "Operating system",
+          "Updates",
+          "Check for updates automatically",
+          "Release channel",
+          "What's new",
+        ])
+      )
+    ).toBeTruthy();
+    await expect(updates.getByRole("status")).toHaveCount(0);
     const automatic = updates.getByRole("switch", {
       name: "Check for updates automatically",
     });
@@ -379,6 +415,17 @@ test.describe("updates", () => {
     await expect(
       main.getByText("This build doesn't update itself.", { exact: true })
     ).toBeVisible();
+    // The line is the first card's whole content, What's new last.
+    expect(
+      inOrder(
+        await placesOf(page, [
+          "This build doesn't update itself.",
+          "Version",
+          "Operating system",
+          "What's new",
+        ])
+      )
+    ).toBeTruthy();
 
     // What's new follows the line on every build.
     const show = main.getByRole("button", { name: "Show", exact: true });

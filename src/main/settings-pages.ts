@@ -13,7 +13,14 @@ import type { SettingsHistory, SettingsPage } from "#core/settings-pages.ts";
  */
 export const createSettingsPages = () => {
   let history = FIRST_SETTINGS_HISTORY;
+  let opened = 0;
   const listeners = new Set<() => void>();
+
+  const announce = () => {
+    for (const listener of listeners) {
+      listener();
+    }
+  };
 
   const set = (next: SettingsHistory | undefined) => {
     if (next === undefined || next === history) {
@@ -21,10 +28,7 @@ export const createSettingsPages = () => {
     }
 
     history = next;
-
-    for (const listener of listeners) {
-      listener();
-    }
+    announce();
 
     return true;
   };
@@ -33,7 +37,19 @@ export const createSettingsPages = () => {
     current: () => currentSettingsPage(history),
     canGoBack: () => stepSettingsPage(history, -1) !== undefined,
     canGoForward: () => stepSettingsPage(history, 1) !== undefined,
-    open: (page: SettingsPage) => set(openSettingsPage(history, page)),
+    /** How many pages were opened, the one shown opened again included. */
+    opened: () => opened,
+    /**
+     * Opens the page; the one already shown opened again is told too, so
+     * the window shows it again from its top.
+     */
+    open: (page: SettingsPage) => {
+      opened += 1;
+
+      if (!set(openSettingsPage(history, page))) {
+        announce();
+      }
+    },
     step: (by: -1 | 1) => set(stepSettingsPage(history, by)),
     /** Drops the pages of profiles no longer listed. */
     follow: (listedIds: readonly string[]) =>
