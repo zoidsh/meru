@@ -14,6 +14,7 @@ import { OpenAppOverlay } from "./open-app.tsx";
 import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
 import { Toast } from "./toast.tsx";
+import { UpdateCard } from "./update-card.tsx";
 
 /**
  * Escape anywhere in the overlay's document, and a press outside its card,
@@ -133,6 +134,10 @@ export const OverlayLayer = () => {
     }
     case "drop": {
       drawn = <DropZone {...open} />;
+      break;
+    }
+    case "update": {
+      drawn = <UpdateCard {...open} />;
       break;
     }
     default: {

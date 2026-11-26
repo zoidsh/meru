@@ -42,6 +42,7 @@ import type { Profiles } from "./profiles.ts";
 import type { LaunchHandlers, ShellHandlers } from "./shell-ipc.ts";
 import type { Sidebar } from "./sidebar.ts";
 import type { TabMenu } from "./tab-menu.ts";
+import type { UpdateCardModule } from "./update-card.ts";
 
 export interface ShellHandlersDeps {
   profiles: Pick<
@@ -59,6 +60,7 @@ export interface ShellHandlersDeps {
   pageSize: () => Size;
   overlays: Pick<Overlays, "open" | "close" | "current">;
   find: Pick<Find, "type" | "step" | "close">;
+  updateCard: Pick<UpdateCardModule, "run">;
   /** Selecting a tab through them wakes it if it sleeps. */
   tabs: {
     retry: (key: TabKey) => void;
@@ -156,6 +158,10 @@ const shellOverlay = (
     overlay?.kind === "license"
   ) {
     return { kind: overlay.kind };
+  }
+
+  if (overlay?.kind === "update") {
+    return { kind: "update", card: overlay.card, version: overlay.version };
   }
 
   if (overlay?.kind === "find") {
@@ -331,6 +337,7 @@ export const createShellHandlers = ({
   profiles,
   overlays,
   find,
+  updateCard,
   tabs,
   revealOwnWindow,
   navigateTab,
@@ -477,11 +484,21 @@ export const createShellHandlers = ({
       return Promise.resolve();
     },
     closeOverlay: () => {
-      if (overlays.current()?.kind === "find") {
+      const open = overlays.current()?.kind;
+
+      if (open === "find") {
         find.close();
+      } else if (open === "update") {
+        // Escape is Later or Close, or the card would come straight back.
+        updateCard.run("dismiss");
       } else {
         overlays.close();
       }
+
+      return Promise.resolve();
+    },
+    runUpdateCard: ({ action }) => {
+      updateCard.run(action);
 
       return Promise.resolve();
     },

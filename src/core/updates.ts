@@ -124,6 +124,56 @@ export const nextUpdateStatus = (
 /** Three hours, as v3 checks. */
 export const UPDATE_CHECK_INTERVAL = 3 * 60 * 60 * 1000;
 
+/** Meru's releases, newest first, each with its notes. */
+export const RELEASES_URL = "https://github.com/zoidsh/meru/releases";
+
 /** Where a version's release notes and downloads are. */
 export const releasePageUrl = (version: string) =>
-  `https://github.com/zoidsh/meru/releases/tag/v${version}`;
+  `${RELEASES_URL}/tag/v${version}`;
+
+/** What the main window's update card says: a version ready, or one refused. */
+export interface UpdateCard {
+  card: "ready" | "unverified";
+  version: string;
+}
+
+/** The card's buttons and Escape: Restart now, What's new, Download, and Later or Close. */
+export const UPDATE_CARD_ACTIONS = [
+  "restart",
+  "whats-new",
+  "download",
+  "dismiss",
+] as const;
+
+export type UpdateCardAction = (typeof UPDATE_CARD_ACTIONS)[number];
+
+/** What each card offers. */
+export const UPDATE_CARD_OFFERS: Record<
+  UpdateCard["card"],
+  readonly UpdateCardAction[]
+> = {
+  ready: ["whats-new", "dismiss", "restart"],
+  unverified: ["dismiss", "download"],
+};
+
+/** How a dismissed card is remembered for the rest of the run. */
+export const updateCardKey = ({ card, version }: UpdateCard) =>
+  `${card}:${version}`;
+
+/**
+ * The card the status calls for, unless it was dismissed in this run: Later
+ * on a ready version, Close on a refused one. A newer version is a card of
+ * its own, so it shows again.
+ */
+export const updateCard = (
+  { status, version }: UpdateStatus,
+  dismissed: ReadonlySet<string>
+): UpdateCard | undefined => {
+  if ((status !== "ready" && status !== "unverified") || version === null) {
+    return undefined;
+  }
+
+  const card: UpdateCard = { card: status, version };
+
+  return dismissed.has(updateCardKey(card)) ? undefined : card;
+};

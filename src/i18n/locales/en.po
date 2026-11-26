@@ -618,6 +618,11 @@ msgstr "Check for updates"
 msgid "Check for updates automatically"
 msgstr "Check for updates automatically"
 
+#. Menu item in the app menu that opens the About page of Settings and checks for a new version of Meru there
+#: src/main/commands.ts
+msgid "Check for Updates…"
+msgstr "Check for Updates…"
+
 #. Label of the switch on a profile's page in Settings that turns checking its mail on or off
 #: src/settings/profile-page.tsx
 msgid "Check mail"
@@ -679,9 +684,11 @@ msgid "Clicking the icon opens the first profile that has unread mail."
 msgstr "Clicking the icon opens the first profile that has unread mail."
 
 #. Button in the find bar that ends the search and hides the bar
+#. Button of the main window's card saying a downloaded update could not be verified; it hides the card
 #. Menu item in the Window menu that closes the window
 #: src/main/application-menu.ts
 #: src/shell/find-bar.tsx
+#: src/shell/update-card.tsx
 msgid "Close"
 msgstr "Close"
 
@@ -994,8 +1001,10 @@ msgstr "Dock"
 msgid "Done"
 msgstr "Done"
 
+#. Button of the main window's card saying a downloaded update could not be verified; it opens the version's release page in the default browser, to download it by hand
 #. Button on the About page of Settings that opens the release page of a version Meru could not verify, to download it by hand
 #: src/settings/updates-group.tsx
+#: src/shell/update-card.tsx
 msgid "Download"
 msgstr "Download"
 
@@ -1325,6 +1334,11 @@ msgstr "Language"
 msgid "Last checked {when}."
 msgstr "Last checked {when}."
 
+#. Button of the main window's update card that hides it until Meru is opened again; the version still installs when Meru quits
+#: src/shell/update-card.tsx
+msgid "Later"
+msgstr "Later"
+
 #. The left arrow key, as a screen reader says it in a keyboard shortcut
 #: src/main/shortcuts-page.ts
 msgid "Left Arrow"
@@ -1492,6 +1506,11 @@ msgstr "Meru {version} couldn't be verified, so it wasn't installed."
 msgid "Meru {version} is ready to install"
 msgstr "Meru {version} is ready to install"
 
+#. Card at the bottom right of the main window once a new version has downloaded; {version} is its version number, such as 4.2.0; at most three lines of a narrow card
+#: src/shell/update-card.tsx
+msgid "Meru {version} is ready. Restart to finish installing it."
+msgstr "Meru {version} is ready. Restart to finish installing it."
+
 #. Description of the Ask before opening links switch in Settings
 #: src/settings/privacy-page.tsx
 msgid "Meru asks before a link opens in your default browser."
@@ -1533,6 +1552,11 @@ msgstr "Meru couldn't identify this computer, so it can't check your license. Re
 #: src/main/entitlement.ts
 msgid "Meru couldn't save your license. Check that your disk isn't full, then try again."
 msgstr "Meru couldn't save your license. Check that your disk isn't full, then try again."
+
+#. Card at the bottom right of the main window when a downloaded version's signature did not match; at most three lines of a narrow card
+#: src/shell/update-card.tsx
+msgid "Meru couldn't verify the downloaded update, so it wasn't installed."
+msgstr "Meru couldn't verify the downloaded update, so it wasn't installed."
 
 #. Description of the Check for updates automatically switch on the About page of Settings
 #: src/settings/updates-group.tsx
@@ -2188,8 +2212,10 @@ msgstr "Reset {label} to All profiles"
 msgid "Resize panes"
 msgstr "Resize panes"
 
+#. Button of the main window's update card that quits Meru, installs the downloaded version and opens Meru again
 #. Button on the About page of Settings that quits Meru, installs the downloaded version and opens Meru again
 #: src/settings/updates-group.tsx
+#: src/shell/update-card.tsx
 msgid "Restart now"
 msgstr "Restart now"
 
@@ -2279,6 +2305,11 @@ msgstr "Scroll profiles right"
 #: src/settings/saved-searches-card.tsx
 msgid "Search"
 msgstr "Search"
+
+#. Description of the What's new row on the About page of Settings
+#: src/settings/updates-group.tsx
+msgid "See what changed in each version."
+msgstr "See what changed in each version."
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -2381,7 +2412,9 @@ msgid "Shortcuts"
 msgstr "Shortcuts"
 
 #. Button of the Test notification row in Settings that shows a sample new mail notification, as the settings above would show one
+#. Button of the What's new row on the About page of Settings that opens Meru's releases in the default browser
 #: src/settings/notifications-page.tsx
+#: src/settings/updates-group.tsx
 msgid "Show"
 msgstr "Show"
 
@@ -3157,6 +3190,13 @@ msgstr "weekends"
 #: src/settings/notifications-page.tsx
 msgid "What notifications show"
 msgstr "What notifications show"
+
+#. Button of the main window's update card that opens the new version's release notes in the default browser
+#. Label of the row on the About page of Settings that opens the list of Meru's releases and their notes
+#: src/settings/updates-group.tsx
+#: src/shell/update-card.tsx
+msgid "What's new"
+msgstr "What's new"
 
 #. Description of the Do Not Disturb switch in Settings; turned off, the moon button still shows in the title bar while Do Not Disturb is on
 #: src/settings/appearance-page.tsx

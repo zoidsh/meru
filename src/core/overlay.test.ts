@@ -4,6 +4,7 @@ import { APPS, findApp } from "./apps.ts";
 import {
   OVERLAY_FRAME_NAME,
   coversPage,
+  leavesViewFree,
   overlayRectangle,
   overlayWidth,
   isShellDocument,
@@ -50,6 +51,12 @@ describe(transitionOverlay, () => {
       transitionOverlay(opened, { kind: "open", overlay: findA })
     ).toStrictEqual(findA);
     expect(transitionOverlay(opened, { kind: "close" })).toBeUndefined();
+  });
+
+  it("keeps the update card through another profile or tab selected", () => {
+    const card: Overlay = { kind: "update", card: "ready", version: "4.2.0" };
+
+    expect(changed(card, selectProfile(two, "b"))).toStrictEqual(card);
   });
 
   it("keeps a toast open through a change of state, until it is replaced or closes", () => {
@@ -156,6 +163,17 @@ describe(overlayRectangle, () => {
     ]);
   });
 
+  it("puts the update card's view in the page area's bottom right corner, the card and its 8px inset", () => {
+    expect(
+      overlayRectangle(
+        { width: 1000, height: 700 },
+        { sidebar: "narrow", trialFooter: false },
+        "linux",
+        { kind: "update" }
+      )
+    ).toStrictEqual({ x: 664, y: 560, width: 328, height: 132 });
+  });
+
   it("puts the find bar's view at the top right of the focused pane, or of the page area", () => {
     const size = { width: 1000, height: 700 };
 
@@ -187,17 +205,30 @@ describe(coversPage, () => {
         ["open-app", "inbox", "downloads", "find", "toast", "drop"] as const
       ).map((kind) => coversPage({ kind }))
     ).toStrictEqual([true, true, true, false, false, false]);
+    expect(coversPage({ kind: "update" })).toBeFalsy();
     expect(coversPage(undefined)).toBeFalsy();
   });
 });
 
 describe(staysOpenOutside, () => {
-  it("is the find bar alone", () => {
+  it("is the find bar, the license notice and the update card", () => {
     expect(
-      (["find", "open-app", "inbox", "toast"] as const).map((kind) =>
-        staysOpenOutside({ kind })
-      )
-    ).toStrictEqual([true, false, false, false]);
+      (
+        ["find", "license", "update", "open-app", "inbox", "toast"] as const
+      ).map((kind) => staysOpenOutside({ kind }))
+    ).toStrictEqual([true, true, true, false, false, false]);
+  });
+});
+
+describe(leavesViewFree, () => {
+  it("is nothing open, or the update card, which gives way to what waits", () => {
+    expect([
+      leavesViewFree(undefined),
+      leavesViewFree({ kind: "update" }),
+      ...(["find", "license", "toast", "open-app", "downloads"] as const).map(
+        (kind) => leavesViewFree({ kind })
+      ),
+    ]).toStrictEqual([true, true, false, false, false, false, false]);
   });
 });
 

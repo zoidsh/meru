@@ -352,6 +352,21 @@ describe(createFind, () => {
     ]);
   });
 
+  it("shows the bar over the update card, which gives way to it", () => {
+    const { find, overlays, setFront } = setup();
+
+    find.open();
+    find.type("apple");
+    setFront(week);
+    overlays.open(
+      { kind: "update", card: "ready", version: "4.2.0" },
+      { takeFocus: false }
+    );
+    setFront(mail);
+
+    expect(overlays.current()).toStrictEqual({ kind: "find", ...mail });
+  });
+
   it("forgets the bar and its term when the tab's page goes, closing the bar", () => {
     const { find, overlays, setFront, dropPage } = setup();
 

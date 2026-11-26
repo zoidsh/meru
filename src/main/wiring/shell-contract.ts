@@ -38,6 +38,7 @@ import type { createShowGmail } from "../show-gmail.ts";
 import type { Sidebar } from "../sidebar.ts";
 import { createTabMenu } from "../tab-menu.ts";
 import type { createTabViews } from "../tab-views.ts";
+import type { UpdateCardModule } from "../update-card.ts";
 
 /**
  * The shell's calls and the state it draws, with the tab's and the
@@ -57,6 +58,7 @@ export const wireShellContract = ({
   ownWindows,
   overlays,
   find,
+  updateCard,
   focus,
   sidebar,
   inbox,
@@ -95,6 +97,7 @@ export const wireShellContract = ({
   ownWindows: OwnWindows;
   overlays: Overlays;
   find: Find;
+  updateCard: UpdateCardModule;
   focus: Focus;
   sidebar: Sidebar;
   inbox: Inbox;
@@ -161,6 +164,7 @@ export const wireShellContract = ({
         profiles,
         overlays,
         find,
+        updateCard,
         tabs: views,
         revealOwnWindow: showOwnWindow,
         navigateTab: async (key, action) => {

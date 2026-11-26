@@ -246,6 +246,11 @@ const setup = () => {
 
       return Promise.resolve();
     },
+    runUpdateCard: (request) => {
+      calls.push(["runUpdateCard", request]);
+
+      return Promise.resolve();
+    },
     toggleSidebar: (request) => {
       calls.push(["toggleSidebar", request]);
 

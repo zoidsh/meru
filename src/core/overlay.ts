@@ -11,6 +11,7 @@ import type { PaneDirection } from "./pane-tree.ts";
 import type { Platform } from "./platform.ts";
 import { selectedProfile } from "./state.ts";
 import type { State } from "./state.ts";
+import type { UpdateCard } from "./updates.ts";
 import type { Rectangle, Size } from "./window-bounds.ts";
 
 /** The short notices a toast gives, by name. */
@@ -55,7 +56,13 @@ export type Overlay =
    * The find bar over a tab's page, the focused pane's in a split, which
    * takes focus but stays while the page is pressed or the window loses it.
    */
-  | { kind: "find"; profileId: string; tabId: string };
+  | { kind: "find"; profileId: string; tabId: string }
+  /**
+   * A version ready to install or one that could not be verified, at the
+   * page area's bottom right, shown only while nothing else holds the view
+   * and taking no focus as it appears.
+   */
+  | ({ kind: "update" } & UpdateCard);
 
 /** Whether an overlay leaves focus where it is, taking none and giving none back. */
 export const takesNoFocus = (overlay: Pick<Overlay, "kind"> | undefined) =>
@@ -67,14 +74,27 @@ export const takesNoFocus = (overlay: Pick<Overlay, "kind"> | undefined) =>
  * clicked, and the license notice, which says something to read once.
  */
 export const staysOpenOutside = (overlay: Pick<Overlay, "kind"> | undefined) =>
-  overlay?.kind === "find" || overlay?.kind === "license";
+  overlay?.kind === "find" ||
+  overlay?.kind === "license" ||
+  overlay?.kind === "update";
 
 /**
  * Whether an overlay is a card over the page, which takes the keys a page's
  * commands would; the find bar, a toast and a drop's zone are not.
  */
 export const coversPage = (overlay: Pick<Overlay, "kind"> | undefined) =>
-  overlay !== undefined && overlay.kind !== "find" && !takesNoFocus(overlay);
+  overlay !== undefined &&
+  overlay.kind !== "find" &&
+  overlay.kind !== "update" &&
+  !takesNoFocus(overlay);
+
+/**
+ * Whether what is open leaves the view to what waits for it, a toast, the
+ * license notice or the find bar: nothing, or the update card, which gives
+ * way and comes back once the view is free again.
+ */
+export const leavesViewFree = (overlay: Pick<Overlay, "kind"> | undefined) =>
+  overlay === undefined || overlay.kind === "update";
 
 /**
  * The view a toast is drawn in, at the page area's bottom right corner: the
@@ -84,6 +104,14 @@ export const coversPage = (overlay: Pick<Overlay, "kind"> | undefined) =>
  * it stays no larger than the shadow needs.
  */
 export const TOAST_VIEW = { width: 416, height: 96 } as const;
+
+/**
+ * The view the update card is drawn in, at the page area's bottom right
+ * corner: the 320px card 8px in from the page's right and bottom, as tall
+ * as three lines of text and its buttons (124px), so the pages beside it
+ * take their own presses.
+ */
+export const UPDATE_CARD_VIEW = { width: 328, height: 132 } as const;
 
 /** The card's width for each width class, in CSS pixels. */
 export const OVERLAY_WIDTHS = { medium: 448, wide: 704 } as const;
@@ -97,8 +125,9 @@ export const overlayWidth = (overlay: Pick<Overlay, "kind">): OverlayWidth =>
 /**
  * Where the overlay's view sits while one is open: a card's over the page
  * area, so the card can be placed in it by CSS and a press beside it lands
- * in the view, which closes it; a toast's only where the toast is, so the
- * pages beside it take their own presses, as does the find bar's, at the
+ * in the view, which closes it; a toast's or the update card's only where
+ * it is, so the pages beside it take their own presses, as does the find
+ * bar's, at the
  * top right of `pane`, the focused one placed in the page area, or of the
  * page area outside a split.
  */
@@ -115,12 +144,13 @@ export const overlayRectangle = (
     return findRectangle(area, pane);
   }
 
-  if (overlay.kind !== "toast") {
+  if (overlay.kind !== "toast" && overlay.kind !== "update") {
     return area;
   }
 
-  const width = Math.min(TOAST_VIEW.width, area.width);
-  const height = Math.min(TOAST_VIEW.height, area.height);
+  const corner = overlay.kind === "toast" ? TOAST_VIEW : UPDATE_CARD_VIEW;
+  const width = Math.min(corner.width, area.width);
+  const height = Math.min(corner.height, area.height);
 
   return {
     x: area.x + area.width - width,
@@ -165,6 +195,7 @@ export const transitionOverlay = (
         current?.kind === "inbox" ||
         current?.kind === "downloads" ||
         current?.kind === "license" ||
+        current?.kind === "update" ||
         current?.kind === "toast" ||
         current?.kind === "drop"
       ) {

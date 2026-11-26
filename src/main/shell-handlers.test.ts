@@ -115,6 +115,11 @@ const setup = ({
         calls.push(["findClose", ...(key ? [key.tabId] : [])]);
       },
     },
+    updateCard: {
+      run: (action) => {
+        calls.push(["updateCard", action]);
+      },
+    },
     revealOwnWindow: (key) => {
       calls.push(["revealOwnWindow", key]);
     },

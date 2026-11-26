@@ -56,6 +56,12 @@ export const createOverlays = ({
       return;
     }
 
+    // The update card took none as it came, so it gives focus back only
+    // where a click or a key had moved it into the card.
+    if (closed.kind === "update" && focus.focused()?.kind !== "overlay") {
+      return;
+    }
+
     focus.focus([{ kind: "front" }, { kind: "shell" }]);
   };
 

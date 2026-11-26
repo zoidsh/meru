@@ -62,7 +62,13 @@ export const wireMenu = ({
   onSettingsFocusChange,
   settingsPages,
   entitlement,
+  canUpdate,
+  checkForUpdates,
 }: {
+  /** Whether this build updates itself, for Check for Updates…. */
+  canUpdate: () => boolean;
+  /** Opens Settings on About and checks there. */
+  checkForUpdates: () => void;
   /** What the commands may do, which an activation raises at once. */
   entitlement: Pick<Entitlement, "can" | "onChange">;
   platform: Platform;
@@ -148,6 +154,7 @@ export const wireMenu = ({
           : undefined,
         doNotDisturb: doNotDisturb.current(),
         can: entitlement.can,
+        canUpdate: canUpdate(),
         inboxOpen: inbox.isOpen(),
         downloadsOpen: downloads.isOpen(),
         openAppOpen: openApp.isOpen(),
@@ -232,6 +239,7 @@ export const wireMenu = ({
       findAgain: find.again,
       toggleBookmark: bookmarks.toggle,
       openSettings,
+      checkForUpdates,
     },
     locale: () => i18n.locale,
     setMenu: setApplicationMenu,

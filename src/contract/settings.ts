@@ -446,6 +446,8 @@ export const SETTINGS_CALLS = {
    * default browser; nothing while none was refused.
    */
   openUpdateRelease: { request: none, response: z.undefined() },
+  /** Opens the list of Meru's releases, each with its notes, in the default browser. */
+  openWhatsNew: { request: none, response: z.undefined() },
   ...ENTITLEMENT_CALLS,
 } as const satisfies Record<
   SettingsCallName,

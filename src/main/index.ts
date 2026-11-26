@@ -76,6 +76,7 @@ import {
   testBuildSetup,
 } from "./wiring/test-build.ts";
 import { wireTray } from "./wiring/tray.ts";
+import { wireUpdateCard } from "./wiring/update-card.ts";
 import { wireUpdates } from "./wiring/updates.ts";
 
 const { apps, signInOrigins, keepAliveUrl, keepAliveTiming, contextMenus } =
@@ -690,7 +691,15 @@ const start = async () => {
     onSettingsFocusChange,
     settingsPages,
     entitlement,
+    canUpdate: () => updates.read().status !== "unsupported",
+    checkForUpdates: () => {
+      openSettings();
+      settingsPages.open({ section: "about", profileId: null });
+      updates.check();
+    },
   });
+
+  const updateCard = wireUpdateCard({ updates, overlays });
 
   wireShellContract({
     platform,
@@ -707,6 +716,7 @@ const start = async () => {
     ownWindows,
     overlays,
     find,
+    updateCard,
     focus,
     sidebar,
     inbox,

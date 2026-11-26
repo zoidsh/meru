@@ -6,6 +6,7 @@ import {
   transitionFind,
 } from "#core/find.ts";
 import type { FindEffect, FindEvent, FoundInPage } from "#core/find.ts";
+import { leavesViewFree } from "#core/overlay.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { FindOptions } from "#platform/content-view.ts";
@@ -106,7 +107,7 @@ export const createFind = ({ pages, overlays, focus, windows }: FindDeps) => {
     const shown = shownBar(state);
     const open = overlays.current();
 
-    if (shown && !open) {
+    if (shown && leavesViewFree(open)) {
       overlays.open({ kind: "find", ...shown.key }, { takeFocus: false });
     } else if (
       open?.kind === "find" &&

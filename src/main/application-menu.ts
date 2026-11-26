@@ -422,6 +422,7 @@ export const buildMenuTemplate = ({
     submenu: isMacOS
       ? [
           roles.about,
+          ...item("app.checkForUpdates"),
           separator,
           ...item("app.settings"),
           separator,
@@ -435,6 +436,8 @@ export const buildMenuTemplate = ({
         ]
       : [
           ...item("app.settings"),
+          // No Help menu here to hold it, and no About to stand beside.
+          ...item("app.checkForUpdates"),
           separator,
           doNotDisturb,
           separator,

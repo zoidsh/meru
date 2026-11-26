@@ -77,6 +77,8 @@ export interface CommandContext {
   doNotDisturb: DoNotDisturb | undefined;
   /** What this run may use, the entitlement's `can`. */
   can: (capability: Capability) => boolean;
+  /** Whether this build updates itself. */
+  canUpdate: boolean;
   /** Whether the unified inbox is open over the page. */
   inboxOpen: boolean;
   /** Whether the Downloads card is open over the page. */
@@ -166,6 +168,8 @@ export interface CommandActions {
   toggleBookmark: (key: TabKey, announce: boolean) => Promise<unknown>;
   /** Opens the Settings window, or brings the open one forward. */
   openSettings: () => void;
+  /** Opens the Settings window on About and checks for a new version there. */
+  checkForUpdates: () => void;
 }
 
 export interface Command {
@@ -381,6 +385,23 @@ export const COMMANDS: readonly Command[] = [
     once: true,
     run: (_context, { openSettings }) => {
       openSettings();
+
+      return Promise.resolve();
+    },
+  },
+  {
+    id: "app.checkForUpdates",
+    inOwnWindow: true,
+    title: () =>
+      t({
+        message: "Check for Updates…",
+        comment:
+          "Menu item in the app menu that opens the About page of Settings and checks for a new version of Meru there",
+      }),
+    isAvailable: ({ canUpdate }) => canUpdate,
+    once: true,
+    run: (_context, { checkForUpdates }) => {
+      checkForUpdates();
 
       return Promise.resolve();
     },

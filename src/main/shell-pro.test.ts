@@ -381,6 +381,30 @@ describe(followLicenseNotice, () => {
     });
   });
 
+  it("puts its toast over the update card, which leaves the view free", () => {
+    const { entitlement, overlays } = follow(trial);
+
+    overlays.open({ kind: "update", card: "ready", version: "4.2.0" });
+    entitlement.move({ status: "trialEnded", downgradePending: true });
+
+    expect(overlays.current()).toStrictEqual({
+      kind: "toast",
+      message: "pro-ends-trial-ended",
+    });
+  });
+
+  it("opens the card at launch over the update card", async () => {
+    const refresh = Promise.withResolvers<undefined>();
+    const { overlays } = follow(unconfirmed, { firstRefresh: refresh.promise });
+
+    overlays.open({ kind: "update", card: "ready", version: "4.2.0" });
+    refresh.resolve(undefined);
+    await refresh.promise;
+    await Promise.resolve();
+
+    expect(overlays.current()).toStrictEqual({ kind: "license" });
+  });
+
   it("tells nothing to a trial, a license, or a free run that never had Pro", async () => {
     const runs = [trial, LICENSED, { ...ENDED, trialChoicePending: false }].map(
       (snapshot) => follow(snapshot)

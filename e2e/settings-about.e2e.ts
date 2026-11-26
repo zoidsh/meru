@@ -9,12 +9,14 @@ import type { ElectronApplication, Page } from "@playwright/test";
 import {
   NO_TRIAL,
   expect,
+  readMenuItem,
   readOpenedExternally,
   stubSystemBrowser,
   test,
 } from "./lib/app.ts";
 import { openSection, openSettings } from "./lib/settings.ts";
 import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
+import { askedUpdater, emitUpdate } from "./lib/updates.ts";
 
 /** The version the packed build carries, read from the manifest it was packed from. */
 const buildVersion = async () => {
@@ -43,36 +45,6 @@ const openAbout = async (app: ElectronApplication) => {
 
   return page;
 };
-
-type UpdateEvent =
-  | { kind: "checking" }
-  | { kind: "available"; version: string }
-  | { kind: "notAvailable" }
-  | { kind: "downloaded"; version: string }
-  | { kind: "error"; signature: boolean };
-
-/** Sends events from the stand-in updater, as the library would. */
-const emitUpdate = (app: ElectronApplication, ...events: UpdateEvent[]) =>
-  app.evaluate((_electron, sent) => {
-    const updater = Reflect.get(globalThis, "meruTestUpdater") as {
-      emit: (event: unknown) => void;
-    };
-
-    for (const event of sent) {
-      updater.emit(event);
-    }
-  }, events);
-
-/** What the stand-in updater was asked. */
-const askedUpdater = (app: ElectronApplication) =>
-  app.evaluate(() => {
-    const { checks, channels, installs } = Reflect.get(
-      globalThis,
-      "meruTestUpdater"
-    ) as { checks: number; channels: unknown[]; installs: number[] };
-
-    return { checks, channels, installs: installs.length };
-  });
 
 const readStored = async (userDataDir: string) =>
   JSON.parse(
@@ -377,6 +349,26 @@ test.describe("updates", () => {
     });
   });
 
+  test("ends with What's new, whose Show opens Meru's releases", async ({
+    app,
+  }) => {
+    const page = await openAbout(app);
+    const updates = page.getByRole("group", { name: "Updates" });
+    const show = updates.getByRole("button", { name: "Show", exact: true });
+
+    await expect(
+      updates.getByText("What's new", { exact: true })
+    ).toBeVisible();
+    await expect(show).toHaveAccessibleDescription(
+      "See what changed in each version."
+    );
+    await stubSystemBrowser(app);
+    await show.click();
+    await expect
+      .poll(() => readOpenedExternally(app))
+      .toStrictEqual(["https://github.com/zoidsh/meru/releases"]);
+  });
+
   test("is one line on a build that cannot update itself, which never checks", async ({
     launchApp,
   }) => {
@@ -387,6 +379,19 @@ test.describe("updates", () => {
     await expect(
       main.getByText("This build doesn't update itself.", { exact: true })
     ).toBeVisible();
+
+    // What's new follows the line on every build.
+    const show = main.getByRole("button", { name: "Show", exact: true });
+
+    await expect(main.getByText("What's new", { exact: true })).toBeVisible();
+    await expect(show).toHaveAccessibleDescription(
+      "See what changed in each version."
+    );
+    await expect(main.getByRole("button")).toHaveCount(3);
+    // Check for Updates… is there, disabled.
+    await expect
+      .poll(() => readMenuItem(app, "app.checkForUpdates"))
+      .toMatchObject({ enabled: false });
     await expect(main.getByRole("group", { name: "Updates" })).toHaveCount(0);
     await expect(main.getByRole("switch")).toHaveCount(0);
     await expect(main.getByRole("combobox")).toHaveCount(0);

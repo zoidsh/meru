@@ -203,6 +203,7 @@ const labels = (context: Partial<CommandContext>) =>
       settingsHistory: undefined,
       doNotDisturb: undefined,
       can: () => true,
+      canUpdate: true,
       navigation: null,
       inboxOpen: false,
       downloadsOpen: false,

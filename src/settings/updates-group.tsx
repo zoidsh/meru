@@ -173,7 +173,47 @@ const StatusRow = ({ updates }: { updates: Updates }) => {
   );
 };
 
-/** The About page's Updates group, or one line where the build cannot update itself. */
+/** What's new, which opens every release's notes in the default browser. */
+const WhatsNewRow = () => {
+  const { t } = useLingui();
+
+  return (
+    <SettingRow
+      label={t({
+        message: "What's new",
+        comment:
+          "Label of the row on the About page of Settings that opens the list of Meru's releases and their notes",
+      })}
+      description={t({
+        message: "See what changed in each version.",
+        comment:
+          "Description of the What's new row on the About page of Settings",
+      })}
+    >
+      {(ids) => (
+        <Button
+          variant="outline"
+          size="sm"
+          aria-describedby={ids.description || undefined}
+          onClick={() => {
+            settingsCalls().openWhatsNew({}).catch(noop);
+          }}
+        >
+          {t({
+            message: "Show",
+            comment:
+              "Button of the What's new row on the About page of Settings that opens Meru's releases in the default browser",
+          })}
+        </Button>
+      )}
+    </SettingRow>
+  );
+};
+
+/**
+ * The About page's Updates group, or one line where the build cannot update
+ * itself, What's new last either way.
+ */
 export const UpdatesGroup = ({
   settings,
   updates,
@@ -185,13 +225,18 @@ export const UpdatesGroup = ({
 
   if (updates.status === "unsupported") {
     return (
-      <p className="text-sm text-muted-foreground">
-        {t({
-          message: "This build doesn't update itself.",
-          comment:
-            "On the About page of Settings in place of the Updates group, for a build of Meru that cannot install new versions",
-        })}
-      </p>
+      <>
+        <p className="text-sm text-muted-foreground">
+          {t({
+            message: "This build doesn't update itself.",
+            comment:
+              "On the About page of Settings in place of the Updates group, for a build of Meru that cannot install new versions",
+          })}
+        </p>
+        <SettingGroup>
+          <Rows>{[<WhatsNewRow key="whatsNew" />]}</Rows>
+        </SettingGroup>
+      </>
     );
   }
 
@@ -294,6 +339,7 @@ export const UpdatesGroup = ({
             )}
           </SettingRow>,
           <StatusRow key="status" updates={updates} />,
+          <WhatsNewRow key="whatsNew" />,
         ]}
       </Rows>
     </SettingGroup>

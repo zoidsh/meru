@@ -32,6 +32,7 @@ const LISTING: CommandContext = {
   settingsHistory: undefined,
   doNotDisturb: undefined,
   can: () => true,
+  canUpdate: true,
   inboxOpen: false,
   downloadsOpen: false,
   openAppOpen: false,

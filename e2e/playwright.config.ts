@@ -43,6 +43,8 @@ const NEEDS_THE_FOCUS = [
   "**/gate-profiles.e2e.ts",
   // Its New tab test opens the launcher twice, which the blur closes.
   "**/settings-tabs-apps.e2e.ts",
+  // It opens Downloads over the update card, which the blur closes.
+  "**/update-card.e2e.ts",
 ];
 const takesTheFocus = process.platform !== "darwin";
 

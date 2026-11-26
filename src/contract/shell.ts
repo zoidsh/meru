@@ -10,6 +10,7 @@ import { TOAST_MESSAGES } from "#core/overlay.ts";
 import { PANE_DIRECTIONS, PANE_GAP_ENDS } from "#core/pane-tree.ts";
 import { PROFILE_TINT_STRENGTHS } from "#core/profile-color.ts";
 import { SIDEBAR_STATES } from "#core/sidebar.ts";
+import { UPDATE_CARD_ACTIONS } from "#core/updates.ts";
 
 import type {
   ContractBridge,
@@ -158,6 +159,11 @@ export const SHELL_CALLS = {
   /** Loads a tab that failed or crashed again, now. */
   retryTab: { request: tabKey, response: z.undefined() },
   closeOverlay: { request: none, response: z.undefined() },
+  /** One of the update card's buttons, which main runs only on a card that offers it. */
+  runUpdateCard: {
+    request: z.object({ action: z.enum(UPDATE_CARD_ACTIONS) }),
+    response: z.undefined(),
+  },
   /**
    * The find bar's term as typed, searched for in its page; empty clears
    * it. `tab` names a tab in its own window, whose bar is there; without
@@ -582,6 +588,12 @@ export const SHELL_STATE = {
     z.object({ kind: z.literal("downloads") }),
     /** Meru Pro ends at the next launch, or the license could not be confirmed. */
     z.object({ kind: z.literal("license") }),
+    /** A version ready to install, or one that could not be verified. */
+    z.object({
+      kind: z.literal("update"),
+      card: z.enum(["ready", "unverified"]),
+      version: z.string().check(z.minLength(1)),
+    }),
     z.object({
       kind: z.literal("open-app"),
       profileId,

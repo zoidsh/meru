@@ -5,6 +5,8 @@ import {
   channelOptions,
   nextUpdateStatus,
   releasePageUrl,
+  updateCard,
+  updateCardKey,
 } from "./updates.ts";
 import type { UpdateEvent, UpdateStatus } from "./updates.ts";
 
@@ -169,5 +171,82 @@ describe(releasePageUrl, () => {
     expect(releasePageUrl("4.2.0")).toBe(
       "https://github.com/zoidsh/meru/releases/tag/v4.2.0"
     );
+  });
+});
+
+const status = (
+  name: UpdateStatus["status"],
+  version: string | null = null
+): UpdateStatus => ({ status: name, version, lastChecked: null });
+
+/** The card each status in turn calls for, with Later or Close pressed where named. */
+const cards = (steps: (UpdateStatus | "dismiss")[]) => {
+  const dismissed = new Set<string>();
+  const shown: (string | null)[] = [];
+  let last: UpdateStatus = INITIAL_UPDATE_STATUS;
+
+  for (const step of steps) {
+    if (step === "dismiss") {
+      const card = updateCard(last, dismissed);
+
+      if (card) {
+        dismissed.add(updateCardKey(card));
+      }
+    } else {
+      last = step;
+    }
+
+    const card = updateCard(last, dismissed);
+
+    shown.push(card ? `${card.card} ${card.version}` : null);
+  }
+
+  return shown;
+};
+
+describe(updateCard, () => {
+  it("shows a ready version until Later, which keeps it away through later checks of it", () => {
+    expect(
+      cards([
+        status("downloading", "4.2.0"),
+        status("ready", "4.2.0"),
+        "dismiss",
+        status("ready", "4.2.0"),
+      ])
+    ).toStrictEqual([null, "ready 4.2.0", null, null]);
+  });
+
+  it("shows a newer version once it is ready, after Later on the one before", () => {
+    expect(
+      cards([
+        status("ready", "4.2.0"),
+        "dismiss",
+        status("downloading", "4.2.1"),
+        status("ready", "4.2.1"),
+      ])
+    ).toStrictEqual(["ready 4.2.0", null, null, "ready 4.2.1"]);
+  });
+
+  it("replaces a ready card with the unverified one, which Close puts away", () => {
+    expect(
+      cards([
+        status("ready", "4.2.0"),
+        status("unverified", "4.2.1"),
+        "dismiss",
+        status("unverified", "4.2.1"),
+      ])
+    ).toStrictEqual(["ready 4.2.0", "unverified 4.2.1", null, null]);
+  });
+
+  it("shows nothing while checking, up to date, failed or on a build that cannot update itself", () => {
+    expect(
+      cards([
+        status("unsupported"),
+        status("idle"),
+        status("checking"),
+        status("upToDate"),
+        status("failed"),
+      ])
+    ).toStrictEqual([null, null, null, null, null]);
   });
 });

@@ -28,6 +28,7 @@ const contextOf = (): CommandContext => ({
   settingsHistory: undefined,
   doNotDisturb: undefined,
   can: () => true,
+  canUpdate: true,
   inboxOpen: false,
   downloadsOpen: false,
   openAppOpen: false,
@@ -249,11 +250,58 @@ describe(buildMenuTemplate, () => {
   it("puts Settings in the app menu, after About on macOS and first elsewhere", () => {
     expect(
       (["darwin", "win32"] as const).map((platform) =>
-        outline(template(platform))[0]?.[1]?.slice(0, 3)
+        outline(template(platform))[0]?.[1]?.slice(0, 4)
       )
     ).toStrictEqual([
-      ["about", "app.settings", undefined],
-      ["app.settings", undefined, "quit"],
+      ["about", "app.checkForUpdates", "app.settings", undefined],
+      ["app.settings", "app.checkForUpdates", undefined, "quit"],
+    ]);
+  });
+
+  it("puts Check for Updates… in About's group on macOS and after Settings… elsewhere, with no key, disabled where the build cannot update itself", () => {
+    const appMenu = (platform: Platform, canUpdate = true) =>
+      submenu(template(platform, { ...contextOf(), canUpdate })[0] ?? {})
+        .slice(0, 4)
+        .map((item) =>
+          item.type === "separator"
+            ? "-"
+            : [item.role ?? item.id, item.accelerator, item.enabled]
+        );
+
+    expect([
+      appMenu("darwin"),
+      appMenu("win32"),
+      appMenu("linux"),
+    ]).toStrictEqual([
+      [
+        ["about", undefined, undefined],
+        ["app.checkForUpdates", undefined, true],
+        "-",
+        ["app.settings", "Command+,", true],
+      ],
+      [
+        ["app.settings", "Control+,", true],
+        ["app.checkForUpdates", undefined, true],
+        "-",
+        [undefined, undefined, undefined],
+      ],
+      [
+        ["app.settings", "Control+,", true],
+        ["app.checkForUpdates", undefined, true],
+        "-",
+        [undefined, undefined, undefined],
+      ],
+    ]);
+    expect(
+      itemOf(
+        template("darwin", { ...contextOf(), canUpdate: false }),
+        "app.checkForUpdates"
+      )?.enabled
+    ).toBeFalsy();
+    expect(appMenu("linux", false)[1]).toStrictEqual([
+      "app.checkForUpdates",
+      undefined,
+      false,
     ]);
   });
 
@@ -551,6 +599,7 @@ const setup = ({ can = () => true }: { can?: () => boolean } = {}) => {
       settingsHistory: undefined,
       doNotDisturb: undefined,
       can,
+      canUpdate: true,
       navigation: { canGoBack: false, canGoForward: false, loading: false },
       inboxOpen,
       downloadsOpen: false,

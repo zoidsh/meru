@@ -18,6 +18,7 @@ export const SHELL_CALL_NAMES = [
   "maximizePane",
   "retryTab",
   "closeOverlay",
+  "runUpdateCard",
   "findInPage",
   "findStep",
   "closeFind",

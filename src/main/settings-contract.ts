@@ -118,7 +118,10 @@ export interface SettingsContractDeps {
   trustedSites: Pick<TrustedSites, "list" | "remove">;
   advanced: Pick<AdvancedPage, "read" | "openSettingsFile" | "clearCache">;
   about: Pick<AboutPage, "read" | "copy">;
-  updates: Pick<Updates, "read" | "check" | "restart" | "openRelease">;
+  updates: Pick<
+    Updates,
+    "read" | "check" | "restart" | "openRelease" | "openWhatsNew"
+  >;
   /** The Shortcuts page's cards, in the language of the moment. */
   shortcuts: () => SettingsState["shortcuts"];
   entitlement: Pick<
@@ -478,6 +481,10 @@ export const settingsHandlers = ({
     openUpdateRelease: () =>
       Promise.try(() => {
         updates.openRelease();
+      }),
+    openWhatsNew: () =>
+      Promise.try(() => {
+        updates.openWhatsNew(null);
       }),
     ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };

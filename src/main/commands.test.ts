@@ -71,9 +71,14 @@ const setup = (initial: State = twoProfiles) => {
   let bookmarked: boolean | undefined;
   const bookmarkToggles: string[] = [];
   let settingsOpened = 0;
+  let canUpdate = true;
+  let updateChecks = 0;
   const actions: CommandActions = {
     openSettings: () => {
       settingsOpened += 1;
+    },
+    checkForUpdates: () => {
+      updateChecks += 1;
     },
     toggleBookmark: (key, announce) => {
       bookmarkToggles.push(`${key.tabId}${announce ? " announced" : ""}`);
@@ -155,6 +160,7 @@ const setup = (initial: State = twoProfiles) => {
       settingsHistory: settingsFocused ? settingsHistory : undefined,
       doNotDisturb: doNotDisturb.current(),
       can: (capability: Capability) => !refused.has(capability),
+      canUpdate,
       inboxOpen,
       downloadsOpen: false,
       openAppOpen,
@@ -209,6 +215,10 @@ const setup = (initial: State = twoProfiles) => {
     navigations,
     openAppOpen: () => openAppOpen,
     settingsOpened: () => settingsOpened,
+    updateChecks: () => updateChecks,
+    setCanUpdate: (next: boolean) => {
+      canUpdate = next;
+    },
     context,
     actions,
     isAvailable: (id: string) => isCommandAvailable(commandOf(id), context()),
@@ -664,6 +674,37 @@ describe("the command registry", () => {
       1,
       { darwin: "Command+,", win32: "Control+,", linux: "Control+," },
     ]);
+  });
+
+  it("checks for updates from any window, with no key, and is disabled where the build cannot update itself", async () => {
+    const app = setup();
+    const command = COMMANDS.find(
+      (candidate) => candidate.id === "app.checkForUpdates"
+    );
+
+    await app.run("app.checkForUpdates");
+
+    const inMain = app.isAvailable("app.checkForUpdates");
+
+    app.setOwnWindow({ profileId: "a", tabId: "a1" });
+
+    const inOwnWindow = app.isAvailable("app.checkForUpdates");
+
+    app.setOwnWindow(undefined);
+    app.setSettingsFocused(true);
+
+    const inSettings = app.isAvailable("app.checkForUpdates");
+
+    app.setCanUpdate(false);
+
+    expect([
+      app.updateChecks(),
+      inMain,
+      inOwnWindow,
+      inSettings,
+      app.isAvailable("app.checkForUpdates"),
+      command?.shortcut,
+    ]).toStrictEqual([1, true, true, true, false, undefined]);
   });
 
   it("opens and closes the unified inbox, offered only with another profile or while it is open", async () => {

@@ -1,3 +1,4 @@
+import { leavesViewFree } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profilePartition } from "#core/state.ts";
 import { createDownloadSessions } from "#platform/downloads.ts";
@@ -64,7 +65,7 @@ export const wireDownloads = ({
     onFolderMissing: (folder) => {
       console.error(`The downloads folder ${folder} is not usable`);
 
-      if (overlays.current() === undefined) {
+      if (leavesViewFree(overlays.current())) {
         overlays.open({ kind: "toast", message: "downloads-folder-missing" });
       }
     },

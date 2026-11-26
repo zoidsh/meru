@@ -1,6 +1,7 @@
 import type { EntitlementState } from "#contract/entitlement.ts";
 import type { ShellState } from "#contract/shell.ts";
 import { downgradeToast } from "#core/entitlement.ts";
+import { leavesViewFree } from "#core/overlay.ts";
 import type { ToastMessage } from "#core/overlay.ts";
 import type { AppWindow } from "#platform/window.ts";
 
@@ -165,7 +166,7 @@ export const followLicenseNotice = ({
 
       cardTold = true;
 
-      if (snapshot.status === "unconfirmed" && open === undefined) {
+      if (snapshot.status === "unconfirmed" && leavesViewFree(open)) {
         overlays.open({ kind: "license" });
       }
 
@@ -177,7 +178,7 @@ export const followLicenseNotice = ({
       hasLicenseKey: snapshot.licenseKey !== null,
     });
 
-    if (message === undefined || told.has(message) || open !== undefined) {
+    if (message === undefined || told.has(message) || !leavesViewFree(open)) {
       return;
     }
 

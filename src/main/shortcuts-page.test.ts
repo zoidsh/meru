@@ -80,7 +80,10 @@ describe(readShortcuts, () => {
         card("darwin", title)?.rows.map(shown)
       )
     ).toStrictEqual([
-      [["Settings…", "⌘ ,"]],
+      [
+        ["Check for Updates…", "None"],
+        ["Settings…", "⌘ ,"],
+      ],
       [
         ["Find…", "⌘ F"],
         ["Find Next", "⌘ G"],
@@ -125,6 +128,16 @@ describe(readShortcuts, () => {
       ],
     ]);
   });
+
+  it.each(["win32", "linux"] as const)(
+    "on %s lists Check for Updates… after Settings… in the Meru card, with no key",
+    (platform) => {
+      expect(card(platform, "Meru")?.rows.map(shown)).toStrictEqual([
+        ["Settings…", "Ctrl ,"],
+        ["Check for Updates…", "None"],
+      ]);
+    }
+  );
 
   it("shows Linux's keys, Alt and a digit for a profile and none to step through them", () => {
     expect(card("linux", "Window")?.rows.map(shown)).toStrictEqual([
