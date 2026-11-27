@@ -1,12 +1,14 @@
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 
 import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import { recordInto } from "#core/log.fake.ts";
+import { NOTIFICATION_SOUNDS } from "#core/sounds.ts";
 import type { SoundPlayer, SoundResult } from "#platform/sound-player.ts";
 
-import { createSoundOutput } from "./sounds.ts";
+import { createSoundOutput, soundFile } from "./sounds.ts";
 
 const FOLDER = path.join("app", "sounds");
 
@@ -40,6 +42,19 @@ const setup = ({ background = false } = {}) => {
 
   return { output, asked, ending, logs };
 };
+
+describe(soundFile, () => {
+  it("names a file the build copies for each of Meru's sounds, and the build copies no other", async () => {
+    const folder = path.join(import.meta.dirname, "../../resources/sounds");
+    const files = await readdir(folder);
+
+    expect(
+      NOTIFICATION_SOUNDS.map((sound) =>
+        path.basename(soundFile(folder, sound))
+      ).toSorted()
+    ).toStrictEqual(files.toSorted());
+  });
+});
 
 describe(createSoundOutput, () => {
   it("plays the sound's file at the volume, returning before it has ended", async () => {

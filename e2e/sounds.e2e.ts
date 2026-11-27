@@ -6,11 +6,12 @@ import {
   readSoundResults,
   readSounds,
   readUnreadTotal,
+  retitle,
   test,
   writeSettings,
   writeState,
 } from "./lib/app.ts";
-import type { StandIn } from "./lib/stand-in.ts";
+import type { StandIn, StandInMail } from "./lib/stand-in.ts";
 import { ANY_SESSION, listing } from "./lib/stand-in.ts";
 
 interface Captured {
@@ -109,4 +110,48 @@ test("with the system's sound, Meru plays none and the notification is not silen
     .poll(() => notifications(app))
     .toStrictEqual([{ title: "Sender 2", silent: false }]);
   expect(await sounds(app)).toStrictEqual([]);
+});
+
+const plain: StandInMail = {
+  id: "1",
+  subject: "Lunch",
+  summary: "Are we still on?",
+  senderName: "Ada",
+  senderAddress: "ada@example.com",
+};
+
+const withCode: StandInMail = {
+  id: "2",
+  subject: "Your verification code",
+  summary: "Use 493021 to finish signing in",
+  senderName: "Example",
+  senderAddress: "no-reply@example.com",
+};
+
+test("a verification code asks for the other notifications' sound, not new email's", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, HOME);
+  await writeSettings(userDataDir, {
+    notificationSound: "duet",
+    otherNotificationSound: "glint",
+    notificationSoundVolume: 0.4,
+  });
+  standIn.setFeed(ANY_SESSION, { unreadCount: 1, mail: [plain] });
+
+  const app = await launchApp();
+  const gmail = await findPage(app, standIn.url);
+
+  await expect.poll(() => readUnreadTotal(app)).toBe(1);
+
+  standIn.setFeed(ANY_SESSION, { unreadCount: 2, mail: [withCode, plain] });
+  await retitle(gmail, "Inbox (2)");
+
+  await expect
+    .poll(() => notifications(app))
+    .toStrictEqual([{ title: "Example", silent: true }]);
+  expect(await sounds(app)).toStrictEqual([{ sound: "glint", volume: 0.4 }]);
+  await expect.poll(() => readSoundResults(app)).toStrictEqual(["played"]);
 });

@@ -454,7 +454,7 @@ const silences = (app: ElectronApplication) =>
     ).map(({ title, silent }) => ({ title, silent }))
   );
 
-test("the free version plays Linen at its volume for the system's sound, previews only Linen, and shows Sound as a Pro row", async ({
+test("the free version plays each role's default at its volume for the system's sound or another, previews only those, and shows both sound rows as Pro rows", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -462,6 +462,7 @@ test("the free version plays Linen at its volume for the system's sound, preview
   await seedOneProfile(userDataDir, standIn);
   await writeSettings(userDataDir, {
     notificationSound: "system",
+    otherNotificationSound: "glint",
     notificationSoundVolume: 0.4,
   });
   standIn.setFeed(ANY_SESSION, listing("1"));
@@ -473,21 +474,32 @@ test("the free version plays Linen at its volume for the system's sound, preview
   await expect
     .poll(() => silences(app))
     .toStrictEqual([{ title: "Sender 2", silent: true }]);
-  expect(await sounds(app)).toStrictEqual([{ sound: "linen", volume: 0.4 }]);
+  expect(await sounds(app)).toStrictEqual([{ sound: "welcome", volume: 0.4 }]);
 
   const page = await openSettings(app);
-  const sound = page.getByRole("combobox", { name: "Sound" });
+  const sound = page.getByRole("combobox", { name: "New email sound" });
+  const other = page.getByRole("combobox", {
+    name: "Other notifications sound",
+  });
 
   await expect(sound).toBeDisabled();
-  await expect(sound).toContainText("Linen");
-  await expect(badgeOf(page, "Sound")).toBeVisible();
+  await expect(sound).toContainText("Welcome");
+  await expect(other).toBeDisabled();
+  await expect(other).toContainText("Nod");
+  await expect(badgeOf(page, "New email sound")).toBeVisible();
+  await expect(badgeOf(page, "Other notifications sound")).toBeVisible();
   await expect(badgeOf(page, "Volume")).toHaveCount(0);
-  await page.getByRole("button", { name: "Play sound" }).click();
+  await page.getByRole("button", { name: "Play new email sound" }).click();
+  await expect.poll(() => sounds(app)).toHaveLength(2);
+  await page
+    .getByRole("button", { name: "Play other notifications sound" })
+    .click();
   await expect
     .poll(() => sounds(app))
     .toStrictEqual([
-      { sound: "linen", volume: 0.4 },
-      { sound: "linen", volume: 0.4 },
+      { sound: "welcome", volume: 0.4 },
+      { sound: "welcome", volume: 0.4 },
+      { sound: "nod", volume: 0.4 },
     ]);
   await expect(readStored(userDataDir, SETTINGS_FILE)).resolves.toBe(
     settingsBefore
@@ -497,7 +509,10 @@ test("the free version plays Linen at its volume for the system's sound, preview
   await openSection(page, "Notifications");
   await expect(sound).toBeEnabled();
   await expect(sound).toContainText("System");
-  await expect(page.getByRole("button", { name: "Play sound" })).toBeDisabled();
+  await expect(other).toContainText("Glint");
+  await expect(
+    page.getByRole("button", { name: "Play new email sound" })
+  ).toBeDisabled();
 });
 
 const USER_STYLES = "body { outline: 3px solid rgb(1, 2, 3) !important; }";

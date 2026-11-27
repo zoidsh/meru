@@ -5,6 +5,7 @@ import {
   TABS_APPS_OVERRIDABLE_KEYS,
 } from "#contract/settings.ts";
 import type { PageSettings } from "#contract/settings.ts";
+import { NOTIFICATION_SOUNDS } from "#core/sounds.ts";
 import type { SoundChoice } from "#core/sounds.ts";
 
 import {
@@ -36,15 +37,12 @@ const profile = (
   overrides,
 });
 
-const SOUNDS: Record<SoundChoice, string> = {
-  none: "None",
-  system: "System",
-  breeze: "Breeze",
-  chime: "Chime",
-  duet: "Duet",
-  knock: "Knock",
-  linen: "Linen",
-};
+const SOUNDS = Object.fromEntries(
+  [...NOTIFICATION_SOUNDS, "system", "none"].map((sound) => [
+    sound,
+    sound.charAt(0).toUpperCase() + sound.slice(1),
+  ])
+) as Record<SoundChoice, string>;
 
 const APP: PageSettings = {
   notifications: true,
@@ -53,7 +51,8 @@ const APP: PageSettings = {
   notificationSummary: true,
   notificationImportantOnly: false,
   quietHours: [],
-  notificationSound: "linen",
+  notificationSound: "welcome",
+  otherNotificationSound: "nod",
   unreadBadge: true,
   downloadsFolder: null,
   notificationSoundVolume: 1,
@@ -168,14 +167,14 @@ describe(differingProfiles, () => {
 
 describe(effectiveSettings, () => {
   it("reads the profile's own values over the app's, and counts them", () => {
-    const work = profile("work", { notificationSound: "chime" });
+    const work = profile("work", { notificationSound: "bloom" });
 
     expect([
       effectiveSettings(APP, work).notificationSound,
       effectiveSettings(APP, work).notifications,
       effectiveSettings(APP, undefined),
       overrideCount(work, NOTIFICATIONS),
-    ]).toStrictEqual(["chime", true, APP, 1]);
+    ]).toStrictEqual(["bloom", true, APP, 1]);
   });
 });
 
@@ -184,7 +183,7 @@ describe(appValueText, () => {
     expect([
       appValueText("notifications", true, SOUNDS, "en-GB"),
       appValueText("unreadBadge", false, SOUNDS, "en-GB"),
-      appValueText("notificationSound", "chime", SOUNDS, "en-GB"),
+      appValueText("notificationSound", "bloom", SOUNDS, "en-GB"),
       appValueText("quietHours", [], SOUNDS, "en-GB"),
       appValueText(
         "quietHours",
@@ -200,7 +199,7 @@ describe(appValueText, () => {
     ]).toStrictEqual([
       "On",
       "Off",
-      "Chime",
+      "Bloom",
       "none",
       "22:00–07:00 every day; 12:00–13:00 weekdays; all day weekends; 18:00–20:00 Mon, Wed",
     ]);

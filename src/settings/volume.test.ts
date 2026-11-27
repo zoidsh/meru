@@ -21,7 +21,7 @@ const profile = (
 });
 
 describe(volumeSound, () => {
-  it("is the app's sound when it is one of Meru's, else the first profile's own of Meru's", () => {
+  it("is the app's new email sound when it is one of Meru's, else the first profile's own of Meru's, else the other notifications' sound", () => {
     const profiles = [
       profile("home", { notificationSound: "system" }),
       profile("work", { notificationSound: "knock" }),
@@ -29,16 +29,18 @@ describe(volumeSound, () => {
     ];
 
     expect([
-      volumeSound("chime", profiles),
-      volumeSound("none", profiles),
-      volumeSound("system", profiles),
-    ]).toStrictEqual(["chime", "knock", "knock"]);
+      volumeSound("bloom", "sip", profiles),
+      volumeSound("none", "sip", profiles),
+      volumeSound("system", "sip", profiles),
+      volumeSound("none", "sip", []),
+      volumeSound("system", "glint", [profile("home")]),
+    ]).toStrictEqual(["bloom", "knock", "knock", "sip", "glint"]);
   });
 
   it("is none while no sound the volume applies to is chosen anywhere", () => {
     expect([
-      volumeSound("none", []),
-      volumeSound("system", [
+      volumeSound("none", "none", []),
+      volumeSound("system", "system", [
         profile("home"),
         profile("work", { notificationSound: "none" }),
       ]),

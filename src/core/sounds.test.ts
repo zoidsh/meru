@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_SOUNDS,
+  NEW_EMAIL_SOUNDS,
+  NEW_EMAIL_SOUND_CHOICES,
   NOTIFICATION_SOUNDS,
+  OTHER_SOUNDS,
+  OTHER_SOUND_CHOICES,
   SOUND_QUIET_PERIOD,
   decideSound,
   soundVolumeSchema,
@@ -10,6 +15,39 @@ import {
 
 // How a burst follows from these, kept by `createMailNotifications`, is
 // proven in src/main/notifications.test.ts.
+
+describe("Meru's sounds", () => {
+  it("are twelve for new email and seven for the rest, none in both, each role's default first", () => {
+    expect([
+      NEW_EMAIL_SOUNDS.length,
+      OTHER_SOUNDS.length,
+      new Set(NOTIFICATION_SOUNDS).size,
+      DEFAULT_SOUNDS,
+      NEW_EMAIL_SOUNDS[0],
+      OTHER_SOUNDS[0],
+    ]).toStrictEqual([
+      12,
+      7,
+      19,
+      { newEmail: "welcome", other: "nod" },
+      "welcome",
+      "nod",
+    ]);
+  });
+
+  it("offer each role its own sounds, the system's and none, and never the other role's", () => {
+    expect([
+      NEW_EMAIL_SOUND_CHOICES.slice(-2),
+      OTHER_SOUND_CHOICES.slice(-2),
+      NEW_EMAIL_SOUND_CHOICES.some((choice) =>
+        (OTHER_SOUNDS as readonly string[]).includes(choice)
+      ),
+      OTHER_SOUND_CHOICES.some((choice) =>
+        (NEW_EMAIL_SOUNDS as readonly string[]).includes(choice)
+      ),
+    ]).toStrictEqual([["system", "none"], ["system", "none"], false, false]);
+  });
+});
 
 describe(decideSound, () => {
   it("plays each of Meru's sounds with a silent notification when none has played", () => {
@@ -23,13 +61,13 @@ describe(decideSound, () => {
 
   it("plays none within the quiet period after the last sound, and plays again at its end", () => {
     expect([
-      decideSound("linen", 1000, 1000),
-      decideSound("linen", 1000 + SOUND_QUIET_PERIOD - 1, 1000),
-      decideSound("linen", 1000 + SOUND_QUIET_PERIOD, 1000),
+      decideSound("welcome", 1000, 1000),
+      decideSound("welcome", 1000 + SOUND_QUIET_PERIOD - 1, 1000),
+      decideSound("welcome", 1000 + SOUND_QUIET_PERIOD, 1000),
     ]).toStrictEqual([
       { silent: true, play: undefined },
       { silent: true, play: undefined },
-      { silent: true, play: "linen" },
+      { silent: true, play: "welcome" },
     ]);
   });
 

@@ -463,6 +463,11 @@ msgstr "At least one profile has to stay awake."
 msgid "At least one profile has to stay on."
 msgstr "At least one profile has to stay on."
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Aurora"
+msgstr "Aurora"
+
 #. Accessible name and tooltip of the title bar button that goes to the page the tab showed before
 #. Accessible name of the Settings window's button that goes back to the page shown before, a section or a profile's page
 #. Menu item in the View menu that goes to the page the selected tab showed before
@@ -472,6 +477,11 @@ msgstr "At least one profile has to stay on."
 #: src/shell/titlebar.tsx
 msgid "Back"
 msgstr "Back"
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Bead"
+msgstr "Bead"
 
 #. Under the Open in split heading: the Google app or bookmark picked opens in a new pane under the focused one
 #: src/shell/open-app.tsx
@@ -502,6 +512,11 @@ msgstr "Block ads"
 #: src/settings/privacy-page.tsx
 msgid "Block trackers"
 msgstr "Block trackers"
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Bloom"
+msgstr "Bloom"
 
 #. Name of a profile's color
 #: src/settings/profile-page.tsx
@@ -546,8 +561,8 @@ msgstr "Bookmarks"
 
 #. Name of a notification sound, picked in Settings
 #: src/settings/notifications-page.tsx
-msgid "Breeze"
-msgstr "Breeze"
+msgid "Breath"
+msgstr "Breath"
 
 #. Menu item in the macOS Window menu
 #: src/main/application-menu.ts
@@ -668,11 +683,6 @@ msgstr "Check now"
 #: src/settings/updates-group.tsx
 msgid "Checking for updates…"
 msgstr "Checking for updates…"
-
-#. Name of a notification sound, picked in Settings
-#: src/settings/notifications-page.tsx
-msgid "Chime"
-msgstr "Chime"
 
 #. Shown in the Color menu on a profile's page in Settings while the profile's stored color is one this version does not know
 #: src/settings/profile-page.tsx
@@ -1010,6 +1020,11 @@ msgstr "Dark"
 msgid "Darkens the conversation view, the compose window, menus and dialogs that Gmail leaves white. Only works when Gmail itself is set to Dark."
 msgstr "Darkens the conversation view, the compose window, menus and dialogs that Gmail leaves white. Only works when Gmail itself is set to Dark."
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Daybreak"
+msgstr "Daybreak"
+
 #. Accessible name of the days a window of quiet hours holds on in Settings
 #: src/settings/quiet-hours-field.tsx
 msgid "Days"
@@ -1060,6 +1075,11 @@ msgstr "Deletes cookies, site data and cached files for this profile."
 #: src/settings/pro-page.tsx
 msgid "Device name"
 msgstr "Device name"
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Dew"
+msgstr "Dew"
 
 #. Badge on a disabled profile's row in Settings' list of profiles, one turned off by its Enabled switch
 #: src/settings/profiles-page.tsx
@@ -1176,6 +1196,11 @@ msgstr "Downloads"
 #: src/settings/profiles-page.tsx
 msgid "Drag to reorder."
 msgstr "Drag to reorder."
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Drop"
+msgstr "Drop"
 
 #. Name of a notification sound, picked in Settings
 #: src/settings/notifications-page.tsx
@@ -1308,6 +1333,11 @@ msgstr "From"
 msgid "General"
 msgstr "General"
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Glint"
+msgstr "Glint"
+
 #. Name of the Settings section for Gmail's page, its conversations and verification codes, in its list and as its title; Gmail is the product's name
 #: src/settings/app.tsx
 msgid "Gmail"
@@ -1360,6 +1390,11 @@ msgstr "Google apps open in your default browser."
 msgid "Green"
 msgstr "Green"
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Halo"
+msgstr "Halo"
+
 #. Name of the Help menu
 #: src/main/application-menu.ts
 msgid "Help"
@@ -1409,6 +1444,11 @@ msgstr "Hides offers from Google above your inbox."
 #: src/settings/gmail-page.tsx
 msgid "Hides the storage and account details below your inbox."
 msgstr "Hides the storage and account details below your inbox."
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Hush"
+msgstr "Hush"
 
 #. Label of the menu in Settings on Windows and Linux choosing the color of Meru's tray icon
 #: src/settings/menu-bar-page.tsx
@@ -1511,6 +1551,11 @@ msgstr "Left Bracket"
 msgid "Left pane {percent}"
 msgstr "Left pane {percent}"
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Letter"
+msgstr "Letter"
+
 #. Title of the group on the Meru Pro page of Settings holding the license key and this computer's name
 #: src/settings/pro-page.tsx
 msgid "License"
@@ -1539,11 +1584,6 @@ msgstr "Light"
 #: src/settings/profile-page.tsx
 msgid "Lime"
 msgstr "Lime"
-
-#. Name of a notification sound, picked in Settings
-#: src/settings/notifications-page.tsx
-msgid "Linen"
-msgstr "Linen"
 
 #. Title of the group of Settings for links that leave Meru for the default browser
 #: src/settings/privacy-page.tsx
@@ -1890,6 +1930,11 @@ msgstr "Name"
 msgid "Name of {shown}"
 msgstr "Name of {shown}"
 
+#. Label of the menu in Settings choosing the sound a new mail notification makes
+#: src/settings/notifications-page.tsx
+msgid "New email sound"
+msgstr "New email sound"
+
 #. Title of the group of Settings for how new mail is announced
 #: src/settings/notifications-page.tsx
 msgid "New mail"
@@ -1989,6 +2034,11 @@ msgstr "No unread messages"
 msgid "No windows to share."
 msgstr "No windows to share."
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Nod"
+msgstr "Nod"
+
 #. Quiet hours under All profiles when they have no window, in the Settings caption: For all profiles, it's none.
 #: src/settings/scope.ts
 msgid "none"
@@ -2000,7 +2050,7 @@ msgctxt "Google apps"
 msgid "none"
 msgstr "none"
 
-#. Choice of the Sound menu in Settings: no sound with a notification
+#. Choice of a sound menu in Settings: no sound with a notification
 #. Description of the Always open in your default browser row in Settings while no Google app is chosen to open in the default browser
 #. What a menu's button in Settings reads while none of its checkboxes is checked, as the Spelling menu with no language
 #: src/settings/checked-summary.ts
@@ -2224,10 +2274,20 @@ msgstr "Optional"
 msgid "Orange"
 msgstr "Orange"
 
+#. Label of the menu in Settings choosing the sound of every notification that is not new mail, such as a verification code's
+#: src/settings/notifications-page.tsx
+msgid "Other notifications sound"
+msgstr "Other notifications sound"
+
 #. Description of Cached images and files in the Delete browsing data dialog in Settings
 #: src/settings/delete-browsing-data.tsx
 msgid "Pages may load a little slower next time."
 msgstr "Pages may load a little slower next time."
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Pair"
+msgstr "Pair"
 
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
@@ -2254,10 +2314,15 @@ msgstr "Pin Tab"
 msgid "Pink"
 msgstr "Pink"
 
-#. Name of the button in Settings beside the Sound menu that plays the chosen sound once
+#. Name of the button in Settings beside the New email sound menu that plays the chosen sound once
 #: src/settings/notifications-page.tsx
-msgid "Play sound"
-msgstr "Play sound"
+msgid "Play new email sound"
+msgstr "Play new email sound"
+
+#. Name of the button in Settings beside the Other notifications sound menu that plays the chosen sound once
+#: src/settings/notifications-page.tsx
+msgid "Play other notifications sound"
+msgstr "Play other notifications sound"
 
 #. The + key, as a screen reader says it in a keyboard shortcut
 #: src/main/shortcuts-page.ts
@@ -2950,6 +3015,11 @@ msgstr "Signs you out of every profile and deletes all your settings and data on
 msgid "Silences all notifications."
 msgstr "Silences all notifications."
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Sip"
+msgstr "Sip"
+
 #. Shown in the Trusted sites dialog of Settings when no site is trusted; Meru asks before a link opens in the default browser, and the question can trust the link's site
 #: src/settings/trusted-sites-dialog.tsx
 msgid "Sites you trust when Meru asks show up here."
@@ -2999,11 +3069,6 @@ msgstr "Sleep When Idle"
 #: src/settings/tabs-apps-page.tsx
 msgid "Sleeping tabs free up memory and reload when you open them."
 msgstr "Sleeping tabs free up memory and reload when you open them."
-
-#. Label of the menu in Settings choosing the sound a new mail notification makes
-#: src/settings/notifications-page.tsx
-msgid "Sound"
-msgstr "Sound"
 
 #. Label of the menu in Settings choosing the languages spelling is checked in as you type
 #: src/settings/language-group.tsx
@@ -3062,8 +3127,13 @@ msgstr "Stopped working"
 msgid "Stops scripts that follow you from site to site."
 msgstr "Stops scripts that follow you from site to site."
 
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Sunrise"
+msgstr "Sunrise"
+
+#. Choice of a sound menu in Settings: the system's own notification sound
 #. Choice of the Icon color menu in Settings: the tray icon follows the system's light or dark mode
-#. Choice of the Sound menu in Settings: the system's own notification sound
 #. Choice of the Theme menu in Settings: Meru is light or dark as the system is
 #: src/settings/appearance-page.tsx
 #: src/settings/menu-bar-page.tsx
@@ -3246,6 +3316,11 @@ msgstr "This search can't be saved."
 #: src/settings/pro-badge.tsx
 msgid "This setting isn't available in the free version. Upgrade to Meru Pro to use it, along with everything else Meru Pro adds."
 msgstr "This setting isn't available in the free version. Upgrade to Meru Pro to use it, along with everything else Meru Pro adds."
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Tide"
+msgstr "Tide"
 
 #. Sender of the stand-in email in the test notification Settings shows: a person's name and the app's
 #: src/main/notifications.ts
@@ -3567,6 +3642,11 @@ msgstr "weekdays"
 #: src/settings/scope.ts
 msgid "weekends"
 msgstr "weekends"
+
+#. Name of a notification sound, picked in Settings
+#: src/settings/notifications-page.tsx
+msgid "Welcome"
+msgstr "Welcome"
 
 #. Title of the group of Settings for what a new mail notification says
 #: src/settings/notifications-page.tsx

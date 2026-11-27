@@ -167,6 +167,7 @@ const isWritten = <Key extends PageSettingKey>(
 
 /** The pages' settings that only the app holds, never a profile. */
 const APP_ONLY_PAGE_KEYS = [
+  "otherNotificationSound",
   "notificationSoundVolume",
   ...GMAIL_PAGE_KEYS,
   ...TABS_APPS_PAGE_KEYS,

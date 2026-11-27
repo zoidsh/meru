@@ -491,15 +491,22 @@ describe(settingsHandlers, () => {
     app.dispose();
   });
 
-  it("previews only Linen on the free version, which plays no other sound", async () => {
+  it("previews only each role's default on the free version, which plays no other sound", async () => {
     const app = setup(stateOf("Work"), undefined, "darwin", ["en"], true);
 
     await expect(app.handlers.previewSound({ sound: "knock" })).rejects.toThrow(
       "needs Meru Pro"
     );
-    await app.handlers.previewSound({ sound: "linen" });
+    await expect(app.handlers.previewSound({ sound: "sip" })).rejects.toThrow(
+      "needs Meru Pro"
+    );
+    await app.handlers.previewSound({ sound: "welcome" });
+    await app.handlers.previewSound({ sound: "nod" });
 
-    expect(app.played).toStrictEqual([{ sound: "linen", volume: 1 }]);
+    expect(app.played).toStrictEqual([
+      { sound: "welcome", volume: 1 },
+      { sound: "nod", volume: 1 },
+    ]);
     app.dispose();
   });
 
@@ -1909,7 +1916,7 @@ describe(readSettingsState, () => {
     const app = setup(stateOf("Home", "Work"), {
       version: 1,
       profiles: {
-        work: { notificationSound: "chime", notifications: "maybe" },
+        work: { notificationSound: "bloom", notifications: "maybe" },
         gone: { notifications: false },
       },
     });
@@ -1939,7 +1946,7 @@ describe(readSettingsState, () => {
         unifiedInbox: true,
         mail: { status: "unknown", address: null },
         savedSearches: [],
-        overrides: { notificationSound: "chime" },
+        overrides: { notificationSound: "bloom" },
       },
     ]);
     app.dispose();

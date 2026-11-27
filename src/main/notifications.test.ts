@@ -839,11 +839,11 @@ describe("verification codes", () => {
 
     app.set("verificationCodesDuringDoNotDisturb", false);
     app.set("notifications", false);
-    app.set("notificationSound", "breeze");
+    app.set("otherNotificationSound", "sip");
     await arrive(app, entry("2"), codeEntry("1"));
 
     expect(titles(app.shown)).toStrictEqual(["Sender 1"]);
-    expect(app.played).toStrictEqual([{ sound: "breeze", volume: 1 }]);
+    expect(app.played).toStrictEqual([{ sound: "sip", volume: 1 }]);
   });
 
   it("passes important only, which keeps none of the mail beside it", async () => {
@@ -964,11 +964,11 @@ const silences = (shown: Shown[]) =>
 
 describe("sounds", () => {
   it.each([
-    ["system", [{ sound: "linen", volume: 0.5 }]],
-    ["duet", [{ sound: "linen", volume: 0.5 }]],
+    ["system", [{ sound: "welcome", volume: 0.5 }]],
+    ["duet", [{ sound: "welcome", volume: 0.5 }]],
     ["none", []],
   ] as const)(
-    "on the free version, with %s chosen, plays Linen at its volume or nothing, never the system's sound",
+    "on the free version, with %s chosen, plays Welcome at its volume or nothing, never the system's sound",
     async (chosen, played) => {
       const app = setup({ free: true });
 
@@ -979,6 +979,38 @@ describe("sounds", () => {
       expect([app.played, silences(app.shown)]).toStrictEqual([played, [true]]);
     }
   );
+
+  it("plays new email's sound for new mail and the other notifications' sound for a verification code, one quiet period across both", async () => {
+    const app = setup();
+
+    app.set("notificationSound", "duet");
+    app.set("otherNotificationSound", "sip");
+    await arrive(app, entry("2"), codeEntry("1"));
+
+    expect(app.played).toStrictEqual([{ sound: "sip", volume: 1 }]);
+    expect(silences(app.shown)).toStrictEqual([true, true]);
+
+    app.advance(5000);
+    await app.notifications.polled("a", feed(entry("3"), entry("2")));
+    app.advance(4999);
+    await app.notifications.polled(
+      "a",
+      feed(codeEntry("4"), entry("3"), entry("2"))
+    );
+    await settle();
+    app.advance(1);
+    await app.notifications.polled(
+      "a",
+      feed(codeEntry("5"), codeEntry("4"), entry("3"), entry("2"))
+    );
+    await settle();
+
+    expect(app.played.map(({ sound }) => sound)).toStrictEqual([
+      "sip",
+      "duet",
+      "sip",
+    ]);
+  });
 
   it("plays the chosen sound at the chosen volume once for a poll of several, each notification silent", async () => {
     const app = setup();
@@ -997,7 +1029,7 @@ describe("sounds", () => {
     await arrive(app, entry("5"), entry("4"), entry("3"), entry("2"));
 
     expect(titles(app.shown)).toStrictEqual(["4 new messages"]);
-    expect(app.played).toStrictEqual([{ sound: "linen", volume: 1 }]);
+    expect(app.played).toStrictEqual([{ sound: "welcome", volume: 1 }]);
     expect(silences(app.shown)).toStrictEqual([true]);
   });
 
@@ -1069,10 +1101,10 @@ describe("sounds", () => {
   it("sounds for a verification code while the mail beside it is held, in the same quiet period", async () => {
     const app = setup({ doNotDisturb: { until: null } });
 
-    app.set("notificationSound", "breeze");
+    app.set("otherNotificationSound", "glint");
     await arrive(app, entry("2"), codeEntry("1"));
 
-    expect(app.played).toStrictEqual([{ sound: "breeze", volume: 1 }]);
+    expect(app.played).toStrictEqual([{ sound: "glint", volume: 1 }]);
     expect(silences(app.shown)).toStrictEqual([true]);
 
     await app.notifications.polled("a", feed(codeEntry("3"), entry("2")));
@@ -1086,6 +1118,7 @@ describe("sounds", () => {
     const app = setup();
 
     app.set("notificationSound", "none");
+    app.set("otherNotificationSound", "none");
     await arrive(app, entry("2"), codeEntry("1"));
 
     expect(app.played).toStrictEqual([]);
@@ -1117,7 +1150,7 @@ describe("sounds", () => {
     app.support();
     await app.notifications.polled("a", feed(entry("2"), entry("1")));
 
-    expect(app.played).toStrictEqual([{ sound: "linen", volume: 1 }]);
+    expect(app.played).toStrictEqual([{ sound: "welcome", volume: 1 }]);
   });
 
   it("sounds every 5 s under a notification every 4 s, timing the quiet period from the last sound", async () => {
@@ -1146,12 +1179,12 @@ describe("sounds", () => {
 
     app.set("notificationSound", "system");
     await arrive(app, entry("1"));
-    app.set("notificationSound", "chime");
+    app.set("notificationSound", "bloom");
     app.advance(5000);
     await app.notifications.polled("a", feed(entry("2"), entry("1")));
 
     expect(silences(app.shown)).toStrictEqual([true, true]);
-    expect(app.played).toStrictEqual([{ sound: "chime", volume: 1 }]);
+    expect(app.played).toStrictEqual([{ sound: "bloom", volume: 1 }]);
   });
 
   it("reads notifications, quiet hours and what shows for the profile the mail is in", () => {
@@ -1195,11 +1228,11 @@ describe("sounds", () => {
     const app = setup({ state: two });
 
     app.set("notificationSoundVolume", 0.5);
-    app.override("b", "notificationSound", "chime");
+    app.override("b", "notificationSound", "bloom");
     app.notifications.polled("b", feed());
     app.notifications.polled("b", feed(entry("1")));
 
-    expect(app.played).toStrictEqual([{ sound: "chime", volume: 0.5 }]);
+    expect(app.played).toStrictEqual([{ sound: "bloom", volume: 0.5 }]);
   });
 });
 
@@ -1277,7 +1310,7 @@ describe("the test notification", () => {
   it("always sounds and starts no quiet period, so tests 2 s apart both sound and new mail right after one still does", async () => {
     const app = setup();
 
-    app.set("notificationSound", "chime");
+    app.set("notificationSound", "bloom");
     await app.notifications.polled("a", feed(entry("1")));
     app.notifications.showTest(undefined);
     app.advance(2000);
@@ -1288,7 +1321,7 @@ describe("the test notification", () => {
       app.played.map((request) => request.sound),
       app.shown.map(({ silent }) => silent),
     ]).toStrictEqual([
-      ["chime", "chime", "chime"],
+      ["bloom", "bloom", "bloom"],
       [true, true, true],
     ]);
   });

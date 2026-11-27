@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   GATED_SETTINGS,
   entitledSetting,
+  isFreeSound,
   settingCapability,
   settingWritable,
 } from "./entitled-settings.ts";
@@ -70,12 +71,36 @@ describe(entitledSetting, () => {
     ]).toStrictEqual([false, true, false]);
   });
 
-  it("plays Linen without Meru Pro whatever sound was chosen, the system's included, and nothing for none", () => {
-    expect(
-      (["system", "duet", "linen", "none"] as const).map((sound) =>
+  it("plays each role's default without Meru Pro whatever sound was chosen, the system's included, and nothing for none", () => {
+    expect([
+      (["system", "duet", "welcome", "none"] as const).map((sound) =>
         entitledSetting("notificationSound", sound, free)
+      ),
+      (["system", "glint", "nod", "none"] as const).map((sound) =>
+        entitledSetting("otherNotificationSound", sound, free)
+      ),
+    ]).toStrictEqual([
+      ["welcome", "welcome", "welcome", "none"],
+      ["nod", "nod", "nod", "none"],
+    ]);
+  });
+
+  it("plays the chosen sound of each role with Meru Pro, and writes either only with it", () => {
+    expect([
+      entitledSetting("notificationSound", "duet", pro),
+      entitledSetting("otherNotificationSound", "glint", pro),
+      settingWritable("notificationSound", free),
+      settingWritable("otherNotificationSound", free),
+      settingWritable("otherNotificationSound", pro),
+    ]).toStrictEqual(["duet", "glint", false, false, true]);
+  });
+
+  it("plays only each role's default sound free", () => {
+    expect(
+      (["welcome", "nod", "duet", "sip"] as const).map((sound) =>
+        isFreeSound(sound)
       )
-    ).toStrictEqual(["linen", "linen", "linen", "none"]);
+    ).toStrictEqual([true, true, false, false]);
   });
 
   it("blocks neither ads nor trackers without Meru Pro", () => {

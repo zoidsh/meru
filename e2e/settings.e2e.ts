@@ -165,8 +165,8 @@ test("the Settings page loads and opens a menu under the strict policy with no c
 
   // The listeners missed the first load.
   await page.reload();
-  await page.getByRole("combobox", { name: "Sound" }).click();
-  await expect(page.getByRole("option", { name: "Chime" })).toBeVisible();
+  await page.getByRole("combobox", { name: "New email sound" }).click();
+  await expect(page.getByRole("option", { name: "Bloom" })).toBeVisible();
   await page.keyboard.press("Escape");
 
   expect(errors).toStrictEqual([]);
@@ -289,7 +289,7 @@ test("Do Not Disturb from the titlebar turns the row on and pauses the rows it o
     page.getByText("On until you turn it off. Silences all notifications.")
   ).toBeVisible();
   // Allow notifications, Only important mail, Sound, Volume and Quiet hours.
-  await expect(pausedLines(page)).toHaveCount(5);
+  await expect(pausedLines(page)).toHaveCount(6);
   await expect(
     page.getByRole("switch", { name: "Allow notifications" })
   ).toBeChecked();
@@ -462,17 +462,17 @@ test("a profile's own value set elsewhere shows in the open window", async ({
       setOverride: (id: string, key: string, value: unknown) => Promise<void>;
     };
 
-    await settings.setOverride("home", "notificationSound", "chime");
+    await settings.setOverride("home", "notificationSound", "bloom");
   });
 
   await expect(page.getByText("Set differently for 1 profile:")).toBeVisible();
   await page.getByRole("button", { name: "Show Home" }).click();
   await expect(
-    page.getByText("Set for Home only. For all profiles, it's Linen.")
+    page.getByText("Set for Home only. For all profiles, it's Welcome.")
   ).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Sound" })).toHaveText(
-    /^Chime/u
-  );
+  await expect(
+    page.getByRole("combobox", { name: "New email sound" })
+  ).toHaveText(/^Bloom/u);
 });
 
 test("a profile removed in Profiles leaves the Notifications page's scopes, and with one profile left the switcher goes", async ({
@@ -585,7 +585,7 @@ test("with two profiles Do Not Disturb holds whatever a profile sets, lives unde
     )
   ).toBeVisible();
   await page.getByRole("switch", { name: "Do Not Disturb" }).click();
-  await expect(offForAll).toHaveCount(5);
+  await expect(offForAll).toHaveCount(6);
 
   await scopeTab(page, "Work").click();
 
@@ -651,7 +651,7 @@ test("the volume slider writes the app volume when a drag or a key press is comm
 }) => {
   const page = await openSettings(app);
 
-  await setSetting(app, "notificationSound", "chime");
+  await setSetting(app, "notificationSound", "bloom");
   const volume = page.getByRole("slider", { name: "Volume" });
 
   await expect(volume).toHaveAttribute("aria-valuetext", "100%");
@@ -685,7 +685,7 @@ test("the volume slider writes the app volume when a drag or a key press is comm
 
   await expect
     .poll(() => sounds(app))
-    .toStrictEqual([{ sound: "chime", volume: 0.95 }]);
+    .toStrictEqual([{ sound: "bloom", volume: 0.95 }]);
 
   await page.mouse.up();
 
@@ -701,8 +701,8 @@ test("the volume slider writes the app volume when a drag or a key press is comm
   await expect
     .poll(() => sounds(app))
     .toStrictEqual([
-      { sound: "chime", volume: 0.95 },
-      { sound: "chime", volume: dragged },
+      { sound: "bloom", volume: 0.95 },
+      { sound: "bloom", volume: dragged },
     ]);
   await expect(volume).toHaveAttribute(
     "aria-valuetext",
@@ -722,8 +722,8 @@ test("choosing one of Meru's sounds, Play sound and a volume commit each play th
   const page = await openSettings(app);
 
   await setSetting(app, "notificationSoundVolume", 0.5);
-  const sound = page.getByRole("combobox", { name: "Sound" });
-  const play = page.getByRole("button", { name: "Play sound" });
+  const sound = page.getByRole("combobox", { name: "New email sound" });
+  const play = page.getByRole("button", { name: "Play new email sound" });
   const choose = async (name: string) => {
     await sound.click();
     await page.getByRole("option", { name, exact: true }).click();
@@ -782,6 +782,47 @@ test("choosing one of Meru's sounds, Play sound and a volume commit each play th
   ]);
 });
 
+test("the other notifications' menu offers its own seven sounds, and choosing one and Play sound each play it at the app's volume", async ({
+  app,
+  userDataDir,
+}) => {
+  const page = await openSettings(app);
+
+  await setSetting(app, "notificationSoundVolume", 0.6);
+  const sound = page.getByRole("combobox", {
+    name: "Other notifications sound",
+  });
+
+  await expect(sound).toContainText("Nod");
+  await sound.click();
+  await expect(page.getByRole("option")).toHaveText([
+    "None",
+    "System",
+    "Nod",
+    "Sip",
+    "Breath",
+    "Drop",
+    "Pair",
+    "Glint",
+    "Hush",
+  ]);
+  await page.getByRole("option", { name: "Glint", exact: true }).click();
+  await expect(sound).toContainText("Glint");
+  await page
+    .getByRole("button", { name: "Play other notifications sound" })
+    .click();
+
+  await expect
+    .poll(() => sounds(app))
+    .toStrictEqual([
+      { sound: "glint", volume: 0.6 },
+      { sound: "glint", volume: 0.6 },
+    ]);
+  expect(await readStoredSetting(userDataDir, "otherNotificationSound")).toBe(
+    "glint"
+  );
+});
+
 test("with no sound of Meru's for the app, a volume commit plays the first profile's own", async ({
   launchApp,
   userDataDir,
@@ -792,8 +833,8 @@ test("with no sound of Meru's for the app, a volume commit plays the first profi
     notificationSound: "system",
     profiles: {
       home: { notificationSound: "none" },
-      work: { notificationSound: "linen" },
-      club: { notificationSound: "breeze" },
+      work: { notificationSound: "bloom" },
+      club: { notificationSound: "duet" },
     },
   });
 
@@ -805,7 +846,7 @@ test("with no sound of Meru's for the app, a volume commit plays the first profi
 
   await expect
     .poll(() => sounds(app))
-    .toStrictEqual([{ sound: "linen", volume: 0.95 }]);
+    .toStrictEqual([{ sound: "bloom", volume: 0.95 }]);
 });
 
 test("Show test notification shows the stand-in as the app's settings show mail, with its sound, even in quiet hours", async ({
@@ -817,7 +858,7 @@ test("Show test notification shows the stand-in as the app's settings show mail,
   await setSetting(app, "notifications", false);
   await setSetting(app, "quietHours", [{ start: "00:00", end: "00:00" }]);
   await setSetting(app, "notificationSoundVolume", 0.4);
-  await setSetting(app, "notificationSound", "breeze");
+  await setSetting(app, "notificationSound", "duet");
   await page.getByRole("button", { name: "Show test notification" }).click();
 
   await expect
@@ -830,7 +871,7 @@ test("Show test notification shows the stand-in as the app's settings show mail,
         actions: undefined,
       },
     ]);
-  expect(await sounds(app)).toStrictEqual([{ sound: "breeze", volume: 0.4 }]);
+  expect(await sounds(app)).toStrictEqual([{ sound: "duet", volume: 0.4 }]);
 });
 
 test("under Do Not Disturb Show test notification is disabled, says why to the pointer, the keyboard and assistive technology, and shows nothing", async ({
@@ -912,7 +953,7 @@ test("in a profile's scope the test notification is that profile's, as its own s
     ]);
 });
 
-test("the volume is disabled while no sound of Meru's is chosen, unless a profile chooses one, and absent from a profile's scope", async ({
+test("the volume is disabled while no sound of Meru's is chosen, unless a profile or the other notifications choose one, and absent from a profile's scope", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -924,6 +965,8 @@ test("the volume is disabled while no sound of Meru's is chosen, unless a profil
   const volume = page.getByRole("slider", { name: "Volume" });
 
   await setSetting(app, "notificationSound", "none");
+  await expect(volume).toBeEnabled();
+  await setSetting(app, "otherNotificationSound", "system");
   await expect(volume).toBeDisabled();
   await setSetting(app, "notificationSound", "system");
   await expect(volume).toBeDisabled();
@@ -938,7 +981,12 @@ test("the volume is disabled while no sound of Meru's is chosen, unless a profil
   await expect(volume).toBeEnabled();
 
   await scopeTab(page, "Work").click();
-  await expect(page.getByRole("combobox", { name: "Sound" })).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "New email sound" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "Other notifications sound" })
+  ).toHaveCount(0);
   await expect(volume).toHaveCount(0);
 });
 
@@ -970,7 +1018,7 @@ test.describe("shots", () => {
 
     await emulateTheme(app, "light");
     await page.getByRole("switch", { name: "Do Not Disturb" }).click();
-    await expect(pausedLines(page)).toHaveCount(5);
+    await expect(pausedLines(page)).toHaveCount(6);
     // Lets the switch's transition finish.
     await delay(500);
     await page.screenshot({
@@ -999,7 +1047,7 @@ test.describe("shots", () => {
     await writeSettings(userDataDir, {
       profiles: {
         work: {
-          notificationSound: "chime",
+          notificationSound: "bloom",
           notificationSender: false,
           quietHours: [{ start: "09:00", end: "17:00", days: [1, 2, 3, 4, 5] }],
         },
@@ -1028,7 +1076,7 @@ test.describe("shots", () => {
       await scopeTab(page, "Work").click();
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await page
-        .getByText("Set for Work only. For all profiles, it's Linen.")
+        .getByText("Set for Work only. For all profiles, it's Welcome.")
         .evaluate((line) => {
           line.scrollIntoView({ block: "center" });
         });
@@ -1087,7 +1135,7 @@ test.describe("shots", () => {
   }) => {
     await seedProfiles(userDataDir, standIn, ["Work"]);
     await writeSettings(userDataDir, {
-      notificationSound: "chime",
+      notificationSound: "bloom",
       notificationSoundVolume: 0.6,
     });
 
@@ -1145,7 +1193,7 @@ test.describe("shots", () => {
       await scopeTab(page, "Work").click();
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await page
-        .getByText("Set for Work only. For all profiles, it's Chime.")
+        .getByText("Set for Work only. For all profiles, it's Bloom.")
         .evaluate((line) => {
           line.scrollIntoView({ block: "center" });
         });

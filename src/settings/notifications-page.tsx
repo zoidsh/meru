@@ -9,8 +9,17 @@ import type {
   PageSettings,
   SettingChange,
 } from "#contract/settings.ts";
-import { NOTIFICATION_SOUNDS, isNotificationSound } from "#core/sounds.ts";
-import type { NotificationSound, SoundChoice } from "#core/sounds.ts";
+import {
+  NEW_EMAIL_SOUNDS,
+  OTHER_SOUNDS,
+  isNotificationSound,
+} from "#core/sounds.ts";
+import type {
+  NewEmailSoundChoice,
+  NotificationSound,
+  OtherSoundChoice,
+  SoundChoice,
+} from "#core/sounds.ts";
 import { useNowByTheDay } from "#shared/now-by-the-day.ts";
 import { Button } from "#ui/button.tsx";
 import {
@@ -35,11 +44,16 @@ import { settingsCalls, useSettingsState } from "./sync.ts";
 import { VolumeSlider } from "./volume-slider.tsx";
 import { volumeSound } from "./volume.ts";
 
-/** In the order the Sound menu lists them. */
-const SOUND_ORDER: readonly SoundChoice[] = [
+/** In the order each sound menu lists them. */
+const NEW_EMAIL_ORDER: readonly NewEmailSoundChoice[] = [
   "none",
   "system",
-  ...NOTIFICATION_SOUNDS,
+  ...NEW_EMAIL_SOUNDS,
+];
+const OTHER_ORDER: readonly OtherSoundChoice[] = [
+  "none",
+  "system",
+  ...OTHER_SOUNDS,
 ];
 
 /**
@@ -92,31 +106,87 @@ export const NotificationsPage = () => {
     none: t({
       message: "None",
       comment:
-        "Choice of the Sound menu in Settings: no sound with a notification",
+        "Choice of a sound menu in Settings: no sound with a notification",
     }),
     system: t({
       message: "System",
       comment:
-        "Choice of the Sound menu in Settings: the system's own notification sound",
+        "Choice of a sound menu in Settings: the system's own notification sound",
     }),
-    breeze: t({
-      message: "Breeze",
+    welcome: t({
+      message: "Welcome",
       comment: "Name of a notification sound, picked in Settings",
     }),
-    chime: t({
-      message: "Chime",
+    sunrise: t({
+      message: "Sunrise",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    bloom: t({
+      message: "Bloom",
       comment: "Name of a notification sound, picked in Settings",
     }),
     duet: t({
       message: "Duet",
       comment: "Name of a notification sound, picked in Settings",
     }),
+    aurora: t({
+      message: "Aurora",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    daybreak: t({
+      message: "Daybreak",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    halo: t({
+      message: "Halo",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    letter: t({
+      message: "Letter",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    tide: t({
+      message: "Tide",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
     knock: t({
       message: "Knock",
       comment: "Name of a notification sound, picked in Settings",
     }),
-    linen: t({
-      message: "Linen",
+    dew: t({
+      message: "Dew",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    bead: t({
+      message: "Bead",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    nod: t({
+      message: "Nod",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    sip: t({
+      message: "Sip",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    breath: t({
+      message: "Breath",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    drop: t({
+      message: "Drop",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    pair: t({
+      message: "Pair",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    glint: t({
+      message: "Glint",
+      comment: "Name of a notification sound, picked in Settings",
+    }),
+    hush: t({
+      message: "Hush",
       comment: "Name of a notification sound, picked in Settings",
     }),
   };
@@ -168,18 +238,93 @@ export const NotificationsPage = () => {
     </SettingRow>
   );
 
-  const soundLabel = t({
-    message: "Sound",
+  const newEmailSoundLabel = t({
+    message: "New email sound",
     comment:
       "Label of the menu in Settings choosing the sound a new mail notification makes",
   });
+  const otherSoundLabel = t({
+    message: "Other notifications sound",
+    comment:
+      "Label of the menu in Settings choosing the sound of every notification that is not new mail, such as a verification code's",
+  });
+
+  const soundRow = <Choice extends SoundChoice>(row: {
+    key: "notificationSound" | "otherNotificationSound";
+    label: string;
+    playLabel: string;
+    order: readonly Choice[];
+    value: Choice;
+    scope: ReturnType<typeof scopeOf>;
+    onChange: (value: Choice) => void;
+  }) => (
+    <SettingRow
+      key={row.key}
+      label={row.label}
+      paused={paused}
+      scope={row.scope}
+      pro={needsPro.capability("notificationSound")}
+      disabled={needsPro.capability("notificationSound")}
+    >
+      {(ids) => (
+        <>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={row.playLabel}
+            disabled={!isNotificationSound(row.value)}
+            onClick={() => {
+              if (isNotificationSound(row.value)) {
+                void calls.previewSound({ sound: row.value });
+              }
+            }}
+          >
+            <PlayIcon />
+          </Button>
+          <Select
+            items={row.order.map((sound) => ({
+              value: sound,
+              label: soundNames[sound],
+            }))}
+            value={row.value}
+            disabled={needsPro.capability("notificationSound")}
+            onValueChange={(value) => {
+              if (value !== null) {
+                row.onChange(value);
+              }
+
+              if (isNotificationSound(value)) {
+                void calls.previewSound({ sound: value });
+              }
+            }}
+          >
+            <SelectTrigger aria-labelledby={ids.label} className="min-w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              <SelectGroup>
+                {row.order.map((sound) => (
+                  <SelectItem key={sound} value={sound}>
+                    {soundNames[sound]}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </>
+      )}
+    </SettingRow>
+  );
   const testBlocked = t({
     message: "Turn off Do Not Disturb first.",
     comment:
       "Tooltip and description of the disabled Show button of Test notification in Settings while Do Not Disturb holds every notification",
   });
-  const volumeHeardIn = volumeSound(settings.notificationSound, profiles);
-  const shownSound = values.notificationSound;
+  const volumeHeardIn = volumeSound(
+    settings.notificationSound,
+    settings.otherNotificationSound,
+    profiles
+  );
   const volumeLabel = t({
     message: "Volume",
     comment:
@@ -265,72 +410,42 @@ export const NotificationsPage = () => {
                 }),
                 true
               ),
-              <SettingRow
-                key="notificationSound"
-                label={soundLabel}
-                paused={paused}
-                scope={scopeOf("notificationSound", soundLabel)}
-                pro={needsPro.capability("notificationSound")}
-                disabled={needsPro.capability("notificationSound")}
-              >
-                {(ids) => (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={t({
-                        message: "Play sound",
-                        comment:
-                          "Name of the button in Settings beside the Sound menu that plays the chosen sound once",
-                      })}
-                      disabled={!isNotificationSound(shownSound)}
-                      onClick={() => {
-                        if (isNotificationSound(shownSound)) {
-                          void calls.previewSound({ sound: shownSound });
-                        }
-                      }}
-                    >
-                      <PlayIcon />
-                    </Button>
-                    <Select
-                      items={SOUND_ORDER.map((sound) => ({
-                        value: sound,
-                        label: soundNames[sound],
-                      }))}
-                      value={values.notificationSound}
-                      disabled={needsPro.capability("notificationSound")}
-                      onValueChange={(value) => {
-                        if (value !== null) {
-                          write("notificationSound", value);
-                        }
-
-                        if (isNotificationSound(value)) {
-                          void calls.previewSound({ sound: value });
-                        }
-                      }}
-                    >
-                      <SelectTrigger
-                        aria-labelledby={ids.label}
-                        className="min-w-28"
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent alignItemWithTrigger={false}>
-                        <SelectGroup>
-                          {SOUND_ORDER.map((sound) => (
-                            <SelectItem key={sound} value={sound}>
-                              {soundNames[sound]}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </>
-                )}
-              </SettingRow>,
+              soundRow({
+                key: "notificationSound",
+                label: newEmailSoundLabel,
+                playLabel: t({
+                  message: "Play new email sound",
+                  comment:
+                    "Name of the button in Settings beside the New email sound menu that plays the chosen sound once",
+                }),
+                order: NEW_EMAIL_ORDER,
+                value: values.notificationSound,
+                scope: scopeOf("notificationSound", newEmailSoundLabel),
+                onChange: (value) => {
+                  write("notificationSound", value);
+                },
+              }),
               ...(profile
                 ? []
                 : [
+                    soundRow({
+                      key: "otherNotificationSound",
+                      label: otherSoundLabel,
+                      playLabel: t({
+                        message: "Play other notifications sound",
+                        comment:
+                          "Name of the button in Settings beside the Other notifications sound menu that plays the chosen sound once",
+                      }),
+                      order: OTHER_ORDER,
+                      value: settings.otherNotificationSound,
+                      scope: {},
+                      onChange: (value) => {
+                        void calls.update({
+                          key: "otherNotificationSound",
+                          value,
+                        });
+                      },
+                    }),
                     <SettingRow
                       key="notificationSoundVolume"
                       label={volumeLabel}

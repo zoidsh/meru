@@ -1,9 +1,13 @@
 import type { Capability } from "./entitlement.ts";
 import type { SettingKey, SettingValue } from "./settings.ts";
+import { DEFAULT_SOUNDS } from "./sounds.ts";
 import type { NotificationSound } from "./sounds.ts";
 
-/** The one sound the free version plays. */
-export const FREE_SOUND: NotificationSound = "linen";
+const FREE_SOUNDS: readonly NotificationSound[] = Object.values(DEFAULT_SOUNDS);
+
+/** Whether the free version plays the sound: each role's default alone. */
+export const isFreeSound = (sound: NotificationSound) =>
+  FREE_SOUNDS.includes(sound);
 
 const NO_CUSTOM_SHORTCUTS = {};
 
@@ -38,11 +42,16 @@ export const GATED_SETTINGS: {
   verificationCodesDuringDoNotDisturb: { capability: "verificationCodes" },
   verificationCodeCopyMode: { capability: "verificationCodes" },
   verificationCodeAfterCopy: { capability: "verificationCodes" },
-  // Linen at its volume, or nothing for a person who chose none: never the
-  // system's sound, nor silence for a choice the run does not offer.
+  // Each role's default at its volume, or nothing for a person who chose
+  // none: never the system's sound, nor silence for a choice the run does not
+  // offer.
   notificationSound: {
     capability: "notificationSound",
-    free: (stored) => (stored === "none" ? "none" : FREE_SOUND),
+    free: (stored) => (stored === "none" ? "none" : DEFAULT_SOUNDS.newEmail),
+  },
+  otherNotificationSound: {
+    capability: "notificationSound",
+    free: (stored) => (stored === "none" ? "none" : DEFAULT_SOUNDS.other),
   },
   blockAds: { capability: "blocker", free: () => false },
   blockTrackers: { capability: "blocker", free: () => false },

@@ -13,7 +13,7 @@ describe("the settings contract", () => {
 
     expect([
       update({ key: "notifications", value: false }),
-      update({ key: "notificationSound", value: "chime" }),
+      update({ key: "notificationSound", value: "bloom" }),
       update({
         key: "quietHours",
         value: [{ start: "22:00", end: "07:00", days: [1, 2] }],
@@ -172,7 +172,7 @@ describe("the settings contract", () => {
       unifiedInbox: true,
       mail: { status: "ok", address: "work@example.org" },
       savedSearches: [],
-      overrides: { notificationSound: "chime" },
+      overrides: { notificationSound: "bloom" },
     };
 
     expect([
@@ -313,12 +313,12 @@ describe("the settings contract", () => {
     const previewSound = accepts(SETTINGS_CALLS.previewSound.request);
 
     expect([
-      previewSound({ sound: "chime" }),
-      previewSound({ sound: "linen" }),
+      previewSound({ sound: "bloom" }),
+      previewSound({ sound: "nod" }),
       previewSound({ sound: "system" }),
       previewSound({ sound: "none" }),
       previewSound({ sound: "trumpet" }),
-      previewSound({ sound: "chime", volume: 2 }),
+      previewSound({ sound: "bloom", volume: 2 }),
       previewSound({}),
     ]).toStrictEqual([true, true, false, false, false, true, false]);
   });
@@ -344,7 +344,8 @@ describe("the settings contract", () => {
       notificationSummary: true,
       notificationImportantOnly: false,
       quietHours: [],
-      notificationSound: "linen",
+      notificationSound: "welcome",
+      otherNotificationSound: "nod",
       unreadBadge: true,
       notificationSoundVolume: 0.5,
       hidePromoBanner: true,

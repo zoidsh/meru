@@ -29,6 +29,7 @@ import type {
   VerificationCodeAfterCopy,
 } from "#core/settings.ts";
 import { decideSound, sounds } from "#core/sounds.ts";
+import type { SoundRole } from "#core/sounds.ts";
 import { enabledProfiles, mailChecked } from "#core/state.ts";
 import type { DoNotDisturb, Profile, State } from "#core/state.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
@@ -202,28 +203,38 @@ export const createMailNotifications = ({
   /** The label whose feed each profile's last feed came from. */
   const feedLabels = new Map<string, string | undefined>();
   const shown = new Map<string, Set<ShownNotification>>();
-  /** When a notification of any profile last made a sound. */
+  /**
+   * When a notification of any profile and either role last made a sound, so
+   * a code and new mail shown together make one sound.
+   */
   let lastSoundAt: number | undefined;
 
   /**
    * Shows it, held by its profile until it is gone or the profile is, with
-   * the sound `notificationSound` and the quiet period since the last sound
-   * give it. With no profile it has the app's sound, and no profile's
-   * removal closes it. One asked for always sounds and starts no quiet
-   * period, so it neither waits on mail's sound nor silences the next.
+   * the sound its role's setting and the quiet period since the last sound
+   * give it: new mail's the profile's `notificationSound`, any other the
+   * app's `otherNotificationSound`. With no profile it has the app's sound,
+   * and no profile's removal closes it. One asked for always sounds and
+   * starts no quiet period, so it neither waits on mail's sound nor silences
+   * the next.
    */
   const showFor = (
     profileId: string | undefined,
     content: NotificationContent,
     events: Omit<NotificationEvents, "onGone">,
-    asked = false
+    {
+      role = "newEmail",
+      asked = false,
+    }: { role?: SoundRole; asked?: boolean } = {}
   ) => {
     const held =
       (profileId === undefined ? undefined : shown.get(profileId)) ??
       new Set<ShownNotification>();
     const time = now().getTime();
     const sound = decideSound(
-      setting("notificationSound", profileId),
+      role === "newEmail"
+        ? setting("notificationSound", profileId)
+        : setting("otherNotificationSound"),
       time,
       asked ? undefined : lastSoundAt
     );
@@ -394,7 +405,8 @@ export const createMailNotifications = ({
             onClick: () => {
               open(profileId, url);
             },
-          }
+          },
+          { role: "other" }
         );
 
         return;
@@ -433,7 +445,8 @@ export const createMailNotifications = ({
           copyOnce();
           open(profileId, url);
         },
-      }
+      },
+      { role: "other" }
     );
   };
 
@@ -570,7 +583,7 @@ export const createMailNotifications = ({
         profileId,
         subtitle === undefined ? { title, body } : { title, subtitle, body },
         { onClick: noop },
-        true
+        { asked: true }
       );
     },
     /**

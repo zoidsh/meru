@@ -1,29 +1,72 @@
 import { z } from "zod/mini";
 
-/** Meru's own sounds, carried from v3 as they are. */
-export const NOTIFICATION_SOUNDS = [
-  "breeze",
-  "chime",
+/** New email's sounds, in the order its menu lists them, the default first. */
+export const NEW_EMAIL_SOUNDS = [
+  "welcome",
+  "sunrise",
+  "bloom",
   "duet",
+  "aurora",
+  "daybreak",
+  "halo",
+  "letter",
+  "tide",
   "knock",
-  "linen",
+  "dew",
+  "bead",
 ] as const;
 
-export type NotificationSound = (typeof NOTIFICATION_SOUNDS)[number];
+/** The sounds of every other notification, the default first. */
+export const OTHER_SOUNDS = [
+  "nod",
+  "sip",
+  "breath",
+  "drop",
+  "pair",
+  "glint",
+  "hush",
+] as const;
+
+/** Each of Meru's own sounds, one file each. */
+export const NOTIFICATION_SOUNDS = [
+  ...NEW_EMAIL_SOUNDS,
+  ...OTHER_SOUNDS,
+] as const;
+
+export type NotificationSound =
+  | (typeof NEW_EMAIL_SOUNDS)[number]
+  | (typeof OTHER_SOUNDS)[number];
 
 export const isNotificationSound = (
   choice: unknown
 ): choice is NotificationSound =>
   (NOTIFICATION_SOUNDS as readonly unknown[]).includes(choice);
 
-/** One of Meru's sounds, the system's own, or none. */
-export const SOUND_CHOICES = [
-  ...NOTIFICATION_SOUNDS,
+/** New email's sound: one of its own, the system's, or none. */
+export const NEW_EMAIL_SOUND_CHOICES = [
+  ...NEW_EMAIL_SOUNDS,
   "system",
   "none",
 ] as const;
 
-export type SoundChoice = (typeof SOUND_CHOICES)[number];
+/** Every other notification's sound: one of its own, the system's, or none. */
+export const OTHER_SOUND_CHOICES = [...OTHER_SOUNDS, "system", "none"] as const;
+
+export type NewEmailSoundChoice = (typeof NEW_EMAIL_SOUND_CHOICES)[number];
+export type OtherSoundChoice = (typeof OTHER_SOUND_CHOICES)[number];
+export type SoundChoice = NewEmailSoundChoice | OtherSoundChoice;
+
+/**
+ * Which sound a notification makes: new mail's, or that of every other
+ * notification (a verification code today).
+ */
+export type SoundRole = "newEmail" | "other";
+
+/** What each role plays unless the person chose otherwise, and while free. */
+export const DEFAULT_SOUNDS = {
+  newEmail: NEW_EMAIL_SOUNDS[0],
+  other: OTHER_SOUNDS[0],
+} as const satisfies Record<SoundRole, NotificationSound>;
 
 /**
  * Relative to the output volume. Never 0: a sound that plays at no volume is

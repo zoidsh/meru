@@ -4,8 +4,13 @@ import type { CustomShortcuts } from "./keymap.ts";
 import { quietWindowSchema } from "./notification-gate.ts";
 import type { QuietWindow } from "./notification-gate.ts";
 import type { Platform } from "./platform.ts";
-import { SOUND_CHOICES, soundVolumeSchema } from "./sounds.ts";
-import type { SoundChoice } from "./sounds.ts";
+import {
+  DEFAULT_SOUNDS,
+  NEW_EMAIL_SOUND_CHOICES,
+  OTHER_SOUND_CHOICES,
+  soundVolumeSchema,
+} from "./sounds.ts";
+import type { NewEmailSoundChoice, OtherSoundChoice } from "./sounds.ts";
 import { decodeVersioned } from "./store-file.ts";
 import type { Decoded } from "./store-file.ts";
 import { UPDATE_CHANNELS } from "./updates.ts";
@@ -129,14 +134,23 @@ export const SETTINGS = {
     default: [],
   }),
   /**
-   * What a new-mail or verification-code notification sounds like: one of
-   * Meru's own sounds, the system's, or none.
+   * What a new-mail notification sounds like: one of New email's sounds, the
+   * system's, or none. A name this build does not know, v3's included, reads
+   * as the default.
    */
-  notificationSound: overridable<SoundChoice>({
-    schema: z.enum(SOUND_CHOICES),
-    default: "linen",
+  notificationSound: overridable<NewEmailSoundChoice>({
+    schema: z.enum(NEW_EMAIL_SOUND_CHOICES),
+    default: DEFAULT_SOUNDS.newEmail,
   }),
-  /** The volume of Meru's own sounds, from 0.05 to 1. */
+  /**
+   * What every other notification sounds like, a verification code's
+   * included: one of their sounds, the system's, or none.
+   */
+  otherNotificationSound: setting<OtherSoundChoice>({
+    schema: z.enum(OTHER_SOUND_CHOICES),
+    default: DEFAULT_SOUNDS.other,
+  }),
+  /** The volume of Meru's own sounds, both roles', from 0.05 to 1. */
   notificationSoundVolume: setting<number>({
     schema: soundVolumeSchema,
     default: 1,

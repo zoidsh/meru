@@ -197,20 +197,27 @@ describe(readSetting, () => {
     }
   });
 
-  it("plays Linen at full volume by default, and reads any other choice the file holds", () => {
+  it("plays Welcome for new email and Nod for other notifications at full volume by default, and reads any other choice the file holds", () => {
     const defaults = read({ version: 1 });
 
-    expect(readSetting(defaults, "notificationSound", "linux")).toBe("linen");
-    expect(readSetting(defaults, "notificationSoundVolume", "linux")).toBe(1);
+    expect([
+      readSetting(defaults, "notificationSound", "linux"),
+      readSetting(defaults, "otherNotificationSound", "linux"),
+      readSetting(defaults, "notificationSoundVolume", "linux"),
+    ]).toStrictEqual(["welcome", "nod", 1]);
 
     const chosen = read({
       version: 1,
       notificationSound: "none",
+      otherNotificationSound: "hush",
       notificationSoundVolume: 0.05,
     });
 
-    expect(readSetting(chosen, "notificationSound", "linux")).toBe("none");
-    expect(readSetting(chosen, "notificationSoundVolume", "linux")).toBe(0.05);
+    expect([
+      readSetting(chosen, "notificationSound", "linux"),
+      readSetting(chosen, "otherNotificationSound", "linux"),
+      readSetting(chosen, "notificationSoundVolume", "linux"),
+    ]).toStrictEqual(["none", "hush", 0.05]);
     expect(
       readSetting(
         read({ version: 1, notificationSound: "system" }),
@@ -218,6 +225,33 @@ describe(readSetting, () => {
         "linux"
       )
     ).toBe("system");
+  });
+
+  it("reads a name it does not know, v3's among them, or the other role's, as that role's default, and keeps it in the file", () => {
+    for (const unknown of ["linen", "breeze", "chime", "trumpet"]) {
+      const settings = read({
+        version: 1,
+        notificationSound: unknown,
+        otherNotificationSound: unknown,
+      });
+
+      expect([
+        readSetting(settings, "notificationSound", "darwin"),
+        readSetting(settings, "otherNotificationSound", "darwin"),
+        settings.notificationSound,
+      ]).toStrictEqual(["welcome", "nod", unknown]);
+    }
+
+    const swapped = read({
+      version: 1,
+      notificationSound: "nod",
+      otherNotificationSound: "welcome",
+    });
+
+    expect([
+      readSetting(swapped, "notificationSound", "darwin"),
+      readSetting(swapped, "otherNotificationSound", "darwin"),
+    ]).toStrictEqual(["welcome", "nod"]);
   });
 
   it("reads an unknown sound, and a volume out of range or not finite, as the default", () => {
@@ -231,7 +265,7 @@ describe(readSetting, () => {
       const settings = read(JSON.parse(file));
 
       expect(readSetting(settings, "notificationSound", "darwin")).toBe(
-        "linen"
+        "welcome"
       );
       expect(readSetting(settings, "notificationSoundVolume", "darwin")).toBe(
         1
@@ -353,7 +387,7 @@ describe("a profile's overrides", () => {
     const settings = read({
       version: 1,
       notifications: false,
-      notificationSound: "chime",
+      notificationSound: "duet",
       profiles: {
         p: { notifications: true, notificationSound: "kazoo" },
         q: "not an entry",
@@ -367,7 +401,7 @@ describe("a profile's overrides", () => {
     ).toBeFalsy();
     expect(readSetting(settings, "notifications", "darwin", "q")).toBeFalsy();
     expect(readSetting(settings, "notificationSound", "darwin", "p")).toBe(
-      "chime"
+      "duet"
     );
   });
 
