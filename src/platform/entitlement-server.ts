@@ -3,6 +3,11 @@ import type { ServerRefusal } from "#core/entitlement.ts";
 /** A signed token, or why there is none. */
 export type ServerAnswer = { token: string } | { error: ServerRefusal };
 
+/** Whether the server freed this device's place on its license. */
+export type DeactivationAnswer =
+  | { deactivated: true }
+  | { error: ServerRefusal };
+
 /**
  * The entitlement API. Every answer that carries a token is signed by the
  * server. A call may reject, as a request over the network does; the service
@@ -33,6 +38,11 @@ export interface EntitlementServer {
     licenseKey: string;
     deviceLabel: string;
   }) => Promise<ServerAnswer>;
+  /** Frees this device's place on the license, as a reset asks. */
+  deactivate: (request: {
+    deviceId: string;
+    licenseKey: string;
+  }) => Promise<DeactivationAnswer>;
 }
 
 /**
@@ -45,4 +55,5 @@ export const createUnreachableEntitlementServer = (): EntitlementServer => ({
   refresh: unanswered,
   activate: unanswered,
   setDeviceLabel: unanswered,
+  deactivate: unanswered,
 });

@@ -83,6 +83,21 @@ export const withToken = (
   };
 };
 
+/**
+ * The file with no license: the key, when it was first held, and the token,
+ * which a key's refresh signed. Without a key it is the trial's record, kept
+ * as it is, so a reset never starts a new trial.
+ */
+export const withoutLicense = (file: EntitlementFile): EntitlementFile => {
+  if (storedLicenseKey(file) === undefined) {
+    return file;
+  }
+
+  const { token: _, licenseKey: __, keyStoredAt: ___, ...rest } = file;
+
+  return { ...rest, version: file.version };
+};
+
 /** The file once the person chose the free version after a trial. */
 export const withContinuedFree = (
   file: EntitlementFile,

@@ -9,6 +9,7 @@ import { createHash, createPrivateKey, randomBytes, sign } from "node:crypto";
 import { DAY, OFFLINE_GRACE } from "#core/entitlement.ts";
 import type { Entitlement } from "#core/entitlement.ts";
 import type {
+  DeactivationAnswer,
   ServerAnswer,
   EntitlementServer,
 } from "#platform/entitlement-server.ts";
@@ -45,9 +46,13 @@ const TRIAL_LENGTH = 14 * DAY;
 export const generatedDeviceName = () =>
   `Device ${randomBytes(2).toString("hex").toUpperCase()}`;
 
-/** What the stand-in remembers, as the server would: the trial's start and the keys activated here. */
+/**
+ * What the stand-in remembers, as the server would: the trial's start, the
+ * keys activated here, and how many times this device was deactivated.
+ */
 interface StubRecord {
   trialStartedAt?: number;
+  deactivations?: number;
   /** Each key's name for this device: the one given at activation, and the person's own. */
   licenses: Record<string, { generated: string; chosen?: string }>;
 }
@@ -61,6 +66,9 @@ const readRecord = async (file: TextFile): Promise<StubRecord> => {
     return {
       ...(typeof parsed.trialStartedAt === "number" && {
         trialStartedAt: parsed.trialStartedAt,
+      }),
+      ...(typeof parsed.deactivations === "number" && {
+        deactivations: parsed.deactivations,
       }),
       licenses: parsed.licenses ?? {},
     };
@@ -108,9 +116,9 @@ export const createStubEntitlementServer = ({
   const licensed = (deviceId: string, deviceLabel: string) =>
     token(deviceId, { tier: "pro", licensee: "Meru Developer", deviceLabel });
 
-  const answer = async (
-    handle: (record: StubRecord) => ServerAnswer
-  ): Promise<ServerAnswer> => {
+  const answer = async <Answer extends ServerAnswer | DeactivationAnswer>(
+    handle: (record: StubRecord) => Answer
+  ): Promise<Answer | { error: "offline" }> => {
     if (offline()) {
       return { error: "offline" };
     }
@@ -175,6 +183,22 @@ export const createStubEntitlementServer = ({
         };
 
         return licensed(deviceId, deviceLabel || license.generated);
+      }),
+    // The key's place here is freed, so activating it again names the device
+    // afresh.
+    deactivate: ({ licenseKey }) =>
+      answer((record): DeactivationAnswer => {
+        record.deactivations = (record.deactivations ?? 0) + 1;
+
+        if (!record.licenses[licenseKey]) {
+          return { error: "invalidKey" };
+        }
+
+        record.licenses = Object.fromEntries(
+          Object.entries(record.licenses).filter(([key]) => key !== licenseKey)
+        );
+
+        return { deactivated: true };
       }),
   };
 };

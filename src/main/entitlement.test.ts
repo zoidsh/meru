@@ -8,11 +8,13 @@ import { DAY } from "#core/entitlement.ts";
 import type { Entitlement } from "#core/entitlement.ts";
 import { recordInto, silentLog } from "#core/log.fake.ts";
 import type {
+  DeactivationAnswer,
   EntitlementServer,
   ServerAnswer,
 } from "#platform/entitlement-server.ts";
 
 import {
+  DEACTIVATE_BOUND,
   REFRESH_INTERVAL,
   createEntitlement,
   saveEntitlementFile,
@@ -57,6 +59,10 @@ const createFakeServer = () => {
   let answer = (_request: Request): ServerAnswer | Promise<ServerAnswer> => ({
     error: "offline",
   });
+  /** What `deactivate` answers; nothing ever, while it is `undefined`. */
+  const deactivation: { answer: DeactivationAnswer | undefined } = {
+    answer: { deactivated: true },
+  };
 
   const handle =
     (call: keyof EntitlementServer) => (request: Record<string, unknown>) => {
@@ -86,10 +92,21 @@ const createFakeServer = () => {
     ) => {
       answer = next;
     },
+    deactivation,
     server: {
       refresh: handle("refresh"),
       activate: handle("activate"),
       setDeviceLabel: handle("setDeviceLabel"),
+      deactivate: (request) => {
+        requests.push({ call: "deactivate", ...request });
+
+        // Read when the call is made, so a test sets it first.
+        const { answer: deactivated } = deactivation;
+
+        return deactivated === undefined
+          ? Promise.withResolvers<never>().promise
+          : Promise.resolve(deactivated);
+      },
     } satisfies EntitlementServer,
   };
 };
@@ -1097,5 +1114,102 @@ describe("a quit's wait for the entitlement", () => {
     held[0]?.({ token: signToken({}) });
 
     await expect(activation).resolves.toMatchObject({ ok: false });
+  });
+});
+
+const licensed = (): EntitlementFile => ({
+  version: 1,
+  token: signToken({ tier: "pro", licensee: "Ada" }),
+  licenseKey: "MERU-GOOD-0001",
+  keyStoredAt: START - DAY,
+  imported: "kept as found",
+});
+
+describe("removing the license, as a reset does", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: START });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it.each([
+    [{ deactivated: true }, "deactivated"],
+    [{ error: "offline" }, "offline"],
+    [{ error: "refused" }, "refused"],
+    [{ error: "invalidKey" }, "invalidKey"],
+  ] as const)(
+    "asks the server once to free the device, then removes the key and its token whatever it answers: %o",
+    async (answer, outcome) => {
+      const { entitlement, deactivation, requests, saved, logs } =
+        setup(licensed());
+
+      deactivation.answer = answer;
+
+      await expect(entitlement.removeLicense()).resolves.toBeTruthy();
+      expect(requests).toStrictEqual([
+        { call: "deactivate", deviceId: DEVICE, licenseKey: "MERU-GOOD-0001" },
+      ]);
+      expect(saved).toStrictEqual([{ version: 1, imported: "kept as found" }]);
+      expect(logs).toContain(`license-deactivated outcome=${outcome}`);
+      expect(entitlement.snapshot()).toMatchObject({ licenseKey: null });
+      entitlement.dispose();
+    }
+  );
+
+  it("removes the license once the bound passes when the server never answers", async () => {
+    const { entitlement, deactivation, saved, logs } = setup(licensed());
+
+    deactivation.answer = undefined;
+
+    const removed = entitlement.removeLicense();
+
+    await vi.advanceTimersByTimeAsync(DEACTIVATE_BOUND - 1);
+    expect(saved).toStrictEqual([]);
+    await vi.advanceTimersByTimeAsync(1);
+
+    await expect(removed).resolves.toBeTruthy();
+    expect(saved).toStrictEqual([{ version: 1, imported: "kept as found" }]);
+    expect(logs).toContain("license-deactivated outcome=timeout");
+    entitlement.dispose();
+  });
+
+  it("removes a key the server never confirmed, and without a device id asks nothing", async () => {
+    const { entitlement, requests, saved, logs } = setup(
+      withUnconfirmedKey({ version: 1 }, "MERU-GOOD-0001", START),
+      ""
+    );
+
+    await expect(entitlement.removeLicense()).resolves.toBeTruthy();
+    expect(requests).toStrictEqual([]);
+    expect(saved).toStrictEqual([{ version: 1 }]);
+    expect(logs).toContain("license-deactivated outcome=no-device-id");
+    entitlement.dispose();
+  });
+
+  it("keeps the trial's record, asking and writing nothing, when there is no license", async () => {
+    const { entitlement, requests, saved } = setup({
+      version: 1,
+      token: signToken({ tier: "free", reason: "trialEnded" }),
+      continuedFreeAt: START - DAY,
+    });
+    const before = entitlement.snapshot();
+
+    await expect(entitlement.removeLicense()).resolves.toBeTruthy();
+    expect(requests).toStrictEqual([]);
+    expect(saved).toStrictEqual([]);
+    expect(entitlement.snapshot()).toStrictEqual(before);
+    entitlement.dispose();
+  });
+
+  it("answers false when the file cannot be written, keeping the license", async () => {
+    const { entitlement, disk } = setup(licensed());
+
+    disk.full = true;
+
+    await expect(entitlement.removeLicense()).resolves.toBeFalsy();
+    expect(entitlement.snapshot().licenseKey).not.toBeNull();
+    entitlement.dispose();
   });
 });

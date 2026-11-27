@@ -125,6 +125,7 @@ export const holdEntitlementServer = (server: EntitlementServer) => {
       refresh: after(server.refresh),
       activate: after(server.activate),
       setDeviceLabel: after(server.setDeviceLabel),
+      deactivate: after(server.deactivate),
     } satisfies EntitlementServer,
     hold: () => {
       held ??= Promise.withResolvers();

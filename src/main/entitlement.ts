@@ -1,7 +1,7 @@
 import type { KeyObject } from "node:crypto";
 
 import { t } from "@lingui/core/macro";
-import { Mutex, isEqual } from "es-toolkit";
+import { Mutex, isEqual, withTimeout } from "es-toolkit";
 
 import type { EntitlementState } from "#contract/entitlement.ts";
 import {
@@ -13,6 +13,7 @@ import {
   storedToken,
   withContinuedFree,
   withToken,
+  withoutLicense,
 } from "#core/entitlement-file.ts";
 import type { EntitlementFile } from "#core/entitlement-file.ts";
 import {
@@ -34,6 +35,7 @@ import { scrub } from "#core/log.ts";
 import type { Log } from "#core/log.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type {
+  DeactivationAnswer,
   EntitlementServer,
   ServerAnswer,
 } from "#platform/entitlement-server.ts";
@@ -64,6 +66,9 @@ export const openEntitlementFile = (deps: {
   });
 
 export const REFRESH_INTERVAL = 3 * 60 * 60 * 1000;
+
+/** How long a reset waits for the server to free this device on its license. */
+export const DEACTIVATE_BOUND = 5000;
 
 // setTimeout fires at once for a delay past a signed 32-bit integer.
 const MAX_TIMER = 2 ** 31 - 1;
@@ -304,7 +309,9 @@ export const createEntitlement = ({
   };
 
   /** The server's answer, or `offline` for a call that rejects. */
-  const ask = async (request: () => Promise<ServerAnswer>) => {
+  const ask = async <Answer extends ServerAnswer | DeactivationAnswer>(
+    request: () => Promise<Answer>
+  ) => {
     try {
       return await request();
     } catch (error) {
@@ -523,6 +530,39 @@ export const createEntitlement = ({
         ),
         made
       );
+    },
+    /**
+     * Asks the server once, for at most `DEACTIVATE_BOUND`, to free this
+     * device on its license, then removes the license from the file whatever
+     * it answered; the trial's record stays. Answers whether that was saved.
+     */
+    removeLicense: async (): Promise<boolean> => {
+      const licenseKey = storedLicenseKey(file);
+
+      if (licenseKey === undefined) {
+        return true;
+      }
+
+      if (deviceId === "") {
+        log("license-deactivated", { outcome: "no-device-id" });
+      } else {
+        const answer = await withTimeout(
+          () => ask(() => server.deactivate({ deviceId, licenseKey })),
+          DEACTIVATE_BOUND
+        ).catch(() => ({ error: "timeout" }) as const);
+
+        log("license-deactivated", {
+          outcome: "error" in answer ? answer.error : "deactivated",
+        });
+      }
+
+      await writes.acquire();
+
+      try {
+        return await store(withoutLicense(file));
+      } finally {
+        writes.release();
+      }
     },
     /** Puts the whole license key on the clipboard from main, so no page ever holds it. */
     copyLicenseKey: async (): Promise<EntitlementResult> => {

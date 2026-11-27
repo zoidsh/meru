@@ -145,4 +145,25 @@ describe(createStubEntitlementServer, () => {
       }
     );
   });
+
+  it("deactivates a key, counting each call, then refuses it as any key it never saw; the trial's start stays", async () => {
+    const { server, read, files } = setup();
+    const licenseKey = "MERU-GOOD-0001";
+
+    await server.refresh({ deviceId: "device" });
+    await server.activate({ deviceId: "device", licenseKey });
+
+    await expect(
+      server.deactivate({ deviceId: "device", licenseKey })
+    ).resolves.toStrictEqual({ deactivated: true });
+    await expect(
+      server.deactivate({ deviceId: "device", licenseKey })
+    ).resolves.toStrictEqual({ error: "invalidKey" });
+    expect(
+      read(await server.refresh({ deviceId: "device", licenseKey }))
+    ).toMatchObject({ tier: "free", reason: "licenseRefused" });
+    expect(
+      JSON.parse(files.get("/data/entitlement-stub.json") ?? "")
+    ).toStrictEqual({ trialStartedAt: START, deactivations: 2, licenses: {} });
+  });
 });
