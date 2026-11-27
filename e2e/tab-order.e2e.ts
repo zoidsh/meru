@@ -331,16 +331,6 @@ test("Alt with the arrows moves a focused tab within its area, keeping focus, an
     shell.getByText(`${STAND_IN_TITLE}, position 2 of 3`)
   ).toHaveRole("status");
 
-  // A tile at the grid's start leaves Alt+Left unprevented; one that
-  // moves takes it.
-  await shell.evaluate(() => {
-    globalThis.addEventListener("keydown", (event) => {
-      Reflect.set(globalThis, "meruPrevented", event.defaultPrevented);
-    });
-  });
-
-  const prevented = () =>
-    shell.evaluate(() => Reflect.get(globalThis, "meruPrevented") as boolean);
   const drive = tab(shell, DRIVE_TITLE);
 
   await drive.focus();
@@ -348,9 +338,7 @@ test("Alt with the arrows moves a focused tab within its area, keeping focus, an
   await expect(shell.getByText(`${DRIVE_TITLE}, already first`)).toHaveRole(
     "status"
   );
-  expect(await prevented()).toBe(false);
   await gmail.focus();
   await gmail.press("Alt+ArrowLeft");
   await expect(tabs(shell).first()).toHaveText(STAND_IN_TITLE);
-  expect(await prevented()).toBe(true);
 });

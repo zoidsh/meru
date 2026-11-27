@@ -450,8 +450,6 @@ const TabButton = ({
       onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
         const step = moveStep(event, cell);
 
-        // A tab at its area's end leaves the key alone, for whatever else
-        // listens for it.
         if (step !== undefined && onMoveBy(step)) {
           event.preventDefault();
 

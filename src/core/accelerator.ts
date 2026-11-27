@@ -33,8 +33,10 @@ const CODES: Record<string, string> = {
 const codeOf = (key: string) => CODES[key];
 
 /**
- * Named keys as a key event and `aria-keyshortcuts` name them, by Electron's
- * name, lower case: Electron's `Left` is the event's `ArrowLeft`.
+ * Named keys as `aria-keyshortcuts` names them, by Electron's name, lower
+ * case: Electron's `Left` is `ArrowLeft`. A key event uses the same names
+ * but for Space, which it calls " ", so no shortcut on Space is heard
+ * before the page; no default uses one.
  */
 const KEY_NAMES: Record<string, string> = {
   up: "ArrowUp",
