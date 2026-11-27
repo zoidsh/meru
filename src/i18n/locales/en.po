@@ -83,6 +83,11 @@ msgstr "{holds} You can also turn it on for a while from the moon in the title b
 msgid "{hours, plural, one {For # Hour} other {For # Hours}}"
 msgstr "{hours, plural, one {For # Hour} other {For # Hours}}"
 
+#. Error on the Shortcuts page of Settings when the keys typed for a command belong to another; {keys} are the keys, such as ⌃⇧R, and {command} the other command's name
+#: src/main/keymap.ts
+msgid "{keys} is already used for {command}."
+msgstr "{keys} is already used for {command}."
+
 #. Tooltip of a control that has a keyboard shortcut: {label} is what the control does, {shortcut} its keys as the platform writes them, such as ⌘R or Ctrl+R
 #: src/shell/shortcut-title.ts
 msgid "{label} ({shortcut})"

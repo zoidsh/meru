@@ -1,5 +1,6 @@
 import { z } from "zod/mini";
 
+import type { CustomShortcuts } from "./keymap.ts";
 import { quietWindowSchema } from "./notification-gate.ts";
 import type { QuietWindow } from "./notification-gate.ts";
 import type { Platform } from "./platform.ts";
@@ -436,6 +437,15 @@ export const SETTINGS = {
   autoUpdate: setting<boolean>({
     schema: z.boolean(),
     default: true,
+  }),
+  /**
+   * The keys the person gave commands, one set per platform, which only a
+   * run on that platform reads or writes; `customShortcutsOf` in
+   * `keymap.ts` reads a run's own leniently, the rest stays as found.
+   */
+  customShortcuts: setting<CustomShortcuts>({
+    schema: z.record(z.string(), z.unknown()),
+    default: {},
   }),
   /** Which releases Meru updates to: stable ones, or betas too. */
   updateChannel: setting<UpdateChannel>({

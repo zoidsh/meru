@@ -23,11 +23,11 @@ import { createWindowFactory } from "#platform/window.ts";
 
 import { createAboutPage } from "../about-page.ts";
 import { createAdvancedPage } from "../advanced-page.ts";
-import { COMMANDS } from "../commands.ts";
 import { serveContract } from "../contract-ipc.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Entitlement } from "../entitlement.ts";
 import { createGeneralPage } from "../general-page.ts";
+import type { KeymapService } from "../keymap.ts";
 import type { Language } from "../language.ts";
 import type { LicenseRequests } from "../license-requests.ts";
 import type { MailPoller } from "../mail.ts";
@@ -99,8 +99,11 @@ export const wireSettingsWindow = ({
   systemBrowser,
   clipboard,
   updates,
+  keymap,
 }: {
   platform: Platform;
+  /** Each command's key, which the Shortcuts page lists and changes. */
+  keymap: KeymapService;
   /** The downloads' own, for the folder they are saved to. */
   downloadFiles: Pick<DownloadFiles, "systemFolder" | "usable">;
   isMacOS: boolean;
@@ -226,7 +229,8 @@ export const wireSettingsWindow = ({
     clipboard,
   });
 
-  const shortcuts = () => readShortcuts(platform, lifecycle.name, COMMANDS);
+  const shortcuts = () =>
+    readShortcuts(platform, lifecycle.name, keymap.commands());
 
   const releases = createReleases({
     source: releasesSource(),
@@ -319,6 +323,7 @@ export const wireSettingsWindow = ({
           },
           listener
         );
+        keymap.onChange(listener);
       },
     },
     log: console.error,

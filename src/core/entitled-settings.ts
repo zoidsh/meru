@@ -5,6 +5,8 @@ import type { NotificationSound } from "./sounds.ts";
 /** The one sound the free version plays. */
 export const FREE_SOUND: NotificationSound = "linen";
 
+const NO_CUSTOM_SHORTCUTS = {};
+
 interface GatedSetting<Key extends SettingKey> {
   capability: Capability;
   /**
@@ -65,6 +67,12 @@ export const GATED_SETTINGS: {
     free: () => false,
   },
   systemScreenPicker: { capability: "screenSharePicker", free: () => false },
+  // Every command on its default key, the person's own kept for a license;
+  // one object, so the keymap built from it is built once.
+  customShortcuts: {
+    capability: "shortcutCustomization",
+    free: () => NO_CUSTOM_SHORTCUTS,
+  },
 };
 
 /** The capability the setting needs, if any. */

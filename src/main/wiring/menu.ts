@@ -9,7 +9,7 @@ import { zoomFocused } from "#platform/zoom.ts";
 
 import { createApplicationMenu } from "../application-menu.ts";
 import type { Bookmarks } from "../bookmarks.ts";
-import { COMMANDS, NO_PAGE } from "../commands.ts";
+import { NO_PAGE } from "../commands.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Downloads } from "../downloads.ts";
 import type { Entitlement } from "../entitlement.ts";
@@ -17,6 +17,7 @@ import type { Find } from "../find.ts";
 import type { Focus } from "../focus.ts";
 import type { createGmailNavigation } from "../gmail-navigation.ts";
 import type { Inbox } from "../inbox.ts";
+import type { KeymapService } from "../keymap.ts";
 import type { Language } from "../language.ts";
 import type { OpenApp } from "../open-app.ts";
 import type { Overlays } from "../overlay.ts";
@@ -64,7 +65,10 @@ export const wireMenu = ({
   entitlement,
   canUpdate,
   checkForUpdates,
+  keymap,
 }: {
+  /** Each command's key as this run hears it, which the menu follows. */
+  keymap: Pick<KeymapService, "commands" | "onChange">;
   /** Whether this build updates itself, for Check for Updates…. */
   canUpdate: () => boolean;
   /** Opens Settings on About and checks there. */
@@ -138,7 +142,7 @@ export const wireMenu = ({
       },
     }),
     appName: lifecycle.name,
-    commands: COMMANDS,
+    commands: keymap.commands,
     context: () => {
       const inSettings = settingsFocused();
       const ownWindow = inSettings ? undefined : focusedOwnWindow();
@@ -254,6 +258,7 @@ export const wireMenu = ({
 
   language.onChange(menu.refresh);
   entitlement.onChange(menu.refresh);
+  keymap.onChange(menu.refresh);
   profiles.onChange(menu.refresh);
   inbox.onChange(menu.refresh);
   // Opening and closing the inbox, which Back, Forward and Reload follow.

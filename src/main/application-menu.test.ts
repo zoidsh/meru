@@ -591,7 +591,7 @@ const setup = ({ can = () => true }: { can?: () => boolean } = {}) => {
   const menu = createApplicationMenu({
     platform: "darwin",
     appName: "Meru",
-    commands: COMMANDS,
+    commands: () => COMMANDS,
     context: () => ({
       state,
       ownWindow: undefined,

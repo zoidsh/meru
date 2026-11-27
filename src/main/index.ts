@@ -27,9 +27,11 @@ import { createWindowFactory } from "#platform/window.ts";
 
 import { buildLaunchMenuTemplate } from "./application-menu.ts";
 import { createDeleteBrowsingData } from "./browsing-data.ts";
+import { COMMANDS } from "./commands.ts";
 import { entitlementHandlers } from "./entitlement-handlers.ts";
 import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
+import { createKeymap } from "./keymap.ts";
 import { createLanguage } from "./language.ts";
 import { createOverlays } from "./overlay.ts";
 import { createProfileQuestion } from "./profile-question.ts";
@@ -180,6 +182,13 @@ const start = async () => {
 
   // Decided once, from the entitlement read at launch.
   const trialChoice = createTrialChoice({ entitlement });
+
+  const keymap = createKeymap({
+    platform,
+    appName: lifecycle.name,
+    commands: COMMANDS,
+    settings,
+  });
 
   // Before anything that shows a string, as the entitlement's launch prompt.
   const language = createLanguage({
@@ -683,6 +692,7 @@ const start = async () => {
     settingsPages,
   } = wireSettingsWindow({
     platform,
+    keymap,
     downloadFiles,
     isMacOS,
     background,
@@ -758,6 +768,7 @@ const start = async () => {
       settingsPages.open({ section: "about", profileId: null });
       updates.check();
     },
+    keymap,
   });
 
   const updateCard = wireUpdateCard({
@@ -775,6 +786,7 @@ const start = async () => {
 
   wireShellContract({
     platform,
+    keymap,
     language,
     apps,
     shellContract,

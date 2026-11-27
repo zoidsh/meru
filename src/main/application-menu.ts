@@ -9,7 +9,10 @@ import {
   ZOOM_IN_KEYS,
   builtInAccelerator,
 } from "#core/built-in-shortcuts.ts";
-import type { BuiltInShortcutId } from "#core/built-in-shortcuts.ts";
+import type {
+  BuiltInShortcutId,
+  RoleShortcutId,
+} from "#core/built-in-shortcuts.ts";
 import {
   PINNED_SHORTCUT_COUNT,
   selectPinnedCommandId,
@@ -166,21 +169,8 @@ const appRoles = (appName: string, platform: Platform) => {
       role: "services",
     } satisfies MenuItemConstructorOptions,
     hide: [
-      {
-        label: t({
-          message: `Hide ${appName}`,
-          comment:
-            "Menu item in the macOS app menu that hides the app; {appName} is the app's name",
-        }),
-        role: "hide",
-      },
-      {
-        label: t({
-          message: "Hide Others",
-          comment: "Menu item in the macOS app menu that hides every other app",
-        }),
-        role: "hideOthers",
-      },
+      { label: roleLabel("hide", appName), role: "hide" },
+      { label: roleLabel("hideOthers", appName), role: "hideOthers" },
       {
         label: t({
           message: "Show All",
@@ -197,40 +187,66 @@ const appRoles = (appName: string, platform: Platform) => {
 const editLabel = () =>
   t({ message: "Edit", comment: "Name of the Edit menu" });
 
+/** The label of an item whose key is a role's, which a refused shortcut names. */
+export const roleLabel = (id: RoleShortcutId, appName: string) => {
+  switch (id) {
+    case "undo": {
+      return t({ message: "Undo", comment: "Menu item in the Edit menu" });
+    }
+    case "redo": {
+      return t({ message: "Redo", comment: "Menu item in the Edit menu" });
+    }
+    case "cut": {
+      return t({ message: "Cut", comment: "Menu item in the Edit menu" });
+    }
+    case "copy": {
+      return t({ message: "Copy", comment: "Menu item in the Edit menu" });
+    }
+    case "paste": {
+      return t({ message: "Paste", comment: "Menu item in the Edit menu" });
+    }
+    case "pasteAndMatchStyle": {
+      return t({
+        message: "Paste and Match Style",
+        comment:
+          "Menu item in the Edit menu that pastes text without its formatting",
+      });
+    }
+    case "selectAll": {
+      return t({
+        message: "Select All",
+        comment: "Menu item in the Edit menu",
+      });
+    }
+    case "hide": {
+      return t({
+        message: `Hide ${appName}`,
+        comment:
+          "Menu item in the macOS app menu that hides the app; {appName} is the app's name",
+      });
+    }
+    case "hideOthers": {
+      return t({
+        message: "Hide Others",
+        comment: "Menu item in the macOS app menu that hides every other app",
+      });
+    }
+    default: {
+      return "";
+    }
+  }
+};
+
 /** The Edit menu's items that are the system's roles, which keep text editing working. */
-const editRoles = (): MenuItemConstructorOptions[] => [
-  {
-    label: t({ message: "Undo", comment: "Menu item in the Edit menu" }),
-    role: "undo",
-    id: "edit.undo",
-  },
-  {
-    label: t({ message: "Redo", comment: "Menu item in the Edit menu" }),
-    role: "redo",
-    id: "edit.redo",
-  },
+const editRoles = (appName: string): MenuItemConstructorOptions[] => [
+  { label: roleLabel("undo", appName), role: "undo", id: "edit.undo" },
+  { label: roleLabel("redo", appName), role: "redo", id: "edit.redo" },
   separator,
+  { label: roleLabel("cut", appName), role: "cut", id: "edit.cut" },
+  { label: roleLabel("copy", appName), role: "copy", id: "edit.copy" },
+  { label: roleLabel("paste", appName), role: "paste", id: "edit.paste" },
   {
-    label: t({ message: "Cut", comment: "Menu item in the Edit menu" }),
-    role: "cut",
-    id: "edit.cut",
-  },
-  {
-    label: t({ message: "Copy", comment: "Menu item in the Edit menu" }),
-    role: "copy",
-    id: "edit.copy",
-  },
-  {
-    label: t({ message: "Paste", comment: "Menu item in the Edit menu" }),
-    role: "paste",
-    id: "edit.paste",
-  },
-  {
-    label: t({
-      message: "Paste and Match Style",
-      comment:
-        "Menu item in the Edit menu that pastes text without its formatting",
-    }),
+    label: roleLabel("pasteAndMatchStyle", appName),
     role: "pasteAndMatchStyle",
     id: "edit.pasteAndMatchStyle",
   },
@@ -243,10 +259,7 @@ const editRoles = (): MenuItemConstructorOptions[] => [
     id: "edit.delete",
   },
   {
-    label: t({
-      message: "Select All",
-      comment: "Menu item in the Edit menu",
-    }),
+    label: roleLabel("selectAll", appName),
     role: "selectAll",
     id: "edit.selectAll",
   },
@@ -332,7 +345,7 @@ export const buildLaunchMenuTemplate = ({
           ]
         : [roles.quit],
     },
-    { label: editLabel(), submenu: editRoles() },
+    { label: editLabel(), submenu: editRoles(appName) },
     {
       label: windowLabel(),
       ...(isMacOS ? { role: "windowMenu" as const } : {}),
@@ -448,7 +461,7 @@ export const buildMenuTemplate = ({
   const editMenu: MenuItemConstructorOptions = {
     label: editLabel(),
     submenu: [
-      ...editRoles(),
+      ...editRoles(appName),
       separator,
       ...item("tab.find"),
       ...item("tab.findNext"),
@@ -661,7 +674,8 @@ export interface ApplicationMenuDeps {
   zoom: (change: ZoomChange) => void;
   developerTools?: MenuItemConstructorOptions;
   appName: string;
-  commands: readonly Command[];
+  /** The registry with this run's keys, read afresh each time. */
+  commands: () => readonly Command[];
   context: () => CommandContext;
   actions: CommandActions;
   locale: () => string;
@@ -700,9 +714,10 @@ export const createApplicationMenu = ({
       open.id,
       open.title(),
     ]),
-    ...commands.map((command) => [
+    ...commands().map((command) => [
       command.id,
       command.label?.(current),
+      command.shortcut?.[platform],
       isCommandAvailable(command, current),
       command.isChecked?.(current),
     ]),
@@ -736,7 +751,7 @@ export const createApplicationMenu = ({
       buildMenuTemplate({
         platform,
         appName,
-        commands,
+        commands: commands(),
         context: current,
         run: (command) => {
           run(command);
@@ -756,7 +771,7 @@ export const createApplicationMenu = ({
      * Meru Pro refuses is refused into the log, as its item is disabled.
      */
     runCommand: (id: string) => {
-      const command = commands.find((candidate) => candidate.id === id);
+      const command = commands().find((candidate) => candidate.id === id);
 
       if (command && needsPro(command, context())) {
         log(`Refused command ${id}, which needs Meru Pro`);
@@ -766,7 +781,7 @@ export const createApplicationMenu = ({
     },
     /** The Do Not Disturb menu as the application menu has it now. */
     doNotDisturbItems: () =>
-      doNotDisturbItems(commands, context(), locale(), (command) => {
+      doNotDisturbItems(commands(), context(), locale(), (command) => {
         void run(command);
       }),
     /** Sets the menu again if what it offers has changed. */
@@ -781,7 +796,7 @@ export const createApplicationMenu = ({
      */
     handleKey: (input: KeyInput) => {
       const current = context();
-      const command = commands.find((candidate) => {
+      const command = commands().find((candidate) => {
         const shortcut = candidate.shortcut?.[platform];
 
         return (

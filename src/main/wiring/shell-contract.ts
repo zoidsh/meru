@@ -11,13 +11,13 @@ import type { createSystemBrowser } from "#platform/system-browser.ts";
 
 import type { createApplicationMenu } from "../application-menu.ts";
 import type { Bookmarks } from "../bookmarks.ts";
-import { COMMANDS } from "../commands.ts";
-import { commandAccelerator } from "../context-menu.ts";
+import type { Command } from "../commands.ts";
 import type { createDoNotDisturb } from "../do-not-disturb.ts";
 import type { Downloads } from "../downloads.ts";
 import type { Find } from "../find.ts";
 import type { Focus } from "../focus.ts";
 import type { Inbox } from "../inbox.ts";
+import type { KeymapService } from "../keymap.ts";
 import type { Language } from "../language.ts";
 import type { MailPoller } from "../mail.ts";
 import type { OpenApp } from "../open-app.ts";
@@ -100,8 +100,11 @@ export const wireShellContract = ({
   settings,
   language,
   can,
+  keymap,
 }: {
   platform: Platform;
+  /** Each command's key, which the shell's hints and the tab menu show. */
+  keymap: Pick<KeymapService, "commands" | "accelerator" | "onChange">;
   /** The language Meru shows, which the shell shows too. */
   language: Pick<Language, "current" | "onChange">;
   apps: readonly App[];
@@ -143,8 +146,24 @@ export const wireShellContract = ({
   /** What this run may use; `onProChange` follows a change. */
   can: (capability: Capability) => boolean;
 }) => {
-  const shortcuts = shellShortcuts(COMMANDS, platform);
-  const ariaShortcuts = shellShortcuts(COMMANDS, platform, true);
+  let hints:
+    | {
+        commands: readonly Command[];
+        shortcuts: ShellState["shortcuts"];
+        ariaShortcuts: ShellState["ariaShortcuts"];
+      }
+    | undefined;
+  const shortcuts = (commands: readonly Command[]) => {
+    if (hints?.commands !== commands) {
+      hints = {
+        commands,
+        shortcuts: shellShortcuts(commands, platform),
+        ariaShortcuts: shellShortcuts(commands, platform, true),
+      };
+    }
+
+    return { shortcuts: hints.shortcuts, ariaShortcuts: hints.ariaShortcuts };
+  };
   const paneResize = createPaneResize({
     state: profiles.get,
     resizeSplit: profiles.resizeSplit,
@@ -159,7 +178,7 @@ export const wireShellContract = ({
     apps,
     window: shell.window,
     ownWindow: (key) => ownWindows.window(key),
-    accelerator: commandAccelerator(COMMANDS, platform),
+    accelerator: keymap.accelerator,
     bookmarks,
     profiles,
     moveToOwnWindow,
@@ -269,8 +288,7 @@ export const wireShellContract = ({
                 doNotDisturb: settings.get("titlebarDoNotDisturb"),
               },
             },
-            shortcuts,
-            ariaShortcuts,
+            ...shortcuts(keymap.commands()),
             navigation: views.navigation(),
             downloads: downloads.shellSlice(),
             screenPicker: screenPicker.mainCard() ?? null,
@@ -323,6 +341,7 @@ export const wireShellContract = ({
         downloads.onChange(listener);
         screenPicker.onChange(listener);
         sidebar.onChange(listener);
+        keymap.onChange(listener);
         for (const key of [
           "profileTint",
           "titlebarNewTab",

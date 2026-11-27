@@ -60,6 +60,52 @@ export const BUILT_IN_SHORTCUTS: readonly BuiltInShortcut[] = [
   },
 ];
 
+/** An item of Meru's menus whose key is an Electron role's, not listed on the Shortcuts page. */
+export type RoleShortcutId =
+  | "undo"
+  | "redo"
+  | "cut"
+  | "copy"
+  | "paste"
+  | "pasteAndMatchStyle"
+  | "selectAll"
+  | "hide"
+  | "hideOthers";
+
+/**
+ * The keys Electron's roles in Meru's menus hold on each platform, as
+ * Electron 45's `electron_api_menu_roles.cc` gives them, which no command
+ * may take: the Edit menu's, and macOS's Hide items.
+ */
+export const ROLE_SHORTCUTS: readonly {
+  id: RoleShortcutId;
+  shortcut: Partial<Record<Platform, string>>;
+}[] = [
+  { id: "undo", shortcut: everywhere("CommandOrControl+Z") },
+  {
+    id: "redo",
+    shortcut: {
+      darwin: "Shift+CommandOrControl+Z",
+      win32: "Control+Y",
+      linux: "Shift+CommandOrControl+Z",
+    },
+  },
+  { id: "cut", shortcut: everywhere("CommandOrControl+X") },
+  { id: "copy", shortcut: everywhere("CommandOrControl+C") },
+  { id: "paste", shortcut: everywhere("CommandOrControl+V") },
+  {
+    id: "pasteAndMatchStyle",
+    shortcut: {
+      darwin: "Command+Alt+Shift+V",
+      win32: "Shift+CommandOrControl+V",
+      linux: "Shift+CommandOrControl+V",
+    },
+  },
+  { id: "selectAll", shortcut: everywhere("CommandOrControl+A") },
+  { id: "hide", shortcut: { darwin: "Command+H" } },
+  { id: "hideOthers", shortcut: { darwin: "Command+Alt+H" } },
+];
+
 /**
  * What a page's view hears as Zoom In in place of the table's Plus: `=`,
  * which carries `+`, with Shift or without, since a key event names the key
