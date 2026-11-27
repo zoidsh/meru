@@ -4,7 +4,16 @@
 import { readFile } from "node:fs/promises";
 
 /** How a sound ended: to its end, cut off by its time limit, or not at all. */
-export type SoundResult = "played" | "timedOut" | { error: unknown };
+export type SoundEnd = "played" | "timedOut" | { error: unknown };
+
+export interface SoundResult {
+  end: SoundEnd;
+  /**
+   * Why its context did not close, when it did not; the library then keeps
+   * that context, and any stream it holds, until Meru quits.
+   */
+  closeError?: unknown;
+}
 
 export interface SoundPlayer {
   /**
@@ -107,13 +116,16 @@ const readArrayBuffer = async (file: string) => {
   ) as ArrayBuffer;
 };
 
-const closed = async (context: SoundContext, result: SoundResult) => {
+const closed = async (
+  context: SoundContext,
+  end: SoundEnd
+): Promise<SoundResult> => {
   try {
     await context.close();
 
-    return result;
-  } catch (error) {
-    return result === "played" ? { error } : result;
+    return { end };
+  } catch (closeError) {
+    return { end, closeError };
   }
 };
 
@@ -159,7 +171,7 @@ export const createSoundPlayer = ({
     let source: SoundSource | undefined;
     let settled = false;
 
-    const finish = (result: SoundResult) => {
+    const finish = (end: SoundEnd) => {
       if (settled) {
         return;
       }
@@ -171,7 +183,7 @@ export const createSoundPlayer = ({
         playing.delete(source);
       }
 
-      resolve(closed(context, result));
+      resolve(closed(context, end));
     };
 
     const limit = setTimeout(
@@ -210,7 +222,7 @@ export const createSoundPlayer = ({
         sound = await decode(audio, file);
         context = audio.open(sink);
       } catch (error) {
-        return { error };
+        return { end: { error } };
       }
 
       return run(context, sound, volume);

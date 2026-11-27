@@ -1,6 +1,5 @@
 import path from "node:path";
 
-import { scrub } from "#core/log.ts";
 import type { Log } from "#core/log.ts";
 import type { NotificationSound, SoundRequest } from "#core/sounds.ts";
 import type { SoundPlayer } from "#platform/sound-player.ts";
@@ -11,6 +10,44 @@ export interface SoundOutput {
   /** Starts the sound and returns at once, whatever comes of it. */
   play: (request: SoundRequest) => void;
 }
+
+// What the audio addon throws (its DOMExceptions, TypeError, RangeError, a
+// plain Error, napi's GenericFailure) and what reading a file can, by name or
+// code alone: an addon's message can name the output device.
+const ERROR_NAMES = [
+  "AbortError",
+  "EncodingError",
+  "IndexSizeError",
+  "InvalidAccessError",
+  "InvalidStateError",
+  "NotFoundError",
+  "NotSupportedError",
+  "TypeError",
+  "RangeError",
+  "Error",
+] as const;
+const ERROR_CODES = ["GenericFailure", "ENOENT", "EACCES", "EISDIR"] as const;
+
+type SoundErrorName =
+  | (typeof ERROR_NAMES)[number]
+  | (typeof ERROR_CODES)[number]
+  | "other";
+
+/** A failure as a word from a fixed set: its code where known, else its name. */
+export const soundErrorName = (error: unknown): SoundErrorName => {
+  if (typeof error !== "object" || error === null) {
+    return "other";
+  }
+
+  const code = "code" in error ? error.code : undefined;
+  const name = "name" in error ? error.name : undefined;
+
+  return (
+    ERROR_CODES.find((known) => known === code) ??
+    ERROR_NAMES.find((known) => known === name) ??
+    "other"
+  );
+};
 
 /** The one place a sound's name becomes a file. */
 export const soundFile = (folder: string, sound: NotificationSound) =>
@@ -34,11 +71,20 @@ export const createSoundOutput = ({
 }): SoundOutput => {
   const play = async ({ sound, volume }: SoundRequest) => {
     const result = await player.play(soundFile(folder, sound), volume);
+    const { end } = result;
 
-    if (result === "timedOut") {
-      log("sound-failed", { sound, reason: "timed-out" });
-    } else if (result !== "played") {
-      log("sound-failed", { sound, code: scrub.code(result.error) });
+    if (end === "timedOut") {
+      log("sound-failed", { sound, error: "timed-out" });
+    } else if (end !== "played") {
+      log("sound-failed", { sound, error: soundErrorName(end.error) });
+    }
+
+    if ("closeError" in result) {
+      log("sound-failed", {
+        sound,
+        stage: "close",
+        error: soundErrorName(result.closeError),
+      });
     }
   };
 

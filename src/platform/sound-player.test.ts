@@ -32,7 +32,11 @@ const target = <Fields extends object>(fields: Fields) => {
 };
 
 /** A context as the library makes one, holding no device. */
-const fakeContext = (sink: SoundSink, failStart: boolean) => {
+const fakeContext = (
+  sink: SoundSink,
+  failStart: boolean,
+  failClose: boolean
+) => {
   const gains: (FakeTarget & { gain: { value: number } })[] = [];
   const sources: (FakeTarget & {
     buffer: DecodedSound | null;
@@ -76,7 +80,9 @@ const fakeContext = (sink: SoundSink, failStart: boolean) => {
     close: () => {
       made.closed += 1;
 
-      return Promise.resolve();
+      return failClose
+        ? Promise.reject(new DOMException("closing", "InvalidStateError"))
+        : Promise.resolve();
     },
     /** Ends every sound in it, as the library's render thread does. */
     end: () => {
@@ -96,6 +102,7 @@ const fakeWebAudio = ({
   failOpen = false,
   failStart = false,
   failDecode = false,
+  failClose = false,
 } = {}) => {
   const contexts: ReturnType<typeof fakeContext>[] = [];
   let decodes = 0;
@@ -105,7 +112,7 @@ const fakeWebAudio = ({
         throw new Error("DeviceNotAvailable");
       }
 
-      const context = fakeContext(sink, failStart);
+      const context = fakeContext(sink, failStart, failClose);
 
       contexts.push(context);
 
@@ -163,7 +170,7 @@ describe(createSoundPlayer, () => {
 
     context?.end();
 
-    await expect(played).resolves.toBe("played");
+    await expect(played).resolves.toStrictEqual({ end: "played" });
     expect(context?.closed).toBe(1);
   });
 
@@ -180,12 +187,12 @@ describe(createSoundPlayer, () => {
 
     contexts[1]?.end();
 
-    await expect(second).resolves.toBe("played");
+    await expect(second).resolves.toStrictEqual({ end: "played" });
     expect(contexts.map(({ closed }) => closed)).toStrictEqual([0, 1]);
 
     contexts[0]?.end();
 
-    await expect(first).resolves.toBe("played");
+    await expect(first).resolves.toStrictEqual({ end: "played" });
   });
 
   it("closes the context after its sound's length and the margin when it never ends, and only once", async () => {
@@ -200,7 +207,7 @@ describe(createSoundPlayer, () => {
 
     await vi.advanceTimersByTimeAsync(1);
 
-    await expect(played).resolves.toBe("timedOut");
+    await expect(played).resolves.toStrictEqual({ end: "timedOut" });
 
     contexts[0]?.end();
     await vi.advanceTimersByTimeAsync(0);
@@ -212,8 +219,22 @@ describe(createSoundPlayer, () => {
     const { audio, contexts } = fakeWebAudio({ failStart: true });
 
     await expect(playerOf(audio).play("welcome.wav", 1)).resolves.toStrictEqual(
-      { error: new Error("InvalidStateError") }
+      { end: { error: new Error("InvalidStateError") } }
     );
+    expect(contexts[0]?.closed).toBe(1);
+  });
+
+  it("answers how the sound ended and why its context did not close, closing it once", async () => {
+    const { audio, contexts } = fakeWebAudio({ failClose: true });
+    const played = playerOf(audio).play("welcome.wav", 1);
+
+    await delay(0);
+    contexts[0]?.end();
+
+    await expect(played).resolves.toStrictEqual({
+      end: "played",
+      closeError: new DOMException("closing", "InvalidStateError"),
+    });
     expect(contexts[0]?.closed).toBe(1);
   });
 
@@ -221,7 +242,7 @@ describe(createSoundPlayer, () => {
     const { audio } = fakeWebAudio({ failOpen: true });
 
     await expect(playerOf(audio).play("welcome.wav", 1)).resolves.toStrictEqual(
-      { error: new Error("DeviceNotAvailable") }
+      { end: { error: new Error("DeviceNotAvailable") } }
     );
   });
 
@@ -230,10 +251,10 @@ describe(createSoundPlayer, () => {
     const player = playerOf(audio);
 
     await expect(player.play("welcome.wav", 1)).resolves.toStrictEqual({
-      error: new Error("EncodingError"),
+      end: { error: new Error("EncodingError") },
     });
     await expect(player.play("welcome.wav", 1)).resolves.toStrictEqual({
-      error: new Error("EncodingError"),
+      end: { error: new Error("EncodingError") },
     });
     expect(contexts).toHaveLength(0);
     expect(reads).toStrictEqual(["welcome.wav", "welcome.wav"]);
@@ -253,7 +274,7 @@ describe(createSoundPlayer, () => {
 
     expect(loads).toBe(0);
     await expect(player.play("welcome.wav", 1)).resolves.toStrictEqual({
-      error: new Error("dlopen failed"),
+      end: { error: new Error("dlopen failed") },
     });
     expect(loads).toBe(1);
   });

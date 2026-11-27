@@ -67,31 +67,73 @@ describe(createSoundOutput, () => {
       [{ file: path.join(FOLDER, "duet.wav"), volume: 0.5 }],
     ]);
 
-    ending[0]?.resolve("played");
+    ending[0]?.resolve({ end: "played" });
     await delay(0);
 
     expect(logs).toStrictEqual([]);
   });
 
-  it("logs a sound that failed by its code alone, and one cut off by its time limit", async () => {
+  it("logs a sound that failed by its error's code or name alone, never its message, and one cut off by its time limit", async () => {
     const { output, ending, logs } = setup();
 
-    output.play({ sound: "duet", volume: 1 });
-    output.play({ sound: "knock", volume: 1 });
-    output.play({ sound: "duet", volume: 1 });
+    for (let index = 0; index < 6; index += 1) {
+      output.play({ sound: "duet", volume: 1 });
+    }
+
     ending[0]?.resolve({
-      error: Object.assign(new Error("open /Users/ada/x.wav"), {
-        code: "ENOENT",
-      }),
+      end: {
+        error: Object.assign(new Error("open /Users/ada/x.wav"), {
+          code: "ENOENT",
+        }),
+      },
     });
-    ending[1]?.resolve({ error: new Error("DeviceNotAvailable: AirPods") });
-    ending[2]?.resolve("timedOut");
+    ending[1]?.resolve({
+      end: {
+        error: new DOMException("no device AirPods", "NotFoundError"),
+      },
+    });
+    ending[2]?.resolve({
+      end: {
+        error: Object.assign(new Error("cpal: AirPods gone"), {
+          code: "GenericFailure",
+        }),
+      },
+    });
+    ending[3]?.resolve({ end: { error: new TypeError("AirPods") } });
+    ending[4]?.resolve({
+      end: {
+        error: Object.assign(new Error("AirPods"), { name: "AirPodsError" }),
+      },
+    });
+    ending[5]?.resolve({ end: "timedOut" });
     await delay(0);
 
     expect(logs).toStrictEqual([
-      "sound-failed sound=duet code=ENOENT",
-      "sound-failed sound=knock code=other",
-      "sound-failed sound=duet reason=timed-out",
+      "sound-failed sound=duet error=ENOENT",
+      "sound-failed sound=duet error=NotFoundError",
+      "sound-failed sound=duet error=GenericFailure",
+      "sound-failed sound=duet error=TypeError",
+      "sound-failed sound=duet error=other",
+      "sound-failed sound=duet error=timed-out",
+    ]);
+  });
+
+  it("logs a context that did not close once, by its error's name, beside how the sound ended", async () => {
+    const { output, ending, logs } = setup();
+
+    output.play({ sound: "nod", volume: 1 });
+    output.play({ sound: "sip", volume: 1 });
+    ending[0]?.resolve({
+      end: "played",
+      closeError: new DOMException("AirPods", "InvalidStateError"),
+    });
+    ending[1]?.resolve({ end: "timedOut", closeError: "AirPods" });
+    await delay(0);
+
+    expect(logs).toStrictEqual([
+      "sound-failed sound=nod stage=close error=InvalidStateError",
+      "sound-failed sound=sip error=timed-out",
+      "sound-failed sound=sip stage=close error=other",
     ]);
   });
 

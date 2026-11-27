@@ -76,7 +76,9 @@ export const recordSounds = (player: SoundPlayer): SoundPlayer => {
       const result = await player.play(file, volume);
 
       sound.result =
-        typeof result === "string" ? result : { error: String(result.error) };
+        typeof result.end === "string"
+          ? result.end
+          : { error: String(result.end.error) };
 
       return result;
     },
