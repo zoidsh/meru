@@ -1,6 +1,8 @@
 // Only the suite's build calls these, behind `MERU_E2E_BUILD`, and a release
 // build fails if any global's name here is in its output.
 
+import path from "node:path";
+
 import type { SentNotice } from "#contract/gmail-channels.ts";
 import type { GmailHealth } from "#contract/gmail.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
@@ -18,6 +20,7 @@ import type {
 } from "#core/settings.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { EntitlementServer } from "#platform/entitlement-server.ts";
+import type { SoundPlayer } from "#platform/sound-player.ts";
 
 import { signDevToken } from "./entitlement-stub.ts";
 import type { Entitlement } from "./entitlement.ts";
@@ -61,6 +64,22 @@ export const captureSounds = () => {
   return (request: SoundRequest) => {
     captured.push(request);
   };
+};
+
+/**
+ * Plays one of the app's sounds through `player` from the suite, on the main
+ * process's global under `meruTestPlaySound`, answering how it ended.
+ */
+export const exposeSoundProbe = (player: SoundPlayer, folder: string) => {
+  Reflect.set(
+    globalThis,
+    "meruTestPlaySound",
+    async (name: string, volume: number) => {
+      const result = await player.play(path.join(folder, name), volume);
+
+      return typeof result === "string" ? result : String(result.error);
+    }
+  );
 };
 
 /**

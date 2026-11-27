@@ -6,6 +6,7 @@ import type { Configuration } from "electron-builder";
 import { appIdentity } from "#core/app-identity.ts";
 
 import manifest from "./package.json" with { type: "json" };
+import { SOUND_ADDON_FOLDER, soundAddonGlob } from "./scripts/lib/bundles.ts";
 
 /**
  * `release` is what users install. `e2e` is the end-to-end suite's build: the
@@ -63,8 +64,23 @@ export const createConfig = (variant: PackageVariant): Configuration => {
       buildResources: path.join(root, "build"),
     },
     // The built app is complete: everything is bundled and it has no
-    // node_modules, so there is nothing to install or rebuild.
-    files: ["**/*", "!**/node_modules/**", "!**/*.map"],
+    // node_modules, so there is nothing to install or rebuild. Its one
+    // native file, the audio addon, is the build machine's; each architecture
+    // packed takes its own from the package instead, since the installers
+    // pack x64 and arm64 from one build.
+    files: [
+      "**/*",
+      "!**/node_modules/**",
+      "!**/*.map",
+      "!*.node",
+      {
+        from: SOUND_ADDON_FOLDER,
+        to: ".",
+        filter: [soundAddonGlob(process.platform, "${arch}")],
+      },
+    ],
+    // A native file loads from disk, never from inside the archive.
+    asarUnpack: ["**/*.node"],
     npmRebuild: false,
     nodeGypRebuild: false,
     asar: true,

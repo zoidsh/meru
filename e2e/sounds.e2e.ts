@@ -97,6 +97,29 @@ test("mail Do Not Disturb holds asks for no sound", async ({
   expect(await sounds(app)).toStrictEqual([]);
 });
 
+// The suite's build plays only through the addon's `none` sink, which opens
+// no output device.
+test("the packed app's audio addon plays a sound to its end", async ({
+  app,
+}) => {
+  await expect
+    .poll(() =>
+      app.evaluate(() => typeof Reflect.get(globalThis, "meruTestPlaySound"))
+    )
+    .toBe("function");
+
+  const played = await app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestPlaySound") as (
+        name: string,
+        volume: number
+      ) => Promise<string>
+    )("nod.wav", 0.5)
+  );
+
+  expect(played).toBe("played");
+});
+
 test("with the system's sound, Meru plays none and the notification is not silent", async ({
   launchApp,
   userDataDir,

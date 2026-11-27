@@ -81,6 +81,7 @@ import {
   createCapturedScreenSources,
   createScreenSources,
 } from "#platform/screen-sources.ts";
+import { createSoundPlayer } from "#platform/sound-player.ts";
 import {
   createCapturedSystemBrowser,
   createSystemBrowser,
@@ -101,6 +102,7 @@ import type { SoundOutput } from "../sounds.ts";
 import {
   captureGmailPage,
   captureSounds,
+  exposeSoundProbe,
   exposeTestEntitlement,
   exposeTestSettings,
   holdEntitlementServer,
@@ -194,10 +196,20 @@ export const suiteRunsInBackground = () =>
  */
 export const soundOutput = (
   options: Parameters<typeof createSoundOutput>[0]
-): SoundOutput =>
-  MERU_E2E_BUILD
-    ? { quiet: false, play: captureSounds() }
-    : createSoundOutput(options);
+): SoundOutput => {
+  if (MERU_E2E_BUILD) {
+    // The addon's own playback, through no output device whatever the
+    // machine has, so the packed app's addon runs and nothing is heard.
+    exposeSoundProbe(
+      createSoundPlayer({ sink: "none" }),
+      path.join(import.meta.dirname, "sounds")
+    );
+
+    return { quiet: false, play: captureSounds() };
+  }
+
+  return createSoundOutput(options);
+};
 
 /** The suite switches settings while the app runs, as a settings page will. */
 export const exposeSettingsToSuite = (settings: SettingsStore) => {
