@@ -73,19 +73,17 @@ export const newTabId = (app: App, newId: () => string) =>
 /**
  * Whether a new tab starts in a window of its own, as Move to New Window
  * would put it: under New window, for the profile it opens in, any app but
- * Gmail, unless it is pinned or was asked for as a split.
+ * Gmail, unless it was asked for as a split. A new tab is never pinned.
  */
 export const startsInOwnWindow = ({
   app,
-  pinned,
   split,
   openAppsIn,
 }: {
   app: App;
-  pinned: boolean;
   split: boolean;
   openAppsIn: OpenAppsIn;
-}) => openAppsIn === "windows" && app.id !== "gmail" && !pinned && !split;
+}) => openAppsIn === "windows" && app.id !== "gmail" && !split;
 
 /**
  * Opens `url` as a tab of `app` in the profile, selected: appended, or put
@@ -129,7 +127,6 @@ export const openTab = (
 
     const ownWindow = startsInOwnWindow({
       app,
-      pinned: false,
       split: split !== undefined,
       openAppsIn,
     });

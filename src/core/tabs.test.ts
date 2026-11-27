@@ -81,21 +81,20 @@ const openedAfter = (name: string) =>
   );
 
 describe(startsInOwnWindow, () => {
-  it("sends a new tab to a window of its own only under New window, for any app but Gmail, neither pinned nor asked for as a split", () => {
+  it("sends a new tab to a window of its own only under New window, for any app but Gmail, not asked for as a split", () => {
     const table = [
-      ["calendar", false, false, "windows", true],
-      ["drive", false, false, "windows", true],
-      ["calendar", false, false, "tabs", false],
-      ["gmail", false, false, "windows", false],
-      ["calendar", true, false, "windows", false],
-      ["calendar", false, true, "windows", false],
+      ["calendar", false, "windows", true],
+      ["drive", false, "windows", true],
+      ["calendar", false, "tabs", false],
+      ["gmail", false, "windows", false],
+      ["calendar", true, "windows", false],
     ] as const;
 
     expect(
-      table.map(([appId, pinned, split, openAppsIn]) =>
-        startsInOwnWindow({ app: app(appId), pinned, split, openAppsIn })
+      table.map(([appId, split, openAppsIn]) =>
+        startsInOwnWindow({ app: app(appId), split, openAppsIn })
       )
-    ).toStrictEqual(table.map((row) => row[4]));
+    ).toStrictEqual(table.map((row) => row[3]));
   });
 });
 
