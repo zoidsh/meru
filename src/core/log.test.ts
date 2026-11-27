@@ -298,6 +298,16 @@ describe("an error's text", () => {
     ],
     ["reached mail.google.com", "reached mail.google.com"],
     ["no host bank.example.", "no host another site."],
+    [
+      "connect ECONNREFUSED 203.0.113.9:443",
+      "connect ECONNREFUSED another site",
+    ],
+    [
+      "connect ECONNREFUSED [2001:db8::1]:443",
+      "connect ECONNREFUSED another site",
+    ],
+    ["connect ECONNREFUSED 127.0.0.1:9", "connect ECONNREFUSED 127.0.0.1:9"],
+    ["no host xn--bcher-kva.xn--p1ai", "no host another site"],
   ])("scrubs a host with no scheme: %s", (message, written) => {
     expect(errorLine(message)).toBe(
       `1970-01-01T00:00:00.000Z event error=${JSON.stringify(written)}`
@@ -312,6 +322,71 @@ describe("an error's text", () => {
       `1970-01-01T00:00:00.000Z event error=${JSON.stringify(message)}`
     );
   });
+});
+
+describe("the home folder", () => {
+  const WINDOWS_HOME = String.raw`C:\Users\Ada Lovelace`;
+  const windows: LogContext = { ...context, home: WINDOWS_HOME };
+
+  it.each([
+    [
+      "a command Node could not start, unquoted",
+      String.raw`spawn C:\Users\Ada Lovelace\AppData\Local\meru-updater\pending\Meru Setup 4.2.0.exe ENOENT`,
+      "spawn a path",
+    ],
+    [
+      "electron-updater's check of where an installer is",
+      String.raw`LiteralPath of C:\Users\Ada Lovelace\AppData\Local\meru-updater\pending\x.exe is different than C:\Users\Ada Lovelace\AppData\Local\Temp\x.exe`,
+      "LiteralPath of a path",
+    ],
+  ])("is never written, nor what follows it: %s", (_what, message, starts) => {
+    const text = formatLine(
+      new Date(0),
+      {
+        name: "update-failed",
+        fields: { error: scrub.error(new Error(message)) },
+      },
+      windows
+    );
+
+    expect(text).not.toMatch(/Lovelace|AppData|pending|Temp/u);
+    expect(text).toContain(starts);
+  });
+
+  it("is never written on macOS either, unquoted with a space", () => {
+    const text = formatLine(
+      new Date(0),
+      {
+        name: "update-failed",
+        fields: {
+          error: scrub.error(
+            new Error(
+              "spawn /Users/Ada Lovelace/Library/Caches/meru-updater/pending/x.zip ENOENT"
+            )
+          ),
+        },
+      },
+      { ...context, home: "/Users/Ada Lovelace" }
+    );
+
+    expect(text).not.toMatch(/Lovelace|Library|pending/u);
+    expect(text).toContain("spawn a path");
+  });
+});
+
+describe("a very long field", () => {
+  it.each(["a-", "a.", "a"])(
+    "of %s repeated is written in well under a second",
+    (unit) => {
+      const started = performance.now();
+      const text = line({
+        error: scrub.error(new Error(unit.repeat(200_000 / unit.length))),
+      });
+
+      expect(performance.now() - started).toBeLessThan(1000);
+      expect(text.length).toBeLessThan(2100);
+    }
+  );
 });
 
 describe("the order of a field's scrubbing", () => {

@@ -13,6 +13,11 @@ import { SIGN_IN_ORIGINS } from "./window-open.ts";
  * by its place in the row it then has and Meru's own folders by name.
  */
 export interface LogContext {
+  /**
+   * The person's home folder, written as `~`, and whatever follows it as "a
+   * path", even where a message leaves it unquoted with a space in it.
+   */
+  home?: string;
   /** Meru's user data folder, written as `<data>`. */
   dataDir?: string;
   /** Where the app's own code is, written as `<app>`, so a stack keeps it. */
@@ -20,7 +25,7 @@ export interface LogContext {
   profiles: () => readonly { id: string; tabs: readonly TabEntry[] }[];
 }
 
-type FolderContext = Pick<LogContext, "dataDir" | "appDir">;
+type FolderContext = Pick<LogContext, "home" | "dataDir" | "appDir">;
 
 declare const scrubbedBrand: unique symbol;
 
@@ -339,6 +344,10 @@ const NOT_TLDS: ReadonlySet<string> = new Set([
 const isTld = (label: string) => {
   const lower = label.toLowerCase();
 
+  if (lower.startsWith("xn--")) {
+    return true;
+  }
+
   return lower.length === 2 ? !NOT_TLDS.has(lower) : TLDS.has(lower);
 };
 
@@ -347,7 +356,7 @@ const isTld = (label: string) => {
 // dotted id of Meru's own (`inbox.toggle`, `view.reload`,
 // `com.apple.quarantine`) or a file (`2025.pdf`) stays readable.
 const BARE_HOST =
-  /(?<![\p{L}\p{N}_.~/\\@<>:-])(?<host>(?:[\p{L}\p{N}-]+\.)+(?<tld>\p{L}{2,63}))(?![\p{L}\p{N}_-])(?<rest>[/?#][^\s"'<>`]*)?/giu;
+  /(?<![\p{L}\p{N}_.~/\\@<>:-])(?<host>(?:[\p{L}\p{N}-]+\.)+(?<tld>xn--[\p{L}\p{N}-]{1,59}|\p{L}{2,63}))(?![\p{L}\p{N}_-])(?<rest>[/?#][^\s"'<>`]*)?/giu;
 
 const bareHost = (
   match: string,
@@ -377,8 +386,22 @@ const errorText = (error: unknown) => {
   return `${name}${error.message}${suffix}`;
 };
 
+// An address by number: IPv4 with any port, or IPv6 in brackets.
+const IP_HOST =
+  /(?<![\w./-])(?:(?:\d{1,3}\.){3}\d{1,3}|\[[\da-f:.]{2,45}\])(?::\d{1,5})?(?![\w.-])/giu;
+
+const ipHost = (match: string) => {
+  const host = match.startsWith("[")
+    ? match.slice(0, match.indexOf("]") + 1)
+    : match.replace(/:\d+$/u, "");
+
+  return isKnownHost(host) ? match : OTHER_SITE;
+};
+
 const describeError = (error: unknown, context: FolderContext) =>
-  scrubText(errorText(error), context).replaceAll(BARE_HOST, bareHost);
+  scrubText(errorText(error), context)
+    .replaceAll(BARE_HOST, bareHost)
+    .replaceAll(IP_HOST, ipHost);
 
 /**
  * Whatever a `catch` caught, as its name, message and code, through the net
@@ -411,11 +434,11 @@ const escapeRegExp = (text: string) =>
   text.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);
 
 const ADDRESS =
-  /(?:"[^"\n]{1,64}"|[\p{L}\p{N}._%+-]+)@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+/gu;
+  /(?:"[^"\n]{1,64}"|(?<![\p{L}\p{N}._%+-])[\p{L}\p{N}._%+-]+)@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+/gu;
 
 // Where an absolute path starts: a POSIX one of two folders or more, a
-// Windows drive or a UNC share.
-const ABSOLUTE = String.raw`(?:[A-Za-z]:[\\/]|\\\\|/[^/\s"'<>|]+/)`;
+// Windows drive, a UNC share, or the home folder once it is written `~`.
+const ABSOLUTE = String.raw`(?:[A-Za-z]:[\\/]|\\\\|~[\\/]|/[^/\s"'<>|]+/)`;
 
 const SCRUBS: readonly [RegExp, string | ((match: string) => string)][] = [
   [/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>`]*/giu, urlText],
@@ -432,20 +455,31 @@ const SCRUBS: readonly [RegExp, string | ((match: string) => string)][] = [
   ],
   // Shaped as a license key or a token: groups of four or more joined by
   // dashes, holding a digit.
-  [/\b(?=[a-z0-9-]*\d)[a-z0-9]{4,}(?:-[a-z0-9]{4,}){2,}\b/giu, "a key"],
+  [
+    /(?<![a-z0-9-])(?=[a-z0-9-]*\d)[a-z0-9]{4,}(?:-[a-z0-9]{4,}){2,}\b/giu,
+    "a key",
+  ],
 ];
+
+// What the net reads of a field at most, a few times what is written, so a
+// very long value cannot hold the main thread.
+const SCRUB_LENGTH = 8 * 2000;
 
 /**
  * The net under every field, for what reached it some other way, as an
- * error's message: Meru's own folders by name, then a URL, an address, any
- * other absolute path and a key.
+ * error's message: Meru's own folders and the home folder by name, then a
+ * URL, an address, any other absolute path and a key.
  */
-export const scrubText = (text: string, { dataDir, appDir }: FolderContext) => {
-  let scrubbedText = text;
+export const scrubText = (
+  text: string,
+  { home, dataDir, appDir }: FolderContext
+) => {
+  let scrubbedText = text.slice(0, SCRUB_LENGTH);
 
   for (const [folder, name] of [
     [appDir, "<app>"],
     [dataDir, "<data>"],
+    [home, "~"],
   ] as const) {
     if (folder !== undefined && folder.length > 1) {
       for (const form of new Set([folder, folder.replaceAll("\\", "/")])) {

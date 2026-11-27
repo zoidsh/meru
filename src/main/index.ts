@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import path from "node:path";
 
 import { once, pick } from "es-toolkit";
@@ -104,6 +105,7 @@ const errorDialog = createErrorDialog();
 const logger = createLogger({
   file: createLogFile(path.join(lifecycle.userDataPath, LOG_FILE)),
   context: {
+    home: homedir(),
     dataDir: lifecycle.userDataPath,
     appDir: lifecycle.appPath,
   },
