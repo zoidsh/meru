@@ -1,5 +1,5 @@
 import { realpathSync } from "node:fs";
-import { mkdir, readFile, readdir } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 
@@ -77,6 +77,8 @@ test("the log holds what happened, a failed load and a download included, and no
   );
 
   await mkdir(home);
+  // A store set aside, so a line holds a path in the user data folder.
+  await writeFile(path.join(userDataDir, "entitlement.json"), "{ not json");
   await writeSettings(userDataDir, { downloadsSaveAs: true });
   await writeState(userDataDir, {
     profiles: [
@@ -129,11 +131,12 @@ test("the log holds what happened, a failed load and a download included, and no
     'view-created tab="profile 1 tab 1 gmail" app=gmail',
     'tab-load-failed tab="profile 1 tab 1 gmail" host=127.0.0.1 code=-102',
     "download-started",
+    "store-set-aside file=<data>/entitlement.json kept=<data>/entitlement.corrupt-",
   ]) {
     expect(log).toContain(event);
   }
 
-  for (const personal of [
+  const personal = [
     PROFILE_NAME,
     QUERY,
     "search/",
@@ -145,9 +148,13 @@ test("the log holds what happened, a failed load and a download included, and no
     path.basename(homedir()),
     path.basename(userDataDir),
     path.basename(home),
-  ]) {
-    expect(log).not.toContain(personal);
-    expect(log).not.toContain(JSON.stringify(personal).slice(1, -1));
+  ];
+
+  // Each also as a quoted line escapes it, where that differs.
+  for (const text of new Set(
+    personal.flatMap((one) => [one, JSON.stringify(one).slice(1, -1)])
+  )) {
+    expect(log).not.toContain(text);
   }
 });
 
