@@ -30,8 +30,8 @@ const WIPED = [
   USER_STYLES_FILE_NAME,
   path.dirname(LOG_FILE),
   // The default session's, which the shell, Settings and the overlay's
-  // documents load in: what a page stores, its cookies, and the zoom of
-  // each of Meru's own pages, which Chromium keeps in `Preferences`.
+  // documents load in: whatever a page of ours can write there, and the
+  // zoom of each of Meru's own pages, which Chromium keeps in `Preferences`.
   "Preferences",
   "Local Storage",
   "Session Storage",
@@ -40,6 +40,14 @@ const WIPED = [
   "Cookies",
   "Cookies-journal",
   "Network",
+  "Network Persistent State",
+  "DIPS",
+  "DIPS-wal",
+  "DIPS-journal",
+  "Trust Tokens",
+  "Trust Tokens-journal",
+  "Shared Dictionary",
+  "blob_storage",
 ];
 
 const isWiped = (name: string) =>
