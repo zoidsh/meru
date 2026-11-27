@@ -16,7 +16,7 @@ export const recordedLog = (
   const events: LogEvent[] = [];
   const lines: string[] = [];
   const full: LogContext = {
-    home: context.home,
+    ...context,
     profiles: context.profiles ?? (() => []),
   };
 

@@ -10,11 +10,9 @@ import { SIGN_IN_ORIGINS } from "./window-open.ts";
 
 /**
  * What the log knows at the moment a line is written, so a profile is named
- * by its place in the row it then has and a path under the home folder
- * starts with `~`.
+ * by its place in the row it then has and Meru's own folders by name.
  */
 export interface LogContext {
-  home: string | undefined;
   /** Meru's user data folder, written as `<data>`. */
   dataDir?: string;
   /** Where the app's own code is, written as `<app>`, so a stack keeps it. */
@@ -62,11 +60,16 @@ export type Fixed<S> = S extends string
 
 export type FieldValue = Scrubbed | number | boolean | Error | undefined;
 
-/** Each field a value of a known kind, or a string fixed in the source. */
+/**
+ * Each field a value of a known kind, or a string fixed in the source; never
+ * `any`, which would pass for either.
+ */
 export type Checked<F> = {
-  [K in keyof F]: F[K] extends FieldValue
-    ? F[K]
-    : Fixed<Exclude<F[K], undefined>> | Extract<F[K], undefined>;
+  [K in keyof F]: 0 extends 1 & F[K]
+    ? never
+    : F[K] extends FieldValue
+      ? F[K]
+      : Fixed<Exclude<F[K], undefined>> | Extract<F[K], undefined>;
 };
 
 /** A fixed name of lowercase words joined by dashes: `tab-load-failed`. */
@@ -195,41 +198,146 @@ const tabField = (key: TabKey | string) => {
 };
 
 /**
- * A path of Meru's own, as a store's file; the home folder written as `~`.
- * Never a download's or a folder the person chose.
+ * A file in Meru's own folders, as a store's. The net writes it as every path:
+ * under `<data>` or `<app>` as it is, anywhere else as "a path".
  */
 const pathField = (file: string) => scrubbed(() => file);
 
-/**
- * An error code as Chromium or Node names it (`ERR_NAME_NOT_RESOLVED`,
- * `ENOENT`); anything else shaped otherwise is not written.
- */
-const codeField = (value: string | number | undefined) =>
-  scrubbed(() =>
-    typeof value === "number" || /^[A-Z][A-Z0-9_]{1,63}$/u.test(value ?? "")
-      ? String(value)
-      : "other"
-  );
+const CODE = /^[A-Z][A-Z0-9_]{1,63}$/u;
+
+const codeText = (value: unknown): string => {
+  if (typeof value === "number" && Number.isInteger(value)) {
+    return String(value);
+  }
+
+  if (typeof value === "string") {
+    return CODE.test(value) ? value : "other";
+  }
+
+  return value instanceof Error && "code" in value
+    ? codeText(value.code)
+    : "other";
+};
 
 /**
- * A word Meru, Chromium or a server made, as a language tag, a command's id
- * or a version; never one a person typed, which may be as short.
+ * An error code as Chromium or Node names it (`ERR_NAME_NOT_RESOLVED`,
+ * `ENOENT`, -105), or an error's own `code` alone, never its message; any
+ * other value is written as "other". For a failure whose message would hold
+ * a URL or a path the person chose.
+ */
+const codeField = (value: unknown) => scrubbed(() => codeText(value));
+
+/**
+ * A word from a set the code knows, as a language tag, a menu item's or
+ * command's id, an app's id, an outcome or a version. Never text a person
+ * typed or a page or file supplied, which the pattern alone cannot tell from
+ * one of these.
  */
 const tokenField = (value: string | undefined) =>
   scrubbed(() =>
     value !== undefined && /^[\w.:@+-]{1,64}$/u.test(value) ? value : "other"
   );
 
-/** What Meru's own files and its stacks end with, which no host does. */
-const FILE_ENDINGS =
-  "json|log|txt|js|cjs|mjs|ts|tsx|html|css|map|node|asar|app|exe|dll|so|dylib|plist|png|ico|icns|svg|wasm";
+/** Top-level domains besides the two-letter ones, as a host ends with. */
+const TLDS: ReadonlySet<string> = new Set([
+  "com",
+  "net",
+  "org",
+  "info",
+  "biz",
+  "edu",
+  "gov",
+  "mil",
+  "int",
+  "arpa",
+  "app",
+  "dev",
+  "page",
+  "google",
+  "xyz",
+  "online",
+  "site",
+  "website",
+  "shop",
+  "store",
+  "tech",
+  "cloud",
+  "blog",
+  "news",
+  "live",
+  "pro",
+  "name",
+  "mobi",
+  "asia",
+  "club",
+  "top",
+  "icu",
+  "vip",
+  "work",
+  "space",
+  "fun",
+  "life",
+  "world",
+  "today",
+  "email",
+  "mail",
+  "media",
+  "digital",
+  "network",
+  "group",
+  "agency",
+  "company",
+  "studio",
+  "design",
+  "services",
+  "systems",
+  "example",
+  "test",
+  "invalid",
+  "local",
+  "localhost",
+  "internal",
+  "onion",
+  "lan",
+  "home",
+]);
 
-// A bare host, as Node's `getaddrinfo ENOTFOUND bank.example` gives one;
-// only in an error's text, since Meru's own ids are dotted words too.
-const BARE_HOST = new RegExp(
-  String.raw`(?<![\w.~/\\@-])(?:[a-z0-9-]+\.)+(?!(?:${FILE_ENDINGS})\b)[a-z]{2,}\b(?![\w/\\-])`,
-  "gu"
-);
+/** Two letters a file ends with that no country's domain is. */
+const NOT_TLDS: ReadonlySet<string> = new Set([
+  "js",
+  "ts",
+  "md",
+  "py",
+  "gz",
+  "xz",
+  "rs",
+]);
+
+const isTld = (label: string) => {
+  const lower = label.toLowerCase();
+
+  return lower.length === 2 ? !NOT_TLDS.has(lower) : TLDS.has(lower);
+};
+
+// A host with no scheme, as Node's `getaddrinfo ENOTFOUND bank.example` gives
+// one, with any path or query after it. Only one that ends in a domain, so a
+// dotted id of Meru's own (`inbox.toggle`, `view.reload`,
+// `com.apple.quarantine`) or a file (`2025.pdf`) stays readable.
+const BARE_HOST =
+  /(?<![\p{L}\p{N}_.~/\\@<>:-])(?<host>(?:[\p{L}\p{N}-]+\.)+(?<tld>\p{L}{2,63}))(?![\p{L}\p{N}_-])(?<rest>[/?#][^\s"'<>`]*)?/giu;
+
+const bareHost = (
+  match: string,
+  host: string,
+  tld: string,
+  rest: string | undefined
+) => {
+  if (!isTld(tld)) {
+    return match;
+  }
+
+  return isKnownHost(host) && rest === undefined ? host : OTHER_SITE;
+};
 
 const errorText = (error: unknown) => {
   if (!(error instanceof Error)) {
@@ -246,19 +354,22 @@ const errorText = (error: unknown) => {
   return `${name}${error.message}${suffix}`;
 };
 
-const describeError = (error: unknown) =>
-  errorText(error).replaceAll(BARE_HOST, (match) =>
-    isKnownHost(match) ? match : OTHER_SITE
-  );
+const describeError = (error: unknown, context: FolderContext) =>
+  scrubText(errorText(error), context).replaceAll(BARE_HOST, bareHost);
 
-/** Whatever a `catch` caught, as its name, message and code. */
-const failureField = (error: unknown) => scrubbed(() => describeError(error));
+/**
+ * Whatever a `catch` caught, as its name, message and code, through the net
+ * and with any host scrubbed. A string is taken as a message Meru wrote, as a
+ * mail check's reason; never pass one a page, a file or a person supplied.
+ */
+const failureField = (error: unknown) =>
+  scrubbed((context) => describeError(error, context));
 
 const STACK_FRAMES = 8;
 
 /** As `failure`, with the first frames of its stack. */
 const stackField = (error: unknown) =>
-  scrubbed(() => {
+  scrubbed((context) => {
     const frames =
       error instanceof Error && error.stack !== undefined
         ? error.stack
@@ -267,44 +378,53 @@ const stackField = (error: unknown) =>
             .map((frame) => frame.trim())
         : [];
 
-    return [describeError(error), ...frames].join(" | ");
+    return [
+      describeError(error, context),
+      ...frames.map((frame) => scrubText(frame, context)),
+    ].join(" | ");
   });
+
+type FolderContext = Pick<LogContext, "dataDir" | "appDir">;
 
 const escapeRegExp = (text: string) =>
   text.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);
 
-const SCRUBS: readonly [RegExp, (match: string) => string][] = [
-  [/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>()[\]{}`,]*/giu, urlText],
+const ADDRESS =
+  /(?:"[^"\n]{1,64}"|[\p{L}\p{N}._%+-]+)@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+/gu;
+
+// Where an absolute path starts: a POSIX one of two folders or more, a
+// Windows drive or a UNC share.
+const ABSOLUTE = String.raw`(?:[A-Za-z]:[\\/]|\\\\|/[^/\s"'<>|]+/)`;
+
+const SCRUBS: readonly [RegExp, string | ((match: string) => string)][] = [
+  [/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>`]*/giu, urlText],
   [
-    /\b(?:mailto|tel|sms|data|blob|javascript):[^\s"'<>]*/giu,
+    /\b(?:mailto|tel|sms|data|blob|javascript):[^\s"'<>`]*/giu,
     (match) => `${match.slice(0, match.indexOf(":")).toLowerCase()}:`,
   ],
-  [/[\w.%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+/giu, () => "an address"],
-  [/(?:\/Users|\/home)\/[^/\s"':]+/gu, () => "~"],
-  [/\b[a-z]:\\Users\\[^\\\s"':]+/giu, () => "~"],
-  // What is under the home folder but outside Meru's own folders, as a
-  // download's, up to the quote or bracket around it.
-  [/~[/\\][^'"|()]*/gu, (match) => `~${match.charAt(1)}…`],
+  [ADDRESS, "an address"],
+  // A quoted path may hold spaces, up to its closing quote.
+  [new RegExp(String.raw`(['"])${ABSOLUTE}[^'"\n]*\1`, "gu"), "$1a path$1"],
+  [
+    new RegExp(String.raw`(?<![\w.:/\\>~-])${ABSOLUTE}[^\s"'<>|]*`, "gu"),
+    "a path",
+  ],
   // Shaped as a license key or a token: groups of four or more joined by
   // dashes, holding a digit.
-  [/\b(?=[a-z0-9-]*\d)[a-z0-9]{4,}(?:-[a-z0-9]{4,}){2,}\b/giu, () => "a key"],
+  [/\b(?=[a-z0-9-]*\d)[a-z0-9]{4,}(?:-[a-z0-9]{4,}){2,}\b/giu, "a key"],
 ];
 
 /**
- * The net under every line, for what reached it some other way, as an error's
- * message: an address, a URL with a path, a key, a host outside Meru's pages
- * and the home folder.
+ * The net under every field, for what reached it some other way, as an
+ * error's message: Meru's own folders by name, then a URL, an address, any
+ * other absolute path and a key.
  */
-export const scrubText = (
-  text: string,
-  { home, dataDir, appDir }: Pick<LogContext, "home" | "dataDir" | "appDir">
-) => {
+export const scrubText = (text: string, { dataDir, appDir }: FolderContext) => {
   let scrubbedText = text;
 
   for (const [folder, name] of [
     [appDir, "<app>"],
     [dataDir, "<data>"],
-    [home, "~"],
   ] as const) {
     if (folder !== undefined && folder.length > 1) {
       for (const form of new Set([folder, folder.replaceAll("\\", "/")])) {
@@ -317,7 +437,10 @@ export const scrubText = (
   }
 
   for (const [pattern, replace] of SCRUBS) {
-    scrubbedText = scrubbedText.replaceAll(pattern, replace);
+    scrubbedText =
+      typeof replace === "string"
+        ? scrubbedText.replaceAll(pattern, replace)
+        : scrubbedText.replaceAll(pattern, replace);
   }
 
   return scrubbedText;
@@ -331,7 +454,7 @@ const valueText = (value: unknown, context: LogContext) => {
   }
 
   if (value instanceof Error) {
-    return describeError(value);
+    return describeError(value, context);
   }
 
   if (typeof value === "number" || typeof value === "boolean") {
@@ -348,9 +471,17 @@ const valueText = (value: unknown, context: LogContext) => {
 const quoted = (text: string) =>
   /^[^\s"=]+$/u.test(text) ? text : JSON.stringify(text);
 
+/** A field's text: on one line, through the net, then cut and quoted. */
+const fieldText = (text: string, context: FolderContext) =>
+  quoted(
+    scrubText(text.replaceAll(/\s+/gu, " "), context).slice(0, FIELD_LENGTH)
+  );
+
 /**
  * One line of the log: the time, the event's name and its fields, each
- * `key=value`, on one line however many the values held, and scrubbed.
+ * `key=value`, on one line however many the values held. Each value is
+ * scrubbed whole before it is cut or quoted, so neither hides what the net
+ * looks for.
  */
 export const formatLine = (
   time: Date,
@@ -366,15 +497,13 @@ export const formatLine = (
 
   for (const [key, value] of Object.entries(fields)) {
     if (value !== undefined) {
-      const text = valueText(value, context)
-        .replaceAll(/\s+/gu, " ")
-        .slice(0, FIELD_LENGTH);
+      const field = /^[A-Za-z][\w-]{0,31}$/u.test(key) ? key : "field";
 
-      parts.push(`${key}=${quoted(text)}`);
+      parts.push(`${field}=${fieldText(valueText(value, context), context)}`);
     }
   }
 
-  return scrubText(parts.join(" "), context);
+  return parts.join(" ");
 };
 
 /** What the first line of each run says of it. */
@@ -393,20 +522,17 @@ export interface RunInfo {
 export const formatRunLine = (
   time: Date,
   info: RunInfo,
-  context: Pick<LogContext, "home" | "dataDir" | "appDir">
+  context: FolderContext
 ) =>
-  scrubText(
-    [
-      time.toISOString(),
-      "run-started",
-      `app=${quoted(`${info.productName} ${info.version}`)}`,
-      `build=${quoted(info.build)}`,
-      `os=${quoted(`${info.os} ${info.osVersion}`)}`,
-      `arch=${quoted(info.arch)}`,
-      `electron=${quoted(info.electron)}`,
-    ].join(" "),
-    context
-  );
+  [
+    time.toISOString(),
+    "run-started",
+    `app=${fieldText(`${info.productName} ${info.version}`, context)}`,
+    `build=${fieldText(info.build, context)}`,
+    `os=${fieldText(`${info.os} ${info.osVersion}`, context)}`,
+    `arch=${fieldText(info.arch, context)}`,
+    `electron=${fieldText(info.electron, context)}`,
+  ].join(" ");
 
 /**
  * The scrubbers, the only way a value of the run reaches a field:

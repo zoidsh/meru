@@ -12,8 +12,6 @@ import {
 import type { LogContext } from "./log.ts";
 import { newProfile } from "./state.ts";
 
-const HOME = "/Users/ada";
-
 const PROFILES = [
   newProfile("first-id", "Work"),
   {
@@ -28,7 +26,6 @@ const PROFILES = [
 const DATA = "/Users/ada/Library/Application Support/Meru";
 
 const context: LogContext = {
-  home: HOME,
   dataDir: DATA,
   profiles: () => PROFILES,
 };
@@ -112,40 +109,42 @@ describe("the scrubbers", () => {
   });
 
   it.each([
-    [
-      "Meru's own folder",
-      `${DATA}/state.json`,
-      HOME,
-      'file="<data>/state.json"',
-    ],
+    ["Meru's own folder", `${DATA}/state.json`, "file=<data>/state.json"],
     [
       "a file elsewhere under the home folder",
       "/Users/ada/Downloads/invoice.pdf",
-      HOME,
-      "file=~/…",
+      'file="a path"',
     ],
     [
       "a Windows one",
       String.raw`C:\Users\Ada\Documents\state.json`,
-      String.raw`C:\Users\Ada`,
-      String.raw`file=~\…`,
+      'file="a path"',
     ],
-  ])("write %s from its folder", (_what, file, home, written) => {
-    expect(
-      formatLine(
-        new Date(0),
-        { name: "event", fields: { file: scrub.path(file) } },
-        { ...context, home }
-      )
-    ).toBe(`1970-01-01T00:00:00.000Z event ${written}`);
+  ])("write %s by its folder, or as a path", (_what, file, written) => {
+    expect(line({ file: scrub.path(file) })).toBe(
+      `1970-01-01T00:00:00.000Z event ${written}`
+    );
   });
 
-  it("keep an error code only in the shape Chromium and Node give one", () => {
-    expect(line({ code: scrub.code("ERR_NAME_NOT_RESOLVED") })).toContain(
-      "code=ERR_NAME_NOT_RESOLVED"
+  it("keep an error code only in the shape Chromium and Node give one, and an error's code without its message", () => {
+    const loadError = Object.assign(
+      new Error(
+        "ERR_FAILED (-2) loading 'https://mail.google.com/mail/u/0/#search/(Ada)Lovelace'"
+      ),
+      { code: "ERR_FAILED", errno: -2 }
     );
-    expect(line({ code: scrub.code(-105) })).toContain("code=-105");
-    expect(line({ code: scrub.code("Ada's file") })).toContain("code=other");
+
+    expect(
+      line({
+        named: scrub.code("ERR_NAME_NOT_RESOLVED"),
+        numbered: scrub.code(-105),
+        typed: scrub.code("Ada's file"),
+        load: scrub.code(loadError),
+        bare: scrub.code(new Error("open '/Users/ada/invoice.pdf'")),
+      })
+    ).toBe(
+      "1970-01-01T00:00:00.000Z event named=ERR_NAME_NOT_RESOLVED numbered=-105 typed=other load=ERR_FAILED bare=other"
+    );
   });
 
   it("scrub what an error carries", () => {
@@ -163,7 +162,7 @@ describe("the scrubbers", () => {
 
     expectClean(text);
     expect(text).toContain(
-      "ENOENT: no such file, open '~/…' for an address at mail.google.com and getaddrinfo ENOTFOUND another site, key a key (ENOENT)"
+      "ENOENT: no such file, open 'a path' for an address at mail.google.com and getaddrinfo ENOTFOUND another site, key a key (ENOENT)"
     );
   });
 
@@ -184,6 +183,9 @@ describe("the scrubbers", () => {
     log("profile-added", { name: `${name}!` });
     // @ts-expect-error -- nor an object posing as a scrubbed value
     log("profile-added", { name: { text: name } });
+    const parsed = JSON.parse('"Ada Lovelace"');
+    // @ts-expect-error -- nor `any`, which would pass for anything
+    log("profile-added", { name: parsed });
 
     expect(lines[0]).toBe("tab-closed reason=crashed count=2 ok=true");
     // What got past the types with a cast is not written either.
@@ -192,17 +194,32 @@ describe("the scrubbers", () => {
   });
 });
 
-describe("the net under every line", () => {
+describe("the net under every field", () => {
   it.each([
     [
       "an address in an error message",
       "sent by ada@example.com",
       "sent by an address",
     ],
+    [
+      "an address of other letters",
+      "sent by zoë@exämple.de",
+      "sent by an address",
+    ],
+    [
+      "an address with a quoted name",
+      'sent by "ada lovelace"@example.com',
+      "sent by an address",
+    ],
     ["a file URL", "at file:///Users/ada/secret.pdf", "at file:"],
     [
       "a Gmail URL with a search query",
       "loading 'https://mail.google.com/mail/u/0/#search/invoice?q=secret'",
+      "loading 'mail.google.com'",
+    ],
+    [
+      "a URL whose search holds brackets and commas",
+      "loading 'https://mail.google.com/mail/u/0/#search/(Ada),Lovelace'",
       "loading 'mail.google.com'",
     ],
     ["a mailto link", "mailto:ada@example.com?subject=secret", "mailto:"],
@@ -212,17 +229,22 @@ describe("the net under every line", () => {
       "the key a key",
     ],
     ["a UUID", "id 3f2b1c9e-0a4d-4f1e-9c2b-7d8e6f5a4b3c", "id a key"],
-    ["the home folder", "at /Users/ada/projects/x", "at ~/…"],
+    ["the home folder", "at /Users/ada/projects/x", "at a path"],
     [
-      "another user's folder",
+      "a quoted folder with spaces",
       "open '/home/bob/x y.pdf' failed",
-      "open '~/…' failed",
+      "open 'a path' failed",
     ],
+    ["a Windows home folder", String.raw`at C:\Users\Bob\x`, "at a path"],
     [
-      "a Windows home folder",
-      String.raw`at C:\Users\Bob\x`,
-      String.raw`at ~\…`,
+      "a Windows path quoted, with spaces",
+      String.raw`EPERM: rename 'C:\Users\Ada Lovelace\Documents\x.tmp' -> 'C:\Users\Ada Lovelace\Documents\x'`,
+      "EPERM: rename 'a path' -> 'a path'",
     ],
+    ["a drive written with slashes", "at D:/Taxes/2025.pdf", "at a path"],
+    ["a share", String.raw`at \\nas\Ada\Taxes and more`, "at a path and more"],
+    ["a disk", "'/Volumes/Ada Backup/x' gone", "'a path' gone"],
+    ["a temporary folder", "at /private/var/folders/x/y", "at a path"],
     [
       "Meru's own folder",
       `open '${DATA}/state.json'`,
@@ -234,14 +256,107 @@ describe("the net under every line", () => {
 
   it("leaves Meru's own words, files and stacks alone", () => {
     for (const text of [
-      "tab-load-failed host=mail.google.com code=-105",
+      "host=mail.google.com code=-105",
       "at Object.focus (index.js:12:3)",
+      "at focus (<app>/out/main.mjs:12:3)",
+      "at file:<app>/out/main.mjs:12:3",
+      "at process.processTicksAndRejections (node:internal/process/task_queues:95:5)",
       "saved state.json and main.log, Meru.app 4.2.0-beta.3",
       "ERR_NAME_NOT_RESOLVED (-105)",
-      "command-refused command=inbox.toggle",
+      "on 2026/11/27, 1/2 done",
     ]) {
       expect(scrubText(text, context)).toBe(text);
     }
+  });
+
+  it("writes an app's own frames from its folder", () => {
+    expect(
+      scrubText(
+        "at focus (/Applications/Meru.app/Contents/Resources/app.asar/out/main.mjs:12:3)",
+        { appDir: "/Applications/Meru.app/Contents/Resources/app.asar" }
+      )
+    ).toBe("at focus (<app>/out/main.mjs:12:3)");
+  });
+});
+
+const errorLine = (message: string) =>
+  line({ error: scrub.error(new Error(message)) });
+
+describe("an error's text", () => {
+  it.each([
+    [
+      "getaddrinfo ENOTFOUND MyBank.Example",
+      "getaddrinfo ENOTFOUND another site",
+    ],
+    [
+      "fetch mybank.example/statements?id=42 failed",
+      "fetch another site failed",
+    ],
+    [
+      "could not reach ada.app or ada.so",
+      "could not reach another site or another site",
+    ],
+    ["reached mail.google.com", "reached mail.google.com"],
+    ["no host bank.example.", "no host another site."],
+  ])("scrubs a host with no scheme: %s", (message, written) => {
+    expect(errorLine(message)).toBe(
+      `1970-01-01T00:00:00.000Z event error=${JSON.stringify(written)}`
+    );
+  });
+
+  it("leaves Meru's dotted ids and file names", () => {
+    const message =
+      "inbox.toggle, view.reload is not a function, com.apple.quarantine, 2025.pdf";
+
+    expect(errorLine(message)).toBe(
+      `1970-01-01T00:00:00.000Z event error=${JSON.stringify(message)}`
+    );
+  });
+});
+
+describe("the order of a field's scrubbing", () => {
+  const WINDOWS_DATA = String.raw`C:\Users\Ada Lovelace\AppData\Roaming\Meru`;
+  const windows: LogContext = { ...context, dataDir: WINDOWS_DATA };
+
+  it("scrubs a Windows path with a space before quoting doubles its backslashes", () => {
+    const error = Object.assign(
+      new Error(
+        String.raw`EPERM: operation not permitted, rename 'C:\Users\Ada Lovelace\Documents\x.tmp' -> 'C:\Users\Ada Lovelace\Documents\x'`
+      ),
+      { code: "EPERM" }
+    );
+    const text = formatLine(
+      new Date(0),
+      { name: "event", fields: { error: scrub.error(error) } },
+      windows
+    );
+
+    expect(text).not.toContain("Lovelace");
+    expect(text).toContain("'a path' -> 'a path'");
+  });
+
+  it("writes a file in a data folder with a space by its folder", () => {
+    const text = formatLine(
+      new Date(0),
+      {
+        name: "store-set-aside",
+        fields: { file: scrub.path(String.raw`${WINDOWS_DATA}\state.json`) },
+      },
+      windows
+    );
+
+    expect(text).toBe(
+      String.raw`1970-01-01T00:00:00.000Z store-set-aside file=<data>\state.json`
+    );
+  });
+
+  it("scrubs an address the cut would split", () => {
+    const text = line({
+      error: scrub.error(new Error(`${"x ".repeat(997)}ada@example.com`)),
+    });
+
+    expect(text).not.toContain("ada@");
+    expect(text).not.toContain("example");
   });
 });
 

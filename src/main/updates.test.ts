@@ -29,7 +29,7 @@ const setup = ({
   });
   const steps: string[] = [];
   const opened: string[] = [];
-  const { log, lines: logs } = recordedLog({ home: "/Users/someone" });
+  const { log, lines: logs } = recordedLog();
   let finish: (() => void) | undefined;
   const updates = createUpdates({
     updater: noUpdater ? undefined : fake.updater,
@@ -259,7 +259,7 @@ describe(createUpdates, () => {
       );
 
       expect(app.logs.at(-1)).toBe(
-        'update-failed signature=false error="404 github.com at ~/…"'
+        'update-failed signature=false error="404 github.com at a path"'
       );
     });
   });

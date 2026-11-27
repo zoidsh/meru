@@ -11,7 +11,7 @@ const setup = (failing = false) => {
   const echoed: string[] = [];
   const logger = createLogger({
     file,
-    context: { home: "/Users/ada" },
+    context: {},
     now: () => new Date(Date.now()),
     echo: (line) => echoed.push(line),
   });
