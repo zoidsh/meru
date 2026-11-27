@@ -15,7 +15,7 @@ import type {
   DownloadSignals,
 } from "#platform/downloads.ts";
 
-import { createDownloads } from "./downloads.ts";
+import { SAVE_AS_WINDOW, createDownloads } from "./downloads.ts";
 
 const NOW = 50 * DOWNLOAD_LIFETIME;
 const FOLDER = "/Downloads";
@@ -54,14 +54,21 @@ interface FakeItem extends DownloadItem {
 
 /** A download its session hands over, driven by the test. */
 const fakeItem = ({
+  url = "https://mail.google.com/report.pdf",
   fileName = "report.pdf",
   mimeType = "application/pdf",
   total = 1000,
-}: { fileName?: string; mimeType?: string; total?: number } = {}) => {
+}: {
+  url?: string;
+  fileName?: string;
+  mimeType?: string;
+  total?: number;
+} = {}) => {
   const done = new Set<(end: DownloadEnd) => void>();
   let received = 0;
   let answered: ((file: string | undefined) => void) | undefined;
   const item: FakeItem = {
+    url,
     fileName,
     mimeType,
     startedAt: NOW,
@@ -144,6 +151,7 @@ const setup = ({
   const profileFolders = new Map<string, string | null>();
   let saveAs = false;
   let showWhenDone = false;
+  let time = NOW;
   const files: DownloadFiles = {
     folder: () => FOLDER,
     systemFolder: () => FOLDER,
@@ -248,7 +256,7 @@ const setup = ({
 
       return `d${ids}`;
     },
-    now: () => NOW,
+    now: () => time,
     repeat: (run) => {
       repeating.add(run);
 
@@ -293,6 +301,10 @@ const setup = ({
       }
     },
     repeating,
+    /** Moves the clock on. */
+    pass: (ms: number) => {
+      time += ms;
+    },
     land: (file: string) => {
       disk.add(file);
     },
@@ -501,6 +513,66 @@ describe("taking a download", () => {
     await settle();
 
     expect(history().map((each) => each.state)).toStrictEqual(["completed"]);
+  });
+
+  describe("Save As… from a page", () => {
+    const IMAGE = "https://mail.google.com/photo.png";
+
+    it("starts the address's download and asks where to save it, though Settings saves without asking, running it as any download", async () => {
+      const { downloads, history } = setup();
+      const started: string[] = [];
+      const item = fakeItem({
+        url: IMAGE,
+        fileName: "photo.png",
+        mimeType: "image/png",
+      });
+
+      downloads.saveAs(IMAGE, (url) => started.push(url));
+      downloads.take(item, "a");
+      await settle();
+      item.answer("/Pictures/photo.png");
+      item.arrive(1000);
+      await settle();
+      item.end("completed");
+      await settle();
+
+      expect([started, item.askedAt, item.savedTo, history()]).toStrictEqual([
+        [IMAGE],
+        "/Downloads/photo.png",
+        "/Pictures/photo.png",
+        [
+          {
+            id: "d1",
+            fileName: "photo.png",
+            path: "/Pictures/photo.png",
+            size: 1000,
+            startedAt: NOW,
+            state: "completed",
+          },
+        ],
+      ]);
+    });
+
+    it("asks only for the next download of the address, and not once it started too late", async () => {
+      const { downloads, pass } = setup();
+      const other = fakeItem();
+      const marked = fakeItem({ url: IMAGE });
+      const again = fakeItem({ url: IMAGE });
+      const late = fakeItem({ url: IMAGE });
+
+      downloads.saveAs(IMAGE, () => null);
+      downloads.take(other, "a");
+      downloads.take(marked, "a");
+      downloads.take(again, "a");
+      downloads.saveAs(IMAGE, () => null);
+      pass(SAVE_AS_WINDOW + 1);
+      downloads.take(late, "a");
+      await settle();
+
+      expect(
+        [other, marked, again, late].map((each) => each.askedAt !== undefined)
+      ).toStrictEqual([false, true, false, false]);
+    });
   });
 
   it("counts past a name on disk or held by one running, without case on macOS", () => {

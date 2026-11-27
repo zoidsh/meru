@@ -31,6 +31,8 @@ export type DownloadEnd = "completed" | "cancelled" | "failed";
 
 /** One download Chromium started, from its first moment. */
 export interface DownloadItem {
+  /** The address it was asked for, before any redirect. */
+  url: string;
   /** The name the server or page gave it. */
   fileName: string;
   mimeType: string;
@@ -163,6 +165,7 @@ const wrap = (
   });
 
   return {
+    url: item.getURLChain()[0] ?? item.getURL(),
     fileName: item.getFilename(),
     mimeType: item.getMimeType(),
     startedAt: Math.round(item.getStartTime() * 1000),

@@ -89,6 +89,9 @@ interface Running {
   path: string;
 }
 
+/** How long after Save As… its download may start and still ask where. */
+export const SAVE_AS_WINDOW = 10_000;
+
 /** How often the progress shown is read again while anything runs. */
 export const PROGRESS_INTERVAL = 500;
 
@@ -136,6 +139,8 @@ export const createDownloads = ({
   const gone = new Set<string>();
   /** The tab whose own window shows the card, while it is open there. */
   let inWindow: TabKey | undefined;
+  /** Addresses Save As… asked for, by when, whose download asks where. */
+  const askFor = new Map<string, number>();
   /** The chosen folders found missing, each told of once. */
   const missing = new Set<string>();
   /** Bytes of those that finished since nothing last ran. */
@@ -327,7 +332,13 @@ export const createDownloads = ({
    * started it, none when no profile has that session any more.
    */
   const take = (item: DownloadItem, profileId: string | undefined) => {
-    const asks = choices.saveAs();
+    const askedAt = askFor.get(item.url);
+
+    askFor.delete(item.url);
+
+    const asks =
+      (askedAt !== undefined && now() - askedAt <= SAVE_AS_WINDOW) ||
+      choices.saveAs();
     const folder = saveFolder(!asks, profileId);
     const filePath = path.join(
       folder,
@@ -505,6 +516,22 @@ export const createDownloads = ({
       await prune();
     },
     take,
+    /**
+     * Downloads `url` through `start`, asking where to save it whatever
+     * Settings says. Only the next download of that address asks, and only
+     * if it starts within a few seconds, so a later one of the same address,
+     * or one that never started, leaves the rest as Settings has them.
+     */
+    saveAs: (url: string, download: (url: string) => void) => {
+      for (const [marked, at] of askFor) {
+        if (now() - at > SAVE_AS_WINDOW) {
+          askFor.delete(marked);
+        }
+      }
+
+      askFor.set(url, now());
+      download(url);
+    },
     prune,
     isOpen,
     setOpen,
