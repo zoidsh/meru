@@ -1,4 +1,4 @@
-import { existsSync, realpathSync } from "node:fs";
+import { realpathSync } from "node:fs";
 import { copyFile, readdir, rm, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -96,6 +96,12 @@ const SOUND_ADDON_SUFFIXES = ["", "-gnu", "-msvc"];
 export const soundAddonGlob = (platform: string, arch: string) =>
   `node-web-audio-api.${platform}-${arch}{${SOUND_ADDON_SUFFIXES.join(",")}}.node`;
 
+/** Whether `name` is the addon's binary for that platform and architecture. */
+export const isSoundAddon = (name: string, platform: string, arch: string) =>
+  SOUND_ADDON_SUFFIXES.some(
+    (suffix) => name === `node-web-audio-api.${platform}-${arch}${suffix}.node`
+  );
+
 /**
  * The sounds main plays, into `sounds`, and the audio addon's binary for the
  * machine this builds on beside main's bundle, which `pnpm start` and
@@ -104,10 +110,10 @@ export const soundAddonGlob = (platform: string, arch: string) =>
 export const copySounds = async (target: BuildTarget) => {
   const directory = path.join(outDir(target), "sounds");
   const source = path.join(repositoryRoot, "resources", "sounds");
-  const addon = SOUND_ADDON_SUFFIXES.map(
-    (suffix) =>
-      `node-web-audio-api.${process.platform}-${process.arch}${suffix}.node`
-  ).find((name) => existsSync(path.join(SOUND_ADDON_FOLDER, name)));
+  const binaries = await readdir(SOUND_ADDON_FOLDER);
+  const addon = binaries.find((name) =>
+    isSoundAddon(name, process.platform, process.arch)
+  );
 
   if (!addon) {
     throw new Error(

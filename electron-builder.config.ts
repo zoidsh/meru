@@ -1,12 +1,17 @@
 import { copyFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
+import { Arch } from "electron-builder";
 import type { Configuration } from "electron-builder";
 
 import { appIdentity } from "#core/app-identity.ts";
 
 import manifest from "./package.json" with { type: "json" };
-import { SOUND_ADDON_FOLDER, soundAddonGlob } from "./scripts/lib/bundles.ts";
+import {
+  isSoundAddon,
+  SOUND_ADDON_FOLDER,
+  soundAddonGlob,
+} from "./scripts/lib/bundles.ts";
 
 /**
  * `release` is what users install. `e2e` is the end-to-end suite's build: the
@@ -42,6 +47,36 @@ const copyAssetCatalog: Configuration["afterPack"] = async (context) => {
     path.join(root, "build", "Assets.car"),
     path.join(context.appOutDir, bundle, "Contents", "Resources", "Assets.car")
   );
+};
+
+/**
+ * Fails a pack whose app holds anything but its own architecture's audio
+ * addon, once: a file set that matched nothing on some target, or another
+ * platform's binaries, 46 MB of them, would otherwise ship unnoticed.
+ */
+const checkSoundAddon: Configuration["afterPack"] = async (context) => {
+  const arch = Arch[context.arch];
+  const entries = await readdir(context.appOutDir, {
+    recursive: true,
+    withFileTypes: true,
+  });
+  const found = entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".node"))
+    .map((entry) => entry.name);
+
+  if (
+    found.length !== 1 ||
+    !isSoundAddon(found[0] ?? "", context.electronPlatformName, arch)
+  ) {
+    throw new Error(
+      `The ${context.electronPlatformName} ${arch} app must hold its own audio addon alone, and holds ${found.length === 0 ? "no .node" : found.join(", ")}`
+    );
+  }
+};
+
+const afterPack: Configuration["afterPack"] = async (context) => {
+  await checkSoundAddon(context);
+  await copyAssetCatalog(context);
 };
 
 export const packOutputDir = (variant: PackageVariant) =>
@@ -110,7 +145,7 @@ export const createConfig = (variant: PackageVariant): Configuration => {
     // Signing, notarisation and publishing are not configured yet, so every
     // build is unsigned whatever identities the keychain or environment holds.
     publish: null,
-    afterPack: copyAssetCatalog,
+    afterPack,
     mac: {
       identity: null,
       category: "public.app-category.productivity",
