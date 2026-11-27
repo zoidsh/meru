@@ -22,6 +22,7 @@ import {
   createCapturedContextMenus,
   createContextMenus,
 } from "#platform/context-menu.ts";
+import type { ContextMenus } from "#platform/context-menu.ts";
 import {
   createCapturedDefaultBrowser,
   createDefaultBrowser,
@@ -60,6 +61,10 @@ import {
   createCapturedNotifier,
   createNotifier,
 } from "#platform/notifications.ts";
+import {
+  createCapturedPageMenus,
+  createPageMenus,
+} from "#platform/page-menu.ts";
 import {
   createCapturedPathOpener,
   createPathOpener,
@@ -243,6 +248,13 @@ export const systemBrowser = () =>
 
 export const systemClipboard = () =>
   MERU_E2E_BUILD ? createCapturedClipboard() : createClipboard();
+
+/**
+ * The suite's build records whatever a page's menu would do to the system's
+ * clipboard, spelling dictionary or screen, its developer tools included.
+ */
+export const systemPageMenus = (menus: ContextMenus) =>
+  MERU_E2E_BUILD ? createCapturedPageMenus(menus) : createPageMenus(menus);
 
 /**
  * The suite's build captures every notification, so a test never puts one on

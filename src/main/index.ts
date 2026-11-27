@@ -76,6 +76,7 @@ import { wireMailFeed } from "./wiring/mail-feed.ts";
 import { wireMenu } from "./wiring/menu.ts";
 import { wireNotifications } from "./wiring/notifications.ts";
 import { wireOwnWindows } from "./wiring/own-windows.ts";
+import { wirePageMenu } from "./wiring/page-menu.ts";
 import { wireScreenPicker } from "./wiring/screen-picker.ts";
 import { wireSettingsWindow } from "./wiring/settings-window.ts";
 import { wireShellContract } from "./wiring/shell-contract.ts";
@@ -513,6 +514,17 @@ const start = async () => {
     pollProfiles,
     power,
   } = wireMailFeed({ log, apps, sessions, profiles, doNotDisturb });
+
+  wirePageMenu({
+    log,
+    platform,
+    contextMenus,
+    senders,
+    isGmailTab,
+    clipboard,
+    browser: systemBrowser,
+    downloads,
+  });
 
   const contentBlocker = wireContentBlocker({ settings, signInOrigins });
   // macOS checks spelling with its own, whatever a session is given.

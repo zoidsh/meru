@@ -876,6 +876,21 @@ msgstr "Copy"
 msgid "Copy code"
 msgstr "Copy code"
 
+#. Item of a page's context menu on an email link that copies the address it writes to
+#: src/main/page-menu.ts
+msgid "Copy Email Address"
+msgstr "Copy Email Address"
+
+#. Item of a page's context menu that copies the image clicked
+#: src/main/page-menu.ts
+msgid "Copy Image"
+msgstr "Copy Image"
+
+#. Item of a page's context menu that copies the address of the image clicked
+#: src/main/page-menu.ts
+msgid "Copy Image Address"
+msgstr "Copy Image Address"
+
 #. Accessible name of the button beside the license key on the Meru Pro page of Settings that copies the whole key
 #: src/settings/pro-page.tsx
 msgid "Copy license key"
@@ -888,13 +903,18 @@ msgstr "Copy license key"
 msgid "Copy Link"
 msgstr "Copy Link"
 
+#. Item of a page's context menu on a link that copies where it goes
+#: src/main/page-menu.ts
+msgid "Copy Link Address"
+msgstr "Copy Link Address"
+
 #. Accessible name of the button on the About page of Settings that copies the operating system's name, version and architecture
 #: src/settings/about-page.tsx
 msgid "Copy operating system"
 msgstr "Copy operating system"
 
-#. Item of a tab's context menu that copies its page's address
-#: src/main/tab-menu.ts
+#. Item of a tab's context menu, and of the menu of a page in a tab other than Gmail's, that copies the page's address
+#: src/main/menu-labels.ts
 msgid "Copy URL"
 msgstr "Copy URL"
 
@@ -1420,6 +1440,11 @@ msgstr "In split view"
 msgid "In split view, maximized"
 msgstr "In split view, maximized"
 
+#. Item of a page's context menu that opens the developer tools at the element clicked
+#: src/main/page-menu.ts
+msgid "Inspect Element"
+msgstr "Inspect Element"
+
 #. Second sentence after an action in the unified inbox failed: the message shows in the list again
 #: src/shell/inbox.tsx
 msgid "It’s back in the list."
@@ -1465,6 +1490,11 @@ msgstr "Last checked {when}."
 #: src/shell/update-card.tsx
 msgid "Later"
 msgstr "Later"
+
+#. Item of a page's context menu on a misspelt word that adds it to the dictionary, so it is no longer marked
+#: src/main/page-menu.ts
+msgid "Learn Spelling"
+msgstr "Learn Spelling"
 
 #. The left arrow key, as a screen reader says it in a keyboard shortcut
 #: src/main/shortcuts-page.ts
@@ -1564,6 +1594,11 @@ msgstr "Loading…"
 #: src/settings/advanced-page.tsx
 msgid "Logs"
 msgstr "Logs"
+
+#. Item of a page's context menu on macOS that shows the system's definition of the selected text; {selection} is that text, cut short
+#: src/main/page-menu.ts
+msgid "Look Up “{SELECTION}”"
+msgstr "Look Up “{SELECTION}”"
 
 #. Description of the Use the macOS screen picker switch in Settings
 #: src/settings/advanced-page.tsx
@@ -1914,6 +1949,11 @@ msgstr "No downloads yet"
 msgid "No Google apps open"
 msgstr "No Google apps open"
 
+#. Disabled item of a page's context menu, in place of spelling suggestions, when the spell checker has none for the misspelt word
+#: src/main/page-menu.ts
+msgid "No Guesses Found"
+msgstr "No Guesses Found"
+
 #. Heading of the unified inbox before any profile's mail has been read, as when none is signed in or Meru is offline
 #: src/shell/inbox.tsx
 msgid "No mail to show yet"
@@ -2102,8 +2142,8 @@ msgstr "Open Google apps in"
 msgid "Open Google apps in Meru"
 msgstr "Open Google apps in Meru"
 
-#. Item of a tab's context menu that opens its page in the system's web browser
-#: src/main/tab-menu.ts
+#. Item of a tab's context menu, and of the menu of a page in a tab other than Gmail's, that opens the page in the system's web browser
+#: src/main/menu-labels.ts
 msgid "Open in Default Browser"
 msgstr "Open in Default Browser"
 
@@ -2510,6 +2550,11 @@ msgstr "Save device name"
 msgid "Save downloads to"
 msgstr "Save downloads to"
 
+#. Item of a page's context menu on an image that asks where to save it, then downloads it
+#: src/main/page-menu.ts
+msgid "Save Image As…"
+msgstr "Save Image As…"
+
 #. The Export button of the Logs row in Settings for a moment after a copy of the logs was saved
 #: src/settings/advanced-page.tsx
 msgid "Saved"
@@ -2554,6 +2599,11 @@ msgstr "Scroll profiles right"
 #: src/settings/saved-searches-card.tsx
 msgid "Search"
 msgstr "Search"
+
+#. Item of a page's context menu that searches Google for the selected text in the default browser
+#: src/main/page-menu.ts
+msgid "Search with Google"
+msgstr "Search with Google"
 
 #. Description of the What's new row on the About page of Settings
 #: src/settings/updates-group.tsx

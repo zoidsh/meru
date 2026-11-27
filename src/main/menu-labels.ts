@@ -2,11 +2,24 @@ import { t } from "@lingui/core/macro";
 import type { MenuItemConstructorOptions } from "electron";
 
 /**
- * The labels a command and a native context menu item share, so the menu
- * bar and a tab's menu name it the same way: Title Case, as every native
- * menu is, prepositions and articles lower case as macOS writes them.
+ * The labels two native menus share, the menu bar and a tab's menu or a
+ * tab's menu and a page's, so both name it the same way: Title Case, as
+ * every native menu is, prepositions and articles lower case as macOS
+ * writes them.
  */
 export const MENU_LABELS = {
+  copyUrl: () =>
+    t({
+      message: "Copy URL",
+      comment:
+        "Item of a tab's context menu, and of the menu of a page in a tab other than Gmail's, that copies the page's address",
+    }),
+  openInBrowser: () =>
+    t({
+      message: "Open in Default Browser",
+      comment:
+        "Item of a tab's context menu, and of the menu of a page in a tab other than Gmail's, that opens the page in the system's web browser",
+    }),
   reload: () =>
     t({
       message: "Reload",

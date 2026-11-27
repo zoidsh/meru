@@ -113,17 +113,8 @@ const LABELS: Record<TabMenuItemId, () => string> = {
       comment:
         "Item of a tab's context menu that opens another tab of the same Google app at the same page",
     }),
-  copyUrl: () =>
-    t({
-      message: "Copy URL",
-      comment: "Item of a tab's context menu that copies its page's address",
-    }),
-  openInBrowser: () =>
-    t({
-      message: "Open in Default Browser",
-      comment:
-        "Item of a tab's context menu that opens its page in the system's web browser",
-    }),
+  copyUrl: MENU_LABELS.copyUrl,
+  openInBrowser: MENU_LABELS.openInBrowser,
   pin: () =>
     t({
       message: "Pin",

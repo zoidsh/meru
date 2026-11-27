@@ -1,5 +1,9 @@
 import { Menu } from "electron";
-import type { BaseWindow, MenuItemConstructorOptions } from "electron";
+import type {
+  BaseWindow,
+  MenuItemConstructorOptions,
+  WebFrameMain,
+} from "electron";
 
 import type { MenuPoint } from "#core/context-menu.ts";
 
@@ -21,11 +25,15 @@ export type ContextMenuItem =
   | { type: "separator" };
 
 export interface ContextMenus {
-  /** Pops the menu up in `window`, at `at` in its content area or at the pointer. */
+  /**
+   * Pops the menu up in `window`, at `at` in its content area or at the
+   * pointer; a page's menu names the `frame` it was asked for in.
+   */
   popup: (
     window: BaseWindow,
     items: readonly ContextMenuItem[],
-    at?: MenuPoint
+    at?: MenuPoint,
+    frame?: WebFrameMain
   ) => void;
 }
 
@@ -51,10 +59,11 @@ const template = (item: ContextMenuItem): MenuItemConstructorOptions => {
 
 /** Native menus, as the system draws them. */
 export const createContextMenus = (): ContextMenus => ({
-  popup: (window, items, at) => {
+  popup: (window, items, at, frame) => {
     Menu.buildFromTemplate(items.map(template)).popup({
       window,
       ...(at && { x: at.x, y: at.y }),
+      ...(frame && { frame }),
     });
   },
 });
