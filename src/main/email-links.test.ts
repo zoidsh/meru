@@ -353,7 +353,7 @@ describe(createComposeWindows, () => {
 
     opened[0]?.onWindowOpen("https://example.com/");
     opened[0]?.onChildNavigation("https://mail.google.com/mail/u/0/");
-    opened[0]?.onWebContents(7);
+    opened[0]?.onWebContents(7, "child-window");
 
     const gmail = { profileId: "c", tabId: "gmail" };
 
@@ -362,6 +362,20 @@ describe(createComposeWindows, () => {
       [gmail, "https://mail.google.com/mail/u/0/"],
     ]);
     expect(registered).toStrictEqual([[7, { role: "child-window", ...gmail }]]);
+  });
+
+  it("registers the window and each pop-up it opens with the URL each was opened for, so a compose pop-out from it is known for one", () => {
+    const { windows, opened, registered } = composing(THREE);
+    const popout = "https://mail.google.com/mail/u/0/popout?ver=1#cmid%3D1";
+
+    windows.open("c", LINK);
+    opened[0]?.onWebContents(7, "child-window", opened[0].url);
+    opened[0]?.onWebContents(8, "child-window", popout);
+
+    expect(registered).toMatchObject([
+      [7, { role: "child-window", openedAt: opened[0]?.url }],
+      [8, { role: "child-window", openedAt: popout }],
+    ]);
   });
 
   it("opens one for a sleeping profile, which keeps it", () => {

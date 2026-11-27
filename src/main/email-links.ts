@@ -231,7 +231,7 @@ export const createComposeWindows = ({
         onWindowOpen: (url, asked) =>
           windowOpening.onWindowOpen(key, url, asked),
         onChildNavigation: (url) => windowOpening.onChildNavigation(key, url),
-        onWebContents: (webContentsId, openedAt) =>
+        onWebContents: (webContentsId, _kind, openedAt) =>
           senders.register(webContentsId, {
             role: "child-window",
             ...key,

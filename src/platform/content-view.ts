@@ -275,13 +275,9 @@ export type SessionWindowOptions = Pick<
   | "onWindowOpen"
   | "onChildNavigation"
   | "background"
+  | "onWebContents"
 > & {
   url: string;
-  /**
-   * Told of its webContents and its pop-ups', as a view's windows' are, each
-   * with the URL it was opened for.
-   */
-  onWebContents: (webContentsId: number, openedAt?: string) => () => void;
   /** Told once it has closed, by the page's own `window.close()` or `close`. */
   onClosed: () => void;
 };
@@ -317,9 +313,7 @@ export const openSessionWindow = (
     },
   });
 
-  trackDestroyed(window.webContents, "child-window", (id) =>
-    onWebContents(id, url)
-  );
+  trackDestroyed(window.webContents, "child-window", onWebContents, url);
   guardNavigation(window, options.onChildNavigation);
   window.removeMenu();
 
