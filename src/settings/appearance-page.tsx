@@ -145,7 +145,7 @@ export const AppearancePage = () => {
               label: t({
                 message: "Tint with profile color",
                 comment:
-                  "Label of the switch in Settings that mixes the selected profile's color into the title bar and the sidebar",
+                  "Label of the switch in Settings that colors the title bar, the sidebar and the cards and menus over the page in tones of the selected profile's color",
               }),
               description: t({
                 message:

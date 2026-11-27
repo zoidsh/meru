@@ -13,6 +13,7 @@ import { Inbox } from "./inbox.tsx";
 import { LicenseNotice } from "./license-notice.tsx";
 import { OpenAppOverlay } from "./open-app.tsx";
 import { ProfileQuestion } from "./profile-question.tsx";
+import { useProfileTint, useTintColor } from "./profile-tint.ts";
 import { MainScreenPicker } from "./screen-picker.tsx";
 import { openOverlayDocument } from "./shell-document.ts";
 import { shellCalls, useShellState } from "./sync.ts";
@@ -164,6 +165,7 @@ export const OverlayLayer = () => {
 
   useClosers(target, open?.kind);
   useCloseOnShellPress(open?.kind);
+  useProfileTint(target, useTintColor());
 
   return target && open
     ? createPortal(<OverlayContent open={open} target={target} />, target.body)

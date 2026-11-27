@@ -46,7 +46,7 @@ export const TrialFooter = ({ days }: { days: number }) => {
           "Accessible name of the footer of the main window that counts the days left of the Meru Pro trial",
       })}
       // On the shell, so its muted text takes the shell's.
-      data-tinted
+      data-frame
       style={{ height: TRIAL_FOOTER_HEIGHT }}
       className="flex shrink-0 items-center justify-center gap-2"
     >

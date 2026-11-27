@@ -754,9 +754,11 @@ const SplitBox = ({
         // below it takes room, so its edge stands one stack gap from its
         // neighbours.
         "-mx-1 flex flex-col rounded-[12px] p-1",
+        // In oklab: in oklch the page's grey names a hue of 0, which pulls
+        // the profile's hue toward pink on the way.
         maximized
-          ? "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_85%)]"
-          : "bg-[color-mix(in_oklch,var(--color-shell),var(--background)_55%)]",
+          ? "bg-[color-mix(in_oklab,var(--color-shell),var(--background)_85%)]"
+          : "bg-[color-mix(in_oklab,var(--color-shell),var(--background)_55%)]",
         wide ? "col-span-2 gap-1" : "items-center gap-2"
       )}
     >
@@ -1209,7 +1211,7 @@ export const Sidebar = ({
   return (
     <Tabs.Root
       ref={sidebar}
-      data-tinted
+      data-frame
       orientation="vertical"
       value={tabs.selectedTabId}
       onValueChange={(tabId: string) => {

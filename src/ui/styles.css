@@ -50,67 +50,17 @@
 }
 
 /*
- * Ours too: the profile tint. Where `data-tint` sets `--tint` to the selected
- * profile's colour, the shell grey takes `--tint-amount` of it, by the
- * theme, and the titlebar and the sidebar,
- * marked `data-tinted`, mix it into their hover (7/6 of that), selected and
- * outline (4/3) fills. The page and overlays keep their own greys.
- * Mixed here and not in `[data-tinted]`, where a token naming itself would be
- * a cycle. Mixed in oklab, since in oklch shadcn's greys, `oklch(L 0 0)`, name
- * a hue of 0 that pulls every tint's hue toward it, which is pink.
+ * Ours too: the profile tint. The shell gives each document it draws for a
+ * profile that profile's tonal palette (`src/core/tonal-tint.ts`) as the
+ * ordinary tokens on its root, each `light-dark()` of the two themes, and
+ * marks the root `data-tint`. Untinted, the frame (the titlebar, the sidebar
+ * and the trial footer, marked `data-frame`) keeps the plain grey but not
+ * shadcn's muted grey in light, which is 3.97:1 on the shell.
  */
-[data-tint] {
-  --tint-amount: 20%;
-  --tint-shell: color-mix(
-    in oklab,
-    var(--shell),
-    var(--tint, var(--shell)) var(--tint-amount)
-  );
-  --tint-hover: color-mix(
-    in oklab,
-    var(--muted),
-    var(--tint, var(--muted)) calc(var(--tint-amount) * 7 / 6)
-  );
-  --tint-selected: color-mix(
-    in oklab,
-    var(--secondary),
-    var(--tint, var(--secondary)) calc(var(--tint-amount) * 4 / 3)
-  );
-  --tint-outline: color-mix(
-    in oklab,
-    var(--border),
-    var(--tint, var(--border)) calc(var(--tint-amount) * 4 / 3)
-  );
-  /*
-   * The shell's own muted text and icons: shadcn's muted grey is 3.97:1 on
-   * the light shell and less on a tinted one. Light takes a dark tone of the
-   * profile's colour, as Chrome does on a coloured frame, and without one a
-   * grey of the same weight; every colour stays above 4.5:1.
-   */
-  --tint-muted-foreground: color-mix(
-    in oklab,
-    var(--foreground),
-    var(--tint, oklch(0.7 0 0)) 55%
-  );
-}
-
-@media (prefers-color-scheme: dark) {
-  /* Dark's muted grey already reads on the tinted shell, so it only leans. */
-  [data-tint] {
-    --tint-amount: 12%;
-    --tint-muted-foreground: color-mix(
-      in oklab,
-      var(--muted-foreground),
-      var(--tint, var(--muted-foreground)) 15%
-    );
+@media (prefers-color-scheme: light) {
+  :root:not([data-tint]) [data-frame] {
+    --muted-foreground: #555555;
   }
-}
-
-[data-tinted] {
-  --muted: var(--tint-hover);
-  --secondary: var(--tint-selected);
-  --border: var(--tint-outline);
-  --muted-foreground: var(--tint-muted-foreground);
 }
 
 @layer base {
@@ -132,7 +82,7 @@
 }
 
 @theme inline {
-  --color-shell: var(--tint-shell, var(--shell));
+  --color-shell: var(--shell);
   --color-success: var(--success);
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;

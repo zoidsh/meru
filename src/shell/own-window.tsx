@@ -2,7 +2,6 @@ import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
 import { EllipsisVerticalIcon } from "lucide-react";
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 
 import type { ShellState } from "#contract/shell.ts";
@@ -24,6 +23,7 @@ import { wholePoint } from "./context-menu.ts";
 import { Downloads, DownloadsButton } from "./downloads.tsx";
 import { FindBar } from "./find-bar.tsx";
 import { shellPlatform } from "./platform.ts";
+import { useProfileTint, useTintColor } from "./profile-tint.ts";
 import { ScreenPicker } from "./screen-picker.tsx";
 import {
   closeShellDocument,
@@ -86,24 +86,19 @@ const OwnWindowFrame = ({ own }: { own: OwnWindow }) => {
   const shortcuts = useShellState("shortcuts");
   const downloads = useShellState("downloads");
   const appearance = useShellState("appearance");
-  const tint = appearance?.tint ?? true;
   const downloadsShown = appearance?.buttons.downloads ?? true;
   const profile = profiles?.profiles.find(({ id }) => id === own.profileId);
   const title = tabTitle(own);
 
   return (
-    <div
-      data-tint
-      style={{ "--tint": tint ? profile?.color : undefined } as CSSProperties}
-      className="flex h-screen flex-col bg-shell"
-    >
+    <div className="flex h-screen flex-col bg-shell">
       <header
         aria-label={t({
           message: "Title bar",
           comment:
             "Accessible name of the strip across the top of the window, read by screen readers",
         })}
-        data-tinted
+        data-frame
         style={{
           height: TITLEBAR_HEIGHT,
           paddingLeft: titlebarStart(shellPlatform()),
@@ -196,6 +191,7 @@ const OwnWindowDocument = ({ own }: { own: OwnWindow }) => {
       closeShellDocument(name);
     };
   }, [name]);
+  useProfileTint(target, useTintColor(own.profileId));
 
   return target
     ? createPortal(<OwnWindowFrame own={own} />, target.body)
@@ -226,6 +222,7 @@ const OwnWindowFind = ({
       closeShellDocument(name);
     };
   }, [name]);
+  useProfileTint(target, useTintColor(profileId));
 
   // Escape anywhere in it closes it, as in the overlay's document.
   useEffect(() => {
@@ -324,6 +321,7 @@ const OwnWindowCard = ({ own, card }: { own: OwnWindow; card: ShownCard }) => {
       closeShellDocument(name);
     };
   }, [name]);
+  useProfileTint(target, useTintColor(own.profileId));
 
   useEffect(() => {
     if (!target) {

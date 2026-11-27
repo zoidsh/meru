@@ -521,7 +521,7 @@ export const SHELL_STATE = {
   sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),
   /** What the Appearance settings ask of the shell. */
   appearance: z.object({
-    /** Whether the shell mixes the profile's colour into its greys. */
+    /** Whether the shell draws in tones of the profile's colour, or in shadcn's greys. */
     tint: z.boolean(),
     /**
      * Whether each titlebar button may show; one that may still shows only

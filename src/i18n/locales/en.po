@@ -3042,7 +3042,7 @@ msgstr "This setting isn't available in the free version. Upgrade to Meru Pro to
 msgid "Tim from Meru"
 msgstr "Tim from Meru"
 
-#. Label of the switch in Settings that mixes the selected profile's color into the title bar and the sidebar
+#. Label of the switch in Settings that colors the title bar, the sidebar and the cards and menus over the page in tones of the selected profile's color
 #: src/settings/appearance-page.tsx
 msgid "Tint with profile color"
 msgstr "Tint with profile color"

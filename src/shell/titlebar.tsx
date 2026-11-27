@@ -704,7 +704,7 @@ export const Titlebar = ({
         comment:
           "Accessible name of the strip across the top of the window, read by screen readers",
       })}
-      data-tinted
+      data-frame
       style={
         {
           height: TITLEBAR_HEIGHT,

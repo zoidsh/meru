@@ -2,7 +2,9 @@ import type { ElectronApplication, Page } from "@playwright/test";
 
 import { contentViewBounds } from "#core/layout.ts";
 import type { Platform } from "#core/platform.ts";
+import { paletteColor } from "#core/profile-color.ts";
 import { windowBackground } from "#core/shell-grey.ts";
+import { tonalTokens } from "#core/tonal-tint.ts";
 
 import {
   clickMenuItem,
@@ -63,25 +65,27 @@ test("the view sits as the shell draws it, on the shell grey the window has too 
   ]);
   await expect.poll(() => drawnPadding(shell)).toBe("0px 8px");
   // Playwright emulates the light theme in the page, not in main. The first
-  // profile's colour is the palette's first, at the light theme's Medium.
+  // profile's colour is the palette's first, whose light tonal frame it is.
   const [drawn, tinted] = await shell
     .getByRole("banner", { name: "Title bar" })
-    .evaluate((titlebar) => {
-      const probe = document.createElement("div");
+    .evaluate(
+      (titlebar, frame) => {
+        const probe = document.createElement("div");
 
-      probe.style.backgroundColor =
-        "color-mix(in oklab, rgb(235, 235, 235), #2d52d2 20%)";
-      document.body.append(probe);
+        probe.style.backgroundColor = frame;
+        document.body.append(probe);
 
-      const expected = getComputedStyle(probe).backgroundColor;
+        const expected = getComputedStyle(probe).backgroundColor;
 
-      probe.remove();
+        probe.remove();
 
-      return [
-        getComputedStyle(titlebar.parentElement ?? titlebar).backgroundColor,
-        expected,
-      ];
-    });
+        return [
+          getComputedStyle(titlebar.parentElement ?? titlebar).backgroundColor,
+          expected,
+        ];
+      },
+      tonalTokens(paletteColor("blue"), "light").shell
+    );
 
   expect(drawn).toBe(tinted);
 

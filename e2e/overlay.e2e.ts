@@ -3,6 +3,8 @@ import { delay } from "es-toolkit";
 
 import { overlayRectangle } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
+import { paletteColor } from "#core/profile-color.ts";
+import { tonalTokens } from "#core/tonal-tint.ts";
 
 import {
   clickMenuItem,
@@ -223,7 +225,8 @@ test("Escape, a click beside the card, a tab switch and the window losing focus 
   const gmail = await findPage(app, standIn.url);
   const draft = gmail.getByRole("textbox", { name: DRAFT_LABEL });
 
-  // A reloaded shell opens a new overlay document, which its styles reach.
+  // A reloaded shell opens a new overlay document, which its styles and the
+  // profile's palette reach: the card in the first profile's blue popover.
   const first = await findOverlayDocument(app);
 
   await shell.reload();
@@ -232,14 +235,28 @@ test("Escape, a click beside the card, a tab switch and the window losing focus 
   const overlay = await findOverlayDocument(app);
 
   await openFromMenu(app, overlay);
+
+  const { popover } = tonalTokens(paletteColor("blue"), "light");
+
   expect(
     await overlay
       .getByRole("dialog", { name: "New tab" })
-      .evaluate((card) => [
-        getComputedStyle(card).backgroundColor,
-        getComputedStyle(card.ownerDocument.body).backgroundColor,
-      ])
-  ).toStrictEqual(["oklch(1 0 0)", "rgba(0, 0, 0, 0)"]);
+      .evaluate((card, fill) => {
+        const probe = card.ownerDocument.createElement("div");
+
+        probe.style.backgroundColor = fill;
+        card.ownerDocument.body.append(probe);
+
+        const expected = getComputedStyle(probe).backgroundColor;
+
+        probe.remove();
+
+        return [
+          getComputedStyle(card).backgroundColor === expected,
+          getComputedStyle(card.ownerDocument.body).backgroundColor,
+        ];
+      }, popover)
+  ).toStrictEqual([true, "rgba(0, 0, 0, 0)"]);
   await overlay.keyboard.press("Escape");
   await expectClosed(app, overlay);
 
