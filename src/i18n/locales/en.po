@@ -1595,7 +1595,7 @@ msgstr "Loading…"
 msgid "Logs"
 msgstr "Logs"
 
-#. Item of a page's context menu on macOS that shows the system's definition of the selected text; {selection} is that text, cut short
+#. Item of a page's context menu on macOS that shows the system's definition of the selected text; {SELECTION} is that text, cut short
 #: src/main/page-menu.ts
 msgid "Look Up “{SELECTION}”"
 msgstr "Look Up “{SELECTION}”"

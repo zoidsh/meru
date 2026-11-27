@@ -64,7 +64,7 @@ const LABELS: Record<FixedId, () => string> = {
     t({
       message: `Look Up “${SELECTION}”`,
       comment:
-        "Item of a page's context menu on macOS that shows the system's definition of the selected text; {selection} is that text, cut short",
+        "Item of a page's context menu on macOS that shows the system's definition of the selected text; {SELECTION} is that text, cut short",
     }),
   searchWithGoogle: () =>
     t({
