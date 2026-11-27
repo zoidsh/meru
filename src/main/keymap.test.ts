@@ -147,6 +147,22 @@ describe(createKeymap, () => {
     );
   });
 
+  it("refuses a key whose press Zoom In hears, as Ctrl and QWERTZ's +, which sits where US has ]", async () => {
+    const { keymap } = setup("linux");
+
+    await expect(
+      keymap.set("tab.reload", "Control+]", {
+        key: "+",
+        code: "BracketRight",
+        control: true,
+        shift: false,
+        alt: false,
+        meta: false,
+      })
+    ).resolves.toBe("Ctrl+] is already used for Zoom In.");
+    expect(keymap.accelerator("tab.reload")).toBe("F5");
+  });
+
   it("frees the key a command leaves, for another to take", async () => {
     const { keymap } = setup();
 

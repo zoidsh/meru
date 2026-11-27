@@ -1,6 +1,7 @@
 import { t } from "@lingui/core/macro";
 
 import { formatAccelerator } from "#core/accelerator.ts";
+import type { PressedKey } from "#core/accelerator.ts";
 import {
   BUILT_IN_SHORTCUTS,
   ROLE_SHORTCUTS,
@@ -129,8 +130,15 @@ export const createKeymap = ({
   };
 
   /** Why `accelerator` cannot be the command's key, or `undefined` while it can. */
-  const refusal = (id: string, accelerator: string) => {
-    const holder = shortcutHolder(current(), fixed, id, accelerator, isMacOS);
+  const refusal = (id: string, accelerator: string, pressed?: PressedKey) => {
+    const holder = shortcutHolder(
+      current(),
+      fixed,
+      id,
+      accelerator,
+      isMacOS,
+      pressed
+    );
 
     if (holder === undefined) {
       return;
@@ -178,10 +186,12 @@ export const createKeymap = ({
     /**
      * Gives the command `accelerator`, or no key for `""`; answers why not
      * when another command or a key of the menu's holds it, and changes
-     * nothing then. Rejects without Meru Pro.
+     * nothing then; also when another key hears the very key `pressed` that
+     * recorded it. Rejects without Meru Pro.
      */
-    set: async (id: string, accelerator: string) => {
-      const refused = accelerator === "" ? undefined : refusal(id, accelerator);
+    set: async (id: string, accelerator: string, pressed?: PressedKey) => {
+      const refused =
+        accelerator === "" ? undefined : refusal(id, accelerator, pressed);
 
       if (refused === undefined) {
         await write(id, accelerator);

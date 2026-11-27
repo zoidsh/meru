@@ -131,17 +131,15 @@ const ChangeableRow = ({
       return;
     }
 
-    const recorded = recordKey(
-      {
-        key: event.key,
-        code: event.code,
-        control: event.ctrlKey,
-        shift: event.shiftKey,
-        alt: event.altKey,
-        meta: event.metaKey,
-      },
-      isMacOS()
-    );
+    const pressed = {
+      key: event.key,
+      code: event.code,
+      control: event.ctrlKey,
+      shift: event.shiftKey,
+      alt: event.altKey,
+      meta: event.metaKey,
+    };
+    const recorded = recordKey(pressed, isMacOS());
 
     // Tab moves focus on, which ends the recording as the button blurs.
     if (recorded.kind === "leave") {
@@ -180,7 +178,7 @@ const ChangeableRow = ({
       }
       case "key": {
         void answer(
-          calls.setShortcut({ id, accelerator: recorded.accelerator })
+          calls.setShortcut({ id, accelerator: recorded.accelerator, pressed })
         );
         break;
       }

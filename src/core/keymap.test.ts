@@ -31,6 +31,16 @@ const keymapOf = (
     isMacOS: true,
   });
 
+/** With Control held. */
+const press = (key: string, code: string) => ({
+  key,
+  code,
+  control: true,
+  shift: false,
+  alt: false,
+  meta: false,
+});
+
 describe(customShortcutsOf, () => {
   it("reads only this platform's set, each key the recorder could have recorded or none", () => {
     const stored = {
@@ -155,6 +165,42 @@ describe(shortcutHolder, () => {
       undefined,
       undefined,
     ]);
+  });
+
+  it("refuses a key whose press another key hears, as QWERTZ's +, which records as ] but is Zoom In's Plus", () => {
+    const fixed = [
+      { id: "zoomIn", accelerator: "CommandOrControl+Plus" },
+      { id: "zoomInEqual", accelerator: "CommandOrControl+=" },
+    ];
+    const pcKeymap = effectiveKeymap({
+      defaults: { reload: "F5", "profile.select.1": "Control+Alt+Shift+1" },
+      changeable: new Set(["reload"]),
+      custom: {},
+      fixed,
+      isMacOS: false,
+    });
+
+    expect([
+      shortcutHolder(
+        pcKeymap,
+        fixed,
+        "reload",
+        "Control+]",
+        false,
+        press("+", "BracketRight")
+      ),
+      // Without the press, as on Reset, the key alone is compared.
+      shortcutHolder(pcKeymap, fixed, "reload", "Control+]", false),
+      // QWERTZ's ü where US has [ is free.
+      shortcutHolder(
+        pcKeymap,
+        fixed,
+        "reload",
+        "Control+[",
+        false,
+        press("ü", "BracketLeft")
+      ),
+    ]).toStrictEqual([{ fixed: "zoomIn" }, undefined, undefined]);
   });
 });
 

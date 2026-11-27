@@ -538,8 +538,8 @@ export const settingsHandlers = ({
       Promise.try(() => {
         shortcutEditor.record(id);
       }),
-    setShortcut: async ({ id, accelerator }) =>
-      (await shortcutEditor.set(id, accelerator)) ?? null,
+    setShortcut: async ({ id, accelerator, pressed }) =>
+      (await shortcutEditor.set(id, accelerator, pressed)) ?? null,
     resetShortcut: async ({ id }) => (await shortcutEditor.reset(id)) ?? null,
     ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };

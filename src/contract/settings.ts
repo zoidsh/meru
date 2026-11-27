@@ -497,7 +497,21 @@ export const SETTINGS_CALLS = {
    * recording; answers why not when another command holds it.
    */
   setShortcut: {
-    request: z.object({ id: z.string(), accelerator: z.string() }),
+    request: z.object({
+      id: z.string(),
+      accelerator: z.string(),
+      /** The key typed, which no other key may hear either. */
+      pressed: z.optional(
+        z.object({
+          key: z.string(),
+          code: z.string(),
+          control: z.boolean(),
+          shift: z.boolean(),
+          alt: z.boolean(),
+          meta: z.boolean(),
+        })
+      ),
+    }),
     response: z.nullable(z.string()),
   },
   /** Gives the command its default again, answering as `setShortcut` does. */

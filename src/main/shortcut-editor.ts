@@ -1,4 +1,5 @@
 import { isRecordable } from "#core/accelerator.ts";
+import type { PressedKey } from "#core/accelerator.ts";
 import type { Capability } from "#core/entitlement.ts";
 import type { Platform } from "#core/platform.ts";
 import type { AppWindow } from "#platform/window.ts";
@@ -64,9 +65,9 @@ export const createShortcutEditor = ({
     },
     /**
      * Gives the command the key typed, `""` for none; answers why not when
-     * another holds it.
+     * another holds it, or hears the key `pressed` that recorded it.
      */
-    set: (id: string, accelerator: string) => {
+    set: (id: string, accelerator: string, pressed?: PressedKey) => {
       stop();
 
       if (
@@ -78,7 +79,7 @@ export const createShortcutEditor = ({
         );
       }
 
-      return keymap.set(id, accelerator);
+      return keymap.set(id, accelerator, pressed);
     },
     reset: (id: string) => {
       stop();

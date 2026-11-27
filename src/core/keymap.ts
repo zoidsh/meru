@@ -1,4 +1,9 @@
-import { acceleratorIdentity, isRecordable } from "./accelerator.ts";
+import {
+  acceleratorIdentity,
+  isRecordable,
+  matchesAccelerator,
+} from "./accelerator.ts";
+import type { PressedKey } from "./accelerator.ts";
 import type { Platform } from "./platform.ts";
 
 /**
@@ -120,14 +125,18 @@ export const effectiveKeymap = ({
 
 /**
  * What holds `accelerator` besides the command `id`: another command, by
- * its id, or a fixed key, by its own; `undefined` while it is free.
+ * its id, or a fixed key, by its own; `undefined` while it is free. With
+ * the key `pressed` that recorded it, also whatever key hears that very
+ * press, as QWERTZ's + where US has ], which records as ] but is heard as
+ * Zoom In's Plus.
  */
 export const shortcutHolder = (
   keymap: Keymap,
   fixed: readonly FixedKey[],
   id: string,
   accelerator: string,
-  isMacOS: boolean
+  isMacOS: boolean,
+  pressed?: PressedKey
 ): { command: string } | { fixed: string } | undefined => {
   const identity = identityOf(accelerator, isMacOS);
 
@@ -135,18 +144,25 @@ export const shortcutHolder = (
     return undefined;
   }
 
-  const held = fixed.find(
-    (key) => identityOf(key.accelerator, isMacOS) === identity
-  );
+  const others = Object.keys(keymap.keys).filter((other) => other !== id);
+  const input = pressed && {
+    ...pressed,
+    type: "keyDown",
+    isAutoRepeat: false,
+  };
+  const holds = (key: string | undefined) =>
+    key !== undefined &&
+    key !== "" &&
+    (identityOf(key, isMacOS) === identity ||
+      (input !== undefined && matchesAccelerator(key, input, isMacOS)));
+
+  const held = fixed.find((key) => holds(key.accelerator));
 
   if (held) {
     return { fixed: held.id };
   }
 
-  const command = Object.keys(keymap.keys).find(
-    (other) =>
-      other !== id && identityOf(keymap.keys[other], isMacOS) === identity
-  );
+  const command = others.find((other) => holds(keymap.keys[other]));
 
   return command === undefined ? undefined : { command };
 };
