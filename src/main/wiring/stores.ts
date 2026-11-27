@@ -89,7 +89,15 @@ export const wireStores = async ({
   });
   // Ahead of every other listener of the profiles, so each reads the
   // sidebar as the change leaves it.
-  const sidebar = createSidebar({ profiles });
+  const sidebar = createSidebar({
+    profiles,
+    showWindows: {
+      get: () => settings.get("showWindowsInSidebar"),
+      onChange: (listener) => {
+        settings.onChange("showWindowsInSidebar", listener);
+      },
+    },
+  });
   const doNotDisturb = createDoNotDisturb({
     profiles,
     now: () => new Date(),

@@ -4,6 +4,7 @@ import {
   keepsOverride,
   sidebarRule,
   sidebarState,
+  sidebarTabs,
   sidebarWidth,
   toggleShown,
   toggleWidth,
@@ -110,6 +111,37 @@ describe("the toggles", () => {
   });
 });
 
+/** Gmail, and two Calendar tabs each in a window of its own. */
+const windowed: State = {
+  version: 1,
+  profiles: [
+    {
+      ...newProfile("a", "Default"),
+      tabs: [
+        gmailTab(),
+        { id: "c1", app: "calendar", url: "", title: "", ownWindow: true },
+        { id: "c2", app: "calendar", url: "", title: "", ownWindow: true },
+      ],
+    },
+    newProfile("b", "Work"),
+  ],
+  selectedProfileId: "a",
+};
+
+describe(sidebarTabs, () => {
+  it("gives the selected profile's tabs the sidebar lists, which the rule counts: Gmail alone and its own windows open no column while Show windows in the sidebar is off", () => {
+    const ids = (showWindows: boolean) =>
+      sidebarTabs(windowed, showWindows).map((tab) => tab.id);
+
+    expect([
+      ids(true),
+      ids(false),
+      sidebarRule(sidebarTabs(windowed, true)),
+      sidebarRule(sidebarTabs(windowed, false)),
+    ]).toStrictEqual([["gmail", "c1", "c2"], ["gmail"], "wide", "hidden"]);
+  });
+});
+
 describe(keepsOverride, () => {
   const state: State = {
     version: 1,
@@ -136,22 +168,46 @@ describe(keepsOverride, () => {
         withTabs([
           { id: "c1", app: "calendar", url: "x", title: "Week" },
           gmailTab(),
-        ])
+        ]),
+        true
       )
     ).toBeTruthy();
   });
 
   it("lapses when a tab opens or closes, or another profile is selected", () => {
     expect([
-      keepsOverride(state, withTabs([gmailTab()])),
+      keepsOverride(state, withTabs([gmailTab()]), true),
       keepsOverride(
         state,
         withTabs([
           ...(state.profiles[0]?.tabs ?? []),
           { id: "d1", app: "docs", url: "", title: "" },
-        ])
+        ]),
+        true
       ),
-      keepsOverride(state, { ...state, selectedProfileId: "b" }),
+      keepsOverride(state, { ...state, selectedProfileId: "b" }, true),
     ]).toStrictEqual([false, false, false]);
+  });
+
+  it("holds as a tab the sidebar leaves out closes, and lapses as one it lists does", () => {
+    const [profile] = windowed.profiles;
+    const without = (tabId: string): State => ({
+      ...windowed,
+      profiles: profile
+        ? [
+            {
+              ...profile,
+              tabs: profile.tabs.filter(
+                (tab) => !("id" in tab) || tab.id !== tabId
+              ),
+            },
+          ]
+        : [],
+    });
+
+    expect([
+      keepsOverride(windowed, without("c1"), false),
+      keepsOverride(windowed, without("c1"), true),
+    ]).toStrictEqual([true, false]);
   });
 });

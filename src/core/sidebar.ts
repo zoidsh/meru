@@ -1,5 +1,6 @@
 import { isEqual } from "es-toolkit";
 
+import { listedTabs } from "./drawn-tabs.ts";
 import type { Platform } from "./platform.ts";
 import { isPinned, knownTabs, selectedProfile } from "./state.ts";
 import type { State, Tab } from "./state.ts";
@@ -66,21 +67,30 @@ export const sidebarState = (
   return override.width ?? (rule === "hidden" ? "narrow" : rule);
 };
 
-/** The selected profile's tabs, which the rule reads. */
-export const sidebarTabs = (state: State) => knownTabs(selectedProfile(state));
+/**
+ * The selected profile's tabs the sidebar lists, which the rule reads: with
+ * Show windows in the sidebar off, none in a window of its own.
+ */
+export const sidebarTabs = (state: State, showWindows: boolean) =>
+  listedTabs(knownTabs(selectedProfile(state)), showWindows);
 
-const tabIds = (state: State) =>
-  sidebarTabs(state)
+const tabIds = (state: State, showWindows: boolean) =>
+  sidebarTabs(state, showWindows)
     .map((tab) => tab.id)
     .toSorted();
 
 /**
  * Whether a choice made by hand still holds after `previous` became `next`:
- * not once another profile is selected or a tab opens or closes in it.
+ * not once another profile is selected or a tab the sidebar lists opens or
+ * closes in it.
  */
-export const keepsOverride = (previous: State, next: State) =>
+export const keepsOverride = (
+  previous: State,
+  next: State,
+  showWindows: boolean
+) =>
   previous.selectedProfileId === next.selectedProfileId &&
-  isEqual(tabIds(previous), tabIds(next));
+  isEqual(tabIds(previous, showWindows), tabIds(next, showWindows));
 
 /** The override after the titlebar's toggle, from the state it showed. */
 export const toggleShown = (
