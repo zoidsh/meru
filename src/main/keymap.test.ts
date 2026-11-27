@@ -92,7 +92,7 @@ describe(createKeymap, () => {
       "another command's",
       "darwin",
       "Command+,",
-      "⌘, is already used for Settings….",
+      "⌘, is already used for Settings.",
     ],
     [
       "a range's",
@@ -143,7 +143,7 @@ describe(createKeymap, () => {
     const { keymap } = setup("win32");
 
     await expect(keymap.set("tab.reload", "CommandOrControl+,")).resolves.toBe(
-      "Ctrl+, is already used for Settings…."
+      "Ctrl+, is already used for Settings."
     );
   });
 
@@ -175,7 +175,7 @@ describe(createKeymap, () => {
     await keymap.set("tab.find", "Control+Shift+R");
 
     await expect(keymap.reset("tab.reload")).resolves.toBe(
-      "⌃⇧R is already used for Find…."
+      "⌃⇧R is already used for Find."
     );
     expect(keymap.accelerator("tab.reload")).toBe("Command+Alt+R");
   });

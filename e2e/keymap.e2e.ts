@@ -1,4 +1,4 @@
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
 import {
@@ -8,31 +8,7 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
-import { FORMER_KEYS, KEYS } from "./lib/keys.ts";
-import type { Key } from "./lib/keys.ts";
-
-/** `key` in the page whose URL starts with `url`, as the system hands keys to it, so its view hears it first. */
-const pressInPage = (
-  app: ElectronApplication,
-  url: string,
-  { keyCode, modifiers }: Key
-) =>
-  app.evaluate(
-    ({ webContents }, request) => {
-      const page = webContents
-        .getAllWebContents()
-        .find((candidate) => candidate.getURL().startsWith(request.url));
-
-      for (const type of ["keyDown", "keyUp"] as const) {
-        page?.sendInputEvent({
-          type,
-          keyCode: request.keyCode,
-          modifiers: request.modifiers,
-        });
-      }
-    },
-    { url, keyCode, modifiers }
-  );
+import { FORMER_KEYS, KEYS, pressInPage } from "./lib/keys.ts";
 
 /** By the name it starts with: a profile not signed in also says so. */
 const profileButton = (shell: Page, name: string) =>

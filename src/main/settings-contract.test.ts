@@ -37,6 +37,7 @@ import {
 import { publicKeyFromRaw } from "./entitlement-token.ts";
 import { createEntitlement, entitlementErrorMessage } from "./entitlement.ts";
 import { createGeneralPage } from "./general-page.ts";
+import { createKeymap } from "./keymap.ts";
 import { createLanguage } from "./language.ts";
 import { createLicenseRequests } from "./license-requests.ts";
 import { createMailPoller } from "./mail.ts";
@@ -49,6 +50,7 @@ import {
 } from "./settings-contract.ts";
 import { createSettingsPages } from "./settings-pages.ts";
 import { createSettingsStore } from "./settings.ts";
+import { createShortcutEditor } from "./shortcut-editor.ts";
 import { readShortcuts } from "./shortcuts-page.ts";
 import { createSpellcheck } from "./spellcheck.ts";
 import { holdEntitlementServer } from "./test-hooks.ts";
@@ -348,6 +350,17 @@ const setup = (
     }),
     about: createAboutPage({ platform, system: system.system, clipboard }),
     shortcuts: () => readShortcuts(platform, "Meru", COMMANDS),
+    shortcutEditor: createShortcutEditor({
+      platform,
+      keymap: createKeymap({
+        platform,
+        appName: "Meru",
+        commands: COMMANDS,
+        settings,
+      }),
+      can: entitlement.can,
+      ignoreMenuShortcuts: () => {},
+    }),
     releases: { list: () => Promise.resolve(RELEASES) },
     entitlement,
     licenseRequests: createLicenseRequests(),

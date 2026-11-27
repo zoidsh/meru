@@ -137,7 +137,8 @@ export const createKeymap = ({
     }
 
     const keys = formatAccelerator(accelerator, platform);
-    const command = holderName(holder);
+    // Else a title such as "Settings…" ends the sentence in two stops.
+    const command = holderName(holder).replace(/…$/u, "");
 
     return t({
       message: `${keys} is already used for ${command}.`,

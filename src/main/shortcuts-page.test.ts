@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import type { Platform } from "#core/platform.ts";
+import { createInitialSettings } from "#core/settings.ts";
 
 import { COMMANDS } from "./commands.ts";
 import type { Command } from "./commands.ts";
-import { readShortcuts } from "./shortcuts-page.ts";
+import { createKeymap } from "./keymap.ts";
+import { createSettingsStore } from "./settings.ts";
+import {
+  googleNote,
+  readShortcuts,
+  shortcutsEditing,
+} from "./shortcuts-page.ts";
 
 const PLATFORMS = ["darwin", "win32", "linux"] as const;
 
@@ -261,5 +268,89 @@ describe(readShortcuts, () => {
         ["Quit Meru", "Ctrl Q"],
       ],
     ]);
+  });
+});
+
+describe(googleNote, () => {
+  it("names one app, two, or two and others, with the verb agreeing", () => {
+    expect(googleNote([])).toBeNull();
+    expect(googleNote(["Chat"])).toBe(
+      "Chat also uses this key. Meru's shortcut will win."
+    );
+    expect(googleNote(["Docs", "Slides"])).toBe(
+      "Docs and Slides also use this key. Meru's shortcut will win."
+    );
+    expect(googleNote(["Gmail", "Docs", "Sheets"])).toBe(
+      "Gmail, Docs and others also use this key. Meru's shortcut will win."
+    );
+  });
+});
+
+/** The macOS rows with four keys changed, Back's being recorded. */
+const setup = async (pro = true) => {
+  const settings = createSettingsStore({
+    initial: createInitialSettings(),
+    save: () => Promise.resolve(),
+    platform: "darwin",
+    log: () => {},
+  });
+  const keymap = createKeymap({
+    platform: "darwin",
+    appName: "Meru",
+    commands: COMMANDS,
+    settings,
+  });
+
+  await keymap.set("tab.reload", "Command+J");
+  await keymap.set("tab.find", "Command+Shift+Y");
+  await keymap.set("tab.stop", "Command+Alt+K");
+  await keymap.set("tab.findNext", "");
+
+  const rows = readShortcuts(
+    "darwin",
+    "Meru",
+    keymap.commands(),
+    shortcutsEditing(keymap, "tab.back", pro)
+  ).cards.flatMap((each) => each.rows);
+
+  return (title: string) => rows.find((row) => row.title === title);
+};
+
+describe(shortcutsEditing, () => {
+  it("says what each changed key's default is, and which Google apps share it", async () => {
+    const row = await setup();
+
+    expect(row("Reload")).toMatchObject({
+      id: "tab.reload",
+      keys: { parts: ["⌘", "J"] },
+      changed: true,
+      note: "The default is ⌃⇧R.",
+      google: "Chat also uses this key. Meru's shortcut will win.",
+    });
+    expect(row("Find…")).toMatchObject({
+      changed: true,
+      google: "Docs and Slides also use this key. Meru's shortcut will win.",
+    });
+    expect(row("Stop")).toMatchObject({
+      changed: true,
+      note: "There's no default.",
+      google: null,
+    });
+    expect(row("Find Next")).toMatchObject({
+      keys: null,
+      changed: true,
+      google: null,
+    });
+    expect(row("Back")).toMatchObject({
+      id: "tab.back",
+      changed: false,
+      note: null,
+      google: null,
+    });
+  });
+
+  it("offers no range's key, and nothing to change without Meru Pro", async () => {
+    expect((await setup())("Select Profile 1 to 9")?.id).toBeNull();
+    expect((await setup(false))("Back")?.id).toBeNull();
   });
 });

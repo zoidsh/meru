@@ -55,6 +55,7 @@ const createFakeWindow = () => {
     onPageGone: () => false,
     onRendererGone: () => false,
     reload: () => false,
+    setIgnoreMenuShortcuts: () => false,
     restore: () => {
       minimized = false;
       calls.push("restore");

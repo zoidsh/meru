@@ -44,7 +44,8 @@ import { createSettingsPages } from "../settings-pages.ts";
 import { createSettingsWindow } from "../settings-window.ts";
 import type { SettingsStore } from "../settings.ts";
 import { createRendererRecovery } from "../shell-recovery.ts";
-import { readShortcuts } from "../shortcuts-page.ts";
+import { createShortcutEditor } from "../shortcut-editor.ts";
+import { readShortcuts, shortcutsEditing } from "../shortcuts-page.ts";
 import type { SoundOutput } from "../sounds.ts";
 import type { Spellcheck } from "../spellcheck.ts";
 import type { TrustedSites } from "../trusted-sites.ts";
@@ -173,6 +174,7 @@ export const wireSettingsWindow = ({
       senders.register(webContentsId, { role: "settings" }),
     prepare: (window) => {
       pages.reset();
+      shortcutEditor.follow(window);
       createRendererRecovery({
         window,
         name: "The Settings window's renderer",
@@ -229,8 +231,25 @@ export const wireSettingsWindow = ({
     clipboard,
   });
 
+  const shortcutEditor = createShortcutEditor({
+    platform,
+    keymap,
+    can: entitlement.can,
+    ignoreMenuShortcuts: (ignore) => {
+      settingsWindow.current()?.setIgnoreMenuShortcuts(ignore);
+    },
+  });
   const shortcuts = () =>
-    readShortcuts(platform, lifecycle.name, keymap.commands());
+    readShortcuts(
+      platform,
+      lifecycle.name,
+      keymap.commands(),
+      shortcutsEditing(
+        keymap,
+        shortcutEditor.recording(),
+        entitlement.can("shortcutCustomization")
+      )
+    );
 
   const releases = createReleases({
     source: releasesSource(),
@@ -276,6 +295,7 @@ export const wireSettingsWindow = ({
       updates,
       releases,
       shortcuts,
+      shortcutEditor,
       entitlement,
       licenseRequests,
       systemBrowser,
@@ -324,6 +344,7 @@ export const wireSettingsWindow = ({
           listener
         );
         keymap.onChange(listener);
+        shortcutEditor.onChange(listener);
       },
     },
     log: console.error,

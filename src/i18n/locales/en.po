@@ -68,10 +68,25 @@ msgstr "{days, plural, one {Your trial ends in # day.} other {Your trial ends in
 msgid "{done} of {total}"
 msgstr "{done} of {total}"
 
+#. Note under a shortcut a person set on the Shortcuts page of Settings, when a Google app uses the same key; {first} is the app's name, such as Docs
+#: src/main/shortcuts-page.ts
+msgid "{first} also uses this key. Meru's shortcut will win."
+msgstr "{first} also uses this key. Meru's shortcut will win."
+
+#. Note under a shortcut a person set on the Shortcuts page of Settings, when two Google apps use the same key; {first} and {second} are the apps' names, such as Docs and Sheets
+#: src/main/shortcuts-page.ts
+msgid "{first} and {second} also use this key. Meru's shortcut will win."
+msgstr "{first} and {second} also use this key. Meru's shortcut will win."
+
 #. On the Shortcuts page of Settings, the keys of the first and the last of a numbered set of commands, such as ⌃⇧1 to ⌃⇧9
 #: src/settings/shortcuts-page.tsx
 msgid "{first} to {last}"
 msgstr "{first} to {last}"
+
+#. Note under a shortcut a person set on the Shortcuts page of Settings, when three or more Google apps use the same key; {first} and {second} are two of the apps' names, such as Docs and Sheets
+#: src/main/shortcuts-page.ts
+msgid "{first}, {second} and others also use this key. Meru's shortcut will win."
+msgstr "{first}, {second} and others also use this key. Meru's shortcut will win."
 
 #. Description of the Do Not Disturb switch in Settings while it is off; {holds} is what it does, such as Silences all notifications. The moon is the Do Not Disturb button in the main window's title bar
 #: src/settings/do-not-disturb.ts
@@ -691,6 +706,11 @@ msgstr "Cleared"
 #: src/settings/advanced-page.tsx
 msgid "Clears saved pages and images for all profiles."
 msgstr "Clears saved pages and images for all profiles."
+
+#. Line atop the Shortcuts page of Settings
+#: src/settings/shortcuts-page.tsx
+msgid "Click a shortcut and type the keys you want to use."
+msgstr "Click a shortcut and type the keys you want to use."
 
 #. Description of the Jump to unread mail switch in Settings; the icon is Meru's in the menu bar or the system tray
 #: src/settings/menu-bar-page.tsx
@@ -2338,8 +2358,10 @@ msgstr "Report spam"
 msgid "Requires Meru Pro"
 msgstr "Requires Meru Pro"
 
+#. Button beside a changed key on the Shortcuts page of Settings, which gives the command its default key again
 #. Button under a Settings row in a profile's scope that drops the profile's own value so it follows All profiles again
 #: src/settings/row-scope.tsx
+#: src/settings/shortcuts-page.tsx
 msgid "Reset"
 msgstr "Reset"
 
@@ -2347,6 +2369,11 @@ msgstr "Reset"
 #: src/settings/row-scope.tsx
 msgid "Reset {label} to All profiles"
 msgstr "Reset {label} to All profiles"
+
+#. Accessible name of the Reset button beside a changed key on the Shortcuts page of Settings; {title} is the command's name
+#: src/settings/shortcuts-page.tsx
+msgid "Reset {title} to its default"
+msgstr "Reset {title} to its default"
 
 #. Accessible name of the gap between two panes of a split view, which a drag or the arrow keys move to resize them
 #: src/shell/pane-handle.tsx
@@ -2562,6 +2589,16 @@ msgstr "Shift+Delete removes the highlighted bookmark"
 #: src/settings/app.tsx
 msgid "Shortcuts"
 msgstr "Shortcuts"
+
+#. Error on the Shortcuts page of Settings on a Mac when the keys typed have no Command, Control or Option
+#: src/settings/shortcuts-page.tsx
+msgid "Shortcuts need ⌘, ⌃ or ⌥."
+msgstr "Shortcuts need ⌘, ⌃ or ⌥."
+
+#. Error on the Shortcuts page of Settings on Windows and Linux when the keys typed have no Ctrl or Alt
+#: src/settings/shortcuts-page.tsx
+msgid "Shortcuts need Ctrl or Alt."
+msgstr "Shortcuts need Ctrl or Alt."
 
 #. Button of the Test notification row in Settings that shows a sample new mail notification, as the settings above would show one
 #. Button of the What's new row on the About page of Settings that opens the list of Meru's releases and their notes
@@ -2946,6 +2983,11 @@ msgstr "Test notification"
 msgid "That window is no longer open."
 msgstr "That window is no longer open."
 
+#. Under a command on the Shortcuts page of Settings whose key a person set; {keys} is the command's own key, such as ⌃⇧R
+#: src/main/shortcuts-page.ts
+msgid "The default is {keys}."
+msgstr "The default is {keys}."
+
 #. Short notice at the foot of the window when Gmail's Add another account is clicked on the free version, which adds no profile; at most two lines of a narrow notice
 #: src/shell/toast.tsx
 msgid "The free version uses one profile. Upgrade to Meru Pro to add more."
@@ -2965,6 +3007,11 @@ msgstr "The window stopped drawing several times in a row, so {productName} will
 #: src/settings/appearance-page.tsx
 msgid "Theme"
 msgstr "Theme"
+
+#. Under a command on the Shortcuts page of Settings whose key a person set, when the command has no key of its own on this platform
+#: src/main/shortcuts-page.ts
+msgid "There's no default."
+msgstr "There's no default."
 
 #: src/main/entitlement.ts
 msgid "There's no license with this key. Check it and try again, or contact support."
@@ -3192,6 +3239,16 @@ msgstr "Turn this off if pages flicker or stay blank. Restart Meru to apply the 
 #: src/settings/advanced-page.tsx
 msgid "Turn this off if pages flicker or stay blank. You'll need to restart Meru."
 msgstr "Turn this off if pages flicker or stay blank. You'll need to restart Meru."
+
+#. In the button of a command's key on the Shortcuts page of Settings while the new key is being typed
+#: src/settings/shortcuts-page.tsx
+msgid "Type shortcut…"
+msgstr "Type shortcut…"
+
+#. Under a command on the Shortcuts page of Settings while its key is being recorded
+#: src/settings/shortcuts-page.tsx
+msgid "Type the new shortcut. Press Escape to cancel or Delete to clear it."
+msgstr "Type the new shortcut. Press Escape to cancel or Delete to clear it."
 
 #. Button on the short notice saying an email was sent; it takes the send back and shows its compose window again
 #. Menu item in the Edit menu

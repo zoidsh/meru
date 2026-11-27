@@ -487,6 +487,24 @@ export const SETTINGS_CALLS = {
    * profile's Gmail, or the system's mail app while that profile is signed out.
    */
   contactSupport: { request: none, response: z.undefined() },
+  /** Starts recording the command's key, or with `null` stops; Meru Pro's. */
+  recordShortcut: {
+    request: z.object({ id: z.nullable(z.string()) }),
+    response: z.undefined(),
+  },
+  /**
+   * Gives the command the key recorded, `""` for none, ending the
+   * recording; answers why not when another command holds it.
+   */
+  setShortcut: {
+    request: z.object({ id: z.string(), accelerator: z.string() }),
+    response: z.nullable(z.string()),
+  },
+  /** Gives the command its default again, answering as `setShortcut` does. */
+  resetShortcut: {
+    request: z.object({ id: z.string() }),
+    response: z.nullable(z.string()),
+  },
   ...ENTITLEMENT_CALLS,
 } as const satisfies Record<
   SettingsCallName,
@@ -658,15 +676,25 @@ export const SETTINGS_STATE = {
         title: z.string(),
         rows: z.array(
           z.object({
+            /** The command whose key the row changes; none for a range, or without Meru Pro. */
+            id: z.nullable(z.string()),
             title: z.string(),
             /** None where the command has no key on this platform. */
             keys: shortcutKeys,
             /** A family's last command's key, its first's being `keys`; else none. */
             to: shortcutKeys,
+            /** Whether the key is the person's own, which Reset takes back. */
+            changed: z.boolean(),
+            /** For a changed key, what the default is, as the row says it. */
+            note: z.nullable(z.string()),
+            /** For a changed key a Google app uses too, the line saying so. */
+            google: z.nullable(z.string()),
           })
         ),
       })
     ),
+    /** The command whose key is being typed, during which the menu hears no key. */
+    recording: z.nullable(z.string()),
     builtIn: z.array(z.object({ title: z.string(), keys: shortcutKey })),
   }),
   /** The language Meru shows, as a catalog's tag. */

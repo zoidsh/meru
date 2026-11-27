@@ -44,6 +44,9 @@ export const SETTINGS_CALL_NAMES = [
   "listReleases",
   "openReleaseLink",
   "contactSupport",
+  "recordShortcut",
+  "setShortcut",
+  "resetShortcut",
   ...ENTITLEMENT_CALL_NAMES,
 ] as const;
 

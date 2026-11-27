@@ -50,6 +50,7 @@ import type { Profiles } from "./profiles.ts";
 import type { Releases } from "./releases.ts";
 import type { SettingsPages } from "./settings-pages.ts";
 import type { SettingsStore } from "./settings.ts";
+import type { ShortcutEditor } from "./shortcut-editor.ts";
 import type { SoundOutput } from "./sounds.ts";
 import type { TrustedSites } from "./trusted-sites.ts";
 import type { Updates } from "./updates.ts";
@@ -136,6 +137,8 @@ export interface SettingsContractDeps {
   releases: Pick<Releases, "list">;
   /** The Shortcuts page's cards, in the language of the moment. */
   shortcuts: () => SettingsState["shortcuts"];
+  /** The Shortcuts page's recorder and the changes it makes. */
+  shortcutEditor: Pick<ShortcutEditor, "record" | "set" | "reset">;
   entitlement: Pick<
     Entitlement,
     | "snapshot"
@@ -236,6 +239,7 @@ export const settingsHandlers = ({
   entitlement,
   licenseRequests,
   systemBrowser,
+  shortcutEditor,
 }: SettingsContractDeps): ContractHandlers<typeof SETTINGS_CALLS> => {
   const store = settings as unknown as LooseStore;
 
@@ -530,6 +534,13 @@ export const settingsHandlers = ({
       }
     },
     contactSupport: () => contactSupport(),
+    recordShortcut: ({ id }) =>
+      Promise.try(() => {
+        shortcutEditor.record(id);
+      }),
+    setShortcut: async ({ id, accelerator }) =>
+      (await shortcutEditor.set(id, accelerator)) ?? null,
+    resetShortcut: async ({ id }) => (await shortcutEditor.reset(id)) ?? null,
     ...entitlementHandlers({ entitlement, licenseRequests, systemBrowser }),
   };
 };

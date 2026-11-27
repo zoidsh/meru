@@ -2,8 +2,13 @@ import { t } from "@lingui/core/macro";
 import { noop } from "es-toolkit";
 
 import type { SettingsState } from "#contract/settings.ts";
-import { acceleratorKeys, acceleratorParts } from "#core/accelerator.ts";
+import {
+  acceleratorKeys,
+  acceleratorParts,
+  formatAccelerator,
+} from "#core/accelerator.ts";
 import { BUILT_IN_SHORTCUTS } from "#core/built-in-shortcuts.ts";
+import { googleAppsUsing } from "#core/google-app-keys.ts";
 import type { Platform } from "#core/platform.ts";
 import { SHORTCUT_FAMILIES, shortcutCards } from "#core/shortcut-cards.ts";
 import type { ShortcutFamily, ShortcutRow } from "#core/shortcut-cards.ts";
@@ -12,6 +17,7 @@ import { newProfile } from "#core/state.ts";
 import { builtInLabel, buildMenuTemplate } from "./application-menu.ts";
 import { NO_PAGE } from "./commands.ts";
 import type { Command, CommandContext } from "./commands.ts";
+import type { KeymapService } from "./keymap.ts";
 
 type Shortcuts = SettingsState["shortcuts"];
 type Keys = Shortcuts["cards"][number]["rows"][number]["keys"];
@@ -207,17 +213,117 @@ const familyTitle = (family: ShortcutFamily) => {
 };
 
 /**
+ * The quiet line under a key a person gave a command that Google's apps
+ * use too, naming two of them at most; none when no app does.
+ */
+export const googleNote = (apps: readonly string[]): string | null => {
+  const [first, second] = apps;
+
+  if (first === undefined) {
+    return null;
+  }
+
+  if (second === undefined) {
+    return t({
+      message: `${first} also uses this key. Meru's shortcut will win.`,
+      comment:
+        "Note under a shortcut a person set on the Shortcuts page of Settings, when a Google app uses the same key; {first} is the app's name, such as Docs",
+    });
+  }
+
+  return apps.length === 2
+    ? t({
+        message: `${first} and ${second} also use this key. Meru's shortcut will win.`,
+        comment:
+          "Note under a shortcut a person set on the Shortcuts page of Settings, when two Google apps use the same key; {first} and {second} are the apps' names, such as Docs and Sheets",
+      })
+    : t({
+        message: `${first}, ${second} and others also use this key. Meru's shortcut will win.`,
+        comment:
+          "Note under a shortcut a person set on the Shortcuts page of Settings, when three or more Google apps use the same key; {first} and {second} are two of the apps' names, such as Docs and Sheets",
+      });
+};
+
+/** What the page may change, and what is changed, from the keymap and the recorder. */
+export interface ShortcutsEditing {
+  changeable: (id: string) => boolean;
+  /** Whether the command's key is the person's own, applied in this run. */
+  changed: (id: string) => boolean;
+  defaultKey: (id: string) => string | undefined;
+  recording: string | null;
+}
+
+const UNCHANGED = { changed: false, note: null, google: null };
+
+const NO_DEFAULTS: Partial<Record<string, string>> = {};
+
+const NOT_EDITING: ShortcutsEditing = {
+  changeable: () => false,
+  changed: () => false,
+  defaultKey: (id) => NO_DEFAULTS[id],
+  recording: null,
+};
+
+/** What the page may change now: every command's key the keymap allows, with Meru Pro. */
+export const shortcutsEditing = (
+  keymap: Pick<KeymapService, "current" | "defaults" | "isChangeable">,
+  recording: string | null,
+  pro: boolean
+): ShortcutsEditing => {
+  const { changed } = keymap.current();
+
+  return {
+    changeable: (id) => pro && keymap.isChangeable(id),
+    changed: (id) => changed.has(id),
+    defaultKey: keymap.defaults,
+    recording,
+  };
+};
+
+const defaultSentence = (
+  accelerator: string | undefined,
+  platform: Platform
+) => {
+  if (accelerator === undefined) {
+    return t({
+      message: "There's no default.",
+      comment:
+        "Under a command on the Shortcuts page of Settings whose key a person set, when the command has no key of its own on this platform",
+    });
+  }
+
+  const keys = formatAccelerator(accelerator, platform);
+
+  return t({
+    message: `The default is ${keys}.`,
+    comment:
+      "Under a command on the Shortcuts page of Settings whose key a person set; {keys} is the command's own key, such as ⌃⇧R",
+  });
+};
+
+/**
  * The Shortcuts page's cards, read from the application menu as `platform`
  * builds it, and the built-in keys from the table the menu takes them from.
  */
 export const readShortcuts = (
   platform: Platform,
   appName: string,
-  commands: readonly Command[]
+  commands: readonly Command[],
+  editing: ShortcutsEditing = NOT_EDITING
 ): Shortcuts => {
   const byId = new Map(commands.map((command) => [command.id, command]));
-  const keysOf = (id: string) =>
-    shortcutKeys(byId.get(id)?.shortcut?.[platform], platform);
+  const keyOf = (id: string) => byId.get(id)?.shortcut?.[platform];
+  const keysOf = (id: string) => shortcutKeys(keyOf(id), platform);
+  const changedRow = (id: string) => {
+    const key = keyOf(id);
+
+    return {
+      changed: true,
+      note: defaultSentence(editing.defaultKey(id), platform),
+      google:
+        key === undefined ? null : googleNote(googleAppsUsing(key, platform)),
+    };
+  };
   const menus = buildMenuTemplate({
     platform,
     appName,
@@ -230,17 +336,22 @@ export const readShortcuts = (
   const row = (entry: ShortcutRow) =>
     entry.family === undefined
       ? {
+          id: editing.changeable(entry.id) ? entry.id : null,
           title: byId.get(entry.id)?.title() ?? "",
           keys: keysOf(entry.id),
           to: null,
+          ...(editing.changed(entry.id) ? changedRow(entry.id) : UNCHANGED),
         }
       : {
+          id: null,
           title: familyTitle(entry.family),
           keys: keysOf(entry.first),
           to: keysOf(entry.last),
+          ...UNCHANGED,
         };
 
   return {
+    recording: editing.recording,
     cards: shortcutCards(menus, new Set(byId.keys())).map((card) => ({
       title: card.menu,
       rows: card.rows.map(row),

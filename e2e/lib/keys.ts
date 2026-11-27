@@ -1,3 +1,5 @@
+import type { ElectronApplication } from "@playwright/test";
+
 type Modifier = "shift" | "control" | "alt" | "meta";
 
 /** A key with its modifiers, as `sendInputEvent` takes them. */
@@ -12,6 +14,29 @@ const key = (keyCode: string, ...modifiers: Modifier[]): Key => ({
   keyCode,
   modifiers,
 });
+
+/** `key` in the page whose URL starts with `url`, as the system hands keys to it, so its view hears it first. */
+export const pressInPage = (
+  app: ElectronApplication,
+  url: string,
+  { keyCode, modifiers }: Key
+) =>
+  app.evaluate(
+    ({ webContents }, request) => {
+      const page = webContents
+        .getAllWebContents()
+        .find((candidate) => candidate.getURL().startsWith(request.url));
+
+      for (const type of ["keyDown", "keyUp"] as const) {
+        page?.sendInputEvent({
+          type,
+          keyCode: request.keyCode,
+          modifiers: request.modifiers,
+        });
+      }
+    },
+    { url, keyCode, modifiers }
+  );
 
 /** Cmd on macOS, Ctrl elsewhere. */
 export const COMMAND_KEY: Modifier = isMacOS ? "meta" : "control";

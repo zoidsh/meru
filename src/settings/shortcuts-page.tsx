@@ -1,17 +1,37 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useId } from "react";
+import { cn } from "cn";
+import { noop } from "es-toolkit";
+import { RotateCcwIcon } from "lucide-react";
+import { useId, useState } from "react";
+import type { KeyboardEvent } from "react";
 
 import type { SettingsState } from "#contract/settings.ts";
-import { Field, FieldTitle } from "#ui/field.tsx";
+import { recordKey } from "#core/accelerator.ts";
+import { Button } from "#ui/button.tsx";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldTitle,
+} from "#ui/field.tsx";
 import { Kbd, KbdGroup } from "#ui/kbd.tsx";
 
+import { ProBadge, useNeedsPro } from "./pro-badge.tsx";
 import { SettingGroup, SettingGroups } from "./setting-group.tsx";
 import { Rows } from "./setting-row.tsx";
-import { useSettingsState } from "./sync.ts";
+import { settingsCalls, useSettingsState } from "./sync.ts";
 
-type Keys = NonNullable<
-  SettingsState["shortcuts"]["cards"][number]["rows"][number]["keys"]
->;
+type Row = SettingsState["shortcuts"]["cards"][number]["rows"][number];
+type Keys = NonNullable<Row["keys"]>;
+
+/** Why the key last typed for a command was not taken. */
+interface RowError {
+  id: string;
+  text: string;
+}
+
+const isMacOS = () => document.documentElement.dataset.platform === "darwin";
 
 /** One Kbd per key; a screen reader says the keys' names instead. */
 const KeyGroup = ({ keys }: { keys: Keys }) => (
@@ -24,6 +44,15 @@ const KeyGroup = ({ keys }: { keys: Keys }) => (
     </KbdGroup>
     <span className="sr-only">{keys.spoken}</span>
   </>
+);
+
+const NoKeys = () => (
+  <Trans
+    context="keyboard shortcut"
+    comment="On the Shortcuts page of Settings, in place of the keys of a command that has none on this platform"
+  >
+    None
+  </Trans>
 );
 
 /** A command's title and its keys, read-only. */
@@ -57,15 +86,209 @@ const ShortcutRow = ({
             {first} to {last}
           </Trans>
         ) : (
-          (first ?? (
-            <Trans
-              context="keyboard shortcut"
-              comment="On the Shortcuts page of Settings, in place of the keys of a command that has none on this platform"
-            >
-              None
-            </Trans>
-          ))
+          (first ?? <NoKeys />)
         )}
+      </div>
+    </Field>
+  );
+};
+
+/**
+ * A command whose key a person changes: the key in a button that records
+ * the next keys typed, and Reset once it is changed. Main holds whether it
+ * records, and answers each change.
+ */
+const ChangeableRow = ({
+  id,
+  row,
+  recording,
+  error,
+  setError,
+}: {
+  id: string;
+  row: Row;
+  recording: boolean;
+  error: string | undefined;
+  setError: (error: RowError | null) => void;
+}) => {
+  const { t } = useLingui();
+  const { title } = row;
+  const titleId = useId();
+  const buttonId = useId();
+  const descriptionId = useId();
+  const errorId = useId();
+  const googleId = useId();
+  const calls = settingsCalls();
+
+  const answer = async (refused: Promise<string | null>) => {
+    const text = await refused.catch(noop);
+
+    setError(typeof text === "string" ? { id, text } : null);
+  };
+
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (!recording) {
+      return;
+    }
+
+    const recorded = recordKey(
+      {
+        key: event.key,
+        code: event.code,
+        control: event.ctrlKey,
+        shift: event.shiftKey,
+        alt: event.altKey,
+        meta: event.metaKey,
+      },
+      isMacOS()
+    );
+
+    // Tab moves focus on, which ends the recording as the button blurs.
+    if (recorded.kind === "leave") {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    switch (recorded.kind) {
+      case "cancel": {
+        calls.recordShortcut({ id: null }).catch(noop);
+        break;
+      }
+      case "clear": {
+        void answer(calls.setShortcut({ id, accelerator: "" }));
+        break;
+      }
+      case "needsModifier": {
+        calls.recordShortcut({ id: null }).catch(noop);
+        setError({
+          id,
+          text: isMacOS()
+            ? t({
+                message: "Shortcuts need ⌘, ⌃ or ⌥.",
+                comment:
+                  "Error on the Shortcuts page of Settings on a Mac when the keys typed have no Command, Control or Option",
+              })
+            : t({
+                message: "Shortcuts need Ctrl or Alt.",
+                comment:
+                  "Error on the Shortcuts page of Settings on Windows and Linux when the keys typed have no Ctrl or Alt",
+              }),
+        });
+        break;
+      }
+      case "key": {
+        void answer(
+          calls.setShortcut({ id, accelerator: recorded.accelerator })
+        );
+        break;
+      }
+      // A modifier alone, or a key no shortcut can name: still recording.
+      default:
+    }
+  };
+
+  // The hint while recording outranks an error, which outranks the default.
+  const shownError = recording ? undefined : error;
+  let description: string | null = row.note;
+
+  if (recording) {
+    description = t({
+      message:
+        "Type the new shortcut. Press Escape to cancel or Delete to clear it.",
+      comment:
+        "Under a command on the Shortcuts page of Settings while its key is being recorded",
+    });
+  } else if (shownError !== undefined) {
+    description = null;
+  }
+
+  const keys = row.keys ? <KeyGroup keys={row.keys} /> : <NoKeys />;
+  const describedBy = [
+    description !== null && descriptionId,
+    shownError !== undefined && errorId,
+    row.google !== null && googleId,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <Field
+      orientation="horizontal"
+      aria-labelledby={titleId}
+      data-invalid={shownError === undefined ? undefined : true}
+    >
+      {/* A title alone is the field's own child, which Field centers on the
+          buttons; lines under it align the row to its top. */}
+      {describedBy === "" ? (
+        <FieldTitle id={titleId}>{title}</FieldTitle>
+      ) : (
+        <FieldContent>
+          <FieldTitle id={titleId}>{title}</FieldTitle>
+          {description !== null && (
+            <FieldDescription id={descriptionId}>
+              {description}
+            </FieldDescription>
+          )}
+          {shownError !== undefined && (
+            <FieldError id={errorId}>{shownError}</FieldError>
+          )}
+          {row.google !== null && (
+            <FieldDescription id={googleId}>{row.google}</FieldDescription>
+          )}
+        </FieldContent>
+      )}
+      <div className="flex items-center gap-2">
+        {row.changed && (
+          <Button
+            variant="ghost"
+            size="xs"
+            aria-label={t({
+              message: `Reset ${title} to its default`,
+              comment:
+                "Accessible name of the Reset button beside a changed key on the Shortcuts page of Settings; {title} is the command's name",
+            })}
+            onClick={() => {
+              void answer(calls.resetShortcut({ id }));
+            }}
+          >
+            <RotateCcwIcon data-icon="inline-start" />
+            {t({
+              message: "Reset",
+              comment:
+                "Button beside a changed key on the Shortcuts page of Settings, which gives the command its default key again",
+            })}
+          </Button>
+        )}
+        <Button
+          id={buttonId}
+          variant="outline"
+          size="sm"
+          // The focus ring while it records, as a click alone shows none.
+          className={cn(recording && "border-ring ring-3 ring-ring/50")}
+          aria-labelledby={`${titleId} ${buttonId}`}
+          aria-describedby={describedBy || undefined}
+          aria-invalid={shownError === undefined ? undefined : true}
+          onClick={() => {
+            setError(null);
+            calls.recordShortcut({ id }).catch(noop);
+          }}
+          onKeyDown={onKeyDown}
+          onBlur={() => {
+            if (recording) {
+              calls.recordShortcut({ id: null }).catch(noop);
+            }
+          }}
+        >
+          {recording
+            ? t({
+                message: "Type shortcut…",
+                comment:
+                  "In the button of a command's key on the Shortcuts page of Settings while the new key is being typed",
+              })
+            : keys}
+        </Button>
       </div>
     </Field>
   );
@@ -74,11 +297,15 @@ const ShortcutRow = ({
 /**
  * Every keyboard shortcut of this platform, a card per menu of the
  * application menu and the keys bound outside the registry last, as main
- * sends them: read-only, app-wide, and nothing on it is Pro.
+ * sends them. With Meru Pro each command's key is a button that records a
+ * new one; on the free version the page lists them.
  */
 export const ShortcutsPage = () => {
   const { t } = useLingui();
   const shortcuts = useSettingsState("shortcuts");
+  const needsPro = useNeedsPro().capability("shortcutCustomization");
+  const noteId = useId();
+  const [error, setError] = useState<RowError | null>(null);
 
   if (!shortcuts) {
     return null;
@@ -86,17 +313,37 @@ export const ShortcutsPage = () => {
 
   return (
     <SettingGroups>
+      <div className="flex items-center gap-2">
+        <p id={noteId} className="text-sm text-muted-foreground">
+          {t({
+            message: "Click a shortcut and type the keys you want to use.",
+            comment: "Line atop the Shortcuts page of Settings",
+          })}
+        </p>
+        {needsPro && <ProBadge labelledBy={noteId} />}
+      </div>
       {shortcuts.cards.map((card) => (
         <SettingGroup key={card.title} title={card.title}>
           <Rows>
-            {card.rows.map((row) => (
-              <ShortcutRow
-                key={row.title}
-                title={row.title}
-                keys={row.keys}
-                to={row.to}
-              />
-            ))}
+            {card.rows.map((row) =>
+              row.id === null ? (
+                <ShortcutRow
+                  key={row.title}
+                  title={row.title}
+                  keys={row.keys}
+                  to={row.to}
+                />
+              ) : (
+                <ChangeableRow
+                  key={row.id}
+                  id={row.id}
+                  row={row}
+                  recording={shortcuts.recording === row.id}
+                  error={error?.id === row.id ? error.text : undefined}
+                  setError={setError}
+                />
+              )
+            )}
           </Rows>
         </SettingGroup>
       ))}

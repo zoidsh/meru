@@ -80,6 +80,8 @@ export interface AppWindow extends PlainWindow {
   onRendererGone: (listener: (reason: string) => void) => void;
   /** Loads the page again, in a new process should its own be gone. */
   reload: () => void;
+  /** Whether the application menu's keys act while the page has the keys. */
+  setIgnoreMenuShortcuts: (ignore: boolean) => void;
   isFullScreen: () => boolean;
   /** Leaves full screen, then runs `then` once the window has. */
   leaveFullScreen: (then: () => void) => void;
@@ -231,6 +233,9 @@ export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
       },
       reload: () => {
         webContents.reload();
+      },
+      setIgnoreMenuShortcuts: (ignore) => {
+        webContents.setIgnoreMenuShortcuts(ignore);
       },
       isFullScreen: () => window.isFullScreen(),
       leaveFullScreen: (then) => {
