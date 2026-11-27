@@ -196,16 +196,17 @@ describe(listedTabs, () => {
   const tabs = [
     { id: "g", ownWindow: false },
     { id: "c", ownWindow: true },
-    { id: "d", ownWindow: false },
+    { id: "d" },
+    { id: "p", pinned: true, ownWindow: true },
   ];
 
-  it("lists every tab while windows show, and those in the main window alone, in their order, while they do not", () => {
+  it("lists every tab while windows show, and those in the main window alone, in their order, while they do not; a pinned tab is never in a window of its own", () => {
     expect([
       listedTabs(tabs, true).map(({ id }) => id),
       listedTabs(tabs, false).map(({ id }) => id),
     ]).toStrictEqual([
-      ["g", "c", "d"],
-      ["g", "d"],
+      ["g", "c", "d", "p"],
+      ["g", "d", "p"],
     ]);
   });
 });

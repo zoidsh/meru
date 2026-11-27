@@ -2,7 +2,7 @@ import { findApp } from "./apps.ts";
 import type { App } from "./apps.ts";
 import { menuOfGroups, menuPointInside } from "./context-menu.ts";
 import type { MenuEntry, MenuItemEntry, MenuPoint } from "./context-menu.ts";
-import { drawnTabs } from "./drawn-tabs.ts";
+import { drawnTabs, listedTabs } from "./drawn-tabs.ts";
 import { isWebUrl } from "./google-redirect.ts";
 import { canMarkSleepWhenIdle, marksSleepWhenIdle } from "./idle-sleep.ts";
 import type { SleepIdleTabs } from "./settings.ts";
@@ -72,15 +72,24 @@ export interface TabPage {
 const profileOf = (state: State, profileId: string) =>
   state.profiles.find((candidate) => candidate.id === profileId);
 
-/** The tabs Close other tabs closes: every other that can close. */
-const othersOf = (profile: Profile, tab: Tab) =>
-  knownTabs(profile).filter((other) => other !== tab && canCloseTab(other));
+/**
+ * The tabs Close other tabs closes: every other the sidebar lists that can
+ * close, so a window of its own stays open while the sidebar leaves it out.
+ */
+const othersOf = (profile: Profile, tab: Tab, showWindows: boolean) =>
+  listedTabs(knownTabs(profile), showWindows).filter(
+    (other) => other !== tab && canCloseTab(other)
+  );
 
-/** The tabs Close tabs below closes: those drawn after it that can close. */
-const belowOf = (profile: Profile, tab: Tab) => {
-  const order = drawnTabs(profile);
+/**
+ * The tabs Close tabs below closes: those the sidebar lists after it that
+ * can close; none below a tab it does not list.
+ */
+const belowOf = (profile: Profile, tab: Tab, showWindows: boolean) => {
+  const order = listedTabs(drawnTabs(profile), showWindows);
+  const at = order.indexOf(tab);
 
-  return order.slice(order.indexOf(tab) + 1).filter(canCloseTab);
+  return at === -1 ? [] : order.slice(at + 1).filter(canCloseTab);
 };
 
 type Item = MenuItemEntry<TabMenuItemId>;
@@ -116,14 +125,16 @@ const bookmarkItems = (bookmarked: boolean | undefined): Item[] =>
  * Separate from split take one in a split. A tab that is not pinned can move
  * to a new window; one in its own window offers Move to main window in its
  * place, no Sleep or Wake, since it never sleeps, and neither splitting nor
- * pinning, which are the main window's.
+ * pinning, which are the main window's. Close other tabs and Close tabs
+ * below count only the tabs the sidebar lists, as `showWindows` has it.
  */
 export const tabMenu = (
   state: State,
   key: TabKey,
   apps: readonly App[],
   page: TabPage,
-  sleepIdleTabs: SleepIdleTabs
+  sleepIdleTabs: SleepIdleTabs,
+  showWindows: boolean
 ): MenuEntry<TabMenuItemId>[] | undefined => {
   const profile = profileOf(state, key.profileId);
   const tab = findTab(state, key);
@@ -184,8 +195,8 @@ export const tabMenu = (
       ...(canCloseTab(tab)
         ? [item("close", true, { command: "tab.close" })]
         : []),
-      item("closeOthers", othersOf(profile, tab).length > 0),
-      item("closeBelow", belowOf(profile, tab).length > 0),
+      item("closeOthers", othersOf(profile, tab, showWindows).length > 0),
+      item("closeBelow", belowOf(profile, tab, showWindows).length > 0),
     ],
   ]);
 };
@@ -275,23 +286,34 @@ const closeAll = (
     : next;
 };
 
-/** Closes every other tab of the profile that can close. */
-export const closeOtherTabs = (state: State, key: TabKey) => {
+/**
+ * Closes every other tab of the profile that can close and, with Show
+ * windows in the sidebar off, is in the main window.
+ */
+export const closeOtherTabs = (
+  state: State,
+  key: TabKey,
+  showWindows: boolean
+) => {
   const profile = profileOf(state, key.profileId);
   const tab = findTab(state, key);
 
   return profile && tab
-    ? closeAll(state, key, othersOf(profile, tab))
+    ? closeAll(state, key, othersOf(profile, tab, showWindows))
     : undefined;
 };
 
-/** Closes the tabs the sidebar draws after the tab that can close. */
-export const closeTabsBelow = (state: State, key: TabKey) => {
+/** Closes the tabs the sidebar lists after the tab that can close. */
+export const closeTabsBelow = (
+  state: State,
+  key: TabKey,
+  showWindows: boolean
+) => {
   const profile = profileOf(state, key.profileId);
   const tab = findTab(state, key);
 
   return profile && tab
-    ? closeAll(state, key, belowOf(profile, tab))
+    ? closeAll(state, key, belowOf(profile, tab, showWindows))
     : undefined;
 };
 

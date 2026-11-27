@@ -74,13 +74,17 @@ export const itemTabs = <T extends DrawnTab>(
 
 /**
  * The tabs the sidebar lists: all of them, or with Show windows in the
- * sidebar off those in the main window alone. Only the drawing leaves the
- * others out; every count and key reads the tabs as stored.
+ * sidebar off those in the main window alone.
  */
-export const listedTabs = <T extends { ownWindow: boolean }>(
+export const listedTabs = <
+  T extends DrawnTab & { ownWindow?: boolean | undefined },
+>(
   tabs: readonly T[],
   showWindows: boolean
-): readonly T[] => (showWindows ? tabs : tabs.filter((tab) => !tab.ownWindow));
+): readonly T[] =>
+  showWindows
+    ? tabs
+    : tabs.filter((tab) => tab.ownWindow !== true || isPinned(tab));
 
 /**
  * The profile's shown tabs in the order the sidebar draws them, which Close

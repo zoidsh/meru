@@ -53,7 +53,8 @@ const offered = (
   current: State,
   tabId: string,
   page?: TabPage,
-  sleepIdleTabs: SleepIdleTabs = "unpinned"
+  sleepIdleTabs: SleepIdleTabs = "unpinned",
+  showWindows = true
 ) =>
   shown(
     tabMenu(
@@ -61,7 +62,8 @@ const offered = (
       { profileId: "p", tabId },
       APPS,
       page ?? { loaded: true, bookmarked: false },
-      sleepIdleTabs
+      sleepIdleTabs,
+      showWindows
     )
   );
 
@@ -191,7 +193,8 @@ describe(tabMenu, () => {
           { profileId: "p", tabId: "c" },
           APPS,
           { loaded: true, bookmarked: false },
-          "chosen"
+          "chosen",
+          true
         ) ?? []
       ).flatMap((entry) =>
         entry.kind === "item" ? [[entry.id, entry.command ?? null]] : []
@@ -389,7 +392,7 @@ describe(closeOtherTabs, () => {
     );
 
     expect(
-      ids(closeOtherTabs(current, { profileId: "p", tabId: "c" }))
+      ids(closeOtherTabs(current, { profileId: "p", tabId: "c" }, true))
     ).toStrictEqual([["gmail", "c", "d"], "c"]);
   });
 
@@ -397,8 +400,8 @@ describe(closeOtherTabs, () => {
     const current = state([tab("c", "calendar"), tab("s", "sheets")]);
 
     expect([
-      ids(closeOtherTabs(current, { profileId: "p", tabId: "c" })),
-      closeOtherTabs(state([]), { profileId: "p", tabId: "gmail" }),
+      ids(closeOtherTabs(current, { profileId: "p", tabId: "c" }, true)),
+      closeOtherTabs(state([]), { profileId: "p", tabId: "gmail" }, true),
     ]).toStrictEqual([[["gmail", "c"], "gmail"], undefined]);
   });
 });
@@ -416,9 +419,9 @@ describe(closeTabsBelow, () => {
     );
 
     expect([
-      ids(closeTabsBelow(current, { profileId: "p", tabId: "s" })),
-      ids(closeTabsBelow(current, { profileId: "p", tabId: "d" })),
-      closeTabsBelow(current, { profileId: "p", tabId: "o" }),
+      ids(closeTabsBelow(current, { profileId: "p", tabId: "s" }, true)),
+      ids(closeTabsBelow(current, { profileId: "p", tabId: "d" }, true)),
+      closeTabsBelow(current, { profileId: "p", tabId: "o" }, true),
     ]).toStrictEqual([
       [["gmail", "c", "d", "s"], "s"],
       [["gmail", "d"], "d"],
@@ -466,10 +469,63 @@ const boxed = (): State => {
 describe("Close tabs below with a split's box in the list", () => {
   it("counts as drawn: below B is C alone, and below N are B and C", () => {
     expect([
-      ids(closeTabsBelow(boxed(), { profileId: "p", tabId: "b" }))?.[0],
-      ids(closeTabsBelow(boxed(), { profileId: "p", tabId: "n" }))?.[0],
+      ids(closeTabsBelow(boxed(), { profileId: "p", tabId: "b" }, true))?.[0],
+      ids(closeTabsBelow(boxed(), { profileId: "p", tabId: "n" }, true))?.[0],
       offered(boxed(), "n")?.includes("closeBelow"),
     ]).toStrictEqual([["gmail", "a", "b", "n"], ["gmail", "a", "n"], true]);
+  });
+});
+
+const pKey = (tabId: string) => ({ profileId: "p", tabId });
+
+/** Calendar and Sheets in windows of their own, Drive and Docs listed. */
+const windowed = () =>
+  state([
+    { ...tab("c", "calendar"), ownWindow: true },
+    tab("d", "drive"),
+    { ...tab("s", "sheets"), ownWindow: true },
+    tab("o", "docs"),
+  ]);
+
+describe("Close other tabs and Close tabs below with Show windows in the sidebar", () => {
+  it("close every tab beside or below while it is on, own windows too", () => {
+    expect([
+      ids(closeOtherTabs(windowed(), pKey("d"), true))?.[0],
+      ids(closeTabsBelow(windowed(), pKey("d"), true))?.[0],
+    ]).toStrictEqual([
+      ["gmail", "d"],
+      ["gmail", "c", "d"],
+    ]);
+  });
+
+  it("close only tabs the sidebar lists while it is off, leaving each own window open", () => {
+    expect([
+      ids(closeOtherTabs(windowed(), pKey("d"), false))?.[0],
+      ids(closeTabsBelow(windowed(), pKey("d"), false))?.[0],
+    ]).toStrictEqual([
+      ["gmail", "c", "d", "s"],
+      ["gmail", "c", "d", "s"],
+    ]);
+  });
+
+  it("are offered by what the sidebar lists: off with only own windows beside or below", () => {
+    const current = state([
+      tab("d", "drive"),
+      { ...tab("c", "calendar"), ownWindow: true },
+    ]);
+    const closing = (showWindows: boolean, tabId = "d") =>
+      offered(current, tabId, undefined, "unpinned", showWindows)?.slice(-2);
+
+    expect([closing(true), closing(false), closing(false, "c")]).toStrictEqual([
+      ["closeOthers", "closeBelow"],
+      ["closeOthers off", "closeBelow off"],
+      ["closeOthers", "closeBelow off"],
+    ]);
+    expect([
+      closeOtherTabs(current, pKey("d"), false),
+      closeTabsBelow(current, pKey("d"), false),
+      closeTabsBelow(current, pKey("c"), false),
+    ]).toStrictEqual([undefined, undefined, undefined]);
   });
 });
 

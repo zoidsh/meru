@@ -77,6 +77,7 @@ const setup = ({
   bookmarked = false,
   pages = {} as Partial<Record<string, string>>,
   sleepIdleTabs = "unpinned" as SleepIdleTabs,
+  showWindows = true,
 } = {}) => {
   const done: unknown[] = [];
   const popups: Popup[] = [];
@@ -118,8 +119,9 @@ const setup = ({
       setOpenAtLaunch: (each, on) => recorded("openAtLaunch")(key(each), on),
       setSleepWhenIdle: (each, on) => recorded("sleepWhenIdle")(key(each), on),
       closeTab: (each) => recorded("close")(key(each)),
-      closeOtherTabs: (each) => recorded("closeOthers")(key(each)),
-      closeTabsBelow: (each) => recorded("closeBelow")(key(each)),
+      closeOtherTabs: (each, shows) =>
+        recorded("closeOthers")(key(each), shows),
+      closeTabsBelow: (each, shows) => recorded("closeBelow")(key(each), shows),
       separateTab: (each) => recorded("separate")(key(each)),
       maximizePane: (each, on) => recorded("maximize")(key(each), on),
     },
@@ -127,6 +129,7 @@ const setup = ({
     moveToMainWindow: (each) => recorded("moveToMainWindow")(key(each)),
     isLoaded: (each) => each.tabId !== "x",
     sleepIdleTabs: () => sleepIdleTabs,
+    showWindows: () => showWindows,
     pageUrl: (each) => pages[each.tabId],
     reload: (each) => recorded("reload")(key(each)),
     sleep: (each) => {
@@ -305,8 +308,27 @@ describe(createTabMenu, () => {
       ],
       [["moveToOwnWindow", "p/c"]],
       [["close", "p/c"]],
-      [["closeOthers", "p/c"]],
-      [["closeBelow", "p/c"]],
+      [["closeOthers", "p/c", true]],
+      [["closeBelow", "p/c", true]],
+    ]);
+  });
+
+  it("offers and closes below by what the sidebar lists, as Show windows in the sidebar is now", async () => {
+    const closing = (showWindows: boolean) => {
+      const { menu, popups } = setup({ showWindows });
+
+      menu.open(at("x"));
+
+      return labels(popups.at(-1))?.slice(-2);
+    };
+    const { choose } = setup({ showWindows: false });
+
+    expect([closing(true), closing(false)]).toStrictEqual([
+      ["Close Other Tabs", "Close Tabs Below"],
+      ["Close Other Tabs", "Close Tabs Below (off)"],
+    ]);
+    await expect(choose("x", "Close Other Tabs")).resolves.toStrictEqual([
+      ["closeOthers", "p/x", false],
     ]);
   });
 

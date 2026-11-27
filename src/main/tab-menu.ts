@@ -62,6 +62,8 @@ export interface TabMenuDeps {
   isLoaded: (key: TabKey) => boolean;
   /** Which tabs sleep once idle, as the setting is now. */
   sleepIdleTabs: () => SleepIdleTabs;
+  /** Whether Show windows in the sidebar is on now. */
+  showWindows: () => boolean;
   /**
    * The URL the tab's page shows now, where it has a live one: the saved
    * URL is written at most once a second, so it can lag behind.
@@ -180,6 +182,7 @@ export const createTabMenu = ({
   moveToMainWindow,
   isLoaded,
   sleepIdleTabs,
+  showWindows,
   pageUrl,
   reload,
   sleep,
@@ -296,11 +299,11 @@ export const createTabMenu = ({
         break;
       }
       case "closeOthers": {
-        await profiles.closeOtherTabs(key);
+        await profiles.closeOtherTabs(key, showWindows());
         break;
       }
       default: {
-        await profiles.closeTabsBelow(key);
+        await profiles.closeTabsBelow(key, showWindows());
       }
     }
   };
@@ -315,7 +318,8 @@ export const createTabMenu = ({
         url: pageUrl(key),
         bookmarked: bookmarks.bookmarked(key),
       },
-      sleepIdleTabs()
+      sleepIdleTabs(),
+      showWindows()
     );
 
   /** Runs the item if the menu `current` gives now still offers it, enabled. */

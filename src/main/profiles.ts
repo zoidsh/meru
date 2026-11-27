@@ -463,11 +463,15 @@ export const createProfiles = ({
       (current, key: TabKey, size: Size, point: { x: number; y: number }) =>
         dropInView(current, key, size, point)
     ),
-    closeOtherTabs: gated("workspaceApps", (current, key: TabKey) =>
-      closeOtherTabs(current, key)
+    closeOtherTabs: gated(
+      "workspaceApps",
+      (current, key: TabKey, showWindows: boolean) =>
+        closeOtherTabs(current, key, showWindows)
     ),
-    closeTabsBelow: gated("workspaceApps", (current, key: TabKey) =>
-      closeTabsBelow(current, key)
+    closeTabsBelow: gated(
+      "workspaceApps",
+      (current, key: TabKey, showWindows: boolean) =>
+        closeTabsBelow(current, key, showWindows)
     ),
     setPinned: gated("workspaceApps", (current, key: TabKey, pinned: boolean) =>
       setPinned(current, key, pinned)
