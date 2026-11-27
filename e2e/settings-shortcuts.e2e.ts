@@ -444,6 +444,31 @@ test("refuses a key another command holds, naming it, and changes nothing", asyn
   await expectNotRecording(page);
 });
 
+test("keeps recording through the repeats of the Enter held that started it", async ({
+  app,
+}) => {
+  const page = await openShortcuts(app);
+
+  await reloadButton(page).focus();
+  await page.keyboard.press("Enter");
+  await expect(reloadButton(page)).toHaveText("Type shortcut…");
+
+  const cdp = await page.context().newCDPSession(page);
+  const enter = {
+    key: "Enter",
+    code: "Enter",
+    windowsVirtualKeyCode: 13,
+    autoRepeat: true,
+  };
+
+  await cdp.send("Input.dispatchKeyEvent", { type: "rawKeyDown", ...enter });
+  await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", ...enter });
+  await cdp.detach();
+
+  await expect(reloadButton(page)).toHaveText("Type shortcut…");
+  await expect(reloadRow(page).getByRole("alert")).toHaveCount(0);
+});
+
 test("leaves Reload with no key on Delete, and Reset gives the default back", async ({
   app,
 }) => {
