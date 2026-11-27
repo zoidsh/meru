@@ -1,5 +1,7 @@
 import path from "node:path";
 
+import { noop } from "es-toolkit";
+
 import type { App } from "#core/apps.ts";
 import { GMAIL_FEATURES, gmailFeatures } from "#core/gmail-hooks.ts";
 import { gmailOwnWindow, profilePartition } from "#core/state.ts";
@@ -8,6 +10,7 @@ import type { TabKey } from "#core/tabs.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import { createIpc } from "#platform/ipc.ts";
 import type { createPower } from "#platform/power.ts";
+import { createSentWindows } from "#platform/sent-windows.ts";
 import type { createSessions } from "#platform/sessions.ts";
 import { readTextUpTo } from "#platform/text-file.ts";
 
@@ -22,6 +25,7 @@ import type { MailPoller } from "../mail.ts";
 import type { Overlays } from "../overlay.ts";
 import type { Profiles } from "../profiles.ts";
 import type { SenderRegistry } from "../senders.ts";
+import { createSentCompose } from "../sent-compose.ts";
 import type { SettingsStore } from "../settings.ts";
 import { createShowGmail } from "../show-gmail.ts";
 import type { createTabViews } from "../tab-views.ts";
@@ -35,7 +39,8 @@ import { exposeSettingsToSuite, gmailPageCapture } from "./test-build.ts";
 /**
  * Gmail's page contract, its switches following the settings, which the
  * suite's build alone may also switch from outside. Answers with what tells
- * a profile's page to catch up, at most every 2 s.
+ * a profile's page to catch up, at most every 2 s, and what closes a compose
+ * window after sending.
  */
 const serveGmailPage = ({
   gmailOrigin,
@@ -43,19 +48,37 @@ const serveGmailPage = ({
   profiles,
   settings,
   userStyles,
+  overlays,
+  background,
 }: {
   gmailOrigin: string | undefined;
   senders: SenderRegistry;
   profiles: Pick<Profiles, "get">;
   settings: SettingsStore;
   userStyles: () => Promise<string>;
+  overlays: Overlays;
+  background: boolean;
 }) => {
   exposeSettingsToSuite(settings);
 
   if (gmailOrigin === undefined) {
-    return { catchUp: createCatchUp(() => false), navigate: () => false };
+    return {
+      catchUp: createCatchUp(() => false),
+      navigate: () => false,
+      sentCompose: { undo: noop },
+    };
   }
 
+  const sentCompose = createSentCompose({
+    enabled: () => settings.get("closeComposeWindowAfterSend"),
+    windows: createSentWindows(background),
+    overlays,
+    undoPage: (webContentsId) => {
+      // oxlint-disable-next-line no-use-before-define -- the page reports the sends this takes back
+      gmailPage.undo(webContentsId);
+    },
+  });
+  const capture = gmailPageCapture();
   const gmailPage = serveGmailContract({
     ipc: createIpc(),
     senders,
@@ -64,7 +87,14 @@ const serveGmailPage = ({
     features: () => gmailFeatures(settings.get),
     userStyles,
     watchSent: () => settings.get("closeComposeWindowAfterSend"),
-    ...gmailPageCapture(),
+    ...capture,
+    onSent: (webContentsId, notice) => {
+      if (capture) {
+        capture.onSent(webContentsId, notice);
+      }
+
+      sentCompose.notice(webContentsId, notice);
+    },
     log: console.error,
   });
 
@@ -77,6 +107,7 @@ const serveGmailPage = ({
   return {
     catchUp: createCatchUp(gmailPage.catchUp),
     navigate: gmailPage.navigate,
+    sentCompose,
   };
 };
 
@@ -103,7 +134,9 @@ export const wireGmail = ({
   showOwnWindow,
   revealGmail,
   entitlement,
+  background,
 }: {
+  background: boolean;
   entitlement: Pick<Entitlement, "can">;
   lifecycle: ReturnType<typeof createAppLifecycle>;
   sessions: ReturnType<typeof createSessions>;
@@ -151,8 +184,10 @@ export const wireGmail = ({
       log: console.error,
       allowed: () => entitlement.can("userStyles"),
     }),
+    overlays,
+    background,
   });
-  const { catchUp } = gmailPage;
+  const { catchUp, sentCompose } = gmailPage;
   const navigateGmail = createGmailNavigation({
     send: gmailPage.navigate,
     jumpTo: showGmail.jumpTo,
@@ -223,5 +258,5 @@ export const wireGmail = ({
   mail.onPoll(inbox.polled);
   settings.onChange("unifiedInbox", inbox.refresh);
 
-  return { showGmail, navigateGmail, mailActions, inbox };
+  return { showGmail, navigateGmail, mailActions, inbox, sentCompose };
 };

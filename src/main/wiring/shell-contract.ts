@@ -28,6 +28,7 @@ import { createProfileMenu } from "../profile-menu.ts";
 import type { ProfileQuestion } from "../profile-question.ts";
 import type { Profiles } from "../profiles.ts";
 import type { ScreenPicker } from "../screen-picker.ts";
+import type { SentCompose } from "../sent-compose.ts";
 import type { SettingsStore } from "../settings.ts";
 import {
   createShellHandlers,
@@ -83,6 +84,7 @@ export const wireShellContract = ({
   downloads,
   screenPicker,
   profileQuestion,
+  sentCompose,
   mail,
   doNotDisturb,
   openApp,
@@ -124,6 +126,7 @@ export const wireShellContract = ({
   downloads: Downloads;
   screenPicker: ScreenPicker;
   profileQuestion: ProfileQuestion;
+  sentCompose: Pick<SentCompose, "undo">;
   mail: MailPoller;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
   openApp: OpenApp;
@@ -212,6 +215,7 @@ export const wireShellContract = ({
         downloads,
         screenPicker,
         profileQuestion,
+        sentCompose,
         openApp,
         bookmarks,
         tabMenu,

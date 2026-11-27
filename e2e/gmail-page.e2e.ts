@@ -226,6 +226,7 @@ test("reports a hook broken when the markup it anchors on goes, and absent when 
       darkDialog: "absent",
       darkDialogText: "absent",
       sentNotice: "absent",
+      sentUndo: "absent",
     });
   // A broken hook does nothing: the policy link it no longer reaches shows.
   await expect(parts(view).hideInboxFooter).toBeVisible();
@@ -344,27 +345,17 @@ test("keeps Gmail's pop-out inert without Close compose window after sending: it
 
   expect(health.every(({ tabId }) => tabId === "gmail")).toBeTruthy();
 
+  // Turned on, the pop-out tells of the notice it shows, and closes once it
+  // has gone; the tab's page is never told to watch, so its own tells nothing.
   await setSetting(app, "closeComposeWindowAfterSend", true);
   await expect.poll(() => readSent(app)).toStrictEqual(["shown"]);
+  await showSentNotice(view, true);
   await showSentNotice(popout, false);
   await expect.poll(() => readSent(app)).toStrictEqual(["shown", "gone"]);
-
-  await setSetting(app, "closeComposeWindowAfterSend", false);
-  await showSentNotice(popout, true);
+  await expect.poll(() => popout.isClosed()).toBeTruthy();
   await delay(500);
 
-  expect(await readSent(app)).toStrictEqual(["shown", "gone"]);
-
-  // On again, the pop-out tells of the notice it shows; the tab's page is
-  // never told to watch, so its own notice tells nothing.
-  await setSetting(app, "closeComposeWindowAfterSend", true);
-  await showSentNotice(view, true);
-  await expect
-    .poll(() => readSent(app))
-    .toStrictEqual(["shown", "gone", "shown"]);
-  await delay(500);
-
-  expect(await readSent(app)).toHaveLength(3);
+  expect(await readSent(app)).toHaveLength(2);
 });
 
 const THREAD_FEATURES = [

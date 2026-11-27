@@ -159,6 +159,7 @@ const setup = () => {
     openMeruPro: () => Promise.resolve(),
     shareScreen: () => Promise.resolve(),
     answerProfileQuestion: () => Promise.resolve(),
+    undoSent: () => Promise.resolve(),
     cancelScreenPicker: () => Promise.resolve(),
     retryScreenPicker: () => Promise.resolve(),
     openScreenRecordingSettings: () => Promise.resolve(),

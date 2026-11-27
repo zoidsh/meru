@@ -68,3 +68,21 @@ export const watchSentNotice = (
     observer.disconnect();
   };
 };
+
+const SENT_UNDO = findHook("sentUndo");
+
+/**
+ * Presses the Undo of Gmail's "Message sent" bar, never a link quoted in
+ * mail; whether there was one to press.
+ */
+export const undoSent = (root: ParentNode) => {
+  const undo = SENT_UNDO.anchors
+    .map((anchor) =>
+      root.querySelector<HTMLElement>(guardedSelector(SENT_UNDO, anchor))
+    )
+    .find((element) => element !== null);
+
+  undo?.click();
+
+  return undo !== undefined;
+};

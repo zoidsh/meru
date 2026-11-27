@@ -566,24 +566,26 @@ const start = async () => {
     settings,
   });
 
-  const { showGmail, navigateGmail, mailActions, inbox } = wireGmail({
-    lifecycle,
-    sessions,
-    power,
-    senders,
-    settings,
-    profiles,
-    views,
-    overlays,
-    focus,
-    mail,
-    gmail,
-    gmailHome,
-    gmailOrigin,
-    showOwnWindow,
-    revealGmail,
-    entitlement,
-  });
+  const { showGmail, navigateGmail, mailActions, inbox, sentCompose } =
+    wireGmail({
+      lifecycle,
+      sessions,
+      power,
+      senders,
+      settings,
+      profiles,
+      views,
+      overlays,
+      focus,
+      mail,
+      gmail,
+      gmailHome,
+      gmailOrigin,
+      showOwnWindow,
+      revealGmail,
+      entitlement,
+      background,
+    });
 
   const { livePageUrl, openApp, bookmarks } = wireLauncher({
     platform,
@@ -783,6 +785,7 @@ const start = async () => {
     downloads,
     screenPicker,
     profileQuestion,
+    sentCompose,
     mail,
     doNotDisturb,
     openApp,

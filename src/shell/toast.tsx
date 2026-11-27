@@ -132,6 +132,11 @@ export const Toast = ({
     }),
     "license-refused": refused,
     "trial-ended": ended,
+    "message-sent": t({
+      message: "Message sent",
+      comment:
+        "Short notice at the foot of the window once an email written in a compose window of its own is sent, that window having closed; beside it an Undo button",
+    }),
   }[message];
 
   const upgrade = offersUpgrade(message)
@@ -141,6 +146,14 @@ export const Toast = ({
           "Button on a short notice at the foot of the window saying a feature needs Meru Pro; it opens Meru Pro's pricing in the default browser",
       })
     : undefined;
+  const undo =
+    message === "message-sent"
+      ? t({
+          message: "Undo",
+          comment:
+            "Button on the short notice saying an email was sent; it takes the send back and shows its compose window again",
+        })
+      : undefined;
 
   useEffect(() => {
     const id = notices.add({
@@ -157,12 +170,20 @@ export const Toast = ({
           },
         },
       }),
+      ...(undo && {
+        actionProps: {
+          children: undo,
+          onClick: () => {
+            shellCalls().undoSent({}).catch(noop);
+          },
+        },
+      }),
     });
 
     return () => {
       notices.close(id);
     };
-  }, [text, upgrade]);
+  }, [text, upgrade, undo]);
 
   return (
     <ToastProvider toastManager={notices}>

@@ -13,11 +13,12 @@ import type { GmailFeature, GmailFeatures } from "#core/gmail-hooks.ts";
 
 import { pressRefresh } from "./catch-up.ts";
 import { RECHECK_MS, checkHealth } from "./health.ts";
-import { watchSentNotice } from "./sent.ts";
+import { undoSent, watchSentNotice } from "./sent.ts";
 
 // Gmail draws a view some time after it moves to it, so a check waits for it
 // to settle and looks once more before calling a required hook broken.
 const SETTLE_MS = 1000;
+const HIDDEN_CHECK_MS = 100;
 const MIN_GAP_MS = 2000;
 
 const inserted = new Map<GmailFeature, string>();
@@ -221,12 +222,25 @@ ipcRenderer.on(GMAIL_CHANNELS.watchSent, (_event, watch: unknown) => {
       {
         root: document,
         isVisible: (element) => element.checkVisibility(),
-        beforePaint: requestAnimationFrame,
+        // A hidden window paints no frames, and main hides one as it sends
+        // while it waits for the notice to go.
+        beforePaint: (look) => {
+          if (document.visibilityState === "visible") {
+            requestAnimationFrame(look);
+          } else {
+            setTimeout(look, HIDDEN_CHECK_MS);
+          }
+        },
       },
       (notice) => {
         ipcRenderer.send(GMAIL_CHANNELS.sent, notice);
       }
     );
+  }
+});
+ipcRenderer.on(GMAIL_CHANNELS.undoSent, () => {
+  if (stopWatchingSent) {
+    undoSent(document);
   }
 });
 // A view's first, empty document is no page to ask about.

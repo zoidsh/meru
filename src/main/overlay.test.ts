@@ -153,23 +153,26 @@ describe(createOverlays, () => {
     vi.useRealTimers();
   });
 
-  it("keeps a toast with Upgrade past a plain one's time, closing it at its own", () => {
-    vi.useFakeTimers();
+  it.each(["email-links-pro", "message-sent"] as const)(
+    "keeps a toast with a button (%s) past a plain one's time, closing it at its own",
+    (message) => {
+      vi.useFakeTimers();
 
-    const { overlays, focus } = setup();
-    const shown = () => overlays.current()?.kind;
+      const { overlays, focus } = setup();
+      const shown = () => overlays.current()?.kind;
 
-    focus.noteFocused({ kind: "front" });
-    overlays.open({ kind: "toast", message: "email-links-pro" });
-    vi.advanceTimersByTime(TOAST_DURATION);
+      focus.noteFocused({ kind: "front" });
+      overlays.open({ kind: "toast", message });
+      vi.advanceTimersByTime(TOAST_DURATION);
 
-    const atPlainEnd = shown();
+      const atPlainEnd = shown();
 
-    vi.advanceTimersByTime(ACTION_TOAST_DURATION - TOAST_DURATION);
+      vi.advanceTimersByTime(ACTION_TOAST_DURATION - TOAST_DURATION);
 
-    expect([atPlainEnd, shown()]).toStrictEqual(["toast", undefined]);
-    vi.useRealTimers();
-  });
+      expect([atPlainEnd, shown()]).toStrictEqual(["toast", undefined]);
+      vi.useRealTimers();
+    }
+  );
 
   it("shows where a dragged tab would land without taking focus from the page, and gives none back when it closes", () => {
     const { overlays, focus, events } = setup();

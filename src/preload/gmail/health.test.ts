@@ -67,6 +67,7 @@ describe(checkHealth, () => {
         darkDialog: "absent",
         darkDialogText: "absent",
         sentNotice: "absent",
+        sentUndo: "absent",
       },
     });
   });

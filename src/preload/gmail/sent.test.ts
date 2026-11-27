@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SentNotice } from "#contract/gmail-channels.ts";
 
-import { sentNoticeShown, watchSentNotice } from "./sent.ts";
+import { sentNoticeShown, undoSent, watchSentNotice } from "./sent.ts";
 
 // Gmail's bar as it reads after a send: the notice, then Undo and View message.
 const NOTICE = `<div class="vh"><span class="aT"><span class="bAq">Message sent</span><span class="bAo">&nbsp;&nbsp;</span><span id="link_undo" class="ag a8k" role="link">Undo</span><span id="link_vsm" class="ag a8k" role="link">View message</span></span></div>`;
@@ -101,5 +101,26 @@ describe(watchSentNotice, () => {
     await settle();
 
     expect(told).toStrictEqual([]);
+  });
+});
+
+describe(undoSent, () => {
+  it("presses the bar's own Undo", () => {
+    const document = rootOf(`<div class="b8 UC">${NOTICE}</div>`);
+    const pressed: string[] = [];
+
+    document
+      .querySelector("#link_undo")
+      ?.addEventListener("click", () => pressed.push("undo"));
+
+    expect(undoSent(document)).toBeTruthy();
+    expect(pressed).toStrictEqual(["undo"]);
+  });
+
+  it.each([
+    ["no bar", '<div class="vh"></div>'],
+    ["the bar quoted in a message", `<div data-message-id="m">${NOTICE}</div>`],
+  ])("presses nothing with %s", (_what, body) => {
+    expect(undoSent(rootOf(body))).toBeFalsy();
   });
 });

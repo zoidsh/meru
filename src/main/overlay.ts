@@ -1,7 +1,7 @@
 import { isEqual } from "es-toolkit";
 
 import {
-  offersUpgrade,
+  hasToastAction,
   takesNoFocus,
   transitionOverlay,
 } from "#core/overlay.ts";
@@ -97,7 +97,7 @@ export const createOverlays = ({
             hide();
           }
         },
-        offersUpgrade(overlay.message) ? ACTION_TOAST_DURATION : TOAST_DURATION
+        hasToastAction(overlay.message) ? ACTION_TOAST_DURATION : TOAST_DURATION
       );
     }
 

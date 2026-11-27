@@ -41,6 +41,7 @@ import type { ProfileMenu } from "./profile-menu.ts";
 import type { ProfileQuestion } from "./profile-question.ts";
 import type { Profiles } from "./profiles.ts";
 import type { ScreenPicker } from "./screen-picker.ts";
+import type { SentCompose } from "./sent-compose.ts";
 import type { LaunchHandlers, ShellHandlers } from "./shell-ipc.ts";
 import type { Sidebar } from "./sidebar.ts";
 import type { TabMenu } from "./tab-menu.ts";
@@ -91,6 +92,7 @@ export interface ShellHandlersDeps {
     "share" | "cancel" | "retry" | "openSettings"
   >;
   profileQuestion: Pick<ProfileQuestion, "answer">;
+  sentCompose: Pick<SentCompose, "undo">;
   openApp: Pick<OpenApp, "choose" | "chooseBookmark" | "removeBookmark">;
   bookmarks: Pick<Bookmarks, "toggle">;
   tabMenu: Pick<TabMenu, "open" | "openOwnWindow">;
@@ -358,6 +360,7 @@ export const createShellHandlers = ({
   downloads,
   screenPicker,
   profileQuestion,
+  sentCompose,
   openApp,
   bookmarks,
   tabMenu,
@@ -585,6 +588,11 @@ export const createShellHandlers = ({
     },
     answerProfileQuestion: ({ profileId }) => {
       profileQuestion.answer(profileId);
+
+      return Promise.resolve();
+    },
+    undoSent: () => {
+      sentCompose.undo();
 
       return Promise.resolve();
     },

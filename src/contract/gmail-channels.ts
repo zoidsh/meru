@@ -37,6 +37,8 @@ export const GMAIL_CHANNELS = {
   watchSent: "gmail:watch-sent",
   /** Page to main, from a window told to watch: a `SentNotice`. */
   sent: "gmail:sent",
+  /** Main to a window whose send is shown as sent: press Gmail's Undo. */
+  undoSent: "gmail:undo-sent",
 } as const;
 
 export const SENT_NOTICES = ["shown", "gone"] as const;

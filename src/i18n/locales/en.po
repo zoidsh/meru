@@ -1734,6 +1734,11 @@ msgstr "Meru uses it for the profile dot and to tint the title bar."
 msgid "MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
 msgstr "MERU-XXXX-XXXX-XXXX-XXXX-XXXX"
 
+#. Short notice at the foot of the window once an email written in a compose window of its own is sent, that window having closed; beside it an Undo button
+#: src/shell/toast.tsx
+msgid "Message sent"
+msgstr "Message sent"
+
 #. Menu item in the Window menu
 #: src/main/application-menu.ts
 msgid "Minimize"
@@ -3191,8 +3196,10 @@ msgstr "Turn this off if pages flicker or stay blank. Restart Meru to apply the 
 msgid "Turn this off if pages flicker or stay blank. You'll need to restart Meru."
 msgstr "Turn this off if pages flicker or stay blank. You'll need to restart Meru."
 
+#. Button on the short notice saying an email was sent; it takes the send back and shows its compose window again
 #. Menu item in the Edit menu
 #: src/main/application-menu.ts
+#: src/shell/toast.tsx
 msgid "Undo"
 msgstr "Undo"
 

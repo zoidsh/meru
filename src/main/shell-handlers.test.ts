@@ -143,6 +143,11 @@ const setup = ({
         calls.push(["answerProfileQuestion", profileId]);
       },
     },
+    sentCompose: {
+      undo: () => {
+        calls.push(["undoSent"]);
+      },
+    },
     screenPicker: {
       share: (source, window) => {
         calls.push(["shareScreen", source, window]);

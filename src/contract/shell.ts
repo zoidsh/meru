@@ -298,6 +298,11 @@ export const SHELL_CALLS = {
     request: z.object({ profileId }),
     response: z.undefined(),
   },
+  /** Undo on the toast saying an email was sent: the send taken back. */
+  undoSent: {
+    request: none,
+    response: z.undefined(),
+  },
   /** Cancel, Escape or a press outside the picker: the page gets no stream. */
   cancelScreenPicker: {
     request: z.object({ window: inWindow }),

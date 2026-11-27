@@ -253,6 +253,17 @@ export const serveGmailContract = ({
   });
 
   return {
+    /**
+     * Tells a window that shook hands to press Gmail's Undo on its send,
+     * while its main frame is still on Gmail's origin.
+     */
+    undo: (webContentsId: number) => {
+      if (windows.has(webContentsId) && isWindow(webContentsId)) {
+        ipc.send(webContentsId, GMAIL_CHANNELS.undoSent, undefined, {
+          mainFrameOrigin: gmailOrigin,
+        });
+      }
+    },
     /** Tells each window that shook hands whether to watch now. */
     pushWatch: () => {
       for (const webContentsId of windows) {

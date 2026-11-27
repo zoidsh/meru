@@ -26,6 +26,7 @@ export const TOAST_MESSAGES = [
   ...DOWNGRADE_TOASTS,
   "license-refused",
   "trial-ended",
+  "message-sent",
 ] as const;
 
 export type ToastMessage = (typeof TOAST_MESSAGES)[number];
@@ -39,6 +40,10 @@ export const UPGRADE_TOASTS = [
 /** Whether the toast carries Upgrade. */
 export const offersUpgrade = (message: ToastMessage) =>
   (UPGRADE_TOASTS as readonly ToastMessage[]).includes(message);
+
+/** Whether the toast carries a button, Upgrade or a sent email's Undo. */
+export const hasToastAction = (message: ToastMessage) =>
+  offersUpgrade(message) || message === "message-sent";
 
 /** What an overlay over the content views shows; one at a time. */
 export type Overlay =

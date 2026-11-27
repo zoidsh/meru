@@ -213,13 +213,45 @@ test("a link in the compose window leaves for the default browser, as one in Gma
   expect(compose.isClosed()).toBeFalsy();
 });
 
-test("with Close compose window after sending on, the compose window has Gmail's preload and tells main of Gmail's sent notice", async ({
-  launchApp,
-  userDataDir,
-  standIn,
-}) => {
+/** Whether the one compose window shows, or none is left. */
+const composeShown = async (app: ElectronApplication) => {
+  const windows = await composeWindows(app);
+
+  return windows.length === 0 ? "closed" : windows[0]?.visible;
+};
+
+/** The main window's notice that the email was sent. */
+const sentToast = (overlay: Page) =>
+  overlay
+    .getByRole("region", { name: "Notifications" })
+    .getByText("Message sent", { exact: true });
+
+/** Counts presses of Gmail's Undo in the stand-in's sent notice. */
+const countUndoPresses = (compose: Page) =>
+  compose.evaluate(() => {
+    Reflect.set(globalThis, "undoPresses", 0);
+    document.addEventListener("click", (event) => {
+      if (event.target instanceof Element && event.target.id === "link_undo") {
+        Reflect.set(
+          globalThis,
+          "undoPresses",
+          (Reflect.get(globalThis, "undoPresses") as number) + 1
+        );
+      }
+    });
+  });
+
+/** A compose window opened for a link, Close compose window after sending on or off. */
+const openCompose = async (
+  launchApp: () => Promise<ElectronApplication>,
+  userDataDir: string,
+  standIn: StandIn,
+  closeAfterSend: boolean
+) => {
   await seedProfiles(userDataDir, standIn, ["Personal"]);
-  await writeSettings(userDataDir, { closeComposeWindowAfterSend: true });
+  await writeSettings(userDataDir, {
+    closeComposeWindowAfterSend: closeAfterSend,
+  });
 
   const app = await launchApp();
   const view = await findPage(app, standIn.url);
@@ -227,23 +259,109 @@ test("with Close compose window after sending on, the compose window has Gmail's
   await openUrl(app, LINK);
 
   const compose = await findPage(app, composeUrl(standIn.url, LINK));
-  const readSent = () =>
-    app.evaluate(() => {
-      const { sent } = Reflect.get(globalThis, "meruTestGmailPage") as {
-        sent: { notice: string }[];
-      };
 
-      return sent.map(({ notice }) => notice);
-    });
+  return { app, view, compose, overlay: await findOverlayDocument(app) };
+};
+
+test("with Close compose window after sending on, a sent email's window hides at once, and Undo presses Gmail's own and shows it again", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, view, compose, overlay } = await openCompose(
+    launchApp,
+    userDataDir,
+    standIn,
+    true
+  );
 
   // The tab's own page is never told to watch.
   await showSentNotice(view, true);
+  await delay(500);
+  await expect(sentToast(overlay)).toHaveCount(0);
+
+  await countUndoPresses(compose);
   await showSentNotice(compose, true);
-  await expect.poll(readSent).toStrictEqual(["shown"]);
+  await expect.poll(() => composeShown(app)).toBe(false);
+  await expect(sentToast(overlay)).toBeVisible();
+
+  await overlay
+    .getByRole("region", { name: "Notifications" })
+    .getByRole("button", { name: "Undo" })
+    .click();
+
+  await expect
+    .poll(() => compose.evaluate(() => Reflect.get(globalThis, "undoPresses")))
+    .toBe(1);
+  await expect.poll(() => composeShown(app)).toBe(true);
+  await expect(sentToast(overlay)).toHaveCount(0);
+
+  // Gmail takes its notice away as it undoes, and the draft stays open.
   await showSentNotice(compose, false);
-  await expect.poll(readSent).toStrictEqual(["shown", "gone"]);
-  // Nothing more is done with it, so the window stays.
-  expect(compose.isClosed()).toBeFalsy();
+  await delay(500);
+  expect(await composeShown(app)).toBe(true);
+});
+
+test("with Close compose window after sending on, a sent email's window closes once Gmail's notice has gone, the toast going with it", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, compose, overlay } = await openCompose(
+    launchApp,
+    userDataDir,
+    standIn,
+    true
+  );
+
+  await showSentNotice(compose, true);
+  await expect(sentToast(overlay)).toBeVisible();
+  // A shorter undo period than the toast's: its Undo would do nothing.
+  await showSentNotice(compose, false);
+  await expect(sentToast(overlay)).toHaveCount(0);
+  await expect.poll(() => composeShown(app)).toBe("closed");
+});
+
+test("with Close compose window after sending on, a sent email's window waits hidden for its notice to go after the toast ends", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, compose, overlay } = await openCompose(
+    launchApp,
+    userDataDir,
+    standIn,
+    true
+  );
+
+  await showSentNotice(compose, true);
+  await expect(sentToast(overlay)).toBeVisible();
+  await expect(sentToast(overlay)).toHaveCount(0, { timeout: 12_000 });
+  expect(await composeShown(app)).toBe(false);
+
+  await showSentNotice(compose, false);
+  await expect.poll(() => composeShown(app)).toBe("closed");
+});
+
+test("with Close compose window after sending off, a sent email's window stays as it is and nothing is said", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, compose, overlay } = await openCompose(
+    launchApp,
+    userDataDir,
+    standIn,
+    false
+  );
+
+  await showSentNotice(compose, true);
+  await delay(500);
+  await showSentNotice(compose, false);
+  await delay(500);
+
+  expect(await composeShown(app)).toBe(true);
+  await expect(sentToast(overlay)).toHaveCount(0);
 });
 
 test("a second launch's link opens a compose window, and anything but mailto is ignored", async ({

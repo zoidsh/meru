@@ -43,6 +43,7 @@ export const HOOK_NAMES = [
   "darkDialog",
   "darkDialogText",
   "sentNotice",
+  "sentUndo",
 ] as const;
 
 export type HookName = (typeof HOOK_NAMES)[number];
@@ -336,6 +337,13 @@ export const HOOKS: readonly Hook[] = [
     scope: "chrome",
     // Gmail's "Message sent" bar, by its Undo and View message links.
     anchors: [".vh:has(#link_undo):has(#link_vsm)"],
+    requiredIn: [],
+  },
+  {
+    name: "sentUndo",
+    scope: "chrome",
+    // The Undo link of that bar, which takes a send back while it shows.
+    anchors: [".vh:has(#link_vsm) #link_undo"],
     requiredIn: [],
   },
 ];

@@ -334,7 +334,8 @@ export const SETTINGS = {
   }),
   /**
    * A compose window of its own, one Meru opened for an email link or
-   * Gmail's pop-out, watches for Gmail's notice that the email was sent.
+   * Gmail's pop-out, hides once Gmail says its email was sent, and closes
+   * once Gmail's Undo has gone unless the main window's Undo was pressed.
    */
   closeComposeWindowAfterSend: setting<boolean>({
     schema: z.boolean(),

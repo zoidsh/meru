@@ -55,6 +55,7 @@ const HEALTH: GmailHealth = {
     darkDialog: "matched",
     darkDialogText: "matched",
     sentNotice: "matched",
+    sentUndo: "matched",
   },
   ms: 2,
 };
@@ -540,6 +541,26 @@ describe("a compose window of its own", () => {
     expect(contract.logs).toContain(
       "Refused Gmail's sent notice from webContents 99 (main frame, https://mail.google.com)"
     );
+  });
+
+  it("is told to press Gmail's Undo on its main frame on Gmail's origin, while a tab or a window that never shook hands is told nothing", () => {
+    const contract = setup();
+
+    contract.shake(from(GMAIL_VIEW));
+    contract.sent.length = 0;
+    contract.page.undo(CHILD_WINDOW);
+    contract.shake(from(CHILD_WINDOW));
+    contract.page.undo(GMAIL_VIEW);
+    contract.page.undo(CHILD_WINDOW);
+
+    expect(contract.sent).toStrictEqual([
+      {
+        to: CHILD_WINDOW,
+        channel: GMAIL_CHANNELS.undoSent,
+        message: undefined,
+        options: { mainFrameOrigin: GMAIL_ORIGIN },
+      },
+    ]);
   });
 
   it("refuses a malformed notice without logging what it held", () => {
