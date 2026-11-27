@@ -67,6 +67,14 @@ export const wireStores = async ({
     log,
   });
   const multipleProfiles = () => entitlement.can("profiles");
+  const settings = createSettingsStore({
+    initial: stores.settings,
+    save: (next) => saveSettings(settingsFile, next),
+    platform,
+    log,
+    profileValues: multipleProfiles,
+    can: entitlement.can,
+  });
   const profiles = createProfiles({
     initial: stores.state,
     save: (state) => saveState(stateFile, state),
@@ -77,6 +85,7 @@ export const wireStores = async ({
     log,
     multipleProfiles,
     can: entitlement.can,
+    openAppsIn: (profileId) => settings.get("openAppsIn", profileId),
   });
   // Ahead of every other listener of the profiles, so each reads the
   // sidebar as the change leaves it.
@@ -85,15 +94,6 @@ export const wireStores = async ({
     profiles,
     now: () => new Date(),
     log,
-  });
-
-  const settings = createSettingsStore({
-    initial: stores.settings,
-    save: (next) => saveSettings(settingsFile, next),
-    platform,
-    log,
-    profileValues: multipleProfiles,
-    can: entitlement.can,
   });
 
   // The settings first, so a profile coming back reads its own values.

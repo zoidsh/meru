@@ -562,7 +562,18 @@ const start = async () => {
     network,
     senders,
     state: profiles.get,
-    openTab: profiles.openTab,
+    // A tab Open Google apps in starts in a window of its own comes forward
+    // as Move to New Window brings it; its window is placed as the change
+    // is committed.
+    openTab: async (profileId, ...rest) => {
+      const opened = await profiles.openTab(profileId, ...rest);
+
+      if (opened?.ownWindow) {
+        showOwnWindow({ profileId, tabId: opened.tabId });
+      }
+
+      return opened;
+    },
     selectTab: profiles.selectTab,
     closeTab: profiles.closeTab,
     newId,

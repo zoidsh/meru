@@ -4,6 +4,7 @@ import type { App } from "./apps.ts";
 import { drawnTabs } from "./drawn-tabs.ts";
 import { paneTabs } from "./pane-tree.ts";
 import type { PaneDirection, Split } from "./pane-tree.ts";
+import type { OpenAppsIn } from "./settings.ts";
 import {
   isInSplit,
   splitBeside,
@@ -61,6 +62,8 @@ const updateProfile = (
 export interface OpenedTab {
   state: State;
   tabId: string;
+  /** A new tab that started in a window of its own, to bring forward. */
+  ownWindow?: true;
 }
 
 /** Gmail's tab keeps its id however often it is closed and opened again. */
@@ -68,10 +71,29 @@ export const newTabId = (app: App, newId: () => string) =>
   app.id === "gmail" ? GMAIL_TAB_ID : newId();
 
 /**
+ * Whether a new tab starts in a window of its own, as Move to New Window
+ * would put it: under New window, for the profile it opens in, any app but
+ * Gmail, unless it is pinned or was asked for as a split.
+ */
+export const startsInOwnWindow = ({
+  app,
+  pinned,
+  split,
+  openAppsIn,
+}: {
+  app: App;
+  pinned: boolean;
+  split: boolean;
+  openAppsIn: OpenAppsIn;
+}) => openAppsIn === "windows" && app.id !== "gmail" && !pinned && !split;
+
+/**
  * Opens `url` as a tab of `app` in the profile, selected: appended, or put
  * right after the tab `after` names, or for a single-instance app with a tab
  * already, that tab, given the URL. With `split`, it goes in a new pane that
- * way of the focused one, as Split right and Split down put it.
+ * way of the focused one, as Split right and Split down put it. A new tab
+ * `startsInOwnWindow` sends to a window of its own leaves the main window's
+ * selection as it was.
  */
 export const openTab = (
   state: State,
@@ -80,7 +102,8 @@ export const openTab = (
   url: string,
   newId: () => string,
   after?: string,
-  split?: PaneDirection
+  split?: PaneDirection,
+  openAppsIn: OpenAppsIn = "tabs"
 ): OpenedTab | undefined => {
   let opened: Omit<OpenedTab, "state"> | undefined;
 
@@ -104,6 +127,12 @@ export const openTab = (
       };
     }
 
+    const ownWindow = startsInOwnWindow({
+      app,
+      pinned: false,
+      split: split !== undefined,
+      openAppsIn,
+    });
     const tab: Tab = {
       id: newTabId(app, newId),
       app: app.id,
@@ -111,9 +140,10 @@ export const openTab = (
       title: "",
       // Gmail with no pinned key reads as pinned, as it was before pinning.
       ...(app.id === "gmail" && { pinned: false }),
+      ...(ownWindow && { ownWindow: true }),
     };
 
-    opened = { tabId: tab.id };
+    opened = { tabId: tab.id, ...(ownWindow && { ownWindow: true }) };
 
     const before = profile.tabs.findIndex(
       (entry) => isTab(entry) && entry.id === after
@@ -123,7 +153,7 @@ export const openTab = (
     return {
       ...profile,
       tabs: profile.tabs.toSpliced(at, 0, tab),
-      selectedTabId: tab.id,
+      selectedTabId: ownWindow ? profile.selectedTabId : tab.id,
     };
   };
 

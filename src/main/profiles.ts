@@ -22,6 +22,7 @@ import {
   renameSavedSearch,
 } from "#core/saved-searches.ts";
 import type { SavedSearchRefusal } from "#core/saved-searches.ts";
+import type { OpenAppsIn } from "#core/settings.ts";
 import {
   addProfile,
   isAsleep,
@@ -91,6 +92,11 @@ export interface ProfilesDeps {
    * switched, the stored one kept. Everything when absent.
    */
   can?: (capability: Capability) => boolean;
+  /**
+   * Where a new tab of a Google app starts for the profile, as Tabs & Google
+   * Apps says now; the main window when absent.
+   */
+  openAppsIn?: (profileId: string) => OpenAppsIn;
 }
 
 /**
@@ -108,6 +114,7 @@ export const createProfiles = ({
   log,
   multipleProfiles = () => true,
   can = () => true,
+  openAppsIn = () => "tabs",
 }: ProfilesDeps) => {
   const mutex = new Mutex();
   const listeners = new Set<(state: State) => void>();
@@ -369,8 +376,9 @@ export const createProfiles = ({
     rename: (profileId: string, name: string) =>
       exclusive(() => commit(renameProfile(state, profileId, name))),
     /**
-     * Opens `url` as a tab of `app`, selected; a new tab gets `tabId`, and
-     * goes after the tab `after` names, if any.
+     * Opens `url` as a tab of `app`, selected, or in a window of its own as
+     * `openAppsIn` says for the profile; a new tab gets `tabId`, and goes
+     * after the tab `after` names, if any.
      */
     openTab: (
       profileId: string,
@@ -402,7 +410,8 @@ export const createProfiles = ({
           url,
           () => tabId,
           after,
-          split
+          split,
+          openAppsIn(profileId)
         );
 
         return opened && (await commit(opened.state)) ? opened : undefined;

@@ -24,6 +24,7 @@ import {
   setPinned,
   setSleepWhenIdle,
   splitTab,
+  startsInOwnWindow,
   updatePages,
 } from "./tabs.ts";
 
@@ -78,6 +79,109 @@ const openedAfter = (name: string) =>
       name
     )?.state
   );
+
+describe(startsInOwnWindow, () => {
+  it("sends a new tab to a window of its own only under New window, for any app but Gmail, neither pinned nor asked for as a split", () => {
+    const table = [
+      ["calendar", false, false, "windows", true],
+      ["drive", false, false, "windows", true],
+      ["calendar", false, false, "tabs", false],
+      ["gmail", false, false, "windows", false],
+      ["calendar", true, false, "windows", false],
+      ["calendar", false, true, "windows", false],
+    ] as const;
+
+    expect(
+      table.map(([appId, pinned, split, openAppsIn]) =>
+        startsInOwnWindow({ app: app(appId), pinned, split, openAppsIn })
+      )
+    ).toStrictEqual(table.map((row) => row[4]));
+  });
+});
+
+/** Opens a tab of the app beside Calendar, selected, as Open Google apps in says. */
+const openedBeside = (
+  appId: string,
+  openAppsIn: "tabs" | "windows",
+  options: { split?: "row"; tabs?: Tab[]; singleInstance?: boolean } = {}
+) =>
+  openTab(
+    state(options.tabs ?? [tab("c1", "calendar")], "c1"),
+    "p",
+    { ...app(appId), ...(options.singleInstance && { singleInstance: true }) },
+    `https://${appId}.google.com/new`,
+    () => "new",
+    undefined,
+    options.split,
+    openAppsIn
+  );
+
+describe("openTab under New window", () => {
+  it("puts a new tab in a window of its own after the others, the main window's selection kept, and says so", () => {
+    const next = openedBeside("drive", "windows");
+
+    expect([
+      next?.ownWindow,
+      ids(next?.state),
+      tabsOf(next?.state)?.tabs[2]?.ownWindow,
+    ]).toStrictEqual([true, [["gmail", "c1", "new"], "c1"], true]);
+  });
+
+  it("opens it in the main window, selected, under Tabs", () => {
+    const next = openedBeside("drive", "tabs");
+
+    expect([next?.ownWindow, ids(next?.state)]).toStrictEqual([
+      undefined,
+      [["gmail", "c1", "new"], "new"],
+    ]);
+    expect(tabsOf(next?.state)?.tabs[2]).not.toHaveProperty("ownWindow");
+  });
+
+  it("keeps Gmail, opened again after it was closed, in the main window", () => {
+    const next = openTab(
+      {
+        ...state([tab("c1", "calendar")], "c1"),
+        profiles: [
+          { ...newProfile("p", "Default"), tabs: [tab("c1", "calendar")] },
+        ],
+      },
+      "p",
+      app("gmail"),
+      "https://mail.google.com/",
+      () => "new",
+      undefined,
+      undefined,
+      "windows"
+    );
+
+    expect([next?.ownWindow, ids(next?.state)]).toStrictEqual([
+      undefined,
+      [["c1", "gmail"], "gmail"],
+    ]);
+  });
+
+  it("keeps an Open in split a split in the main window", () => {
+    const next = openedBeside("drive", "windows", { split: "row" });
+
+    expect(next?.ownWindow).toBeUndefined();
+    expect(ids(next?.state)?.[1]).toBe("new");
+    expect(tabsOf(next?.state)?.splits).toHaveLength(1);
+  });
+
+  it("sends the URL to a single-instance app's existing tab wherever it is, opening no window", () => {
+    const next = openedBeside("drive", "windows", {
+      tabs: [tab("c1", "calendar"), tab("d1", "drive")],
+      singleInstance: true,
+    });
+
+    expect([next?.tabId, next?.ownWindow, ids(next?.state)]).toStrictEqual([
+      "d1",
+      undefined,
+      [["gmail", "c1", "d1"], "d1"],
+    ]);
+    expect(tabsOf(next?.state)?.tabs[2]).not.toHaveProperty("ownWindow");
+  });
+});
 
 describe(openTab, () => {
   it("appends a tab of the app at the URL, selected, in that profile only", () => {

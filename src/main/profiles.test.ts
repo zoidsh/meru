@@ -806,3 +806,46 @@ describe("one profile alone, on the free version", () => {
     ]);
   });
 });
+
+describe("opening a tab under Open Google apps in", () => {
+  it("reads the setting of the profile the tab opens in, at each open", async () => {
+    const asked: string[] = [];
+    let inWindows = new Set(["a"]);
+    const profiles = createProfiles({
+      initial: two,
+      save: () => Promise.resolve(),
+      newId: () => "unused",
+      profileName: (n) => `Profile ${n}`,
+      clearSession: () => Promise.resolve(),
+      now: () => 0,
+      log: silentLog,
+      openAppsIn: (profileId) => {
+        asked.push(profileId);
+
+        return inWindows.has(profileId) ? "windows" : "tabs";
+      },
+    });
+    const calendar = APPS.find((app) => app.id === "calendar");
+
+    if (!calendar) {
+      throw new Error("The registry lacks Calendar");
+    }
+
+    const first = await profiles.openTab("a", calendar, calendar.home, "c1");
+    const second = await profiles.openTab("b", calendar, calendar.home, "c2");
+
+    inWindows = new Set();
+
+    const third = await profiles.openTab("a", calendar, calendar.home, "c3");
+
+    expect([
+      asked,
+      [first?.ownWindow, second?.ownWindow, third?.ownWindow],
+      profiles.get().profiles.map((profile) => profile.selectedTabId),
+    ]).toStrictEqual([
+      ["a", "b", "a"],
+      [true, undefined, undefined],
+      ["c3", "c2"],
+    ]);
+  });
+});
