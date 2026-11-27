@@ -74,8 +74,9 @@ export const GOOGLE_APP_KEYS: readonly GoogleAppKey[] = [
   ]),
   { accelerator: "Control+Command+F", on: "mac", apps: ["Slides"] },
   { accelerator: "F11", on: "pc", apps: ["Slides"] },
-  // Kept by Meru as Minimize, Electron's role's key.
-  { accelerator: "Control+M", on: "pc", apps: ["Slides"] },
+  // Ctrl+M, which the keymap decision keeps as Minimize, is not listed: the
+  // audit recorded no app on it. Neither it nor macOS's Command+M is yet
+  // checked against Slides' list.
 ];
 
 /** The Google apps that use `accelerator` on `platform`, as the list has them. */
