@@ -27,6 +27,13 @@ import {
   scopeTab,
   switchNamed,
 } from "./lib/settings.ts";
+import {
+  THEMES,
+  emulateTheme,
+  onlyWithShots,
+  shootWindow,
+  shotPath,
+} from "./lib/shots.ts";
 import { CALENDAR_TITLE, DRIVE_TITLE, STAND_IN_TITLE } from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 
@@ -322,4 +329,62 @@ test("with Show windows in the sidebar off, a tab in its own window leaves the s
   await chooseContextMenuItem(app, "Move to Main Window");
   await expect(calendar).toHaveAttribute("aria-selected", "true");
   await expect(calendar).not.toHaveAccessibleDescription(/own window/u);
+});
+
+test.describe("shots", () => {
+  test.beforeEach(onlyWithShots);
+
+  test("the wide sidebar with a tab in its own window listed and left out, light and dark", async ({
+    launchApp,
+    userDataDir,
+    standIn,
+  }) => {
+    await writeState(userDataDir, {
+      profiles: [
+        {
+          id: "p",
+          name: "Default",
+          tabs: [
+            { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+            {
+              id: "c",
+              app: "calendar",
+              url: standIn.calendarUrl,
+              title: "",
+              ownWindow: true,
+            },
+            { id: "d1", app: "drive", url: standIn.driveUrl, title: "" },
+            { id: "d2", app: "drive", url: standIn.driveUrl, title: "" },
+          ],
+          selectedTabId: "d1",
+        },
+      ],
+      selectedProfileId: "p",
+    });
+
+    const app = await launchApp();
+    const shell = await findPage(app, SHELL_URL);
+    const calendar = sidebarTab(shell, CALENDAR_TITLE);
+
+    await findTitlebar(app);
+    await expect(calendar).toBeVisible();
+
+    const shoot = async (surface: string) => {
+      for (const theme of THEMES) {
+        // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+        await emulateTheme(app, theme);
+        // oxlint-disable-next-line no-await-in-loop -- one after another
+        await shootWindow(app, shell, shotPath(surface, theme));
+      }
+    };
+
+    await shoot("sidebar-windows-shown");
+
+    const page = await openSettings(app);
+
+    await openSection(page, "Tabs & Google Apps");
+    await switchNamed(page, SHOW_WINDOWS).click();
+    await expect(calendar).toHaveCount(0);
+    await shoot("sidebar-windows-hidden");
+  });
 });

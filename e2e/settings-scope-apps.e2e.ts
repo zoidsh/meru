@@ -373,6 +373,7 @@ test.describe("shots", () => {
       profiles: {
         work: {
           openAppsInMeru: true,
+          openAppsIn: "windows",
           appsInDefaultBrowser: ["meet", "drive"],
           downloadsFolder: workFolder,
         },
