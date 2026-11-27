@@ -210,6 +210,15 @@ export const createConfig = (variant: PackageVariant): Configuration => {
         "Tired of losing your inbox in browser tabs? Meru brings Gmail to your fingertips as a desktop app",
       category: "Network;Office",
     },
+    // Meru's sounds need PipeWire's client library, which the audio addon
+    // links: recommended, never depended on, so a system without it still
+    // installs Meru and only loses those sounds. Setting `recommends`
+    // replaces electron-builder's default list, hence its tray library too;
+    // `depends` stays electron-builder's. The rpm is left without one, since
+    // fpm offers its weak dependencies only as a raw spec tag.
+    deb: {
+      recommends: ["libappindicator3-1", "libpipewire-0.3-0"],
+    },
     appImage: {
       artifactName: "${productName}-${version}-${arch}.${ext}",
     },
