@@ -255,12 +255,11 @@ export interface ShortcutsEditing {
 
 const UNCHANGED = { changed: false, note: null, google: null };
 
-const NO_DEFAULTS: Partial<Record<string, string>> = {};
-
 const NOT_EDITING: ShortcutsEditing = {
   changeable: () => false,
   changed: () => false,
-  defaultKey: (id) => NO_DEFAULTS[id],
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- no default is shown
+  defaultKey: () => undefined,
   recording: null,
 };
 

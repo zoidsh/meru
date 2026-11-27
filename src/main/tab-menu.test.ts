@@ -3,13 +3,15 @@ import { describe, expect, it } from "vitest";
 import { APPS } from "#core/apps.ts";
 import type { MenuPoint } from "#core/context-menu.ts";
 import type { SleepIdleTabs } from "#core/settings.ts";
+import { createInitialSettings } from "#core/settings.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { ContextMenuItem } from "#platform/context-menu.ts";
 
 import { COMMANDS } from "./commands.ts";
-import { commandAccelerator } from "./context-menu.ts";
+import { createKeymap } from "./keymap.ts";
+import { createSettingsStore } from "./settings.ts";
 import { createTabMenu } from "./tab-menu.ts";
 
 const initial: State = {
@@ -92,7 +94,18 @@ const setup = ({
     window: menuWindow("main", popups),
     ownWindow: (each) =>
       each.tabId === "w" ? menuWindow("own", popups) : undefined,
-    accelerator: commandAccelerator(COMMANDS, "linux"),
+    accelerator: createKeymap({
+      platform: "linux",
+      appName: "Meru",
+      commands: COMMANDS,
+      settings: createSettingsStore({
+        initial: createInitialSettings(),
+        save: () => Promise.resolve(),
+        platform: "linux",
+        log: () => {},
+        can: () => true,
+      }),
+    }).accelerator,
     bookmarks: {
       bookmarked: (each) => (each.tabId === "gmail" ? undefined : bookmarked),
       toggle: async (each, announce) => {

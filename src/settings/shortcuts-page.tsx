@@ -131,6 +131,13 @@ const ChangeableRow = ({
       return;
     }
 
+    // A key held, such as the Enter that started recording, records nothing.
+    if (event.repeat) {
+      event.preventDefault();
+
+      return;
+    }
+
     const pressed = {
       key: event.key,
       code: event.code,

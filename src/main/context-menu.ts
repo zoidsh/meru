@@ -1,8 +1,5 @@
 import type { MenuEntry } from "#core/context-menu.ts";
-import type { Platform } from "#core/platform.ts";
 import type { ContextMenuItem } from "#platform/context-menu.ts";
-
-import type { Command } from "./commands.ts";
 
 export interface NativeMenuOptions<Id extends string> {
   /** The item's label in the person's language, as it reads now. */
@@ -34,9 +31,3 @@ export const nativeMenu = <Id extends string>(
       click: () => choose(entry.id),
     };
   });
-
-/** What gives the shortcut the registry gives a command on this platform. */
-export const commandAccelerator =
-  (commands: readonly Pick<Command, "id" | "shortcut">[], platform: Platform) =>
-  (id: string) =>
-    commands.find((command) => command.id === id)?.shortcut?.[platform];

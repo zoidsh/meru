@@ -232,7 +232,7 @@ export const roleLabel = (id: RoleShortcutId, appName: string) => {
       });
     }
     default: {
-      return "";
+      return id satisfies never;
     }
   }
 };
