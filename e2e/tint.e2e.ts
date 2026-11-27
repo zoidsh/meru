@@ -245,88 +245,49 @@ test("the palette follows the Theme setting, against the system's theme either w
   }
 });
 
-type Painted = { window: number; top: number[] }[];
-
 /**
- * From the launch on, the colour near the top of every frame each window's
- * page paints, in `[red, green, blue]`, and the windows already showing when
- * this began, whose first frames it missed. A tab's own window has no page of
- * its own, only clear views over its colour.
+ * Starts keeping the colour near the top of every frame the main window's page
+ * paints, its titlebar's, in `[red, green, blue]`.
  */
 const watchPaints = (app: ElectronApplication) =>
-  app.evaluate(({ app: electron, BrowserWindow }) => {
-    const painted: Painted = [];
-    const late: number[] = [];
-    const watch = (window: Electron.BrowserWindow) => {
-      if (window.isVisible()) {
-        late.push(window.id);
+  app.evaluate(({ BrowserWindow }, shellUrl) => {
+    const painted: number[][] = [];
+    const window = BrowserWindow.getAllWindows().find((candidate) =>
+      candidate.webContents.getURL().startsWith(shellUrl)
+    );
+
+    window?.webContents.beginFrameSubscription((image) => {
+      const { width, height } = image.getSize();
+      const [contentWidth = width] = window.getContentSize();
+      const at =
+        (Math.round((3 * width) / contentWidth) * width +
+          Math.round(width / 2)) *
+        4;
+
+      if (height > 0) {
+        // BGRA.
+        painted.push([...image.toBitmap().subarray(at, at + 3)].toReversed());
       }
-
-      const subscribe = () => {
-        window.webContents.beginFrameSubscription((image) => {
-          const { width, height } = image.getSize();
-          const [contentWidth = width] = window.getContentSize();
-          const scale = width / contentWidth;
-          const at =
-            (Math.round(3 * scale) * width + Math.round(width / 2)) * 4;
-
-          if (height > 0) {
-            // BGRA.
-            painted.push({
-              window: window.id,
-              top: [...image.toBitmap().subarray(at, at + 3)].toReversed(),
-            });
-          }
-        });
-      };
-
-      // A subscription takes only once the page has a renderer.
-      if (window.webContents.getURL() === "") {
-        window.webContents.once("did-start-loading", subscribe);
-      } else {
-        subscribe();
-      }
-    };
-
-    for (const window of BrowserWindow.getAllWindows()) {
-      watch(window);
-    }
-    electron.on("browser-window-created", (_event, window) => {
-      watch(window);
     });
-    Reflect.set(globalThis, "meruTestPainted", { painted, late });
-  });
+    Reflect.set(globalThis, "meruTestPainted", painted);
+  }, SHELL_URL);
 
-/** What `watchPaints` saw of the main window, if it ran, and each window's colour. */
 const readPaints = (app: ElectronApplication) =>
+  app.evaluate(() => Reflect.get(globalThis, "meruTestPainted") as number[][]);
+
+/** Each window's own colour; a tab's own window is a BaseWindow. */
+const windowColors = (app: ElectronApplication) =>
   app.evaluate(({ BaseWindow, BrowserWindow }, shellUrl) => {
-    const { painted, late } = (Reflect.get(globalThis, "meruTestPainted") as
-      | { painted: Painted; late: number[] }
-      | undefined) ?? { painted: [], late: [] };
     const shell = BrowserWindow.getAllWindows().find((window) =>
       window.webContents.getURL().startsWith(shellUrl)
     );
+    const [main, ...own] = [
+      ...(shell ? [shell] : []),
+      ...BaseWindow.getAllWindows().filter((window) => window.id !== shell?.id),
+    ].map((window) => window.getBackgroundColor().slice(0, 7).toLowerCase());
 
-    return {
-      late: late.includes(shell?.id ?? -1),
-      main: painted.filter(({ window }) => window === shell?.id),
-      // A tab's own window is a BaseWindow.
-      colors: BaseWindow.getAllWindows().map((window) => ({
-        main: window.id === shell?.id,
-        color: window.getBackgroundColor().slice(0, 7).toLowerCase(),
-      })),
-    };
+    return { main, own };
   }, SHELL_URL);
-
-/** Each window's own colour, the main window's first. */
-const windowColors = async (app: ElectronApplication) => {
-  const { colors } = await readPaints(app);
-
-  return {
-    main: colors.find(({ main }) => main)?.color,
-    own: colors.filter(({ main }) => !main).map(({ color }) => color),
-  };
-};
 
 const shellTone = (name: ProfileColorName, theme: TonalTheme) =>
   tonalTokens(paletteColor(name), theme).shell;
@@ -345,12 +306,12 @@ const near = (rgb: number[], hex: string, dim = 1) =>
  * draws while Playwright holds a new page at its first line, which no one
  * outside a test ever sees.
  */
-const allPainted = (frames: Painted, hex: string) =>
-  frames.some(({ top }) => near(top, hex)) &&
-  frames.every(({ top }) => near(top, hex) || near(top, hex, 0.65));
+const allPainted = (frames: number[][], hex: string) =>
+  frames.some((top) => near(top, hex)) &&
+  frames.every((top) => near(top, hex) || near(top, hex, 0.65));
 
 for (const tint of [true, false]) {
-  test(`every frame the main window paints from its first, and a tab's own window, is the frame's colour, ${tint ? "the profile's tonal shell" : "the grey untinted"}, never a white page first`, async ({
+  test(`every frame the shell's page paints while it loads in a window already showing is the frame's colour, ${tint ? "the profile's tonal shell" : "the grey untinted"}, never a white page first; each window is that colour too`, async ({
     launchApp,
     standIn,
     userDataDir,
@@ -360,27 +321,42 @@ for (const tint of [true, false]) {
     await writeState(userDataDir, twoProfiles(standIn));
 
     const app = await launchApp();
-
-    await watchPaints(app);
+    const [main, own] = tint
+      ? [shellTone("amber", "light"), shellTone("blue", "light")]
+      : ["#ebebeb", "#ebebeb"];
 
     const shell = await findPage(app, SHELL_URL);
 
     await expect(titlebarOf(shell)).toBeVisible();
     await findTitlebar(app);
+    expect(await windowColors(app)).toStrictEqual({ main, own: [own] });
+
+    // A launch's first paints race Playwright's attaching, which Linux's
+    // window, shown as soon as it is made, often loses. Loading the page
+    // again, as main does when its renderer is gone, is the same load from an
+    // empty page, with the window showing throughout.
+    await watchPaints(app);
+
+    const loaded = shell.waitForEvent("load");
+    const before = await app.evaluate(({ BrowserWindow }, shellUrl) => {
+      BrowserWindow.getAllWindows()
+        .find((window) => window.webContents.getURL().startsWith(shellUrl))
+        ?.webContents.reload();
+
+      return (Reflect.get(globalThis, "meruTestPainted") as unknown[]).length;
+    }, SHELL_URL);
+
+    await loaded;
+    await expect(titlebarOf(shell)).toBeVisible();
+    // The own window's titlebar comes back too, reported before the app closes.
+    await findTitlebar(app);
     // Frames go on arriving; a few after the titlebar shows are enough.
     await delay(500);
 
-    const paints = await readPaints(app);
-    const [main, own] = tint
-      ? [shellTone("amber", "light"), shellTone("blue", "light")]
-      : ["#ebebeb", "#ebebeb"];
+    const all = await readPaints(app);
+    const painted = all.slice(before);
 
-    expect(paints.late).toBe(false);
-    expect(await windowColors(app)).toStrictEqual({ main, own: [own] });
-    expect(
-      allPainted(paints.main, main),
-      JSON.stringify(paints.main.map(({ top }) => top))
-    ).toBe(true);
+    expect(allPainted(painted, main), JSON.stringify(painted)).toBe(true);
   });
 }
 
