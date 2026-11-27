@@ -86,7 +86,21 @@ describe(openState, () => {
       "{ not json"
     );
     expect(JSON.parse(files.get(STATE_PATH) ?? "")).toStrictEqual(initial);
-    expect(logs).toHaveLength(1);
+    expect(logs).toStrictEqual([
+      'store-set-aside file="a path" kept="a path" kind=not-json',
+    ]);
+  });
+
+  it("logs a file of the wrong shape set aside by its kind, never what it holds", async () => {
+    const { file } = createFakeFile(
+      JSON.stringify({ version: 1, profiles: "Ada Lovelace" })
+    );
+    const { state, logs } = load(file);
+
+    await expect(state).resolves.toStrictEqual(initial);
+    expect(logs).toStrictEqual([
+      'store-set-aside file="a path" kept="a path" kind=wrong-shape',
+    ]);
   });
 
   it("keeps the list to clear, and keys it does not know at the top and in a profile, when it rewrites the file", async () => {

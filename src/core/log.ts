@@ -20,6 +20,8 @@ export interface LogContext {
   profiles: () => readonly { id: string; tabs: readonly TabEntry[] }[];
 }
 
+type FolderContext = Pick<LogContext, "dataDir" | "appDir">;
+
 declare const scrubbedBrand: unique symbol;
 
 /**
@@ -197,11 +199,32 @@ const tabField = (key: TabKey | string) => {
   return scrubbed((context) => tabText(context, parsed));
 };
 
+const pathText = (file: string, { dataDir, appDir }: FolderContext) => {
+  for (const [folder, name] of [
+    [appDir, "<app>"],
+    [dataDir, "<data>"],
+  ] as const) {
+    const rest =
+      folder !== undefined &&
+      folder.length > 1 &&
+      file.toLowerCase().startsWith(folder.toLowerCase())
+        ? file.slice(folder.length)
+        : undefined;
+
+    if (rest !== undefined && (rest === "" || /^[\\/]/u.test(rest))) {
+      return `${name}${rest}`;
+    }
+  }
+
+  return "a path";
+};
+
 /**
- * A file in Meru's own folders, as a store's. The net writes it as every path:
- * under `<data>` or `<app>` as it is, anywhere else as "a path".
+ * A file in Meru's own folders, as a store's: under `<data>` or `<app>` by its
+ * place there, anywhere else as "a path", whatever its name holds.
  */
-const pathField = (file: string) => scrubbed(() => file);
+const pathField = (file: string) =>
+  scrubbed((context) => pathText(file, context));
 
 const CODE = /^[A-Z][A-Z0-9_]{1,63}$/u;
 
@@ -383,8 +406,6 @@ const stackField = (error: unknown) =>
       ...frames.map((frame) => scrubText(frame, context)),
     ].join(" | ");
   });
-
-type FolderContext = Pick<LogContext, "dataDir" | "appDir">;
 
 const escapeRegExp = (text: string) =>
   text.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);

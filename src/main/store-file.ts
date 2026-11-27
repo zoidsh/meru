@@ -56,7 +56,8 @@ export const openStore = async <T>(
 ): Promise<OpenedStore<T>> => {
   const { file, name, decode, initial, now, log } = store;
   const text = await file.read();
-  const decoded = text === undefined ? undefined : decode(parse(text));
+  const parsed = text === undefined ? undefined : parse(text);
+  const decoded = text === undefined ? undefined : decode(parsed);
 
   if (decoded?.kind === "read") {
     return { value: decoded.value, settle: settled };
@@ -88,7 +89,8 @@ export const openStore = async <T>(
         log("store-set-aside", {
           file: scrub.path(file.path),
           kept: scrub.path(aside),
-          reason: scrub.error(decoded.reason),
+          // Not the decoder's own words, which may quote the file.
+          kind: parsed === undefined ? "not-json" : "wrong-shape",
         });
       }
 

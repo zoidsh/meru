@@ -87,9 +87,13 @@ const setup = ({
 
 describe(createProfiles, () => {
   it("adds a profile with a new id, the next name and the first colour no profile has, selected, saved before it shows", async () => {
-    const { profiles, steps } = setup();
+    const { profiles, steps, logs } = setup();
 
     await expect(profiles.add()).resolves.toBe("new-1");
+    // The count is the one after the change.
+    expect(logs).toStrictEqual([
+      'profile-added profile="profile 3" profiles=3',
+    ]);
 
     expect(profiles.get().profiles.at(-1)).toStrictEqual({
       ...newProfile("new-1", "Profile 3"),
