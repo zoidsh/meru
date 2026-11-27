@@ -18,7 +18,11 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
-import { findTitlebar, readOwnWindows } from "./lib/own-window.ts";
+import {
+  findTitlebar,
+  findWindowCard,
+  readOwnWindows,
+} from "./lib/own-window.ts";
 import {
   THEMES,
   emulateTheme,
@@ -154,6 +158,56 @@ test("the frame, the cards over it and a tab's own window take their profile's t
   await expect
     .poll(() => background(titlebarOf(shell)))
     .toBe(tone("blue", "light", "shell"));
+});
+
+/** Whether `page`'s root carries the tint: its mark and its role tokens. */
+const tinted = (page: Page) =>
+  page.evaluate(() => {
+    const root = document.documentElement;
+
+    return (
+      root.dataset.tint !== undefined &&
+      root.style.getPropertyValue("--shell") !== ""
+    );
+  });
+
+test("a card in a tab's own window takes that tab's profile, and turning the tint off takes the palette from the overlay and every own window's document", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeState(userDataDir, twoProfiles(standIn));
+
+  const app = await launchApp();
+  const shell = await findPage(app, SHELL_URL);
+  const overlay = await findOverlayDocument(app);
+  const ownTitlebar = await findTitlebar(app);
+
+  await titlebarOf(ownTitlebar)
+    .getByRole("button", { name: "Downloads", exact: true })
+    .click();
+
+  const ownCard = await findWindowCard(app);
+  const card = ownCard.getByRole("dialog", { name: "Downloads" });
+
+  await expect(card).toBeVisible();
+  // Home's blue, though Work, amber, is the selected profile.
+  expect(await fills(card)).toContain(tone("blue", "light", "popover"));
+
+  const documents = [shell, overlay, ownTitlebar, ownCard];
+  const allTinted = () => Promise.all(documents.map((page) => tinted(page)));
+
+  expect(await allTinted()).toStrictEqual([true, true, true, true]);
+
+  await app.evaluate(async () => {
+    const settings = Reflect.get(globalThis, "meruTestSettings") as {
+      set: (key: string, value: unknown) => Promise<void>;
+    };
+
+    await settings.set("profileTint", false);
+  });
+  await expect.poll(allTinted).toStrictEqual([false, false, false, false]);
+  expect(await fills(card)).toContain("oklch(1 0 0)");
 });
 
 test("the palette follows the Theme setting, against the system's theme either way, the same theme as shadcn's own tokens", async ({
