@@ -108,6 +108,11 @@ export interface AppWindow extends PlainWindow {
    * the folder chosen, or nothing when cancelled.
    */
   pickFolder: (defaultPath: string) => Promise<string | undefined>;
+  /**
+   * The system's Save dialog, modal to the window, opened at `defaultPath`;
+   * the file chosen, or nothing when canceled.
+   */
+  pickSaveFile: (defaultPath: string) => Promise<string | undefined>;
 }
 
 export interface WindowFactory {
@@ -304,6 +309,13 @@ export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
         });
 
         return canceled ? undefined : filePaths[0];
+      },
+      pickSaveFile: async (defaultPath) => {
+        const { canceled, filePath } = await dialog.showSaveDialog(window, {
+          defaultPath,
+        });
+
+        return canceled || filePath === "" ? undefined : filePath;
       },
     };
   },

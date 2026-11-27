@@ -68,6 +68,65 @@ const ClearCache = ({
   );
 };
 
+/** Export…, disabled while the Save dialog is up, then Saved for a moment. */
+const ExportLogs = ({
+  describedBy,
+  onDone,
+}: {
+  describedBy: string;
+  onDone: (failed: boolean) => void;
+}) => {
+  const { t } = useLingui();
+  const [exporting, setExporting] = useState(false);
+  const [saved, showSaved] = useDoneBriefly();
+  const savedLabel = t({
+    message: "Saved",
+    comment:
+      "The Export button of the Logs row in Settings for a moment after a copy of the logs was saved",
+  });
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={exporting}
+        aria-label={t({
+          message: "Export logs",
+          comment:
+            "Accessible name of the Export button of the Logs row in Settings, which saves a copy of the app's logs",
+        })}
+        aria-describedby={describedBy || undefined}
+        onClick={async () => {
+          setExporting(true);
+          onDone(false);
+
+          const answer = await settingsCalls()
+            .exportLogs({})
+            .catch(() => "failed" as const);
+
+          setExporting(false);
+          onDone(answer === "failed");
+
+          if (answer === "saved") {
+            showSaved();
+          }
+        }}
+      >
+        {saved && <CheckIcon data-icon="inline-start" aria-hidden />}
+        {saved
+          ? savedLabel
+          : t({
+              message: "Export…",
+              comment:
+                "Button of the Logs row in Settings that shows the Save dialog for a copy of the app's logs",
+            })}
+      </Button>
+      <output className="sr-only">{saved && savedLabel}</output>
+    </>
+  );
+};
+
 /**
  * Hardware acceleration, which applies at the next launch, the macOS screen
  * picker, and the troubleshooting that needs no setting: app-wide alone, so
@@ -78,6 +137,7 @@ export const AdvancedPage = () => {
   const settings = useSettingsState("settings");
   const advanced = useSettingsState("advanced");
   const [clearFailed, setClearFailed] = useState(false);
+  const [exportFailed, setExportFailed] = useState(false);
   const needsPro = useNeedsPro();
 
   if (!settings || !advanced) {
@@ -175,7 +235,7 @@ export const AdvancedPage = () => {
         title={t({
           message: "Troubleshooting",
           comment:
-            "Title of the group of Settings for opening the settings file and clearing the cache, when something goes wrong",
+            "Title of the group of Settings for opening the settings file, clearing the cache and exporting the logs, when something goes wrong",
         })}
       >
         <Rows>
@@ -240,6 +300,34 @@ export const AdvancedPage = () => {
                 <ClearCache
                   describedBy={ids.description}
                   onDone={setClearFailed}
+                />
+              )}
+            </SettingRow>,
+            <SettingRow
+              key="logs"
+              label={t({
+                message: "Logs",
+                comment:
+                  "Label of the row in Settings that saves a copy of the app's logs, a record of its own events and errors without anything personal",
+              })}
+              description={t({
+                message: "Save a copy of the logs to send to support.",
+                comment: "Description of the Logs row in Settings",
+              })}
+              error={
+                exportFailed
+                  ? t({
+                      message: "Couldn't save the logs. Try again.",
+                      comment:
+                        "Under the Logs row in Settings, when the copy of the logs could not be written",
+                    })
+                  : undefined
+              }
+            >
+              {(ids) => (
+                <ExportLogs
+                  describedBy={ids.description}
+                  onDone={setExportFailed}
                 />
               )}
             </SettingRow>,

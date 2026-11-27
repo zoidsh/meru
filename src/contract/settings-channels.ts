@@ -37,6 +37,7 @@ export const SETTINGS_CALL_NAMES = [
   "removeTrustedSite",
   "openSettingsFile",
   "clearCache",
+  "exportLogs",
   "copyAboutValue",
   "checkForUpdates",
   "restartToUpdate",

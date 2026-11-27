@@ -205,6 +205,11 @@ msgstr "{productName} could not draw its window"
 msgid "{productName} could not start"
 msgstr "{productName} could not start"
 
+#. The file name the Save dialog suggests for a copy of the app's logs; {day} is the date as 2026-11-27
+#: src/main/advanced-page.ts
+msgid "{productName} logs {day}.txt"
+msgstr "{productName} logs {day}.txt"
+
 #. Second line of a finished download in the Downloads card, such as 2.4 MB · 2 hours ago; {saved} is its size with its unit, {when} when it started, such as 2 hours ago or yesterday
 #: src/shell/downloads.tsx
 msgid "{saved} · {when}"
@@ -946,6 +951,11 @@ msgstr "Couldn’t move the message to Trash."
 msgid "Couldn’t report the message as spam."
 msgstr "Couldn’t report the message as spam."
 
+#. Under the Logs row in Settings, when the copy of the logs could not be written
+#: src/settings/advanced-page.tsx
+msgid "Couldn't save the logs. Try again."
+msgstr "Couldn't save the logs. Try again."
+
 #. Badge in Settings' What's new dialog on the release of the version of Meru that is running
 #: src/settings/whats-new-dialog.tsx
 msgid "Current version"
@@ -1205,6 +1215,16 @@ msgstr "Exit"
 #: src/shell/tab-strip.tsx
 msgid "Expand sidebar"
 msgstr "Expand sidebar"
+
+#. Accessible name of the Export button of the Logs row in Settings, which saves a copy of the app's logs
+#: src/settings/advanced-page.tsx
+msgid "Export logs"
+msgstr "Export logs"
+
+#. Button of the Logs row in Settings that shows the Save dialog for a copy of the app's logs
+#: src/settings/advanced-page.tsx
+msgid "Export…"
+msgstr "Export…"
 
 #. Label of the switch in Settings that darkens the parts of Gmail its own dark theme leaves white, such as the conversation view and the compose window
 #: src/settings/gmail-page.tsx
@@ -1527,6 +1547,11 @@ msgstr "Loading what's new"
 #: src/shell/screen-picker.tsx
 msgid "Loading…"
 msgstr "Loading…"
+
+#. Label of the row in Settings that saves a copy of the app's logs, a record of its own events and errors without anything personal
+#: src/settings/advanced-page.tsx
+msgid "Logs"
+msgstr "Logs"
 
 #. Description of the Use the macOS screen picker switch in Settings
 #: src/settings/advanced-page.tsx
@@ -2424,6 +2449,11 @@ msgstr "Same as All profiles."
 msgid "Save"
 msgstr "Save"
 
+#. Description of the Logs row in Settings
+#: src/settings/advanced-page.tsx
+msgid "Save a copy of the logs to send to support."
+msgstr "Save a copy of the logs to send to support."
+
 #. Menu item in the Saved Searches menu that keeps the search Gmail shows now, to run again later
 #: src/main/commands.ts
 msgid "Save Current Search"
@@ -2438,6 +2468,11 @@ msgstr "Save device name"
 #: src/settings/general-page.tsx
 msgid "Save downloads to"
 msgstr "Save downloads to"
+
+#. The Export button of the Logs row in Settings for a moment after a copy of the logs was saved
+#: src/settings/advanced-page.tsx
+msgid "Saved"
+msgstr "Saved"
 
 #. Title of the card on a profile's page in Settings that lists its saved Gmail searches
 #: src/settings/saved-searches-card.tsx
@@ -3143,7 +3178,7 @@ msgstr "Toggle Full Screen"
 msgid "Tray & Taskbar"
 msgstr "Tray & Taskbar"
 
-#. Title of the group of Settings for opening the settings file and clearing the cache, when something goes wrong
+#. Title of the group of Settings for opening the settings file, clearing the cache and exporting the logs, when something goes wrong
 #: src/settings/advanced-page.tsx
 msgid "Troubleshooting"
 msgstr "Troubleshooting"

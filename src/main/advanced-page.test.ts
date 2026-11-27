@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { recordInto, silentLog } from "#core/log.fake.ts";
 import { newProfile } from "#core/state.ts";
 import type { Profile, State } from "#core/state.ts";
+import { fakeLogFile } from "#platform/log-file.fake.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
 
 import { createAdvancedPage } from "./advanced-page.ts";
@@ -19,13 +20,20 @@ const setup = ({
   stored,
   failing = [],
   openFails = false,
+  saveAs = (defaultPath) => Promise.resolve(defaultPath),
+  logFails = false,
 }: {
   /** The file as found; nothing for none yet. */
   stored?: string;
   /** Partitions whose clear is refused. */
   failing?: string[];
   openFails?: boolean;
+  /** What the Save dialog answers, opened where it was asked to be. */
+  saveAs?: (defaultPath: string) => Promise<string | undefined>;
+  logFails?: boolean;
 } = {}) => {
+  const logFile = fakeLogFile({ failing: logFails });
+  const asked: string[] = [];
   const files = new Map<string, string>();
 
   if (stored !== undefined) {
@@ -91,10 +99,20 @@ const setup = ({
         },
       },
     }),
+    logs: logFile,
+    pickSaveFile: (defaultPath) => {
+      asked.push(defaultPath);
+
+      return saveAs(defaultPath);
+    },
+    downloadsFolder: () => "/Users/ada/Downloads",
+    productName: "Meru",
+    // Late in the evening, so a day taken in UTC would show.
+    now: () => new Date(2026, 10, 27, 23, 30),
     log: recordInto(logs, { profiles: () => state.profiles }),
   });
 
-  return { page, files, steps, logs };
+  return { page, files, steps, logs, logFile, asked };
 };
 
 describe(createAdvancedPage, () => {
@@ -160,5 +178,50 @@ describe(createAdvancedPage, () => {
     expect(logs).toStrictEqual([
       'cache-clear-failed profile="profile 2" error="the session refused"',
     ]);
+  });
+
+  it("saves a copy of the log where the person chose, offering a dated name in Downloads", async () => {
+    const { page, logFile, asked, logs } = setup({
+      saveAs: () => Promise.resolve("/Users/ada/Desktop/for support.txt"),
+    });
+
+    await logFile.append("run-started\n");
+
+    await expect(page.exportLogs()).resolves.toBe("saved");
+    expect(asked).toStrictEqual([
+      "/Users/ada/Downloads/Meru logs 2026-11-27.txt",
+    ]);
+    expect([...logFile.copies]).toStrictEqual([
+      ["/Users/ada/Desktop/for support.txt", "run-started\n"],
+    ]);
+    expect(logs).toStrictEqual(["logs-exported"]);
+  });
+
+  it("writes nothing when the Save dialog is canceled", async () => {
+    const { page, logFile, logs } = setup({
+      saveAs: () => Promise.resolve(undefined),
+    });
+
+    await expect(page.exportLogs()).resolves.toBe("canceled");
+    expect(logFile.copies.size).toBe(0);
+    expect(logs).toStrictEqual([]);
+  });
+
+  it("answers failed, and logs why, when the copy cannot be written", async () => {
+    const { page, logs } = setup({ logFails: true });
+
+    await expect(page.exportLogs()).resolves.toBe("failed");
+    expect(logs).toStrictEqual([
+      'logs-export-failed error="ENOSPC: no space left on device"',
+    ]);
+  });
+
+  it("answers failed when the Save dialog cannot be shown", async () => {
+    const { page } = setup({
+      saveAs: () =>
+        Promise.reject(new Error("The Settings window is not open")),
+    });
+
+    await expect(page.exportLogs()).resolves.toBe("failed");
   });
 });

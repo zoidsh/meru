@@ -130,7 +130,10 @@ export interface SettingsContractDeps {
     | "setSpellcheckLanguage"
   >;
   trustedSites: Pick<TrustedSites, "list" | "remove">;
-  advanced: Pick<AdvancedPage, "read" | "openSettingsFile" | "clearCache">;
+  advanced: Pick<
+    AdvancedPage,
+    "read" | "openSettingsFile" | "clearCache" | "exportLogs"
+  >;
   about: Pick<AboutPage, "read" | "copy">;
   updates: Pick<Updates, "read" | "check" | "restart" | "openRelease">;
   /** Meru's releases, from GitHub once a run. */
@@ -509,6 +512,7 @@ export const settingsHandlers = ({
     removeTrustedSite: ({ site }) => trustedSites.remove(site),
     openSettingsFile: () => advanced.openSettingsFile(),
     clearCache: () => advanced.clearCache(),
+    exportLogs: () => advanced.exportLogs(),
     copyAboutValue: ({ item }) => about.copy(item),
     checkForUpdates: () =>
       Promise.try(() => {

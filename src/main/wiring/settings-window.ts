@@ -55,6 +55,7 @@ import { openingOptions } from "../windows.ts";
 import {
   folderPicker,
   pathOpener,
+  saveFilePicker,
   releasesSource,
   systemLoginItem,
   systemMailHandler,
@@ -102,9 +103,12 @@ export const wireSettingsWindow = ({
   clipboard,
   updates,
   keymap,
+  logs,
   log,
 }: {
   platform: Platform;
+  /** The log, which Export logs… copies. */
+  logs: { copyTo: (destination: string) => Promise<void> };
   /** Each command's key, which the Shortcuts page lists and changes. */
   keymap: KeymapService;
   /** The downloads' own, for the folder they are saved to. */
@@ -218,6 +222,7 @@ export const wireSettingsWindow = ({
     }
   });
 
+  const saveFile = saveFilePicker();
   const advanced = createAdvancedPage({
     hardwareAccelerationAtLaunch,
     settingsFile,
@@ -225,6 +230,18 @@ export const wireSettingsWindow = ({
     opener: pathOpener(),
     profiles,
     deleteBrowsingData,
+    logs,
+    // As a sheet on the Settings window, which asked.
+    pickSaveFile: (defaultPath) => {
+      const window = settingsWindow.current();
+
+      return window
+        ? saveFile.pick(window, defaultPath)
+        : Promise.reject(new Error("The Settings window is not open"));
+    },
+    downloadsFolder: downloadFiles.systemFolder,
+    productName: lifecycle.name,
+    now: () => new Date(),
     log,
   });
 

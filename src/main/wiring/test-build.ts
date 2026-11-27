@@ -32,6 +32,7 @@ import {
   createDownloadFiles,
   createDownloadSignals,
 } from "#platform/downloads.ts";
+import type { SaveDialog } from "#platform/downloads.ts";
 import type { EntitlementServer } from "#platform/entitlement-server.ts";
 import {
   createCapturedFolderPicker,
@@ -65,6 +66,10 @@ import {
   createCapturedReleases,
   createGitHubReleases,
 } from "#platform/releases.ts";
+import {
+  capturedSaveFilePicker,
+  createSaveFilePicker,
+} from "#platform/save-file-picker.ts";
 import {
   createCapturedScreenSources,
   createScreenSources,
@@ -354,12 +359,27 @@ export const registerMailHandler = async (
 export const folderPicker = () =>
   MERU_E2E_BUILD ? createCapturedFolderPicker() : createFolderPicker();
 
+let capturedSaveDialog: SaveDialog | undefined;
+
+// One stand-in, so a download's dialog and Export logs… read the same answer.
+const sharedSaveDialog = () => {
+  capturedSaveDialog ??= createCapturedSaveDialog();
+
+  return capturedSaveDialog;
+};
+
 /**
  * The suite's build answers the save dialog as the test says; every other
  * build leaves it to Chromium's own.
  */
 export const saveDialog = () =>
-  MERU_E2E_BUILD ? createCapturedSaveDialog() : undefined;
+  MERU_E2E_BUILD ? sharedSaveDialog() : undefined;
+
+/** The Save dialog for a file of Meru's own, which the suite's build answers. */
+export const saveFilePicker = () =>
+  MERU_E2E_BUILD
+    ? capturedSaveFilePicker(sharedSaveDialog())
+    : createSaveFilePicker();
 
 /**
  * The suite's build records each file it would open, so a test never opens

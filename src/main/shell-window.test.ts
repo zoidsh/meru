@@ -127,6 +127,7 @@ const createFakeWindow = () => {
     showContextMenu: () => false,
     confirm: () => Promise.resolve(false),
     pickFolder: () => Promise.resolve(undefined),
+    pickSaveFile: () => Promise.resolve(undefined),
   };
 
   return {

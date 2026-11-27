@@ -107,6 +107,11 @@ export const ABOUT_ITEMS = ["version", "operatingSystem"] as const;
 
 export type AboutItem = (typeof ABOUT_ITEMS)[number];
 
+/** How Export logs… ended. */
+export const LOGS_EXPORTS = ["saved", "canceled", "failed"] as const;
+
+export type LogsExport = (typeof LOGS_EXPORTS)[number];
+
 /** The About page's settings, in its order; the app holds them, never a profile. */
 export const ABOUT_PAGE_KEYS = ["autoUpdate", "updateChannel"] as const;
 
@@ -441,6 +446,11 @@ export const SETTINGS_CALLS = {
    * pages; rejects when any could not be cleared.
    */
   clearCache: { request: none, response: z.undefined() },
+  /**
+   * Shows the system's Save dialog and writes a copy of the log where the
+   * person saves it.
+   */
+  exportLogs: { request: none, response: z.enum(LOGS_EXPORTS) },
   /** Puts main's own string of one of the About page's values on the clipboard. */
   copyAboutValue: {
     request: z.object({ item: z.enum(ABOUT_ITEMS) }),

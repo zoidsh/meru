@@ -22,6 +22,7 @@ import type { Release } from "#core/releases.ts";
 import type { Settings } from "#core/settings.ts";
 import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
+import { fakeLogFile } from "#platform/log-file.fake.ts";
 import { fakeSystemInfo } from "#platform/system-info.fake.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
 import { fakeUpdater } from "#platform/updater.fake.ts";
@@ -346,6 +347,11 @@ const setup = (
       },
       profiles,
       deleteBrowsingData,
+      logs: fakeLogFile(),
+      pickSaveFile: (defaultPath) => Promise.resolve(defaultPath),
+      downloadsFolder: () => "/Downloads",
+      productName: "Meru",
+      now: () => new Date(2026, 10, 27),
       log: silentLog,
     }),
     about: createAboutPage({ platform, system: system.system, clipboard }),
@@ -1348,6 +1354,13 @@ describe("the Settings window's Advanced page", () => {
     await app.handlers.openSettingsFile({});
 
     expect(app.openedFiles).toStrictEqual(["/settings.json"]);
+    app.dispose();
+  });
+
+  it("answers how Export logs… ended", async () => {
+    const app = setup(stateOf("Work"));
+
+    await expect(app.handlers.exportLogs({})).resolves.toBe("saved");
     app.dispose();
   });
 

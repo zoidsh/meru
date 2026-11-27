@@ -739,6 +739,7 @@ const start = async () => {
     settingsPages,
   } = wireSettingsWindow({
     log,
+    logs: logger,
     platform,
     keymap,
     downloadFiles,
