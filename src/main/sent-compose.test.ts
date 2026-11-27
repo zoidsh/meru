@@ -187,18 +187,14 @@ describe(createSentCompose, () => {
     expect(undone).toStrictEqual([]);
   });
 
-  it("leaves a window whose notice went with a compose in its page, shown again, since Gmail's own Undo brought the draft back", () => {
-    const { overlays, state, throttled, sent } = setup();
+  it("takes a hidden window's notice going with a compose in its page for its send gone, since nobody presses Undo in a hidden page", () => {
+    const { overlays, state, sent } = setup();
 
     sent.notice(1, "shown");
+    overlays.close();
     sent.notice(1, "undone");
 
-    expect([
-      state(1),
-      throttled(1),
-      overlays.current(),
-      sent.waits(1),
-    ]).toStrictEqual(["shown", true, undefined, false]);
+    expect([state(1), sent.waits(1)]).toStrictEqual(["closed", false]);
   });
 
   it("closes a window whose notice never goes at the bound", () => {
@@ -280,6 +276,23 @@ describe(createSentCompose, () => {
     sent.notice(1, "shown");
     sent.notice(1, "undone");
     vi.advanceTimersByTime(SENT_WINDOW_BOUND_MS);
+
+    expect([state(1), sent.waits(1)]).toStrictEqual(["shown", false]);
+  });
+
+  it("lets a window in view go at the bound, never closing it, since a person may be writing there", () => {
+    const { state, released, sent } = setup({ mainShown: false });
+
+    sent.notice(1, "shown");
+    vi.advanceTimersByTime(SENT_WINDOW_BOUND_MS);
+
+    expect([state(1), sent.waits(1), released]).toStrictEqual([
+      "shown",
+      false,
+      [1],
+    ]);
+
+    sent.notice(1, "gone");
 
     expect(state(1)).toBe("shown");
   });

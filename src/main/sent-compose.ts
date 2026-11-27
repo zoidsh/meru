@@ -26,11 +26,11 @@ interface Waiting {
  * as the other toasts decide. Undo presses Gmail's own Undo in that page and
  * shows the window again. Otherwise the window stays as Gmail leaves it,
  * Gmail's own Undo in view. Either way it closes once Gmail's notice has gone
- * with no compose left in the page and its toast has ended, whichever is
- * later, or at the bound; a notice gone with a compose there was undone in
- * the page, and the window is left be. Until then the page lives, since it
- * holds the send through Gmail's undo period. A quit waits for none: a send
- * still in that period when Meru quits may be lost.
+ * and its toast has ended, whichever is later, or at the bound if hidden;
+ * Gmail's own Undo pressed in a window in view leaves the window be, as
+ * does the bound. Until then the page lives, since it holds the send through
+ * Gmail's undo period. A quit waits for none: a send still in that period
+ * when Meru quits may be lost.
  */
 export const createSentCompose = ({
   enabled,
@@ -133,8 +133,14 @@ export const createSentCompose = ({
     waiting.set(webContentsId, {
       hidden,
       gone: false,
+      // A window in view cannot be lost, and may be where a person writes
+      // their next email, so the bound only lets it go.
       timer: setTimeout(() => {
-        close(webContentsId);
+        if (hidden) {
+          close(webContentsId);
+        } else {
+          forget(webContentsId);
+        }
       }, SENT_WINDOW_BOUND_MS),
     });
 
@@ -196,10 +202,12 @@ export const createSentCompose = ({
       return;
     }
 
-    forget(webContentsId);
-
+    // Nobody presses Gmail's Undo in a hidden page, so a compose left there,
+    // a docked draft or an inline reply, says nothing of this send.
     if (entry.hidden) {
-      bringBack(webContentsId);
+      gone(webContentsId);
+    } else {
+      forget(webContentsId);
     }
   };
 
