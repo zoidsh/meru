@@ -325,11 +325,6 @@ msgstr "Add saved search"
 msgid "Add search"
 msgstr "Add search"
 
-#. Description of the Tint with profile color switch in Settings
-#: src/settings/appearance-page.tsx
-msgid "Adds a touch of the profile color to the title bar and sidebar."
-msgstr "Adds a touch of the profile color to the title bar and sidebar."
-
 #. Name of the Settings section for hardware acceleration, the settings file and clearing the cache, in its list and as its title
 #: src/settings/app.tsx
 msgid "Advanced"
@@ -752,6 +747,11 @@ msgstr "Collapse sidebar"
 #: src/settings/profile-page.tsx
 msgid "Color"
 msgstr "Color"
+
+#. Description of the Tint with profile color switch in Settings
+#: src/settings/appearance-page.tsx
+msgid "Colors the title bar, sidebar and menus with the profile's color."
+msgstr "Colors the title bar, sidebar and menus with the profile's color."
 
 #. The , key, as a screen reader says it in a keyboard shortcut
 #: src/main/shortcuts-page.ts
@@ -1723,8 +1723,8 @@ msgstr "Meru still checks its mail."
 
 #. Description of a profile's color on its page in Settings; the profile dot is the colored dot that marks the profile
 #: src/settings/profile-page.tsx
-msgid "Meru uses it for the profile dot and to tint the title bar."
-msgstr "Meru uses it for the profile dot and to tint the title bar."
+msgid "Meru uses it for the profile dot and to color the title bar, sidebar and menus."
+msgstr "Meru uses it for the profile dot and to color the title bar, sidebar and menus."
 
 #. Placeholder of the license key field, showing a key's shape; MERU stays as it is and each X stands for a letter or digit
 #: src/shared/license-dialog.tsx

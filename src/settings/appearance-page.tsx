@@ -149,7 +149,7 @@ export const AppearancePage = () => {
               }),
               description: t({
                 message:
-                  "Adds a touch of the profile color to the title bar and sidebar.",
+                  "Colors the title bar, sidebar and menus with the profile's color.",
                 comment:
                   "Description of the Tint with profile color switch in Settings",
               }),

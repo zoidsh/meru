@@ -407,7 +407,7 @@ export const ProfilePage = ({
               })}
               description={t({
                 message:
-                  "Meru uses it for the profile dot and to tint the title bar.",
+                  "Meru uses it for the profile dot and to color the title bar, sidebar and menus.",
                 comment:
                   "Description of a profile's color on its page in Settings; the profile dot is the colored dot that marks the profile",
               })}
