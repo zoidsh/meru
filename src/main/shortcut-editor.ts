@@ -86,9 +86,17 @@ export const createShortcutEditor = ({
       return keymap.reset(id);
     },
     /** Ends recording whenever the window stops taking the keys typed. */
-    follow: (window: Pick<AppWindow, "on" | "onClosed" | "onPageGone">) => {
+    follow: (
+      window: Pick<AppWindow, "on" | "onClosed" | "onPageGone" | "isVisible">
+    ) => {
       window.on("blur", stop);
-      window.on("hide", stop);
+      // Electron on macOS also says hide when other windows cover this one,
+      // which leaves it visible and, when it has the keys, recording.
+      window.on("hide", () => {
+        if (!window.isVisible()) {
+          stop();
+        }
+      });
       window.onClosed(stop);
       window.onPageGone(stop);
     },

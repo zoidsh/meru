@@ -536,9 +536,14 @@ test("ends recording, the key kept, when the window loses the keys, hides, or Ta
 
   await startRecording(page);
   await app.evaluate(({ BrowserWindow }, url) => {
-    BrowserWindow.getAllWindows()
-      .find((window) => window.webContents.getURL().startsWith(url))
-      ?.emit("hide");
+    const window = BrowserWindow.getAllWindows().find((candidate) =>
+      candidate.webContents.getURL().startsWith(url)
+    );
+
+    window?.hide();
+    // macOS tells of a hide by the window's occlusion changing, which a
+    // window other test apps already cover never does.
+    window?.emit("hide");
   }, SETTINGS_URL);
   await expectNotRecording(page);
   await expect(reloadButton(page)).toHaveAccessibleName(kept);

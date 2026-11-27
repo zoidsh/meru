@@ -14,8 +14,14 @@ const fakeWindow = () => {
   const add = (event: Event, listener: () => void) => {
     listeners.set(event, [...(listeners.get(event) ?? []), listener]);
   };
+  let visible = true;
 
   return {
+    isVisible: () => visible,
+    /** Hides it, as `hide()` does, before telling. */
+    hide: () => {
+      visible = false;
+    },
     on: (event: string, listener: () => void) => {
       add(event as Event, listener);
     },
@@ -83,12 +89,27 @@ describe(createShortcutEditor, () => {
       const { editor, ignored, window } = setup();
 
       editor.record("tab.reload");
+
+      if (event === "hide") {
+        window.hide();
+      }
+
       window.emit(event);
 
       expect(editor.recording()).toBeNull();
       expect(ignored.at(-1)).toBeFalsy();
     }
   );
+
+  it("keeps recording when macOS says hide for a window others cover, which stays visible", () => {
+    const { editor, ignored, window } = setup();
+
+    editor.record("tab.reload");
+    window.emit("hide");
+
+    expect(editor.recording()).toBe("tab.reload");
+    expect(ignored).toStrictEqual([true]);
+  });
 
   it("stops recording when a key is set, even one refused", async () => {
     const { editor, keymap, ignored } = setup();
