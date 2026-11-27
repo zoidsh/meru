@@ -1,10 +1,13 @@
 import { t } from "@lingui/core/macro";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
+
 export interface FailureDeps {
   productName: string;
   /** Blocks until dismissed; Chromium handles no signal meanwhile. */
   showErrorDialog: (title: string, message: string) => void;
-  log: (message: string) => void;
+  log: Log;
   exit: (code: number) => void;
 }
 
@@ -62,7 +65,7 @@ export const createFailures = ({
 
       if (phase === "starting") {
         phase = "failed";
-        log(`${productName} could not start: ${detail}`);
+        log("start-failed", { error: scrub.stack(error) });
         showErrorDialog(
           t({
             message: `${productName} could not start`,
@@ -73,9 +76,9 @@ export const createFailures = ({
         );
         exit(1);
       } else if (phase === "running") {
-        log(`Unexpected error in the main process: ${detail}`);
+        log("main-error", { error: scrub.stack(error) });
       } else if (phase === "quitting") {
-        log(`Interrupted by quitting: ${detail}`);
+        log("quit-interrupted", { error: scrub.error(error) });
       }
     },
   };

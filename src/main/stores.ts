@@ -1,3 +1,4 @@
+import type { Log } from "#core/log.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
 import { openEntitlementFile } from "./entitlement.ts";
@@ -10,7 +11,7 @@ export interface StoresDeps {
   entitlementFile: TextFile;
   newId: () => string;
   now: () => number;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**

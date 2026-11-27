@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ShellState } from "#contract/shell.ts";
 import { APPS } from "#core/apps.ts";
 import type { FindBar } from "#core/find.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
@@ -279,9 +280,7 @@ const setup = ({
     doNotDisturbItems: () => [
       { label: "For 5 Minutes", enabled: true, click: () => {} },
     ],
-    log: (message) => {
-      logged.push(message);
-    },
+    log: recordInto(logged, { profiles: () => state.profiles }),
   });
 
   return {
@@ -370,7 +369,9 @@ describe(createShellHandlers, () => {
 
     expect([shell.calls, shell.logged]).toStrictEqual([
       [["move", { profileId: "a", tabId: "t1" }, "gmail"]],
-      ["Refused to move tab b/gmail of a profile not selected"],
+      [
+        'tab-move-refused tab="profile 2 tab 1 gmail" reason=profile-not-selected',
+      ],
     ]);
   });
 
@@ -464,8 +465,8 @@ describe(createShellHandlers, () => {
       ],
       [["dropInView", key, { width: 1000, height: 600 }, { x: 900, y: 300 }]],
       [
-        "Refused to drop tab b/t1 of a profile not selected",
-        "Refused to drop tab a/t1 outside the page area",
+        'tab-drop-refused tab="a removed profile a closed tab" reason=profile-not-selected',
+        'tab-drop-refused tab="profile 1 tab 2 calendar" reason=outside-pages',
       ],
     ]);
   });
@@ -962,7 +963,7 @@ describe("New tab in the shell", () => {
         ["toggleBookmark", { profileId: "a", tabId: "c1" }, true],
         ["toggleBookmark", { profileId: "a", tabId: "d1" }, false],
       ],
-      ["Refused to bookmark tab a/gone, which is gone"],
+      ['bookmark-refused tab="profile 1 a closed tab" reason=tab-gone'],
     ]);
   });
 
@@ -1028,7 +1029,7 @@ describe("Do Not Disturb in the shell", () => {
       ["doNotDisturb.toggle"],
       [["For 5 Minutes"]],
       [{ x: 900, y: 20 }],
-      ["Refused the Do Not Disturb menu at 1200,20"],
+      ["do-not-disturb-menu-refused x=1200 y=20"],
     ]);
   });
 

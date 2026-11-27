@@ -1,5 +1,7 @@
 import { t } from "@lingui/core/macro";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import {
   asksBeforeOpening,
   shownUrl,
@@ -13,9 +15,6 @@ import type { SystemBrowser } from "#platform/system-browser.ts";
 import type { DefaultBrowserGuard } from "./default-browser-guard.ts";
 import type { SettingsStore } from "./settings.ts";
 import type { TrustedSites } from "./trusted-sites.ts";
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 const trustLabel = (name: string) =>
   t({
@@ -71,7 +70,7 @@ export const createLinkOpener = ({
   prompt: LinkPrompt;
   systemBrowser: SystemBrowser;
   clipboard: Clipboard;
-  log: (message: string) => void;
+  log: Log;
 }): SystemBrowser => ({
   open: async (url) => {
     if (await defaultBrowser.holds(url)) {
@@ -101,7 +100,7 @@ export const createLinkOpener = ({
         try {
           await trustedSites.add(site);
         } catch (error) {
-          log(`A trusted site was not saved: ${describe(error)}`);
+          log("trusted-site-save-failed", { error: scrub.error(error) });
         }
       }
     }

@@ -1,3 +1,4 @@
+import type { Log } from "#core/log.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { ErrorDialog } from "#platform/dialog.ts";
 
@@ -9,10 +10,12 @@ export const wireShellRecovery = ({
   lifecycle,
   errorDialog,
   shell,
+  log,
 }: {
   lifecycle: ReturnType<typeof createAppLifecycle>;
   errorDialog: ErrorDialog;
   shell: ReturnType<typeof createShellWindow>;
+  log: Log;
 }) => {
   createShellRecovery({
     window: shell.window,
@@ -20,6 +23,6 @@ export const wireShellRecovery = ({
     now: Date.now,
     showErrorDialog: errorDialog.show,
     quit: lifecycle.quit,
-    log: console.error,
+    log,
   });
 };

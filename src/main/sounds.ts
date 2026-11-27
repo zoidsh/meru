@@ -1,5 +1,6 @@
 import { SHELL_CHANNELS } from "#contract/shell-channels.ts";
 import type { SoundRequest } from "#contract/shell-sound.ts";
+import type { Log } from "#core/log.ts";
 import type { Ipc } from "#platform/ipc.ts";
 
 export interface SoundOutput {
@@ -25,12 +26,12 @@ export const createSoundOutput = ({
   shellId: number;
   shellOrigin: string;
   background: boolean;
-  log: (message: string) => void;
+  log: Log;
 }): SoundOutput => ({
   quiet: background,
   play: (request) => {
     if (background) {
-      log(`Did not play the ${request.sound} sound under the background flag`);
+      log("sound-held", { sound: request.sound, reason: "background" });
 
       return;
     }

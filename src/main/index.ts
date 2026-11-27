@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import path from "node:path";
 
 import { pick } from "es-toolkit";
@@ -17,6 +18,7 @@ import { createAppLifecycle } from "#platform/app.ts";
 import { createErrorDialog } from "#platform/dialog.ts";
 import { createDisplays } from "#platform/displays.ts";
 import { createIpc } from "#platform/ipc.ts";
+import { createLogFile } from "#platform/log-file.ts";
 import { setApplicationMenu } from "#platform/menu.ts";
 import { createAppProtocol } from "#platform/protocol.ts";
 import { createSpellChecker } from "#platform/spellcheck.ts";
@@ -33,6 +35,7 @@ import { createFailures } from "./failures.ts";
 import { createFocus } from "./focus.ts";
 import { createKeymap } from "./keymap.ts";
 import { createLanguage } from "./language.ts";
+import { createLogger, LOG_FILE } from "./logger.ts";
 import { createOverlays } from "./overlay.ts";
 import { createProfileQuestion } from "./profile-question.ts";
 import { createSenderRegistry } from "./senders.ts";
@@ -99,10 +102,29 @@ const newId = () => crypto.randomUUID();
 const lifecycle = createAppLifecycle();
 const errorDialog = createErrorDialog();
 
+const logger = createLogger({
+  file: createLogFile(path.join(lifecycle.userDataPath, LOG_FILE)),
+  context: {
+    home: homedir(),
+    dataDir: lifecycle.userDataPath,
+    appDir: lifecycle.appPath,
+  },
+  now: () => new Date(),
+  // Main's one console call, so `pnpm dev`, `pnpm start` and the suite's
+  // kept logs show each line as the file has it.
+  echo: (line) => {
+    console.error(line);
+  },
+});
+const { log } = logger;
+
+// Whatever the quit or a crash's exit leaves waiting.
+process.on("exit", logger.flushSync);
+
 const failures = createFailures({
   productName: lifecycle.name,
   showErrorDialog: errorDialog.show,
-  log: console.error,
+  log,
   exit: lifecycle.exit,
 });
 
@@ -132,8 +154,21 @@ const start = async () => {
     return;
   }
 
+  logger.started({
+    productName: lifecycle.name,
+    version: lifecycle.version,
+    build: MERU_E2E_BUILD ? "e2e" : MERU_BUILD_MODE,
+    os: process.platform,
+    osVersion: process.getSystemVersion(),
+    arch: process.arch,
+    electron: process.versions.electron,
+  });
+  lifecycle.onBeforeQuit(() => {
+    log("app-quitting");
+  });
+
   // Before `ready`, so the link that launches Meru is heard.
-  const emailLinks = receiveEmailLinks(lifecycle);
+  const emailLinks = receiveEmailLinks(lifecycle, log);
 
   // Guards a GNOME crash in GTK 4.
   if (process.platform === "linux") {
@@ -178,7 +213,9 @@ const start = async () => {
     licenseRequests,
     firstRefresh,
     storesSettled,
-  } = await wireStores({ lifecycle, newId, clipboard });
+  } = await wireStores({ log, lifecycle, newId, clipboard });
+
+  logger.follow(() => profiles.get().profiles);
 
   // Decided once, from the entitlement read at launch.
   const trialChoice = createTrialChoice({ entitlement });
@@ -252,7 +289,7 @@ const start = async () => {
   const senders = createSenderRegistry();
 
   senders.register(shell.window.webContentsId, { role: "shell" });
-  wireShellRecovery({ lifecycle, errorDialog, shell });
+  wireShellRecovery({ log, lifecycle, errorDialog, shell });
 
   // A page's links leave through the opener, which asks first; Meru's own, as
   // Open in Browser, through `systemBrowser`, which asks nothing. Both show
@@ -262,6 +299,7 @@ const start = async () => {
     ownLinks: systemBrowser,
     trustedSites,
   } = wireLinks({
+    log,
     platform,
     settings,
     systemBrowser: suiteSystemBrowser(),
@@ -309,7 +347,7 @@ const start = async () => {
     senders,
     shellOrigin,
     ...shellContract,
-    log: console.error,
+    log,
   });
 
   let shellLoaded = false;
@@ -401,10 +439,11 @@ const start = async () => {
             views.panes()?.find((pane) => pane.tabId === overlay.tabId)
           : undefined
       ),
-    log: console.error,
+    log,
   });
 
   const { ownWindows, showOwnWindow, revealGmail } = wireOwnWindows({
+    log,
     apps,
     isMacOS,
     background,
@@ -426,6 +465,7 @@ const start = async () => {
     files: downloadFiles,
     watch: watchDownloads,
   } = wireDownloads({
+    log,
     platform,
     isMacOS,
     background,
@@ -459,7 +499,7 @@ const start = async () => {
     mail,
     pollProfiles,
     power,
-  } = wireMailFeed({ apps, sessions, profiles, doNotDisturb });
+  } = wireMailFeed({ log, apps, sessions, profiles, doNotDisturb });
 
   const contentBlocker = wireContentBlocker({ settings, signInOrigins });
   // macOS checks spelling with its own, whatever a session is given.
@@ -468,7 +508,7 @@ const start = async () => {
     : createSpellcheck({
         checker: createSpellChecker(),
         settings,
-        log: console.error,
+        log,
       });
   const preloads = new Map([
     ["gmail", path.join(import.meta.dirname, "preload-gmail.cjs")],
@@ -562,12 +602,13 @@ const start = async () => {
       // oxlint-disable-next-line no-use-before-define -- no page answers before the find bar exists
       find.found(key, result);
     },
-    log: console.error,
+    log,
   });
 
   const find = wireFind({ views, overlays, focus, ownWindows, barsAwaited });
 
   const { screenPicker, hasWindowCard } = wireScreenPicker({
+    log,
     platform,
     background,
     mainWindowShown: () =>
@@ -586,6 +627,7 @@ const start = async () => {
 
   const { showGmail, navigateGmail, mailActions, inbox, sentCompose } =
     wireGmail({
+      log,
       lifecycle,
       sessions,
       power,
@@ -607,6 +649,7 @@ const start = async () => {
     });
 
   const { livePageUrl, openApp, bookmarks } = wireLauncher({
+    log,
     platform,
     apps,
     appOpening,
@@ -625,10 +668,11 @@ const start = async () => {
     shellId: shell.window.webContentsId,
     shellOrigin,
     background,
-    log: console.error,
+    log,
   });
 
   const { showTestNotification } = wireNotifications({
+    log,
     isMacOS,
     sound,
     settings,
@@ -650,6 +694,7 @@ const start = async () => {
   profiles.onChange(overlays.follow);
 
   wireKeepAlive({
+    log,
     apps,
     lifecycle,
     sessions,
@@ -669,6 +714,7 @@ const start = async () => {
   entitlement.onChange(overlays.relayout);
 
   const updates = await wireUpdates({
+    log,
     lifecycle,
     settings,
     runningVersion: createSystemInfo().appVersion(),
@@ -676,6 +722,7 @@ const start = async () => {
   });
 
   const composeWindows = wireComposeWindows({
+    log,
     background,
     profiles,
     views,
@@ -691,6 +738,7 @@ const start = async () => {
     onSettingsFocusChange,
     settingsPages,
   } = wireSettingsWindow({
+    log,
     platform,
     keymap,
     downloadFiles,
@@ -733,11 +781,12 @@ const start = async () => {
       signedOut: (profileId) => mail.mail(profileId).status === "signedOut",
       compose: composeWindows.open,
       openExternal: systemBrowser.open,
-      log: console.error,
+      log,
     }),
   });
 
   const { menu, moveToOwnWindow, moveToMainWindow } = wireMenu({
+    log,
     platform,
     language,
     background,
@@ -776,7 +825,7 @@ const start = async () => {
     overlays,
     openSettings,
     settingsPages,
-    log: console.error,
+    log,
   });
 
   const profileQuestion = createProfileQuestion({
@@ -785,6 +834,7 @@ const start = async () => {
   });
 
   wireShellContract({
+    log,
     platform,
     keymap,
     language,
@@ -825,6 +875,7 @@ const start = async () => {
   });
 
   wireTray({
+    log,
     platform,
     language,
     isMacOS,
@@ -853,8 +904,9 @@ const start = async () => {
     await shell.load();
   }
 
-  void registerAsMailApp(platform, lifecycle.userDataPath);
+  void registerAsMailApp(platform, lifecycle.userDataPath, log);
   answerEmailLinks({
+    log,
     incoming: emailLinks,
     background,
     shell,

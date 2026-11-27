@@ -1,6 +1,7 @@
 import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
+import { recordInto } from "#core/log.fake.ts";
 import { paneTabs } from "#core/pane-tree.ts";
 import type { PaneTree, Split } from "#core/pane-tree.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
@@ -48,9 +49,7 @@ const setup = (split: Split | null = even) => {
     preview: (tree) => {
       previews.push(tree);
     },
-    log: (message) => {
-      logged.push(message);
-    },
+    log: recordInto(logged),
   });
 
   return {

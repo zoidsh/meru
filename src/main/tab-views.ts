@@ -6,6 +6,8 @@ import type { App, AppOpening } from "#core/apps.ts";
 import type { FoundInPage } from "#core/find.ts";
 import { contentViewBounds, viewFrame } from "#core/layout.ts";
 import type { ShellFrame } from "#core/layout.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { OWN_WINDOW_RADIUS } from "#core/own-window.ts";
 import { FOCUS_RING, paneHandles, paneTabs } from "#core/pane-tree.ts";
 import type { PaneDirection, PaneHandle, PaneTree } from "#core/pane-tree.ts";
@@ -129,7 +131,7 @@ export interface TabViewsDeps {
   onNavigated: (key: TabKey, inPage: boolean) => void;
   /** Told of each answer a tab's page gives to a search `find` asked of it. */
   onFound: (key: TabKey, result: FoundInPage) => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /** A pane on screen, placed in the page area. */
@@ -146,9 +148,6 @@ export { LAUNCH_TURN_MS } from "./launch-turn.ts";
 
 /** What of a tab's view a reader of its page gets. */
 export type LoadedPage = Pick<ContentView, "url" | "evaluate">;
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * Chromium's error page, shown once a load failed and until the next one
@@ -311,7 +310,7 @@ export const createTabViews = ({
     try {
       await updatePages(updates);
     } catch (error) {
-      log(`Where the tabs' pages are was not saved: ${describe(error)}`);
+      log("tab-pages-save-failed", { error: scrub.error(error) });
     }
   });
 
@@ -356,7 +355,10 @@ export const createTabViews = ({
     try {
       await view.loadURL(url);
     } catch (error) {
-      log(`Tab ${key} did not load: ${describe(error)}`);
+      log("tab-load-failed", {
+        tab: scrub.tab(key),
+        error: scrub.error(error),
+      });
     }
   };
 
@@ -483,7 +485,12 @@ export const createTabViews = ({
         break;
       }
       case "failed-to-load": {
-        log(`Tab ${key} could not load: ${event.name} (${event.code})`);
+        log("tab-load-failed", {
+          tab: scrub.tab(key),
+          host: scrub.host(event.url),
+          code: event.code,
+          name: scrub.code(event.name),
+        });
         dispatch(key, {
           kind: "failed-to-load",
           reason: { code: event.code, name: event.name },
@@ -491,7 +498,10 @@ export const createTabViews = ({
         break;
       }
       case "crashed": {
-        log(`The page of tab ${key} is gone: ${event.reason}`);
+        log("tab-page-gone", {
+          tab: scrub.tab(key),
+          reason: scrub.token(event.reason),
+        });
         dispatch(key, { kind: "crashed", reason: event.reason });
         break;
       }
@@ -579,7 +589,7 @@ export const createTabViews = ({
       }
     } catch (error) {
       pendingUrls.delete(key);
-      log(`A tab did not open: ${describe(error)}`);
+      log("tab-open-failed", { error: scrub.error(error) });
     }
   };
 
@@ -657,6 +667,7 @@ export const createTabViews = ({
     });
 
     place(key, view);
+    log("view-created", { tab: scrub.tab(tabKeyed), app: scrub.token(app) });
 
     return view;
   };
@@ -664,8 +675,12 @@ export const createTabViews = ({
   const closeView = (key: string, view: ContentView) => {
     try {
       view.close();
+      log("view-closed", { tab: scrub.tab(key) });
     } catch (error) {
-      log(`The view of tab ${key} did not close: ${describe(error)}`);
+      log("view-close-failed", {
+        tab: scrub.tab(key),
+        error: scrub.error(error),
+      });
     }
   };
 
@@ -1020,7 +1035,7 @@ export const createTabViews = ({
         current.profiles.find((profile) => profile.id === tab.key.profileId)
           ?.selectedTabId === tab.key.tabId;
 
-      log("Closed a tab opened only to start a download");
+      log("download-tab-closed");
       void (async () => {
         try {
           await closeTab(tab.key);
@@ -1029,9 +1044,7 @@ export const createTabViews = ({
             await selectTab(from);
           }
         } catch (error) {
-          log(
-            `A tab opened only to download did not close: ${describe(error)}`
-          );
+          log("download-tab-close-failed", { error: scrub.error(error) });
         }
       })();
     },

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { recordInto } from "#core/log.fake.ts";
 import type { QuietWindow } from "#core/notification-gate.ts";
 import type { DoNotDisturb } from "#core/state.ts";
 import type {
@@ -45,9 +46,7 @@ const setup = ({
     showList: () => {
       listed += 1;
     },
-    log: (message) => {
-      logs.push(message);
-    },
+    log: recordInto(logs),
   });
 
   return {
@@ -132,15 +131,15 @@ describe(createDownloadNotifications, () => {
       [
         0,
         [
-          "Held a download's notification: doNotDisturb",
-          "Held a download's notification: doNotDisturb",
+          "download-notification-held reason=doNotDisturb",
+          "download-notification-held reason=doNotDisturb",
         ],
       ],
       [
         0,
         [
-          "Held a download's notification: quietHours",
-          "Held a download's notification: quietHours",
+          "download-notification-held reason=quietHours",
+          "download-notification-held reason=quietHours",
         ],
       ],
     ]);

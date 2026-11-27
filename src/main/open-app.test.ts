@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
 import { bookmarks } from "#core/bookmarks.ts";
+import { silentLog } from "#core/log.fake.ts";
 import type { Overlay } from "#core/overlay.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -91,7 +92,7 @@ const setup = (
     },
     pageUrl: (key) => pages[key.tabId],
     pageSize: () => pageSize ?? { width: 1000, height: 700 },
-    log: () => false,
+    log: silentLog,
   });
 
   return { openApp, events, state: () => state };

@@ -1,6 +1,8 @@
 import type { App } from "#core/apps.ts";
 import { findApp } from "#core/apps.ts";
 import { chooseBookmark } from "#core/bookmarks.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { openableApps, splittableApps } from "#core/open-app.ts";
 import type { PaneDirection } from "#core/pane-tree.ts";
 import { splitFits, splitTarget } from "#core/split.ts";
@@ -49,7 +51,7 @@ export interface OpenAppDeps {
   pageUrl: (key: TabKey) => string | undefined;
   /** The page area's size now, which a split must leave room in. */
   pageSize: () => Size;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**
@@ -89,9 +91,7 @@ export const createOpenApp = ({
     try {
       await systemBrowser.open(url);
     } catch (error) {
-      log(
-        `The system browser did not open a pick: ${error instanceof Error ? error.message : String(error)}`
-      );
+      log("system-browser-open-failed", { error: scrub.error(error) });
     }
   };
 
@@ -116,9 +116,12 @@ export const createOpenApp = ({
       return true;
     }
 
-    log(
-      `Refused a split, ${direction}, with no room in a page area of ${size.width} by ${size.height}`
-    );
+    log("split-refused", {
+      direction,
+      reason: "no-room",
+      width: size.width,
+      height: size.height,
+    });
     overlays.open({ kind: "toast", message: "no-room" });
 
     return false;
@@ -169,7 +172,7 @@ export const createOpenApp = ({
       const profile = selectedProfile(state());
 
       if (splitTarget(profile) === undefined) {
-        log("Refused a split with no known tab selected");
+        log("split-refused", { reason: "no-tab-selected" });
 
         return;
       }
@@ -198,7 +201,7 @@ export const createOpenApp = ({
       const app = listed?.find(({ id }) => id === appId);
 
       if (!open || !profile || !app) {
-        log(`Refused to open ${appId}, which New tab does not list`);
+        log("open-app-refused", { app: scrub.token(appId) });
 
         return;
       }
@@ -228,7 +231,7 @@ export const createOpenApp = ({
       const app = choice && findApp(apps, choice.bookmark.app);
 
       if (!open || !profile || !choice || !app) {
-        log("Refused to open a bookmark the open launcher does not list");
+        log("bookmark-open-refused", { reason: "not-listed" });
 
         return;
       }
@@ -267,7 +270,7 @@ export const createOpenApp = ({
       const open = current();
 
       if (!open) {
-        log("Refused to remove a bookmark with no launcher open");
+        log("bookmark-remove-refused", { reason: "no-launcher" });
 
         return;
       }

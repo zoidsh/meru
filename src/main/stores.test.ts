@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
 
 import { StartupError } from "./failures.ts";
@@ -26,7 +27,7 @@ const createFakeDirectory = (contents: Record<string, string>) => {
         entitlementFile: fileAt("entitlement.json"),
         newId: () => "new-id",
         now: () => 1_763_290_000_000,
-        log: () => {},
+        log: silentLog,
       }),
   };
 };

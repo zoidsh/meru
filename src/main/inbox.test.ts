@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { FeedEntry, FeedOutcome, MailStatus } from "#core/feed.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { ActionOutcome, MailAction } from "#core/mail-actions.ts";
 import { createInitialSettings } from "#core/settings.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
@@ -58,7 +59,7 @@ const setup = (initial: State = two, allowed = () => true) => {
     initial: createInitialSettings(),
     save: () => Promise.resolve(),
     platform: "darwin",
-    log: (message) => logs.push(message),
+    log: recordInto(logs),
   });
 
   const inbox = createInbox({
@@ -97,7 +98,7 @@ const setup = (initial: State = two, allowed = () => true) => {
     },
     allowed,
     now: () => clock,
-    log: (message) => logs.push(message),
+    log: recordInto(logs),
   });
 
   inbox.onChange(() => {

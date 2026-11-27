@@ -1,6 +1,8 @@
 import { withTimeout } from "es-toolkit";
 
 import { INBOX_TYPE_EXPRESSION, isSectioned } from "#core/feed.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { TabKey } from "#core/tabs.ts";
 
 import type { LoadedPage } from "./tab-views.ts";
@@ -17,7 +19,7 @@ export interface InboxTypesDeps {
   setTabbed: (profileId: string, tabbed: boolean) => Promise<boolean>;
   /** Told of a profile whose inbox type changed, so its count can follow. */
   onChange: (profileId: string) => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
 const originOf = (url: string) => URL.parse(url)?.origin ?? "";
@@ -82,16 +84,18 @@ export const createInboxTypes = ({
         return;
       }
     } catch (error) {
-      log(
-        `The inbox type of profile ${key.profileId} was not saved: ${error instanceof Error ? error.message : String(error)}`
-      );
+      log("inbox-type-save-failed", {
+        profile: scrub.profile(key.profileId),
+        error: scrub.error(error),
+      });
 
       return;
     }
 
-    log(
-      `Gmail's inbox in profile ${key.profileId} is ${tabbed ? "tabbed, so Primary is read" : "not tabbed, so the whole inbox is read"}`
-    );
+    log("inbox-type-changed", {
+      profile: scrub.profile(key.profileId),
+      tabbed,
+    });
     onChange(key.profileId);
   },
 });

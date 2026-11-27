@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { recordInto, silentLog } from "#core/log.fake.ts";
 import { createInitialSettings } from "#core/settings.ts";
 import type { SpellChecker } from "#platform/spellcheck.ts";
 
@@ -39,16 +40,14 @@ const setUp = (
     initial: { ...createInitialSettings(), spellcheckLanguages: chosen },
     save: () => Promise.resolve(),
     platform: "linux",
-    log: () => {},
+    log: silentLog,
   });
   const { checker, languages } = fakeChecker(options);
   const logged: string[] = [];
   const spellcheck = createSpellcheck({
     checker,
     settings,
-    log: (message) => {
-      logged.push(message);
-    },
+    log: recordInto(logged),
   });
 
   return { settings, spellcheck, languages, logged };

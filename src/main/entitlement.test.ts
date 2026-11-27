@@ -6,6 +6,7 @@ import { withUnconfirmedKey } from "#core/entitlement-file.ts";
 import type { EntitlementFile } from "#core/entitlement-file.ts";
 import { DAY } from "#core/entitlement.ts";
 import type { Entitlement } from "#core/entitlement.ts";
+import { recordInto, silentLog } from "#core/log.fake.ts";
 import type {
   EntitlementServer,
   ServerAnswer,
@@ -123,7 +124,7 @@ const setup = (initial?: EntitlementFile, deviceId = DEVICE) => {
       },
       now: Date.now,
       timeZone: "UTC",
-      log: (message) => logs.push(message),
+      log: recordInto(logs),
     });
 
   return {
@@ -490,7 +491,7 @@ describe(createEntitlement, () => {
       deviceId: DEVICE,
       clipboard: { writeText: () => Promise.resolve() },
       now: Date.now,
-      log: () => {},
+      log: silentLog,
     });
 
     expect(entitlement.snapshot().status).toBe("none");
@@ -762,9 +763,7 @@ describe("the entitlement's license calls landing out of order", () => {
       error: "offline",
     });
     expect(saved).toStrictEqual([]);
-    expect(logs).toContain(
-      "The entitlement server's call failed: Error: socket hang up"
-    );
+    expect(logs).toContain('license-server-call-failed error="socket hang up"');
     entitlement.dispose();
   });
 });
@@ -871,7 +870,7 @@ describe("the entitlement's wake beside other work", () => {
 
     expect(requests).toStrictEqual([]);
     expect(
-      logs.filter((line) => line.includes("this device's id is unknown"))
+      logs.filter((line) => line.includes("reason=no-device-id"))
     ).toHaveLength(1);
     entitlement.dispose();
   });
@@ -976,7 +975,7 @@ describe("the entitlement when its file cannot be written", () => {
       "Meru couldn't save your license. Check that your disk isn't full, then try again.",
   };
   const LOGGED =
-    "Could not save the entitlement: Error: ENOSPC: no space left on device";
+    'entitlement-save-failed error="ENOSPC: no space left on device"';
 
   it("answers an activation it could not save as not saved, and keeps the key before it", async () => {
     const { entitlement, answerWith, disk, logs } = setupLicensed();
@@ -1057,7 +1056,7 @@ describe("a quit's wait for the entitlement", () => {
       deviceId: DEVICE,
       clipboard: { writeText: () => Promise.resolve() },
       now: Date.now,
-      log: () => {},
+      log: silentLog,
     });
     fake.answerWith(() => ({ token: signToken({}) }));
 

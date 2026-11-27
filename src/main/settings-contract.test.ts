@@ -16,6 +16,7 @@ import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import { withToken } from "#core/entitlement-file.ts";
 import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
 import type { FeedOutcome } from "#core/feed.ts";
+import { silentLog } from "#core/log.fake.ts";
 import type { Platform } from "#core/platform.ts";
 import type { Release } from "#core/releases.ts";
 import type { Settings } from "#core/settings.ts";
@@ -126,7 +127,7 @@ const setup = (
     deviceId: "device",
     clipboard,
     now: Date.now,
-    log: () => false,
+    log: silentLog,
   });
   const multipleProfiles = () => entitlement.can("profiles");
   const settings = createSettingsStore({
@@ -137,7 +138,7 @@ const setup = (
       return Promise.resolve();
     },
     platform: "darwin",
-    log: () => false,
+    log: silentLog,
     profileValues: multipleProfiles,
     can: entitlement.can,
   });
@@ -148,7 +149,7 @@ const setup = (
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
     now: Date.now,
-    log: () => false,
+    log: silentLog,
     multipleProfiles,
     can: entitlement.can,
   });
@@ -161,7 +162,7 @@ const setup = (
   const doNotDisturb = createDoNotDisturb({
     profiles,
     now: () => new Date(),
-    log: () => false,
+    log: silentLog,
   });
   const played: SoundRequest[] = [];
   const tested: (string | undefined)[] = [];
@@ -176,7 +177,7 @@ const setup = (
     // No profile's inbox has a label here.
     inboxLabel: (profileId) => new Map<string, string>().get(profileId),
     isOnline: () => true,
-    log: () => false,
+    log: silentLog,
   });
   const asked: string[] = [];
   // What the composition root's add does beside adding, as closing the inbox.
@@ -221,7 +222,7 @@ const setup = (
             },
           },
           settings,
-          log: () => false,
+          log: silentLog,
         });
   const general = createGeneralPage({
     platform,
@@ -259,7 +260,7 @@ const setup = (
     },
     language,
     spellcheck,
-    log: () => false,
+    log: silentLog,
   });
   const deleteBrowsingData = (profileId: string, kinds: BrowsingDataKinds) => {
     deleted.push([profileId, kinds]);
@@ -283,9 +284,8 @@ const setup = (
     openExternal: (url) => {
       opened.push(url);
     },
-    home: "",
     now: () => 1000,
-    log: () => false,
+    log: silentLog,
   });
   const deps = {
     updates,
@@ -318,7 +318,7 @@ const setup = (
           return Promise.resolve(confirms);
         },
       },
-      log: () => false,
+      log: silentLog,
     }),
     deleteBrowsingData,
     signIn: (profileId: string) => {
@@ -346,7 +346,7 @@ const setup = (
       },
       profiles,
       deleteBrowsingData,
-      log: () => false,
+      log: silentLog,
     }),
     about: createAboutPage({ platform, system: system.system, clipboard }),
     shortcuts: () => readShortcuts(platform, "Meru", COMMANDS),

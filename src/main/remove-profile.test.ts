@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { Confirmation } from "#platform/window.ts";
@@ -31,7 +32,7 @@ const setup = (confirmed: boolean) => {
         return Promise.resolve(confirmed);
       },
     },
-    log: () => false,
+    log: silentLog,
   });
 
   return { remove, removed, confirmations };

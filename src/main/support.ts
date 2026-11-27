@@ -1,5 +1,7 @@
 import { t } from "@lingui/core/macro";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { State } from "#core/state.ts";
 import { supportMailto } from "#core/support.ts";
 
@@ -23,7 +25,7 @@ export const createContactSupport =
     compose: (profileId: string, mailto: string) => void;
     /** Meru's own links' way out, which asks nothing. */
     openExternal: (url: string) => Promise<void>;
-    log: (message: string) => void;
+    log: Log;
   }) =>
   async () => {
     const mailto = supportMailto(
@@ -39,7 +41,7 @@ export const createContactSupport =
       try {
         await openExternal(mailto);
       } catch (error) {
-        log(`Could not open the support email: ${String(error)}`);
+        log("support-email-failed", { error: scrub.error(error) });
       }
 
       return;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { recordInto } from "#core/log.fake.ts";
 import { fakeDefaultBrowser } from "#platform/default-browser.fake.ts";
 
 import { createDefaultBrowserGuard } from "./default-browser-guard.ts";
@@ -23,9 +24,7 @@ const setup = ({
         return Promise.resolve();
       },
     },
-    log: (message) => {
-      logged.push(message);
-    },
+    log: recordInto(logged),
   });
   const browser = guard.guard({
     open: (url) => {
@@ -108,7 +107,7 @@ describe(createDefaultBrowserGuard, () => {
 
     expect([opened, logged]).toStrictEqual([
       [],
-      ["The default browser alert's settings failed: refused"],
+      ["default-browser-alert-failed choice=settings error=refused"],
     ]);
   });
 

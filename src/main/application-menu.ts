@@ -13,6 +13,8 @@ import type {
   BuiltInShortcutId,
   RoleShortcutId,
 } from "#core/built-in-shortcuts.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import {
   PINNED_SHORTCUT_COUNT,
   selectPinnedCommandId,
@@ -680,11 +682,8 @@ export interface ApplicationMenuDeps {
   actions: CommandActions;
   locale: () => string;
   setMenu: (template: MenuItemConstructorOptions[]) => void;
-  log: (message: string) => void;
+  log: Log;
 }
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * Sets the application menu and sets it again whenever what a command
@@ -731,7 +730,10 @@ export const createApplicationMenu = ({
     try {
       await command.run(context(), actions);
     } catch (error) {
-      log(`Command ${command.id} failed: ${describe(error)}`);
+      log("command-failed", {
+        command: scrub.token(command.id),
+        error: scrub.error(error),
+      });
     }
 
     // oxlint-disable-next-line no-use-before-define -- run and build call each other
@@ -774,7 +776,10 @@ export const createApplicationMenu = ({
       const command = commands().find((candidate) => candidate.id === id);
 
       if (command && needsPro(command, context())) {
-        log(`Refused command ${id}, which needs Meru Pro`);
+        log("command-refused", {
+          command: scrub.token(id),
+          reason: "needs-pro",
+        });
       } else if (command) {
         void run(command);
       }

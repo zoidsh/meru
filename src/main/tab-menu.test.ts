@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
 import type { MenuPoint } from "#core/context-menu.ts";
+import { recordInto, silentLog } from "#core/log.fake.ts";
 import type { SleepIdleTabs } from "#core/settings.ts";
 import { createInitialSettings } from "#core/settings.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
@@ -102,7 +103,7 @@ const setup = ({
         initial: createInitialSettings(),
         save: () => Promise.resolve(),
         platform: "linux",
-        log: () => {},
+        log: silentLog,
         can: () => true,
       }),
     }).accelerator,
@@ -147,7 +148,7 @@ const setup = ({
         await recorded("browser")(url);
       },
     },
-    log: (message) => done.push(["log", message]),
+    log: recordInto(done, { profiles: () => current.profiles }, "log "),
   });
 
   /** Clicks the item labelled so in the last popup, and gives what it reached. */
@@ -190,8 +191,8 @@ describe(createTabMenu, () => {
     menu.open(at("c"));
 
     expect(done).toStrictEqual([
-      ["log", "Refused a menu for tab p/c at 900,80"],
-      ["log", "Refused a menu for tab p/gone at 20,80"],
+      'log tab-menu-refused tab="profile 1 tab 2 calendar" x=900 y=80',
+      'log tab-menu-refused tab="profile 1 a closed tab" x=20 y=80',
     ]);
     expect(
       popups.map(({ window, at: point }) => [window, point])
@@ -345,7 +346,7 @@ describe(createTabMenu, () => {
     });
 
     await expect(click("Close Tab")).resolves.toStrictEqual([
-      ["log", "Refused the tab menu's close, which it does not offer"],
+      "log tab-menu-refused item=close",
     ]);
   });
 
@@ -411,8 +412,8 @@ describe(createTabMenu, () => {
     expect([popups, done]).toStrictEqual([
       [],
       [
-        ["log", "Refused a menu for tab p/c at 20,80"],
-        ["log", "Refused a menu for tab p/w at 20,601"],
+        'log tab-menu-refused tab="profile 1 tab 2 calendar" x=20 y=80',
+        'log tab-menu-refused tab="profile 1 tab 4 docs" x=20 y=601',
       ],
     ]);
   });

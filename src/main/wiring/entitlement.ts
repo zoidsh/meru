@@ -1,6 +1,8 @@
 import path from "node:path";
 
 import type { EntitlementFile } from "#core/entitlement-file.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import { readDeviceId } from "#platform/device-id.ts";
@@ -55,15 +57,17 @@ export const wireEntitlement = async ({
   file,
   initial,
   clipboard,
+  log,
 }: {
   lifecycle: ReturnType<typeof createAppLifecycle>;
   file: TextFile;
   initial: EntitlementFile;
   clipboard: Clipboard;
+  log: Log;
 }) => {
   // A device whose id cannot be read verifies no token and asks nothing.
   const deviceId = await readDeviceId().catch((error: unknown) => {
-    console.error(`Could not read this device's id: ${String(error)}`);
+    log("device-id-read-failed", { error: scrub.error(error) });
 
     return "";
   });
@@ -74,7 +78,7 @@ export const wireEntitlement = async ({
     deviceId,
     clipboard,
     now: Date.now,
-    log: console.error,
+    log,
   });
 
   const firstRefresh = entitlement.start();

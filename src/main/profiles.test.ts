@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
 import type { Capability } from "#core/entitlement.ts";
+import { recordInto, silentLog } from "#core/log.fake.ts";
 import { decodeState, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
@@ -64,7 +65,10 @@ const setup = ({
         : Promise.resolve();
     },
     now: () => now,
-    log: (message) => logs.push(message),
+    log: recordInto(logs, {
+      // oxlint-disable-next-line no-use-before-define -- read once a line is logged
+      profiles: () => profiles.get().profiles,
+    }),
   });
 
   // Stands in for the view manager, which closes a removed profile's view.
@@ -170,7 +174,7 @@ describe(createProfiles, () => {
       "save a to clear []",
       "views a",
     ]);
-    expect(logs).toStrictEqual([]);
+    expect(logs).toStrictEqual(["profile-removed place=2 profiles=1"]);
   });
 
   it("never clears the data of an id an unreadable entry still holds when a readable profile of that id is removed", async () => {
@@ -195,7 +199,8 @@ describe(createProfiles, () => {
     expect(steps).not.toContain("clear persist:a");
     expect(profiles.get().profilesToClear).toStrictEqual([]);
     expect(logs).toStrictEqual([
-      "Kept the data of profile a, which was on the list to clear but is still listed",
+      "profile-removed place=1 profiles=1",
+      'profile-data-kept profile="a removed profile"',
     ]);
   });
 
@@ -226,10 +231,10 @@ describe(createProfiles, () => {
 
     expect(steps).toContain("clear persist:b");
     expect(profiles.get().profilesToClear).toStrictEqual([]);
-    expect(logs).toContain("A profiles listener failed: view gone wrong");
+    expect(logs).toContain('profiles-listener-failed error="view gone wrong"');
   });
 
-  it("keeps a profile whose clear fails on the list, and logs where its data was left", async () => {
+  it("keeps a profile whose clear fails on the list, and logs it", async () => {
     const { profiles, logs } = setup({ failClear: ["persist:b"] });
 
     await expect(profiles.remove("b")).resolves.toBeTruthy();
@@ -237,7 +242,8 @@ describe(createProfiles, () => {
     expect(profiles.get().profiles).toStrictEqual([newProfile("a", "Default")]);
     expect(profiles.get().profilesToClear).toStrictEqual(["b"]);
     expect(logs).toStrictEqual([
-      "The data of removed profile b in persist:b was not deleted, and will be tried again at the next launch: locked",
+      "profile-removed place=2 profiles=1",
+      "profile-data-clear-failed error=locked",
     ]);
   });
 
@@ -290,9 +296,7 @@ describe("finishing clears at startup", () => {
     await profiles.finishClears();
 
     expect(profiles.get().profilesToClear).toStrictEqual(["y"]);
-    expect(logs).toStrictEqual([
-      "The data of removed profile y in persist:y was not deleted, and will be tried again at the next launch: locked",
-    ]);
+    expect(logs).toStrictEqual(["profile-data-clear-failed error=locked"]);
   });
 
   it("never clears an id that is still listed as a profile, and drops it from the list with a log line", async () => {
@@ -303,9 +307,7 @@ describe("finishing clears at startup", () => {
     expect(steps).not.toContain("clear persist:b");
     expect(steps).toContain("clear persist:x");
     expect(profiles.get().profilesToClear).toStrictEqual([]);
-    expect(logs).toStrictEqual([
-      "Kept the data of profile b, which was on the list to clear but is still listed",
-    ]);
+    expect(logs).toStrictEqual(['profile-data-kept profile="profile 2"']);
   });
 
   it("does nothing when nothing is left to clear", async () => {
@@ -378,7 +380,7 @@ const setupGated = (
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
     now: () => 2000,
-    log: () => false,
+    log: silentLog,
     can: (capability) => granted || ![refused].flat().includes(capability),
   });
 
@@ -686,7 +688,7 @@ const setupFree = (initial: State = two) => {
       return Promise.resolve();
     },
     now: () => 0,
-    log: () => false,
+    log: silentLog,
     multipleProfiles: () => multiple,
   });
 

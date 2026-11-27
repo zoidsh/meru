@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -55,7 +56,7 @@ const setup = () => {
     focus,
     initial,
     bounds: () => ({ x: 0, y: 0, width: 400, height: 56 }),
-    log: () => false,
+    log: silentLog,
   });
 
   let viewGone: (() => void) | undefined;

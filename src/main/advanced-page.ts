@@ -1,5 +1,7 @@
 import type { SettingsState } from "#contract/settings.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { State } from "#core/state.ts";
 import type { PathOpener } from "#platform/path-opener.ts";
 import type { TextFile } from "#platform/text-file.ts";
@@ -19,13 +21,10 @@ export interface AdvancedPageDeps {
     profileId: string,
     kinds: BrowsingDataKinds
   ) => Promise<void>;
-  log: (message: string) => void;
+  log: Log;
 }
 
 const CACHE_ONLY: BrowsingDataKinds = { cookies: false, cache: true };
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * What the Advanced page does that is not a plain setting: the hardware
@@ -51,7 +50,7 @@ export const createAdvancedPage = ({
 
       await opener.open(settingsFile.path);
     } catch (error) {
-      log(`${settingsFile.path} was not opened: ${describe(error)}`);
+      log("settings-file-open-failed", { error: scrub.error(error) });
     }
   },
   /**
@@ -70,9 +69,10 @@ export const createAdvancedPage = ({
     for (const [index, result] of results.entries()) {
       if (result.status === "rejected") {
         failed.push(ids[index] ?? "");
-        log(
-          `The cache of profile ${ids[index]} was not cleared: ${describe(result.reason)}`
-        );
+        log("cache-clear-failed", {
+          profile: scrub.profile(ids[index] ?? ""),
+          error: scrub.error(result.reason),
+        });
       }
     }
 

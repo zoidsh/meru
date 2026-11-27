@@ -1,5 +1,7 @@
 import { t } from "@lingui/core/macro";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import {
   DO_NOT_DISTURB_DURATIONS,
   doNotDisturbEnd,
@@ -23,11 +25,8 @@ export interface DoNotDisturbDeps {
     "get" | "onChange" | "switchDoNotDisturb" | "forgetEndedDoNotDisturb"
   >;
   now: () => Date;
-  log: (message: string) => void;
+  log: Log;
 }
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * Do Not Disturb, kept in the state so a restart keeps it. Whether it holds
@@ -54,7 +53,7 @@ export const createDoNotDisturb = ({
     try {
       await profiles.switchDoNotDisturb(until);
     } catch (error) {
-      log(`Do Not Disturb was not switched: ${describe(error)}`);
+      log("do-not-disturb-switch-failed", { error: scrub.error(error) });
     }
   };
 
@@ -69,7 +68,7 @@ export const createDoNotDisturb = ({
         arm(profiles.get());
       }
     } catch (error) {
-      log(`An ended Do Not Disturb was not switched off: ${describe(error)}`);
+      log("do-not-disturb-end-failed", { error: scrub.error(error) });
     }
   };
 

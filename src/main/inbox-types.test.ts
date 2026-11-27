@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { INBOX_TYPE_EXPRESSION } from "#core/feed.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { TabKey } from "#core/tabs.ts";
 
 import { INBOX_TYPE_TIMEOUT, createInboxTypes } from "./inbox-types.ts";
@@ -38,7 +39,7 @@ const setup = ({ failSave = false }: { failSave?: boolean } = {}) => {
       return Promise.resolve(true);
     },
     onChange: (profileId) => changes.push(profileId),
-    log: (message) => logs.push(message),
+    log: recordInto(logs, { profiles: () => [{ id: "a", tabs: [] }] }),
   });
   const expressions: string[] = [];
 
@@ -178,7 +179,7 @@ describe(createInboxTypes, () => {
 
     expect(changes).toStrictEqual([]);
     expect(logs).toStrictEqual([
-      "The inbox type of profile a was not saved: disk full",
+      'inbox-type-save-failed profile="profile 1" error="disk full"',
     ]);
   });
 });

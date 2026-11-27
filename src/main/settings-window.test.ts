@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import type { WindowFocusEvent, WindowLoadEvent } from "#platform/window.ts";
 
 import { createSettingsWindow } from "./settings-window.ts";
@@ -78,7 +79,7 @@ const setup = (background = false) => {
       return () => calls.push(`drop ${id}`);
     },
     prepare: () => false,
-    log: () => false,
+    log: silentLog,
   });
 
   return { settings, calls, windows };

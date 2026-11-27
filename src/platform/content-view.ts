@@ -17,7 +17,7 @@ export type ContentViewEvent =
   /** Any load, the first or a later one, started or stopped. */
   | { kind: "load-started" }
   | { kind: "load-stopped" }
-  | { kind: "failed-to-load"; code: number; name: string }
+  | { kind: "failed-to-load"; code: number; name: string; url: string }
   | { kind: "crashed"; reason: string }
   /** The main frame went to `url`, within its document or to a new one. */
   | { kind: "navigated"; url: string; inPage?: boolean }
@@ -363,10 +363,10 @@ const reportEvents = (
     failed = false;
     onEvent({ kind: "load-started" });
   });
-  webContents.on("did-fail-load", (_event, code, name, _url, isMainFrame) => {
+  webContents.on("did-fail-load", (_event, code, name, url, isMainFrame) => {
     if (isMainFrame && code !== ERR_ABORTED) {
       failed = true;
-      onEvent({ kind: "failed-to-load", code, name });
+      onEvent({ kind: "failed-to-load", code, name, url });
     }
   });
   webContents.on("did-stop-loading", () => {

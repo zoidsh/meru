@@ -1,6 +1,7 @@
 import { t } from "@lingui/core/macro";
 import { noop } from "es-toolkit";
 
+import type { Log } from "#core/log.ts";
 import { decideNotification, momentOf } from "#core/notification-gate.ts";
 import type { QuietWindow } from "#core/notification-gate.ts";
 import type { DoNotDisturb } from "#core/state.ts";
@@ -21,7 +22,7 @@ export interface DownloadNotificationsDeps {
   showInFolder: (id: string) => void;
   /** Shows the Downloads card, its window brought forward. */
   showList: () => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**
@@ -57,7 +58,7 @@ export const createDownloadNotifications = ({
     });
 
     if (!decision.show) {
-      log(`Held a download's notification: ${decision.reason}`);
+      log("download-notification-held", { reason: decision.reason });
 
       return;
     }

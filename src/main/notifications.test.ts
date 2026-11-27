@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { SoundRequest } from "#contract/shell-sound.ts";
 import { entitledSetting } from "#core/entitled-settings.ts";
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { MailAction } from "#core/mail-actions.ts";
 import {
   createInitialSettings,
@@ -153,9 +154,7 @@ const setup = ({
         played.push(request);
       },
     },
-    log: (message) => {
-      logs.push(message);
-    },
+    log: recordInto(logs, { profiles: () => [{ id: "a", tabs: [] }] }),
   });
 
   return {
@@ -461,7 +460,7 @@ describe("what holds a new mail notification", () => {
 
     expect(app.shown).toStrictEqual([]);
     expect(app.logs).toStrictEqual([
-      "Held 1 new mail notification(s) of profile a: doNotDisturb",
+      'mail-notifications-held profile="profile 1" count=1 reason=doNotDisturb',
     ]);
   });
 
@@ -486,7 +485,7 @@ describe("what holds a new mail notification", () => {
     expect(app.shown).toStrictEqual([]);
     expect(app.askedImportant).toStrictEqual([]);
     expect(app.logs).toStrictEqual([
-      "Held 1 new mail notification(s) of profile a: quietHours",
+      'mail-notifications-held profile="profile 1" count=1 reason=quietHours',
     ]);
   });
 
@@ -534,7 +533,7 @@ describe("what holds a new mail notification", () => {
 
     expect(titles(app.shown)).toStrictEqual(["Sender 1", "Sender 2"]);
     expect(app.logs).toStrictEqual([
-      "The Important feed of profile a was not read, so all new mail is notified",
+      'important-feed-unread profile="profile 1"',
     ]);
   });
 
@@ -553,7 +552,7 @@ describe("what holds a new mail notification", () => {
 
     expect(app.shown).toStrictEqual([]);
     expect(app.logs).toStrictEqual([
-      "Held 1 new mail notification(s) of profile a: doNotDisturb",
+      'mail-notifications-held profile="profile 1" count=1 reason=doNotDisturb',
     ]);
   });
 
@@ -699,8 +698,8 @@ describe("verification codes", () => {
     ]);
     expect(app.acted).toStrictEqual([]);
     expect(app.logs).toStrictEqual([
-      "Found a verification code in a new message of profile a, copying it",
-      "A verification code of profile a was not copied",
+      'verification-code-found profile="profile 1" copy=now',
+      'verification-code-copy-failed profile="profile 1"',
     ]);
 
     app.allowCopies();
@@ -789,8 +788,8 @@ describe("verification codes", () => {
 
     expect(titles(app.shown)).toStrictEqual(["Sender 1"]);
     expect(app.logs).toStrictEqual([
-      "Found a verification code in a new message of profile a, copying it when asked",
-      "Held 1 new mail notification(s) of profile a: off",
+      'verification-code-found profile="profile 1" copy=when-asked',
+      'mail-notifications-held profile="profile 1" count=1 reason=off',
     ]);
   });
 
@@ -809,7 +808,7 @@ describe("verification codes", () => {
       [],
     ]);
     expect(app.logs).toStrictEqual([
-      "Held a verification code notification of profile a: doNotDisturb",
+      'verification-code-held profile="profile 1" reason=doNotDisturb',
     ]);
   });
 
@@ -954,8 +953,8 @@ describe("verification codes", () => {
     await arrive(app, codeEntry("1"));
 
     expect(app.logs).toStrictEqual([
-      "Found a verification code in a new message of profile a, copying it",
-      "Copied a verification code of profile a, then ran delete",
+      'verification-code-found profile="profile 1" copy=now',
+      'verification-code-copied profile="profile 1" next=delete',
     ]);
   });
 });

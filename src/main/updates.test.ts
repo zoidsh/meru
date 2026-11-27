@@ -1,14 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { recordedLog, silentLog } from "#core/log.fake.ts";
 import { UPDATE_CHECK_INTERVAL } from "#core/updates.ts";
 import { fakeUpdater } from "#platform/updater.fake.ts";
 
 import { createSettingsStore } from "./settings.ts";
-import {
-  INSTALL_QUIT_CAP,
-  createUpdates,
-  loggableUpdateError,
-} from "./updates.ts";
+import { INSTALL_QUIT_CAP, createUpdates } from "./updates.ts";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -28,11 +25,11 @@ const setup = ({
     initial: { version: 1, ...stored },
     save: () => Promise.resolve(),
     platform: "darwin",
-    log: () => false,
+    log: silentLog,
   });
   const steps: string[] = [];
   const opened: string[] = [];
-  const logs: string[] = [];
+  const { log, lines: logs } = recordedLog({ home: "/Users/someone" });
   let finish: (() => void) | undefined;
   const updates = createUpdates({
     updater: noUpdater ? undefined : fake.updater,
@@ -53,11 +50,8 @@ const setup = ({
     openExternal: (url) => {
       opened.push(url);
     },
-    home: "/Users/someone",
     now: () => Date.now(),
-    log: (message) => {
-      logs.push(message);
-    },
+    log,
   });
 
   return {
@@ -264,9 +258,9 @@ describe(createUpdates, () => {
         "404 https://github.com/zoidsh/meru/releases/download/v4.2.0/latest-mac.yml?token=secret at /Users/someone/Library/Caches"
       );
 
-      expect(app.logs).toStrictEqual([
-        "Update failed: 404 https://github.com/zoidsh/meru/releases/download/v4.2.0/latest-mac.yml at ~/Library/Caches",
-      ]);
+      expect(app.logs.at(-1)).toBe(
+        'update-failed signature=false error="404 github.com at ~/…"'
+      );
     });
   });
 
@@ -394,13 +388,5 @@ describe(createUpdates, () => {
       expect(app.updates.read().status).toBe("unsupported");
       expect(app.calls).toStrictEqual([]);
     });
-  });
-});
-
-describe(loggableUpdateError, () => {
-  it("keeps a message with neither as it is", () => {
-    expect(loggableUpdateError("net::ERR_INTERNET_DISCONNECTED", "")).toBe(
-      "net::ERR_INTERNET_DISCONNECTED"
-    );
   });
 });

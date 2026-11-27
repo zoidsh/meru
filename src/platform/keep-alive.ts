@@ -1,5 +1,8 @@
 import { WebContentsView, session } from "electron";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
+
 export interface HiddenPage {
   close: () => void;
 }
@@ -22,11 +25,7 @@ export interface KeepAlivePages {
    * Loads `url` in the partition in a view no window shows, muted, with no
    * preload, dialogs, windows or downloads.
    */
-  open: (
-    partition: string,
-    url: string,
-    log: (message: string) => void
-  ) => HiddenPage;
+  open: (partition: string, url: string, log: Log) => HiddenPage;
 }
 
 const SECOND = 1000;
@@ -104,9 +103,7 @@ export const createKeepAlivePages = (): KeepAlivePages => ({
       } catch (error) {
         // Closing the page aborts a load still under way.
         if (!closed) {
-          log(
-            `A keep-alive page did not load: ${error instanceof Error ? error.message : String(error)}`
-          );
+          log("keep-alive-load-failed", { error: scrub.error(error) });
         }
       }
     };

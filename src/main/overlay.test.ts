@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { recordInto } from "#core/log.fake.ts";
 import { newProfile, selectProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
@@ -51,7 +52,7 @@ const setup = () => {
     focus,
     initial: two,
     bounds: () => bounds,
-    log: (message) => events.push(`log ${message}`),
+    log: recordInto(events, {}, "log "),
   });
 
   overlays.onChange(() => {
@@ -271,7 +272,7 @@ describe(createOverlays, () => {
 
     expect(overlays.current()).toBeUndefined();
     expect(events).toStrictEqual([
-      "log The open-app overlay has no view to open in yet",
+      "log overlay-refused overlay=open-app reason=no-view",
     ]);
 
     adopt();

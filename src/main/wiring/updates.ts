@@ -1,5 +1,5 @@
-import { homedir } from "node:os";
-
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { AppLifecycle } from "#platform/app.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
 
@@ -16,12 +16,14 @@ export const wireUpdates = async ({
   settings,
   runningVersion,
   systemBrowser,
+  log,
 }: {
   lifecycle: Pick<AppLifecycle, "quitThen" | "quit" | "onBeforeQuit">;
   settings: SettingsStore;
   runningVersion: string;
   /** Meru's own links' browser: the release page is Meru's link. */
   systemBrowser: Pick<SystemBrowser, "open">;
+  log: Log;
 }) => {
   const updates = createUpdates({
     updater: await systemUpdater(),
@@ -33,12 +35,11 @@ export const wireUpdates = async ({
       try {
         await systemBrowser.open(url);
       } catch (error) {
-        console.error(`Could not open the release page: ${String(error)}`);
+        log("release-page-open-failed", { error: scrub.error(error) });
       }
     },
-    home: homedir(),
     now: Date.now,
-    log: console.error,
+    log,
   });
 
   lifecycle.onBeforeQuit(updates.dispose);

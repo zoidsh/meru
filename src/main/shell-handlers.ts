@@ -4,6 +4,8 @@ import type { App } from "#core/apps.ts";
 import { menuPointInside } from "#core/context-menu.ts";
 import type { FindBar } from "#core/find.ts";
 import { viewFrame } from "#core/layout.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { openableApps, splittableApps } from "#core/open-app.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
@@ -109,7 +111,7 @@ export interface ShellHandlersDeps {
   runCommand: (id: string) => void;
   /** The Do Not Disturb menu as the application menu has it now. */
   doNotDisturbItems: () => ContextMenuItem[];
-  log: (message: string) => void;
+  log: Log;
 }
 
 type ShellTabStatus = ShellState["tabs"]["tabs"][number]["status"];
@@ -403,18 +405,20 @@ export const createShellHandlers = ({
       if (profileId === profiles.get().selectedProfileId) {
         await profiles.moveTab({ profileId, tabId }, before);
       } else {
-        log(
-          `Refused to move tab ${profileId}/${tabId} of a profile not selected`
-        );
+        log("tab-move-refused", {
+          tab: scrub.tab({ profileId, tabId }),
+          reason: "profile-not-selected",
+        });
       }
     },
     moveInBox: async ({ profileId, tabId, before }) => {
       if (profileId === profiles.get().selectedProfileId) {
         await profiles.moveInBox({ profileId, tabId }, before);
       } else {
-        log(
-          `Refused to move tab ${profileId}/${tabId} of a profile not selected`
-        );
+        log("tab-move-refused", {
+          tab: scrub.tab({ profileId, tabId }),
+          reason: "profile-not-selected",
+        });
       }
     },
     aimTab: ({ profileId, tabId, point }) => {
@@ -449,22 +453,27 @@ export const createShellHandlers = ({
       const size = pageSize();
 
       if (!inViewReach(size, inset(), { x, y })) {
-        log(`Refused to drop tab ${profileId}/${tabId} outside the page area`);
+        log("tab-drop-refused", {
+          tab: scrub.tab({ profileId, tabId }),
+          reason: "outside-pages",
+        });
       } else if (profileId === profiles.get().selectedProfileId) {
         await profiles.dropInView({ profileId, tabId }, size, { x, y });
       } else {
-        log(
-          `Refused to drop tab ${profileId}/${tabId} of a profile not selected`
-        );
+        log("tab-drop-refused", {
+          tab: scrub.tab({ profileId, tabId }),
+          reason: "profile-not-selected",
+        });
       }
     },
     splitOntoTab: async ({ profileId, tabId, target }) => {
       const state = profiles.get();
 
       if (profileId !== state.selectedProfileId) {
-        log(
-          `Refused to split tab ${profileId}/${tabId} of a profile not selected`
-        );
+        log("tab-split-refused", {
+          tab: scrub.tab({ profileId, tabId }),
+          reason: "profile-not-selected",
+        });
 
         return;
       }
@@ -562,7 +571,7 @@ export const createShellHandlers = ({
       if (menuPointInside(point, window.getContentAreaSize())) {
         window.showContextMenu(doNotDisturbItems(), point);
       } else {
-        log(`Refused the Do Not Disturb menu at ${point.x},${point.y}`);
+        log("do-not-disturb-menu-refused", { x: point.x, y: point.y });
       }
 
       return Promise.resolve();
@@ -650,9 +659,7 @@ export const createShellHandlers = ({
       const tab = findTab(profiles.get(), key);
 
       if (!tab) {
-        log(
-          `Refused to bookmark tab ${key.profileId}/${key.tabId}, which is gone`
-        );
+        log("bookmark-refused", { tab: scrub.tab(key), reason: "tab-gone" });
 
         return;
       }

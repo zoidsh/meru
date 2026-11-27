@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
@@ -30,10 +31,12 @@ export const wireStores = async ({
   lifecycle,
   newId,
   clipboard,
+  log,
 }: {
   lifecycle: ReturnType<typeof createAppLifecycle>;
   newId: () => string;
   clipboard: Clipboard;
+  log: Log;
 }) => {
   const platform = process.platform as Platform;
   const isMacOS = platform === "darwin";
@@ -53,7 +56,7 @@ export const wireStores = async ({
     entitlementFile,
     newId,
     now: Date.now,
-    log: console.error,
+    log,
   });
   // Before the profiles and the settings, which ask it what this run may use.
   const { entitlement, licenseRequests, firstRefresh } = await wireEntitlement({
@@ -61,6 +64,7 @@ export const wireStores = async ({
     file: entitlementFile,
     initial: stores.entitlement,
     clipboard,
+    log,
   });
   const multipleProfiles = () => entitlement.can("profiles");
   const profiles = createProfiles({
@@ -70,7 +74,7 @@ export const wireStores = async ({
     profileName: automaticProfileName,
     clearSession: sessions.clear,
     now: Date.now,
-    log: console.error,
+    log,
     multipleProfiles,
     can: entitlement.can,
   });
@@ -80,14 +84,14 @@ export const wireStores = async ({
   const doNotDisturb = createDoNotDisturb({
     profiles,
     now: () => new Date(),
-    log: console.error,
+    log,
   });
 
   const settings = createSettingsStore({
     initial: stores.settings,
     save: (next) => saveSettings(settingsFile, next),
     platform,
-    log: console.error,
+    log,
     profileValues: multipleProfiles,
     can: entitlement.can,
   });
@@ -98,7 +102,7 @@ export const wireStores = async ({
     profiles.recheck();
   });
 
-  followRemovedProfiles({ settings, profiles, log: console.error });
+  followRemovedProfiles({ settings, profiles, log });
 
   // Not awaited: the window must not wait on a clear that hangs, and no view
   // can hold these sessions, whose profiles are no longer listed.

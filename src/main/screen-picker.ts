@@ -1,4 +1,6 @@
 import type { App } from "#core/apps.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import {
@@ -32,7 +34,7 @@ export interface ScreenPickerDeps {
     Overlays,
     "open" | "close" | "current" | "hasView" | "onChange"
   >;
-  log: (message: string) => void;
+  log: Log;
 }
 
 type Answer = Parameters<DisplayMediaHandler>[1];
@@ -151,9 +153,7 @@ export const createScreenPicker = ({
     try {
       listed = await sources.list();
     } catch (error) {
-      log(
-        `The screens and windows to share were not listed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      log("screen-sources-list-failed", { error: scrub.error(error) });
     }
 
     // Dismissed, or loading again, while it listed.
@@ -260,9 +260,7 @@ export const createScreenPicker = ({
       try {
         there = await sources.has(sourceId);
       } catch (error) {
-        log(
-          `Whether a source is still there was not read: ${error instanceof Error ? error.message : String(error)}`
-        );
+        log("screen-source-read-failed", { error: scrub.error(error) });
       }
 
       if (at(window) !== open || !open.answer) {
@@ -302,9 +300,7 @@ export const createScreenPicker = ({
       try {
         await sources.openSettings();
       } catch (error) {
-        log(
-          `The Screen Recording settings did not open: ${error instanceof Error ? error.message : String(error)}`
-        );
+        log("screen-recording-settings-failed", { error: scrub.error(error) });
       }
     },
     /** The card over the main window's page, while one is there. */

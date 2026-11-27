@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { APPS, entitledApps } from "#core/apps.ts";
 import type { App, AppOpening } from "#core/apps.ts";
 import type { FoundInPage } from "#core/find.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { SidebarState } from "#core/sidebar.ts";
 import { gmailTab, knownTabs, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -29,6 +30,7 @@ const REFUSED: ContentViewEvent = {
   kind: "failed-to-load",
   code: -102,
   name: "ERR_CONNECTION_REFUSED",
+  url: GMAIL,
 };
 
 const initial: State = {
@@ -126,7 +128,10 @@ const setup = async ({
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
     now: () => 0,
-    log: (message) => logs.push(message),
+    log: recordInto(logs, {
+      // oxlint-disable-next-line no-use-before-define -- read once a line is logged
+      profiles: () => profiles.get().profiles,
+    }),
   });
 
   const tabs = createTabViews({
@@ -305,7 +310,7 @@ const setup = async ({
     onFound: (key, result) => {
       found.push({ key, result });
     },
-    log: (message) => logs.push(message),
+    log: recordInto(logs, { profiles: () => profiles.get().profiles }),
   });
 
   tabs.reconcile(profiles.get());
@@ -976,12 +981,8 @@ describe(createTabViews, () => {
     expect([
       profile && knownTabs(profile).map((tab) => tab.id),
       profile?.selectedTabId,
-      window.logs.at(-1),
-    ]).toStrictEqual([
-      ["gmail", "c1"],
-      "gmail",
-      "Closed a tab opened only to start a download",
-    ]);
+      window.logs.filter((line) => line.startsWith("download-")),
+    ]).toStrictEqual([["gmail", "c1"], "gmail", ["download-tab-closed"]]);
   });
 
   it("leaves the selection where it is when a download-only tab closes after another was selected", async () => {
@@ -1121,7 +1122,9 @@ describe(createTabViews, () => {
       "https://example.com/",
       "https://example.com/a",
     ]);
-    expect(window.logs).toStrictEqual(["Refused a window a page asked for"]);
+    expect(
+      window.logs.filter((line) => line.startsWith("window-"))
+    ).toStrictEqual(["window-open-refused url=file:"]);
   });
 
   it("answers adding a Google account with a new profile, opening no window", async () => {
@@ -1155,11 +1158,8 @@ describe(createTabViews, () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(window.profilesAdded()).toBe(2);
-    expect(window.logs).toStrictEqual(
-      Array.from(
-        { length: 4 },
-        () => "Dropped a repeated request to add an account"
-      )
+    expect(window.logs.filter((line) => line.startsWith("add-"))).toStrictEqual(
+      Array.from({ length: 4 }, () => "add-account-dropped reason=repeated")
     );
   });
 
@@ -1184,12 +1184,14 @@ describe(createTabViews, () => {
       "https://example.com/b",
     ]);
     expect(window.profiles.get().profiles[0]?.selectedTabId).toBe("new-1");
-    expect(window.logs).toStrictEqual(
-      Array.from(
-        { length: 4 },
-        () => "Kept a window a page opened from leaving its app"
-      )
-    );
+    expect(
+      window.logs.filter((line) => line.startsWith("window-"))
+    ).toStrictEqual([
+      'window-open-kept url="another site"',
+      'window-open-kept url="another site"',
+      "window-open-kept url=javascript:",
+      "window-open-kept url=drive.google.com",
+    ]);
   });
 
   it("closes a closed tab's view and drops its pending retry", async () => {

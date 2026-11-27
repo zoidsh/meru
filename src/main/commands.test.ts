@@ -4,6 +4,7 @@ import { formatAccelerator, matchesAccelerator } from "#core/accelerator.ts";
 import { BUILT_IN_SHORTCUTS } from "#core/built-in-shortcuts.ts";
 import type { Capability } from "#core/entitlement.ts";
 import { googleAppsUsing } from "#core/google-app-keys.ts";
+import { silentLog } from "#core/log.fake.ts";
 import { savedSearches } from "#core/saved-searches.ts";
 import { gmailTab, isAsleep, isTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -53,13 +54,13 @@ const setup = (initial: State = twoProfiles) => {
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
     now: () => 0,
-    log: () => false,
+    log: silentLog,
   });
   // 17 November 2026, 14:00 by the local clock.
   const doNotDisturb = createDoNotDisturb({
     profiles,
     now: () => new Date(2026, 10, 17, 14),
-    log: () => false,
+    log: silentLog,
   });
   let reloads = 0;
   let inboxOpen = false;

@@ -1,4 +1,5 @@
 import type { App } from "#core/apps.ts";
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import { usesSystemPicker } from "#core/screen-picker.ts";
 import { tabKey } from "#core/tabs.ts";
@@ -35,6 +36,7 @@ export const wireScreenPicker = ({
   downloads,
   focus,
   settings,
+  log,
 }: {
   platform: Platform;
   /** A run sharing its desktop with other automated sessions, which asks the system nothing. */
@@ -50,6 +52,7 @@ export const wireScreenPicker = ({
   downloads: Downloads;
   focus: Focus;
   settings: Pick<SettingsStore, "get" | "onChange">;
+  log: Log;
 }) => {
   const { sources, streams } = screenSources(platform, background);
   const picker = createScreenPicker({
@@ -63,7 +66,7 @@ export const wireScreenPicker = ({
       window === undefined ? mainWindowShown() : ownWindows.isShown(window),
     hasPage: views.hasPage,
     overlays,
-    log: console.error,
+    log,
   });
 
   sessions.handleDisplayMedia(picker.request, streams);

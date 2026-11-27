@@ -1,3 +1,4 @@
+import type { Log } from "#core/log.ts";
 import { releaseTag } from "#core/releases.ts";
 
 import type { Overlays } from "../overlay.ts";
@@ -17,7 +18,7 @@ export const wireUpdateCard = ({
   overlays: Overlays;
   openSettings: () => void;
   settingsPages: Pick<SettingsPages, "open">;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   const card = createUpdateCard({
     updates,

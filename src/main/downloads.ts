@@ -16,6 +16,8 @@ import {
   withExtension,
 } from "#core/downloads.ts";
 import type { DownloadEntry } from "#core/downloads.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import type { State } from "#core/state.ts";
 import { tabKey } from "#core/tabs.ts";
@@ -77,7 +79,7 @@ export interface DownloadsDeps {
   now?: () => number;
   /** Runs `run` again and again until the returned function stops it. */
   repeat?: (run: () => void) => () => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
 type ShellDownloads = ShellState["downloads"];
@@ -104,9 +106,6 @@ const safeName = (fileName: string) => {
 
   return name === "" || name === "." || name === ".." ? "download" : name;
 };
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * Every download of every profile: saved in the downloads folder under a
@@ -154,7 +153,7 @@ export const createDownloads = ({
     try {
       await commit(change);
     } catch (error) {
-      log(`The downloads were not saved: ${describe(error)}`);
+      log("downloads-save-failed", { error: scrub.error(error) });
     }
   };
 
@@ -211,6 +210,8 @@ export const createDownloads = ({
     end: DownloadEnd
   ) => {
     running.delete(id);
+    // Never its file's name or folder.
+    log("download-ended", { end, bytes: item.received() });
 
     if (end === "completed") {
       finishedBytes += item.received();
@@ -228,7 +229,7 @@ export const createDownloads = ({
       await files
         .quarantine(filePath, new Date(now()))
         .catch((error: unknown) => {
-          log(`A download was not quarantined: ${describe(error)}`);
+          log("download-quarantine-failed", { error: scrub.error(error) });
         });
 
       // The Dock tells nothing a window in front already shows.
@@ -246,7 +247,7 @@ export const createDownloads = ({
     } else {
       // Chromium removes its partial file; this covers one it left.
       await files.remove(filePath).catch((error: unknown) => {
-        log(`A stopped download's file was not removed: ${describe(error)}`);
+        log("download-remove-failed", { error: scrub.error(error) });
       });
     }
 
@@ -304,6 +305,7 @@ export const createDownloads = ({
       state: "progressing",
     };
 
+    log("download-started", { bytes: item.total() });
     void save((current) => addDownload(current, entry));
     showProgress();
     notify();

@@ -8,9 +8,11 @@ import type {
   SliceSchemas,
   SyncMessage,
 } from "#contract/contract.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
-import { describeSender } from "./senders.ts";
+import { senderFields } from "./senders.ts";
 import type { SenderIdentity, SenderRegistry } from "./senders.ts";
 
 /** Each call's handler, answering the renderer what its response holds, nothing for most. */
@@ -50,7 +52,7 @@ export interface ContractIpcDeps<
    * reads as not known yet, as a renderer's does until the first snapshot.
    */
   state: ContractStateSource<NoInfer<Read>>;
-  log: (message: string) => void;
+  log: Log;
 }
 
 export class RefusedCallError extends Error {
@@ -100,16 +102,22 @@ export const serveContract = <
       channels.call(name as keyof Calls & string),
       async (sender, payload) => {
         if (!isFromRenderer(sender)) {
-          log(
-            `Refused ${name} from ${describeSender(sender)}, which is no ${surface}`
-          );
+          log("call-refused", {
+            call: scrub.token(name),
+            role,
+            ...senderFields(sender),
+          });
           throw new RefusedCallError(`${name} is only for the ${surface}`);
         }
 
         const request = schemas.request.safeParse(payload);
 
         if (!request.success) {
-          log(`Refused a malformed ${name}: ${z.prettifyError(request.error)}`);
+          log("call-refused", {
+            call: scrub.token(name),
+            reason: "malformed",
+            error: scrub.error(z.prettifyError(request.error)),
+          });
           throw new RefusedCallError(`${name} was malformed`);
         }
 
@@ -120,9 +128,10 @@ export const serveContract = <
         try {
           return await handler(request.data);
         } catch (error) {
-          log(
-            `${name} failed: ${error instanceof Error ? error.message : String(error)}`
-          );
+          log("call-failed", {
+            call: scrub.token(name),
+            error: scrub.error(error),
+          });
           throw error;
         }
       }
@@ -140,7 +149,7 @@ export const serveContract = <
     const requested = syncRequest.safeParse(payload);
 
     if (!isFromRenderer(sender) || !requested.success) {
-      log(`Refused a state handshake from ${describeSender(sender)}`);
+      log("handshake-refused", { role, ...senderFields(sender) });
 
       return;
     }

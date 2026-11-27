@@ -1,6 +1,7 @@
 import { noop } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
+import { recordInto } from "#core/log.fake.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
@@ -39,9 +40,7 @@ const setup = ({ fails = false } = {}) => {
       calls.push(["closeInbox"]);
     },
     home: "https://mail.google.com/mail/u/0",
-    log: (message) => {
-      calls.push(["log", message]);
-    },
+    log: recordInto(calls, {}, "log "),
   });
 
   return {
@@ -95,10 +94,9 @@ describe(createShowGmail, () => {
     const failing = setup({ fails: true });
 
     await expect(failing.show.openMessage("a", "u")).resolves.toBeFalsy();
-    expect(failing.calls.at(-1)).toStrictEqual([
-      "log",
-      "A message's profile was not selected: Error: busy",
-    ]);
+    expect(failing.calls.at(-1)).toBe(
+      "log profile-select-failed from=notification error=busy"
+    );
 
     const gone = setup();
 

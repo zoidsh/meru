@@ -1,6 +1,7 @@
 import { noop } from "es-toolkit";
 
 import type { App } from "#core/apps.ts";
+import type { Log } from "#core/log.ts";
 import { IMPORTANT_LABEL } from "#core/notification-gate.ts";
 import { extractVerificationCode } from "#core/verification-code.ts";
 import type { createClipboard } from "#platform/clipboard.ts";
@@ -30,6 +31,7 @@ export const wireNotifications = ({
   revealGmail,
   clipboard,
   notifier,
+  log,
 }: {
   isMacOS: boolean;
   sound: SoundOutput;
@@ -42,6 +44,7 @@ export const wireNotifications = ({
   revealGmail: (profileId: string) => void;
   clipboard: ReturnType<typeof createClipboard>;
   notifier: Notifier;
+  log: Log;
 }) => {
   if (!gmail || !mailActions) {
     return { showTestNotification: noop };
@@ -77,7 +80,7 @@ export const wireNotifications = ({
         : null;
     },
     sound,
-    log: console.error,
+    log,
   });
 
   // A removed profile's actions stop here, before its data is cleared.

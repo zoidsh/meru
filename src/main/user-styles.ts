@@ -1,3 +1,5 @@
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { CappedRead } from "#platform/text-file.ts";
 
 /** v3's name and place, in the user data folder, so an upgrade keeps it. */
@@ -8,13 +10,10 @@ export const USER_STYLES_MAX_BYTES = 256 * 1024;
 export interface UserStylesDeps {
   /** Reads the file, at most `USER_STYLES_MAX_BYTES` of it. */
   read: () => Promise<CappedRead>;
-  log: (message: string) => void;
+  log: Log;
   /** Whether the run may apply them: `can("userStyles")`. */
   allowed?: () => boolean;
 }
-
-const codeOf = (error: unknown) =>
-  error instanceof Error && "code" in error ? String(error.code) : "an error";
 
 /**
  * The person's own CSS for Gmail's page, as the file holds it now: empty
@@ -34,7 +33,7 @@ export const createUserStyles =
     try {
       result = await read();
     } catch (error) {
-      log(`Gmail's user styles were not read: ${codeOf(error)}`);
+      log("user-styles-read-failed", { error: scrub.error(error) });
 
       return "";
     }
@@ -44,9 +43,10 @@ export const createUserStyles =
         return "";
       }
       case "tooLarge": {
-        log(
-          `Gmail's user styles were not applied: the file has ${result.bytes} bytes, more than ${USER_STYLES_MAX_BYTES}`
-        );
+        log("user-styles-refused", {
+          bytes: result.bytes,
+          most: USER_STYLES_MAX_BYTES,
+        });
 
         return "";
       }

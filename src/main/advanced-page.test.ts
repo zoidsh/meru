@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { recordInto, silentLog } from "#core/log.fake.ts";
 import { newProfile } from "#core/state.ts";
 import type { Profile, State } from "#core/state.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
@@ -36,7 +37,7 @@ const setup = ({
     initial: { version: 1, theme: "dark" },
     save: (next) => saveSettings(settingsFile, next),
     platform: "darwin",
-    log: () => false,
+    log: silentLog,
   });
   const steps: string[] = [];
   const logs: string[] = [];
@@ -90,9 +91,7 @@ const setup = ({
         },
       },
     }),
-    log: (message) => {
-      logs.push(message);
-    },
+    log: recordInto(logs, { profiles: () => state.profiles }),
   });
 
   return { page, files, steps, logs };
@@ -130,7 +129,7 @@ describe(createAdvancedPage, () => {
 
     await expect(page.openSettingsFile()).resolves.toBeUndefined();
     expect(logs).toStrictEqual([
-      `${FILE} was not opened: no application knows .json`,
+      'settings-file-open-failed error="no application knows .json"',
     ]);
   });
 
@@ -159,7 +158,7 @@ describe(createAdvancedPage, () => {
     await expect(page.clearCache()).rejects.toThrow("home");
     expect(steps.filter((step) => step.startsWith("reload"))).toHaveLength(4);
     expect(logs).toStrictEqual([
-      "The cache of profile home was not cleared: the session refused",
+      'cache-clear-failed profile="profile 2" error="the session refused"',
     ]);
   });
 });

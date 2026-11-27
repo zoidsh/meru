@@ -2,6 +2,8 @@ import path from "node:path";
 
 import { t } from "@lingui/core/macro";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Decoded } from "#core/store-file.ts";
 import type { TextFile } from "#platform/text-file.ts";
 
@@ -16,7 +18,7 @@ export interface StoreFile<T> {
   /** What the store starts from when it has no file it can read. */
   initial: () => T;
   now: () => number;
-  log: (message: string) => void;
+  log: Log;
 }
 
 const parse = (text: string): unknown => {
@@ -83,9 +85,11 @@ export const openStore = async <T>(
         );
 
         await file.moveTo(aside);
-        log(
-          `Kept the unreadable ${file.path} as ${aside} and started afresh: ${decoded.reason}`
-        );
+        log("store-set-aside", {
+          file: scrub.path(file.path),
+          kept: scrub.path(aside),
+          reason: scrub.error(decoded.reason),
+        });
       }
 
       await saveStore(store, value);

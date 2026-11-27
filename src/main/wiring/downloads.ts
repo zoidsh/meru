@@ -1,3 +1,4 @@
+import type { Log } from "#core/log.ts";
 import { leavesViewFree } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { profilePartition } from "#core/state.ts";
@@ -35,6 +36,7 @@ export const wireDownloads = ({
   focus,
   notifier,
   newId,
+  log,
 }: {
   platform: Platform;
   isMacOS: boolean;
@@ -47,9 +49,10 @@ export const wireDownloads = ({
   focus: Focus;
   notifier: Notifier;
   newId: () => string;
+  log: Log;
 }) => {
   const sessions = createDownloadSessions(saveDialog());
-  const files = downloadFiles();
+  const files = downloadFiles(log);
   const downloads = createDownloads({
     platform,
     state: profiles.get,
@@ -62,8 +65,8 @@ export const wireDownloads = ({
       showWhenDone: () => settings.get("downloadsShowInFolder"),
     },
     // Said where the downloads show, unless a card or menu holds the overlay.
-    onFolderMissing: (folder) => {
-      console.error(`The downloads folder ${folder} is not usable`);
+    onFolderMissing: () => {
+      log("downloads-folder-unusable");
 
       if (leavesViewFree(overlays.current())) {
         overlays.open({ kind: "toast", message: "downloads-folder-missing" });
@@ -84,7 +87,7 @@ export const wireDownloads = ({
       webContentsId: ownWindows.cardContentsId,
     },
     newId,
-    log: console.error,
+    log,
   });
 
   const notifications = createDownloadNotifications({
@@ -102,7 +105,7 @@ export const wireDownloads = ({
       revealWindow(shell.window, background);
       downloads.setOpen(true);
     },
-    log: console.error,
+    log,
   });
 
   downloads.onEnded(notifications.ended);

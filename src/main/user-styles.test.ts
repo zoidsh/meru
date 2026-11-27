@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { recordInto, silentLog } from "#core/log.fake.ts";
 import { readTextUpTo } from "#platform/text-file.ts";
 
 import {
@@ -32,7 +33,7 @@ const stylesOf = (file: string) => {
   const logs: string[] = [];
   const read = createUserStyles({
     read: () => readTextUpTo(file, USER_STYLES_MAX_BYTES),
-    log: (message) => logs.push(message),
+    log: recordInto(logs),
   });
 
   return { read, logs };
@@ -81,7 +82,7 @@ describe(createUserStyles, () => {
 
     await expect(past.read()).resolves.toBe("");
     expect(past.logs).toStrictEqual([
-      `Gmail's user styles were not applied: the file has ${USER_STYLES_MAX_BYTES + 1} bytes, more than ${USER_STYLES_MAX_BYTES}`,
+      `user-styles-refused bytes=${USER_STYLES_MAX_BYTES + 1} most=${USER_STYLES_MAX_BYTES}`,
     ]);
   });
 
@@ -95,7 +96,7 @@ describe(createUserStyles, () => {
 
         return readTextUpTo(file, USER_STYLES_MAX_BYTES);
       },
-      log: () => {},
+      log: silentLog,
       allowed: () => allowed,
     });
 
@@ -116,6 +117,8 @@ describe(createUserStyles, () => {
 
     await expect(read()).resolves.toBe("");
     expect(logs).toHaveLength(1);
-    expect(logs[0]).toMatch(/^Gmail's user styles were not read: E[A-Z]+$/u);
+    expect(logs[0]).toMatch(
+      /^user-styles-read-failed error="[^"/]*\(E[A-Z]+\)"$/u
+    );
   });
 });

@@ -2,6 +2,8 @@ import path from "node:path";
 
 import type { SettingsState } from "#contract/settings.ts";
 import { downloadsFolder, shownFolder } from "#core/downloads-folder.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import { languageName } from "#i18n/index.ts";
 import type { DownloadFiles } from "#platform/downloads.ts";
@@ -32,11 +34,8 @@ export interface GeneralPageDeps {
   language: Pick<Language, "system" | "available">;
   /** None on macOS, which checks spelling with its own. */
   spellcheck: Pick<Spellcheck, "read"> | undefined;
-  log: (message: string) => void;
+  log: Log;
 }
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * What the General page shows that is not a plain setting: the languages it
@@ -75,7 +74,7 @@ export const createGeneralPage = ({
         notify();
       }
     } catch (error) {
-      log(`Whether Meru opens email links was not read: ${describe(error)}`);
+      log("email-links-read-failed", { error: scrub.error(error) });
     }
   };
 

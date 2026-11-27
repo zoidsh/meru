@@ -2,6 +2,7 @@ import { opensInMeru } from "#core/apps.ts";
 import type { App, AppOpening } from "#core/apps.ts";
 import { contentViewBounds } from "#core/layout.ts";
 import type { ShellFrame } from "#core/layout.ts";
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
@@ -25,6 +26,7 @@ export const wireLauncher = ({
   views,
   overlays,
   showOwnWindow,
+  log,
 }: {
   platform: Platform;
   apps: readonly App[];
@@ -42,6 +44,7 @@ export const wireLauncher = ({
   views: ReturnType<typeof createTabViews>;
   overlays: Overlays;
   showOwnWindow: (key: TabKey) => void;
+  log: Log;
 }) => {
   const livePageUrl = (key: TabKey) =>
     views.status(key).kind === "live"
@@ -61,7 +64,7 @@ export const wireLauncher = ({
     pageUrl: livePageUrl,
     pageSize: () =>
       contentViewBounds(shell.window.getContentAreaSize(), frame(), platform),
-    log: console.error,
+    log,
   });
 
   const bookmarks = createBookmarks({
@@ -74,7 +77,7 @@ export const wireLauncher = ({
       ...views.page(key),
     }),
     toggle: profiles.toggleBookmark,
-    log: console.error,
+    log,
   });
 
   return { livePageUrl, openApp, bookmarks };

@@ -1,3 +1,5 @@
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import {
   createInitialState,
   decodeState,
@@ -16,7 +18,7 @@ export interface StateStoreDeps {
   file: TextFile;
   newId: () => string;
   now: () => number;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /** Replaces the file whole; the caller sends one write at a time. */
@@ -52,7 +54,7 @@ export const openState = async ({
       if (state !== opened.value) {
         // Meru still starts on the profile in memory, or it never would.
         await saveState(file, state).catch((error: unknown) => {
-          log(`The new first profile was not saved: ${String(error)}`);
+          log("first-profile-save-failed", { error: scrub.error(error) });
         });
       }
     },

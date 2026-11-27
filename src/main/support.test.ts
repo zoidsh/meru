@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { supportMailto } from "#core/support.ts";
@@ -26,7 +27,7 @@ const setup = (signedOut: readonly string[]) => {
 
       return Promise.resolve();
     },
-    log: () => {},
+    log: silentLog,
   });
 
   return { contact, composed, opened };

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { BUILT_IN_SHORTCUTS } from "#core/built-in-shortcuts.ts";
 import type { BuiltInShortcutId } from "#core/built-in-shortcuts.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { Platform } from "#core/platform.ts";
 import { decodeState, gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -614,7 +615,7 @@ const setup = ({ can = () => true }: { can?: () => boolean } = {}) => {
     locale: () => "en",
     zoom: (change) => zoomed.push(change),
     setMenu: (next) => set.push(next),
-    log: (message) => logs.push(message),
+    log: recordInto(logs),
   });
 
   return {
@@ -683,7 +684,7 @@ describe(createApplicationMenu, () => {
 
     expect([free.inboxOpen(), free.logs, pro.inboxOpen()]).toStrictEqual([
       false,
-      ["Refused command inbox.toggle, which needs Meru Pro"],
+      ["command-refused command=inbox.toggle reason=needs-pro"],
       true,
     ]);
   });

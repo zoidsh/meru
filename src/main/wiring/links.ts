@@ -1,3 +1,4 @@
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
@@ -18,17 +19,19 @@ export const wireLinks = ({
   settings,
   systemBrowser,
   clipboard,
+  log,
 }: {
   platform: Platform;
   settings: Pick<SettingsStore, "get" | "update">;
   systemBrowser: SystemBrowser;
   clipboard: Clipboard;
+  log: Log;
 }) => {
   const trustedSites = createTrustedSites(settings);
   const defaultBrowser = createDefaultBrowserGuard({
     defaultBrowser: systemDefaultBrowser(platform),
     clipboard,
-    log: console.error,
+    log,
   });
 
   return {
@@ -40,7 +43,7 @@ export const wireLinks = ({
       prompt: linkPrompt(),
       systemBrowser,
       clipboard,
-      log: console.error,
+      log,
     }),
     ownLinks: defaultBrowser.guard(systemBrowser),
   };

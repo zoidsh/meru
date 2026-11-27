@@ -1,3 +1,5 @@
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import {
   INITIAL_UPDATE_STATUS,
   UPDATE_CHECK_INTERVAL,
@@ -5,7 +7,7 @@ import {
   nextUpdateStatus,
   releasePageUrl,
 } from "#core/updates.ts";
-import type { UpdateStatus } from "#core/updates.ts";
+import type { UpdateEvent, UpdateStatus } from "#core/updates.ts";
 import type { Updater } from "#platform/updater.ts";
 
 import type { SettingsStore } from "./settings.ts";
@@ -27,19 +29,6 @@ const UNSUPPORTED: UpdateStatus = {
 };
 
 /**
- * An error's message as a log may keep it: no URL's query or fragment, where
- * a feed's tokens go, and no home folder, which names the person.
- */
-export const loggableUpdateError = (message: string, home: string) => {
-  const withoutQueries = message.replaceAll(
-    /(?<url>https?:\/\/[^\s?#]+)[?#]\S*/gu,
-    "$<url>"
-  );
-
-  return home === "" ? withoutQueries : withoutQueries.replaceAll(home, "~");
-};
-
-/**
  * Checks for a new version at launch and every three hours while the setting
  * is on, applies the channel as it changes, and holds where updating stands
  * for the About page. With no updater, or one that cannot update this
@@ -52,7 +41,6 @@ export const createUpdates = ({
   quitThen,
   quit,
   openExternal,
-  home,
   now,
   log,
 }: {
@@ -64,9 +52,8 @@ export const createUpdates = ({
   quit: () => void;
   /** Meru's own links' browser, which asks nothing. */
   openExternal: (url: string) => Promise<void> | void;
-  home: string;
   now: () => number;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   const supported = updater?.canUpdate() === true ? updater : undefined;
   const listeners = new Set<() => void>();
@@ -129,13 +116,36 @@ export const createUpdates = ({
     interval = setInterval(check, UPDATE_CHECK_INTERVAL);
   };
 
+  const logEvent = (event: UpdateEvent) => {
+    switch (event.kind) {
+      case "checking": {
+        log("update-checking");
+        break;
+      }
+      case "available": {
+        log("update-available", { version: scrub.token(event.version) });
+        break;
+      }
+      case "notAvailable": {
+        log("update-not-available");
+        break;
+      }
+      case "downloaded": {
+        log("update-downloaded", { version: scrub.token(event.version) });
+        break;
+      }
+      default:
+    }
+  };
+
   if (supported) {
     applyChannel();
     supported.onEvent((event, message) => {
       if (event.kind === "error") {
-        log(
-          `Update ${event.signature ? "not verified" : "failed"}: ${loggableUpdateError(message ?? "", home)}`
-        );
+        log("update-failed", {
+          signature: event.signature,
+          error: scrub.error(message ?? ""),
+        });
 
         // Nothing was there to install.
         if (installing) {
@@ -146,6 +156,8 @@ export const createUpdates = ({
       if (event.kind === "available") {
         available = event.version;
       }
+
+      logEvent(event);
 
       set(nextUpdateStatus(current, event, { now: now(), available }));
     });

@@ -1,6 +1,8 @@
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { findRectangle } from "#core/find.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { ownWindowPageBounds } from "#core/own-window.ts";
 import { inOwnWindow, ownWindowBounds } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -30,7 +32,7 @@ export interface OwnWindowsDeps {
   saveBounds: (key: TabKey, bounds: Rectangle) => Promise<unknown>;
   /** Told when a tab's own window becomes the one keys go to. */
   onFocus: (key: TabKey) => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /** Where a tab's own window puts its page. */
@@ -55,9 +57,6 @@ interface Entry {
   /** The colour last given the window. */
   color: string;
 }
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * The windows of the tabs moved to windows of their own, one each, which
@@ -138,7 +137,7 @@ export const createOwnWindows = ({
       try {
         await saveBounds(key, bounds);
       } catch (error) {
-        log(`Where a tab's own window is was not saved: ${describe(error)}`);
+        log("own-window-bounds-save-failed", { error: scrub.error(error) });
       }
     })();
 
@@ -184,7 +183,10 @@ export const createOwnWindows = ({
     try {
       await closeTab(key);
     } catch (error) {
-      log(`A tab in its own window did not close: ${describe(error)}`);
+      log("own-window-close-failed", {
+        tab: scrub.tab(key),
+        error: scrub.error(error),
+      });
     }
 
     // Closing the tab closes the window; should it not have, a close still does.

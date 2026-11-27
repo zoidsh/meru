@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { recordInto, silentLog } from "#core/log.fake.ts";
+
 import { StartupError, createFailures } from "./failures.ts";
 
 const setup = () => {
@@ -7,7 +9,7 @@ const setup = () => {
   const failures = createFailures({
     productName: "Meru",
     showErrorDialog: (title) => calls.push(`dialog: ${title}`),
-    log: (message) => calls.push(`log: ${message.split("\n")[0]}`),
+    log: recordInto(calls, {}, "log: "),
     exit: (code) => calls.push(`exit: ${code}`),
   });
 
@@ -21,7 +23,7 @@ describe(createFailures, () => {
     failures.report(new Error("no display"));
 
     expect(calls).toStrictEqual([
-      "log: Meru could not start: Error: no display",
+      expect.stringMatching(/^log: start-failed error="no display \| at /u),
       "dialog: Meru could not start",
       "exit: 1",
     ]);
@@ -43,7 +45,7 @@ describe(createFailures, () => {
     failures.report(new Error("ERR_ABORTED (-3) loading 'meru-app://shell/'"));
 
     expect(calls).toStrictEqual([
-      "log: Interrupted by quitting: Error: ERR_ABORTED (-3) loading 'meru-app://shell/'",
+      `log: quit-interrupted error="ERR_ABORTED (-3) loading 'meru-app:'"`,
     ]);
   });
 
@@ -54,7 +56,7 @@ describe(createFailures, () => {
     failures.report(new Error("late"));
 
     expect(calls).toStrictEqual([
-      "log: Unexpected error in the main process: Error: late",
+      expect.stringMatching(/^log: main-error error="late \| at /u),
     ]);
   });
 
@@ -63,7 +65,7 @@ describe(createFailures, () => {
     const failures = createFailures({
       productName: "Meru",
       showErrorDialog: (_title, message) => details.push(message),
-      log: () => false,
+      log: silentLog,
       exit: () => false,
     });
 

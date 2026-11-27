@@ -5,11 +5,13 @@ import type { GmailFeatures, GmailHealth } from "#contract/gmail.ts";
 import { opensCompose } from "#core/compose-window.ts";
 import { isGmailHash } from "#core/gmail-hash.ts";
 import { HOOK_NAMES } from "#core/gmail-hooks.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { tabKey } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
-import { describeSender } from "./senders.ts";
+import { senderFields } from "./senders.ts";
 import type { SenderRegistry } from "./senders.ts";
 
 export interface GmailPageDeps {
@@ -31,20 +33,12 @@ export interface GmailPageDeps {
   onHealth?: (key: TabKey, health: GmailHealth) => void;
   /** Told of each message refused, by the sender's origin alone. */
   onRefused?: (origin: string | undefined) => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
-const describeHealth = (health: GmailHealth) => {
-  const failing = (["broken", "absent"] as const)
-    .map((status) => {
-      const names = HOOK_NAMES.filter((name) => health.hooks[name] === status);
-
-      return names.length > 0 ? `${status} ${names.join(", ")}` : "";
-    })
-    .filter(Boolean);
-
-  return failing.length > 0 ? failing.join("; ") : "every hook matched";
-};
+/** The hooks a report gives `status`, joined by `+`; empty for none. */
+const hooksThat = (health: GmailHealth, status: "broken" | "absent") =>
+  HOOK_NAMES.filter((name) => health.hooks[name] === status).join("+");
 
 /**
  * Serves Gmail's page contract: the switches, to a page that shakes hands and
@@ -123,8 +117,11 @@ export const serveGmailContract = ({
 
   senders.onDropped(forget);
 
-  const refuse = (sender: IpcSender, what: string) => {
-    log(`Refused Gmail's ${what} from ${describeSender(sender)}`);
+  const refuse = (
+    sender: IpcSender,
+    what: "handshake" | "health-report" | "sent-notice"
+  ) => {
+    log("gmail-message-refused", { message: what, ...senderFields(sender) });
     onRefused?.(sender.origin);
   };
 
@@ -145,7 +142,7 @@ export const serveGmailContract = ({
     try {
       css = await userStyles();
     } catch {
-      log("Gmail's user styles were not read");
+      log("user-styles-read-failed");
 
       return;
     }
@@ -235,7 +232,7 @@ export const serveGmailContract = ({
     const key = accepted(sender);
 
     if (!key || !pages.has(sender.webContentsId)) {
-      refuse(sender, "health report");
+      refuse(sender, "health-report");
 
       return;
     }
@@ -244,20 +241,31 @@ export const serveGmailContract = ({
 
     if (!health.success) {
       // What the page sent may quote the page, so none of it is logged.
-      log("Refused a malformed Gmail health report");
+      log("gmail-message-refused", {
+        message: "health-report",
+        reason: "malformed",
+      });
 
       return;
     }
 
-    const views = health.data.views.join(", ") || "no view";
-    const line = `Gmail's page in tab ${tabKey(key)} (${views}): ${describeHealth(health.data)}`;
+    const views = health.data.views.join("+") || "none";
+    const broken = hooksThat(health.data, "broken");
+    const absent = hooksThat(health.data, "absent");
+    const line = `${tabKey(key)} ${views} ${broken} ${absent}`;
 
     if (reports.get(sender.webContentsId) === line) {
       return;
     }
 
     reports.set(sender.webContentsId, line);
-    log(`${line}, checked in ${health.data.ms} ms`);
+    log("gmail-hooks-checked", {
+      tab: scrub.tab(key),
+      views: scrub.token(views),
+      broken: broken === "" ? undefined : scrub.token(broken),
+      absent: absent === "" ? undefined : scrub.token(absent),
+      ms: health.data.ms,
+    });
     onHealth?.(key, health.data);
   });
 
@@ -267,13 +275,16 @@ export const serveGmailContract = ({
       !windows.has(sender.webContentsId) ||
       !isWindow(sender.webContentsId)
     ) {
-      refuse(sender, "sent notice");
+      refuse(sender, "sent-notice");
 
       return;
     }
 
     if (!isSentNotice(payload)) {
-      log("Refused a malformed Gmail sent notice");
+      log("gmail-message-refused", {
+        message: "sent-notice",
+        reason: "malformed",
+      });
 
       return;
     }

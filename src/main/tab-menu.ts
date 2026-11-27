@@ -5,6 +5,8 @@ import type { App } from "#core/apps.ts";
 import { menuItem, menuPointInside } from "#core/context-menu.ts";
 import type { MenuEntry } from "#core/context-menu.ts";
 import { marksSleepWhenIdle } from "#core/idle-sleep.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { PaneDirection } from "#core/pane-tree.ts";
 import type { SleepIdleTabs } from "#core/settings.ts";
 import type { State } from "#core/state.ts";
@@ -79,11 +81,8 @@ export interface TabMenuDeps {
   ) => Promise<unknown>;
   clipboard: Clipboard;
   systemBrowser: SystemBrowser;
-  log: (message: string) => void;
+  log: Log;
 }
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /** Each item's label, in the person's language as it is when called. */
 const LABELS: Record<TabMenuItemId, () => string> = {
@@ -329,10 +328,13 @@ export const createTabMenu = ({
       if (menuItem(current(), item)?.enabled) {
         await act(item, key);
       } else {
-        log(`Refused the tab menu's ${item}, which it does not offer`);
+        log("tab-menu-refused", { item: scrub.token(item) });
       }
     } catch (error) {
-      log(`The tab menu's ${item} failed: ${describe(error)}`);
+      log("tab-menu-failed", {
+        item: scrub.token(item),
+        error: scrub.error(error),
+      });
     }
   };
 
@@ -359,9 +361,11 @@ export const createTabMenu = ({
   };
 
   const refuse = (request: TabMenuRequest) => {
-    log(
-      `Refused a menu for tab ${request.profileId}/${request.tabId} at ${request.x},${request.y}`
-    );
+    log("tab-menu-refused", {
+      tab: scrub.tab(request),
+      x: request.x,
+      y: request.y,
+    });
   };
 
   return {

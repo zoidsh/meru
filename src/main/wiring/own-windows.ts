@@ -1,4 +1,5 @@
 import type { App } from "#core/apps.ts";
+import type { Log } from "#core/log.ts";
 import { gmailOwnWindow } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
@@ -43,6 +44,7 @@ export const wireOwnWindows = ({
   profiles,
   storesSettled,
   focus,
+  log,
 }: {
   apps: readonly App[];
   isMacOS: boolean;
@@ -59,6 +61,7 @@ export const wireOwnWindows = ({
   profiles: Profiles;
   storesSettled: () => Promise<unknown>;
   focus: Focus;
+  log: Log;
 }) => {
   const ownWindows = createOwnWindows({
     windows: createOwnWindowFactory(contextMenus),
@@ -76,7 +79,7 @@ export const wireOwnWindows = ({
     onFocus: (key) => {
       focus.focusInWindow(key, inOwnWindow(key));
     },
-    log: console.error,
+    log,
   });
 
   frameColors.onChange(ownWindows.recolor);

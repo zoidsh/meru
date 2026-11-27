@@ -4,6 +4,7 @@ import { noop } from "es-toolkit";
 
 import type { App } from "#core/apps.ts";
 import { GMAIL_FEATURES, gmailFeatures } from "#core/gmail-hooks.ts";
+import type { Log } from "#core/log.ts";
 import { gmailOwnWindow, profilePartition } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -53,7 +54,9 @@ const serveGmailPage = ({
   overlays,
   background,
   mainWindow,
+  log,
 }: {
+  log: Log;
   mainWindow: Pick<PlainWindow, "isVisible" | "isMinimized">;
   gmailOrigin: string | undefined;
   senders: SenderRegistry;
@@ -110,7 +113,7 @@ const serveGmailPage = ({
 
       sentCompose.notice(webContentsId, notice);
     },
-    log: console.error,
+    log,
   });
 
   for (const feature of GMAIL_FEATURES) {
@@ -151,6 +154,7 @@ export const wireGmail = ({
   entitlement,
   background,
   mainWindow,
+  log,
 }: {
   background: boolean;
   /** The main window, whose toast says a compose window sent. */
@@ -171,6 +175,7 @@ export const wireGmail = ({
   gmailOrigin: string | undefined;
   showOwnWindow: (key: TabKey) => void;
   revealGmail: (profileId: string) => void;
+  log: Log;
 }) => {
   const showGmail = createShowGmail({
     state: profiles.get,
@@ -186,7 +191,7 @@ export const wireGmail = ({
       inbox.setOpen(false);
     },
     home: gmailHome,
-    log: console.error,
+    log,
   });
   const gmailPage = serveGmailPage({
     gmailOrigin,
@@ -199,12 +204,13 @@ export const wireGmail = ({
           path.join(lifecycle.userDataPath, USER_STYLES_FILE_NAME),
           USER_STYLES_MAX_BYTES
         ),
-      log: console.error,
+      log,
       allowed: () => entitlement.can("userStyles"),
     }),
     overlays,
     background,
     mainWindow,
+    log,
   });
   const { catchUp, sentCompose } = gmailPage;
   const navigateGmail = createGmailNavigation({
@@ -238,7 +244,7 @@ export const wireGmail = ({
             ),
           poke: mail.poke,
           catchUp: catchUp.request,
-          log: console.error,
+          log,
         });
   const inbox = createInbox({
     mail,
@@ -271,7 +277,7 @@ export const wireGmail = ({
       },
     },
     allowed: () => entitlement.can("unifiedInbox"),
-    log: console.error,
+    log,
   });
 
   mail.onPoll(inbox.polled);

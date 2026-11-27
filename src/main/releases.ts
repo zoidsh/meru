@@ -1,5 +1,7 @@
 import { z } from "zod/mini";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Release } from "#core/releases.ts";
 import type { ReleasesSource } from "#platform/releases.ts";
 
@@ -48,7 +50,7 @@ export const createReleases = ({
   log,
 }: {
   source: ReleasesSource;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   let kept: Release[] | undefined;
   let asking: Promise<Release[]> | undefined;
@@ -59,9 +61,7 @@ export const createReleases = ({
     try {
       answer = await source.list();
     } catch (error) {
-      log(
-        `Meru's releases were not listed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      log("releases-list-failed", { error: scrub.error(error) });
       throw new Error("Meru's releases were not listed", { cause: error });
     }
 
@@ -69,7 +69,7 @@ export const createReleases = ({
 
     if (!releases) {
       // What GitHub sent is not ours to log.
-      log("Meru's releases were not listed: the answer was no list");
+      log("releases-list-failed", { reason: "no-list" });
       throw new Error("Meru's releases were not listed");
     }
 

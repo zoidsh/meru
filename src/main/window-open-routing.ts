@@ -1,4 +1,6 @@
 import type { App, AppOpening } from "#core/apps.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { TabKey } from "#core/tabs.ts";
 import { allowsChildNavigation, routeWindowOpen } from "#core/window-open.ts";
 import type { WindowOpenRoute } from "#core/window-open.ts";
@@ -7,9 +9,6 @@ import type { SystemBrowser } from "#platform/system-browser.ts";
 
 /** How long after a page's request to add an account another is dropped. */
 const ADD_PROFILE_PAUSE_MS = 1000;
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * Where a window a tab's page opens goes, and where a link a child window
@@ -37,13 +36,13 @@ export const createWindowOpenRouting = ({
   /** Opens `url` as a tab of `app`, from the page of the tab `from`. */
   openAsTab: (from: TabKey, app: App, url: string) => Promise<void>;
   addProfile: () => Promise<unknown>;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   const openInSystemBrowser = async (url: string) => {
     try {
       await systemBrowser.open(url);
     } catch (error) {
-      log(`The system browser did not open a link: ${describe(error)}`);
+      log("system-browser-open-failed", { error: scrub.error(error) });
     }
   };
 
@@ -52,7 +51,7 @@ export const createWindowOpenRouting = ({
 
   const addProfileFromPage = async () => {
     if (addingProfile) {
-      log("Dropped a repeated request to add an account");
+      log("add-account-dropped", { reason: "repeated" });
 
       return;
     }
@@ -62,7 +61,7 @@ export const createWindowOpenRouting = ({
     try {
       await addProfile();
     } catch (error) {
-      log(`Adding a profile for a new account failed: ${describe(error)}`);
+      log("add-account-failed", { error: scrub.error(error) });
     } finally {
       setTimeout(() => {
         addingProfile = false;
@@ -85,7 +84,7 @@ export const createWindowOpenRouting = ({
         break;
       }
       case "deny": {
-        log("Refused a window a page asked for");
+        log("window-open-refused", { url: scrub.host(url) });
         break;
       }
       default: {
@@ -124,7 +123,7 @@ export const createWindowOpenRouting = ({
 
       const route = routeWindowOpen(url, opening(tabKeyed));
 
-      log("Kept a window a page opened from leaving its app");
+      log("window-open-kept", { url: scrub.host(url) });
 
       if (
         route.kind !== "child-window" &&

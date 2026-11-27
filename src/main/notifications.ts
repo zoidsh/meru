@@ -2,6 +2,8 @@ import { plural, t } from "@lingui/core/macro";
 import { noop } from "es-toolkit";
 
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { MAIL_ACTIONS } from "#core/mail-actions.ts";
 import type { MailAction } from "#core/mail-actions.ts";
 import {
@@ -70,7 +72,7 @@ export interface MailNotificationsDeps {
   important: (profileId: string) => Promise<ReadonlySet<string> | null>;
   /** Where Meru's own sounds play, and whether every notification is silent. */
   sound: SoundOutput;
-  log: (message: string) => void;
+  log: Log;
 }
 
 const FOLLOW_UPS: Record<VerificationCodeAfterCopy, MailAction | undefined> = {
@@ -318,7 +320,9 @@ export const createMailNotifications = ({
     try {
       await clipboard.writeText(code);
     } catch {
-      log(`A verification code of profile ${profileId} was not copied`);
+      log("verification-code-copy-failed", {
+        profile: scrub.profile(profileId),
+      });
 
       return false;
     }
@@ -334,9 +338,10 @@ export const createMailNotifications = ({
       act(profileId, followUp, messageId);
     }
 
-    log(
-      `Copied a verification code of profile ${profileId}${followUp ? `, then ran ${followUp}` : ""}`
-    );
+    log("verification-code-copied", {
+      profile: scrub.profile(profileId),
+      next: followUp,
+    });
 
     return true;
   };
@@ -358,9 +363,10 @@ export const createMailNotifications = ({
 
     // Held, it is neither shown nor copied, as no held notification is later.
     if (!decision.show) {
-      log(
-        `Held a verification code notification of profile ${profileId}: ${decision.reason}`
-      );
+      log("verification-code-held", {
+        profile: scrub.profile(profileId),
+        reason: decision.reason,
+      });
 
       return;
     }
@@ -368,9 +374,10 @@ export const createMailNotifications = ({
     const url = messageUrl(entry.link, inbox);
 
     if (setting("verificationCodeCopyMode") === "immediately") {
-      log(
-        `Found a verification code in a new message of profile ${profileId}, copying it`
-      );
+      log("verification-code-found", {
+        profile: scrub.profile(profileId),
+        copy: "now",
+      });
 
       const copied = await copyCode(profileId, code, entry.id);
 
@@ -393,9 +400,10 @@ export const createMailNotifications = ({
         return;
       }
     } else {
-      log(
-        `Found a verification code in a new message of profile ${profileId}, copying it when asked`
-      );
+      log("verification-code-found", {
+        profile: scrub.profile(profileId),
+        copy: "when-asked",
+      });
     }
 
     // The button and a body click after it must not move the mail twice, but
@@ -494,9 +502,11 @@ export const createMailNotifications = ({
         });
 
         if (!decision.show) {
-          log(
-            `Held ${fresh.length} new mail notification(s) of profile ${profileId}: ${decision.reason}`
-          );
+          log("mail-notifications-held", {
+            profile: scrub.profile(profileId),
+            count: fresh.length,
+            reason: decision.reason,
+          });
         }
 
         return !decision.show;
@@ -510,9 +520,7 @@ export const createMailNotifications = ({
         const ids = await important(profileId);
 
         if (ids === null) {
-          log(
-            `The Important feed of profile ${profileId} was not read, so all new mail is notified`
-          );
+          log("important-feed-unread", { profile: scrub.profile(profileId) });
         }
 
         fresh = importantOnly(fresh, ids);

@@ -1,3 +1,5 @@
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { enabledProfiles, knownTabs } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -12,7 +14,7 @@ export interface ShowGmailDeps {
   closeInbox: () => void;
   /** Gmail's home, or the suite's stand-in's, where a closed Gmail opens. */
   home: string;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**
@@ -49,7 +51,10 @@ export const createShowGmail = ({
       try {
         await selectProfile(profileId);
       } catch (error) {
-        log(`A message's profile was not selected: ${String(error)}`);
+        log("profile-select-failed", {
+          from: "notification",
+          error: scrub.error(error),
+        });
 
         return false;
       }

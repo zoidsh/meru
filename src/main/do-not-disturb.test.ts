@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import { DO_NOT_DISTURB_DURATIONS } from "#core/notification-gate.ts";
 import { decodeState, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -32,12 +33,12 @@ const setup = (initial: State = one) => {
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
     now: Date.now,
-    log: () => false,
+    log: silentLog,
   });
   const doNotDisturb = createDoNotDisturb({
     profiles,
     now: () => new Date(),
-    log: () => false,
+    log: silentLog,
   });
 
   return {

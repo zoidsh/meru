@@ -1,3 +1,5 @@
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { AppWindow } from "#platform/window.ts";
 
 import { revealWindow } from "./windows.ts";
@@ -27,7 +29,7 @@ export interface SettingsWindowDeps<Window extends SettingsWindowHandle> {
   register: (webContentsId: number) => () => void;
   /** Called with each window as it is created, before its page loads. */
   prepare: (window: Window) => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**
@@ -63,9 +65,7 @@ export const createSettingsWindow = <Window extends SettingsWindowHandle>({
     try {
       await window.loadURL(url());
     } catch (error) {
-      log(
-        `The Settings window did not load: ${error instanceof Error ? error.message : String(error)}`
-      );
+      log("settings-window-load-failed", { error: scrub.error(error) });
     }
   };
 

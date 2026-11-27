@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { recordInto, silentLog } from "#core/log.fake.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { fakeUpdater } from "#platform/updater.fake.ts";
@@ -44,7 +45,7 @@ const setup = ({ canUpdate = true } = {}) => {
     focus,
     initial: one,
     bounds: () => ({ x: 0, y: 0, width: 10, height: 10 }),
-    log: () => false,
+    log: silentLog,
   });
 
   overlays.adopt({
@@ -70,7 +71,7 @@ const setup = ({ canUpdate = true } = {}) => {
       initial: { version: 1 },
       save: () => Promise.resolve(),
       platform: "darwin",
-      log: () => false,
+      log: silentLog,
     }),
     runningVersion: "4.1.0",
     quitThen: () => {
@@ -80,9 +81,8 @@ const setup = ({ canUpdate = true } = {}) => {
     openExternal: (url) => {
       opened.push(url);
     },
-    home: "",
     now: () => 0,
-    log: () => false,
+    log: silentLog,
   });
   const card = wireUpdateCard({
     updates,
@@ -91,9 +91,7 @@ const setup = ({ canUpdate = true } = {}) => {
       steps.push("openSettings");
     },
     settingsPages,
-    log: (message) => {
-      logs.push(message);
-    },
+    log: recordInto(logs),
   });
   focus.noteFocused({ kind: "front" });
   focused.length = 0;
@@ -225,8 +223,8 @@ describe(createUpdateCard, () => {
       [],
       [],
       [
-        "Refused the update card's restart with no card open",
-        "Refused the update card's download on a ready card",
+        "update-card-refused action=restart reason=no-card",
+        "update-card-refused action=download card=ready",
       ],
     ]);
   });

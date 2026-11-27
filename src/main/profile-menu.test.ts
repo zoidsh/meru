@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { MenuPoint } from "#core/context-menu.ts";
+import { recordInto, silentLog } from "#core/log.fake.ts";
 import { isAsleep, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { ContextMenuItem } from "#platform/context-menu.ts";
@@ -25,7 +26,7 @@ const setup = () => {
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
     now: () => 0,
-    log: () => false,
+    log: silentLog,
   });
   const menu = createProfileMenu({
     state: profiles.get,
@@ -36,9 +37,7 @@ const setup = () => {
       },
     },
     profiles,
-    log: (message) => {
-      logs.push(message);
-    },
+    log: recordInto(logs, { profiles: () => profiles.get().profiles }),
   });
   const asleep = () => {
     const state = profiles.get();
@@ -77,7 +76,7 @@ describe(createProfileMenu, () => {
     expect([popups.map(({ at }) => at), shown(), logs]).toStrictEqual([
       [{ x: 120, y: 20 }],
       ["Sleep"],
-      ["Refused a menu for profile b at 900,20"],
+      ['profile-menu-refused profile="profile 2" x=900 y=20'],
     ]);
   });
 
@@ -112,7 +111,7 @@ describe(createProfileMenu, () => {
     expect([shown(), asleep(), logs]).toStrictEqual([
       ["Sleep (off)"],
       ["b"],
-      ["Refused the profile menu's sleep, which it does not offer"],
+      ["profile-menu-refused item=sleep"],
     ]);
   });
 });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { BlockAsk } from "#core/blocker.ts";
 import type { Capability } from "#core/entitlement.ts";
+import { silentLog } from "#core/log.fake.ts";
 import type { Settings } from "#core/settings.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import type { RequestBlocker } from "#platform/requests.ts";
@@ -55,7 +56,7 @@ const setup = (
     initial: initial ?? { version: 1 },
     save: () => Promise.resolve(),
     platform: "darwin",
-    log: () => false,
+    log: silentLog,
     ...(can ? { can } : {}),
   });
   const blocker = createContentBlocker({

@@ -1,3 +1,4 @@
+import { scrub } from "#core/log.ts";
 import type { IpcSender } from "#platform/ipc.ts";
 
 export type SenderIdentity =
@@ -46,10 +47,13 @@ export const createSenderRegistry = () => {
 
 export type SenderRegistry = ReturnType<typeof createSenderRegistry>;
 
-/** A frame's origin carries no path, query or fragment, so it can be logged. */
-export const describeSender = ({
+/** A sender as the log's fields, its origin as its host. */
+export const senderFields = ({
   webContentsId,
   isMainFrame,
   origin,
-}: IpcSender) =>
-  `webContents ${webContentsId} (${isMainFrame ? "main frame" : "subframe"}, ${origin ?? "no origin"})`;
+}: IpcSender) => ({
+  webContents: webContentsId,
+  frame: isMainFrame ? ("main" as const) : ("sub" as const),
+  origin: scrub.host(origin),
+});

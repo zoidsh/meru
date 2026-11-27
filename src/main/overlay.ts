@@ -1,5 +1,6 @@
 import { isEqual } from "es-toolkit";
 
+import type { Log } from "#core/log.ts";
 import {
   hasToastAction,
   takesNoFocus,
@@ -27,7 +28,7 @@ export interface OverlaysDeps {
   initial: State;
   /** Where the view sits while `overlay` is open, as the window is now. */
   bounds: (overlay: Overlay) => Rectangle;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**
@@ -77,7 +78,7 @@ export const createOverlays = ({
 
   const show = (overlay: Overlay, takeFocus: boolean) => {
     if (!view) {
-      log(`The ${overlay.kind} overlay has no view to open in yet`);
+      log("overlay-refused", { overlay: overlay.kind, reason: "no-view" });
 
       return;
     }

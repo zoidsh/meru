@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import { createInitialSettings } from "#core/settings.ts";
 import type { Settings } from "#core/settings.ts";
 
@@ -11,7 +12,7 @@ const setUp = (initial: Settings, preferred = ["de-DE"]) => {
     initial,
     save: () => Promise.resolve(),
     platform: "darwin",
-    log: () => {},
+    log: silentLog,
   });
   const activated: string[] = [];
   const changes: string[] = [];

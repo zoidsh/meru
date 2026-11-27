@@ -1,6 +1,7 @@
 import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import type { Platform } from "#core/platform.ts";
 import { createInitialSettings, readSetting } from "#core/settings.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
@@ -161,7 +162,7 @@ const setup = ({
     quit: () => {
       calls.push("quit");
     },
-    log: () => false,
+    log: silentLog,
   });
 
   return {

@@ -1,6 +1,7 @@
 import { delay } from "es-toolkit";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { recordInto } from "#core/log.fake.ts";
 import type { ActionRequest, ActionResponse } from "#core/mail-actions.ts";
 import { newProfile } from "#core/state.ts";
 
@@ -58,9 +59,7 @@ const setup = (
     catchUp: (profileId) => {
       caughtUp.push(profileId);
     },
-    log: (message) => {
-      logged.push(message);
-    },
+    log: recordInto(logged, { profiles: () => [{ id: "p1", tabs: [] }] }),
     now: () => 1,
   });
 
@@ -136,7 +135,7 @@ describe(createMailActions, () => {
     expect(poked).toStrictEqual([]);
     expect(caughtUp).toStrictEqual([]);
     expect(logged).toStrictEqual([
-      "Mail action archive of profile p1: failed (Gmail error 10)",
+      'mail-action-ended action=archive profile="profile 1" outcome=failed reason="Gmail error 10"',
     ]);
   });
 
@@ -150,7 +149,7 @@ describe(createMailActions, () => {
     });
     expect(sent).toHaveLength(1);
     expect(logged).toStrictEqual([
-      "Mail action delete of profile p1: signedOut",
+      'mail-action-ended action=delete profile="profile 1" outcome=signedOut',
     ]);
   });
 
@@ -195,7 +194,7 @@ describe(createMailActions, () => {
       reason: "timed out",
     });
     expect(logged).toStrictEqual([
-      "Mail action archive of profile p1: failed (timed out)",
+      'mail-action-ended action=archive profile="profile 1" outcome=failed reason="timed out"',
     ]);
   });
 
@@ -218,7 +217,7 @@ describe(createMailActions, () => {
       reason: "profile removed",
     });
     expect(logged).toStrictEqual([
-      "Mail action archive of profile p1: failed (profile removed)",
+      'mail-action-ended action=archive profile="profile 1" outcome=failed reason="profile removed"',
     ]);
     await expect(
       Promise.race([kept, delay(20).then(() => "running")])

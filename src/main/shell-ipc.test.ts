@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { SHELL_CHANNELS } from "#contract/shell.ts";
 import type { ShellState } from "#contract/shell.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
 import { RefusedCallError } from "./contract-ipc.ts";
@@ -385,7 +386,7 @@ const setup = () => {
       },
     },
     shellOrigin: SHELL_ORIGIN,
-    log: (message) => logs.push(message),
+    log: recordInto(logs),
   });
 
   const call = (sender: number | IpcSender, name: string, payload: unknown) => {

@@ -5,6 +5,9 @@ export interface AppLifecycle {
   readonly name: string;
   /** Where this run keeps its data, a `--user-data-dir` given to it included. */
   readonly userDataPath: string;
+  /** Where the app's own code is. */
+  readonly appPath: string;
+  readonly version: string;
   appendSwitch: (name: string, value?: string) => void;
   /** Only before the app is ready, for the whole run. */
   disableHardwareAcceleration: () => void;
@@ -59,6 +62,12 @@ export const createAppLifecycle = (): AppLifecycle => {
     },
     get userDataPath() {
       return app.getPath("userData");
+    },
+    get appPath() {
+      return app.getAppPath();
+    },
+    get version() {
+      return app.getVersion();
     },
     appendSwitch: (name, value) => app.commandLine.appendSwitch(name, value),
     disableHardwareAcceleration: () => {

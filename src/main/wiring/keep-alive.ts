@@ -1,6 +1,7 @@
 import type { App } from "#core/apps.ts";
 import { ROTATING_COOKIE } from "#core/keep-alive.ts";
 import type { KeepAliveTiming } from "#core/keep-alive.ts";
+import type { Log } from "#core/log.ts";
 import { allowsPermission } from "#core/permissions.ts";
 import { keptAliveProfileIds } from "#core/state.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
@@ -29,6 +30,7 @@ export const wireKeepAlive = ({
   mail,
   keepAliveUrl,
   keepAliveTiming,
+  log,
 }: {
   apps: readonly App[];
   lifecycle: ReturnType<typeof createAppLifecycle>;
@@ -40,6 +42,7 @@ export const wireKeepAlive = ({
   mail: MailPoller;
   keepAliveUrl: string;
   keepAliveTiming: KeepAliveTiming;
+  log: Log;
 }) => {
   const keepAlive = createKeepAlive({
     pages: createKeepAlivePages(),
@@ -55,7 +58,7 @@ export const wireKeepAlive = ({
     cookie: ROTATING_COOKIE,
     timing: keepAliveTiming,
     now: Date.now,
-    log: console.error,
+    log,
   });
 
   // After the views, so a profile given one closes its keep-alive.

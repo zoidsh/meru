@@ -1,5 +1,7 @@
 import type { Capability } from "#core/entitlement.ts";
-import { composeUrl, isMailtoUrl, schemeOf } from "#core/mailto.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
+import { composeUrl, isMailtoUrl } from "#core/mailto.ts";
 import {
   enabledProfiles,
   GMAIL_TAB_ID,
@@ -15,9 +17,6 @@ import type {
 } from "#platform/content-view.ts";
 
 import type { SenderRegistry } from "./senders.ts";
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /** Asks which of `profileIds`, in that order, writes; the one picked, if any. */
 export type AskProfile = (
@@ -52,11 +51,7 @@ export const MAX_WAITING_LINKS = 10;
  * `MAX_WAITING_LINKS` wait, so another app sending links in a loop cannot
  * stack questions or windows without end.
  */
-export const createIncomingLinks = ({
-  log,
-}: {
-  log: (message: string) => void;
-}) => {
+export const createIncomingLinks = ({ log }: { log: Log }) => {
   const held: string[] = [];
   let answer: ((url: string) => Promise<void>) | undefined;
   let turn = Promise.resolve();
@@ -71,7 +66,7 @@ export const createIncomingLinks = ({
       try {
         await answerWith(url);
       } catch (error) {
-        log(`An incoming link was not opened: ${describe(error)}`);
+        log("email-link-open-failed", { error: scrub.error(error) });
       } finally {
         waiting -= 1;
       }
@@ -81,9 +76,7 @@ export const createIncomingLinks = ({
   return {
     receive: (url: string) => {
       if (waiting >= MAX_WAITING_LINKS) {
-        log(
-          `Dropped an incoming link, since ${waiting} are already waiting to be answered`
-        );
+        log("email-link-dropped", { waiting });
 
         return;
       }
@@ -132,11 +125,11 @@ export const answerIncomingLink =
     compose: (profileId: string, mailto: string) => void;
     /** Tells the person the link needs Meru Pro. */
     refuse: () => void;
-    log: (message: string) => void;
+    log: Log;
   }) =>
   async (url: string) => {
     if (!isMailtoUrl(url)) {
-      log(`Ignored an incoming link (${schemeOf(url)})`);
+      log("email-link-ignored", { url: scrub.host(url) });
 
       return;
     }
@@ -189,7 +182,7 @@ export const createComposeWindows = ({
   /** Gmail's preload, which the compose window's own page gets. */
   preload?: string;
   background: boolean;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   const open = new Map<SessionWindow, string>();
 
@@ -214,7 +207,7 @@ export const createComposeWindows = ({
       const key = gmailTabOf(profileId);
 
       if (!key) {
-        log("A compose window's profile is gone or turned off");
+        log("compose-window-refused", { reason: "no-profile" });
 
         return;
       }

@@ -1,5 +1,6 @@
 import { t } from "@lingui/core/macro";
 
+import type { Log } from "#core/log.ts";
 import type { AppWindow } from "#platform/window.ts";
 
 /** How many reloads a minute may bring before a renderer is given up on. */
@@ -14,17 +15,17 @@ export const SHELL_RELOAD_WINDOW_MS = 60_000;
  */
 export const createRendererRecovery = ({
   window,
-  name,
+  renderer,
   now,
   giveUp,
   log,
 }: {
   window: Pick<AppWindow, "onRendererGone" | "reload">;
-  /** What the log calls the renderer, such as "The shell's renderer". */
-  name: string;
+  /** Which renderer, as the log names it. */
+  renderer: "shell" | "settings";
   now: () => number;
   giveUp: () => void;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   let reloads: number[] = [];
 
@@ -38,16 +39,19 @@ export const createRendererRecovery = ({
     reloads = reloads.filter((when) => at - when < SHELL_RELOAD_WINDOW_MS);
 
     if (reloads.length >= SHELL_RELOAD_LIMIT) {
-      log(
-        `${name} is gone (${reason}) after ${reloads.length} reloads in a minute; giving up`
-      );
+      log("renderer-gone", {
+        renderer,
+        reason,
+        reloads: reloads.length,
+        next: "given-up",
+      });
       giveUp();
 
       return;
     }
 
     reloads.push(at);
-    log(`${name} is gone (${reason}); reloading it`);
+    log("renderer-gone", { renderer, reason, next: "reloaded" });
     window.reload();
   });
 };
@@ -71,11 +75,11 @@ export const createShellRecovery = ({
   /** Blocks until dismissed. */
   showErrorDialog: (title: string, message: string) => void;
   quit: () => void;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   createRendererRecovery({
     window,
-    name: "The shell's renderer",
+    renderer: "shell",
     now,
     giveUp: () => {
       showErrorDialog(

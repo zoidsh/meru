@@ -1,6 +1,7 @@
 import { findApp } from "#core/apps.ts";
 import type { App } from "#core/apps.ts";
 import { FEED_PATH, feedOutcome, inboxLabel } from "#core/feed.ts";
+import type { Log } from "#core/log.ts";
 import { hasTabbedInbox, mailPolls, profilePartition } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
@@ -23,11 +24,13 @@ export const wireMailFeed = ({
   sessions,
   profiles,
   doNotDisturb,
+  log,
 }: {
   apps: readonly App[];
   sessions: ReturnType<typeof createSessions>;
   profiles: Profiles;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
+  log: Log;
 }) => {
   const network = createNetwork();
   const gmail = findApp(apps, "gmail");
@@ -45,7 +48,7 @@ export const wireMailFeed = ({
     // The badge follows at once rather than at the next poll.
     // oxlint-disable-next-line no-use-before-define -- the poller reads what this learns
     onChange: (profileId) => mail.poke(profileId),
-    log: console.error,
+    log,
   });
   const mail = createMailPoller({
     inboxLabel: (profileId) =>
@@ -64,7 +67,7 @@ export const wireMailFeed = ({
       );
     },
     isOnline: network.isOnline,
-    log: console.error,
+    log,
   });
   const pollProfiles = (current: State) => {
     const { profileIds, unchecked } = mailPolls(current);

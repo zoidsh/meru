@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import type { Settings } from "#core/settings.ts";
 import { newProfile } from "#core/state.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
@@ -31,7 +32,7 @@ const load = async (file: TextFile) => {
   const opened = await openSettings({
     file,
     now: () => 1_763_290_000_000,
-    log: () => {},
+    log: silentLog,
   });
 
   await opened.settle();
@@ -91,7 +92,7 @@ const setup = (initial: Settings, failSave = false) => {
       return Promise.resolve();
     },
     platform: "darwin",
-    log: () => {},
+    log: silentLog,
   });
 
   return { settings, saved };
@@ -290,7 +291,7 @@ describe(createSettingsStore, () => {
         return Promise.resolve();
       },
       platform: "darwin",
-      log: () => {},
+      log: silentLog,
       profileValues: () => apply,
     });
     const heard: string[] = [];
@@ -346,7 +347,7 @@ describe(createSettingsStore, () => {
         return Promise.resolve();
       },
       platform: "darwin",
-      log: () => {},
+      log: silentLog,
       can: (capability) => granted || capability === "profiles",
     });
     const heard: string[] = [];
@@ -410,7 +411,7 @@ describe(createSettingsStore, () => {
         initial,
         save: () => Promise.resolve(),
         platform: "darwin",
-        log: () => {},
+        log: silentLog,
         can,
       });
 
@@ -474,7 +475,7 @@ describe(createSettingsStore, () => {
       initial: { version: 1 },
       save: () => Promise.resolve(),
       platform: "darwin",
-      log: () => {},
+      log: silentLog,
       can: () => licensed,
     });
     let pushes = 0;
@@ -518,7 +519,7 @@ describe(createSettingsStore, () => {
         return Promise.resolve();
       },
       platform: "darwin",
-      log: () => {},
+      log: silentLog,
       can: () => false,
     });
 
@@ -547,7 +548,7 @@ describe(followRemovedProfiles, () => {
       profileName: (n) => `Profile ${n}`,
       clearSession: () => Promise.resolve(),
       now: () => 0,
-      log: () => {},
+      log: silentLog,
     });
 
     followRemovedProfiles({ settings, profiles, log: () => {} });
@@ -579,7 +580,7 @@ describe(followRemovedProfiles, () => {
       profileName: (n) => `Profile ${n}`,
       clearSession: () => Promise.resolve(),
       now: () => 0,
-      log: () => {},
+      log: silentLog,
       multipleProfiles: () => multiple,
     });
 
@@ -600,7 +601,7 @@ const setupHeld = () => {
     initial: { version: 1 },
     save: (next) => saveSettings(held.file, next),
     platform: "darwin",
-    log: () => {},
+    log: silentLog,
   });
 
   return { held, settings };
@@ -637,7 +638,7 @@ describe("a quit's wait for the settings", () => {
       initial: { version: 1 },
       save: () => Promise.reject(new Error("disk full")),
       platform: "darwin",
-      log: () => {},
+      log: silentLog,
     });
 
     const update = settings.update("unreadBadge", () => false);

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { KEEP_ALIVE_TIMING, ROTATION_LIFETIME } from "#core/keep-alive.ts";
+import { silentLog } from "#core/log.fake.ts";
 import type { KeepAlivePages } from "#platform/keep-alive.ts";
 
 import { createKeepAlive } from "./keep-alive.ts";
@@ -98,7 +99,7 @@ const setup = ({
     cookie: COOKIE,
     timing: KEEP_ALIVE_TIMING,
     now: Date.now,
-    log: () => false,
+    log: silentLog,
   });
 
   return {

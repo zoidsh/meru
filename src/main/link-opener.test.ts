@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Capability } from "#core/entitlement.ts";
+import { silentLog } from "#core/log.fake.ts";
 import type { Settings } from "#core/settings.ts";
 import { fakeDefaultBrowser } from "#platform/default-browser.fake.ts";
 import type { LinkAnswer, LinkQuestion } from "#platform/link-prompt.ts";
@@ -29,7 +30,7 @@ const setup = (
       return Promise.resolve();
     },
     platform: "darwin",
-    log: () => false,
+    log: silentLog,
     ...(can ? { can } : {}),
   });
   const trustedSites = createTrustedSites(settings);
@@ -47,7 +48,7 @@ const setup = (
     defaultBrowser: createDefaultBrowserGuard({
       defaultBrowser,
       clipboard,
-      log: () => false,
+      log: silentLog,
     }),
     prompt: {
       ask: (question) => {
@@ -64,7 +65,7 @@ const setup = (
       },
     },
     clipboard,
-    log: () => false,
+    log: silentLog,
   });
 
   return {

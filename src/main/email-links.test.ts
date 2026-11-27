@@ -2,6 +2,7 @@ import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import type { Capability } from "#core/entitlement.ts";
+import { recordInto, silentLog } from "#core/log.fake.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
@@ -108,9 +109,7 @@ const answering = ({
     refuse: () => {
       refused += 1;
     },
-    log: (message) => {
-      logs.push(message);
-    },
+    log: recordInto(logs),
   });
 
   return { answer: answer_, composed, logs, asked, refused: () => refused };
@@ -153,8 +152,8 @@ describe(answerIncomingLink, () => {
     expect(composed).toStrictEqual([]);
     expect(refused()).toBe(0);
     expect(logs).toStrictEqual([
-      "Ignored an incoming link (https)",
-      "Ignored an incoming link (mailto)",
+      'email-link-ignored url="another site"',
+      "email-link-ignored url=mailto:",
     ]);
   });
 });
@@ -213,9 +212,7 @@ describe(createIncomingLinks, () => {
   it("drops a link beyond ten waiting, logging only the count, and takes links again once they are answered", async () => {
     const logs: string[] = [];
     const incoming = createIncomingLinks({
-      log: (message) => {
-        logs.push(message);
-      },
+      log: recordInto(logs),
     });
     const answered: string[] = [];
     const hold = Promise.withResolvers<undefined>();
@@ -224,9 +221,7 @@ describe(createIncomingLinks, () => {
       incoming.receive(`mailto:${index}`);
     }
 
-    expect(logs).toStrictEqual([
-      "Dropped an incoming link, since 10 are already waiting to be answered",
-    ]);
+    expect(logs).toStrictEqual(["email-link-dropped waiting=10"]);
 
     incoming.start(async (url) => {
       await hold.promise;
@@ -254,9 +249,7 @@ describe(createIncomingLinks, () => {
   it("goes on after a link whose answer failed, logging no part of it", async () => {
     const logs: string[] = [];
     const incoming = createIncomingLinks({
-      log: (message) => {
-        logs.push(message);
-      },
+      log: recordInto(logs),
     });
     const answered: string[] = [];
 
@@ -274,7 +267,7 @@ describe(createIncomingLinks, () => {
     await settle();
 
     expect(answered).toStrictEqual(["mailto:2"]);
-    expect(logs).toStrictEqual(["An incoming link was not opened: no window"]);
+    expect(logs).toStrictEqual(['email-link-open-failed error="no window"']);
   });
 });
 
@@ -321,7 +314,7 @@ const composing = (initial: State) => {
     state: () => state,
     gmailHome: "https://mail.google.com/mail/u/0",
     background: false,
-    log: () => false,
+    log: silentLog,
   });
 
   return {

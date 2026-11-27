@@ -77,7 +77,9 @@ export interface AppWindow extends PlainWindow {
    * Told when the page's process is gone, with Chromium's reason
    * (`crashed`, `oom`, `killed`, `clean-exit` and the like).
    */
-  onRendererGone: (listener: (reason: string) => void) => void;
+  onRendererGone: (
+    listener: (reason: Electron.RenderProcessGoneDetails["reason"]) => void
+  ) => void;
   /** Loads the page again, in a new process should its own be gone. */
   reload: () => void;
   /** Whether the application menu's keys act while the page has the keys. */

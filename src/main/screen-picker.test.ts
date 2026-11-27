@@ -2,6 +2,7 @@ import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
 import { APPS } from "#core/apps.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import type { ScreenCaptureStatus, ScreenSource } from "#core/screen-picker.ts";
@@ -94,7 +95,7 @@ const setup = ({
       window === undefined ? mainShown : owned.has(tabKey(window)),
     hasPage: (key) => pages.has(tabKey(key)),
     overlays,
-    log: (message) => logged.push(message),
+    log: recordInto(logged),
   });
   const closedIn: TabKey[] = [];
 

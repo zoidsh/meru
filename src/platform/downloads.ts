@@ -19,6 +19,9 @@ import {
   webContents,
 } from "electron";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
+
 import type { AppWindow } from "./window.ts";
 
 const run = promisify(execFile);
@@ -298,11 +301,11 @@ const sharedFiles = (folder: string) => ({
   quarantine,
 });
 
-const revealInFinder = async (file: string) => {
+const revealInFinder = async (file: string, log: Log) => {
   try {
     await run("/usr/bin/open", ["-R", file]);
   } catch (error) {
-    console.error("Could not show a download in Finder", error);
+    log("download-reveal-failed", { error: scrub.error(error) });
   }
 };
 
@@ -336,7 +339,7 @@ const startDrag = async (file: string, webContentsId: number) => {
   }
 };
 
-export const createDownloadFiles = (): DownloadFiles => ({
+export const createDownloadFiles = (log: Log): DownloadFiles => ({
   ...sharedFiles(app.getPath("downloads")),
   open: (file) => {
     void shell.openPath(file);
@@ -345,7 +348,7 @@ export const createDownloadFiles = (): DownloadFiles => ({
     if (process.platform === "darwin") {
       // showItemInFolder leaves Finder behind when chosen from a notification,
       // while Meru is not the frontmost app.
-      void revealInFinder(file);
+      void revealInFinder(file, log);
 
       return;
     }

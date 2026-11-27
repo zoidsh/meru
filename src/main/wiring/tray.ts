@@ -1,3 +1,4 @@
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { createTheme } from "#platform/theme.ts";
@@ -35,6 +36,7 @@ export const wireTray = ({
   showGmail,
   revealGmail,
   doNotDisturb,
+  log,
 }: {
   platform: Platform;
   /** The tray's menu is labelled again in each language chosen. */
@@ -50,6 +52,7 @@ export const wireTray = ({
   showGmail: ReturnType<typeof createShowGmail>;
   revealGmail: (profileId: string) => void;
   doNotDisturb: ReturnType<typeof createDoNotDisturb>;
+  log: Log;
 }) => {
   const reveal = () => {
     revealWindow(shell.window, background);
@@ -74,7 +77,7 @@ export const wireTray = ({
     },
     jumpTo: showGmail.jumpTo,
     quit: lifecycle.quit,
-    log: console.error,
+    log,
   });
   const badge = createUnreadBadge({
     badge: systemBadge(shell.window),
@@ -88,7 +91,7 @@ export const wireTray = ({
       dock: systemDock(),
       settings,
       onShown: badge.redraw,
-      log: console.error,
+      log,
     });
   }
 

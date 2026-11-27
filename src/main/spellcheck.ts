@@ -1,3 +1,5 @@
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { SpellChecker } from "#platform/spellcheck.ts";
 
 import type { SettingsStore } from "./settings.ts";
@@ -5,7 +7,7 @@ import type { SettingsStore } from "./settings.ts";
 export interface SpellcheckDeps {
   checker: SpellChecker;
   settings: Pick<SettingsStore, "get" | "onChange">;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**
@@ -36,7 +38,7 @@ export const createSpellcheck = ({
         return true;
       }
 
-      log(`Dropped the spellchecker language ${language}: no dictionary`);
+      log("spellchecker-language-dropped", { language: scrub.token(language) });
 
       return false;
     });

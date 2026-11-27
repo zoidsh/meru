@@ -1,5 +1,7 @@
 import { isNotFound } from "#core/feed.ts";
 import type { FeedEntry, FeedOutcome, MailStatus } from "#core/feed.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 
 type PollListener = (
   profileId: string,
@@ -28,7 +30,7 @@ export interface MailPollerDeps {
   /** The label of the profile's inbox feed as it is now, none for the whole inbox. */
   inboxLabel: (profileId: string) => string | undefined;
   isOnline: () => boolean;
-  log: (message: string) => void;
+  log: Log;
 }
 
 export const POLL_INTERVAL = 30_000;
@@ -164,9 +166,13 @@ export const createMailPoller = ({
       before.status !== polled.status ||
       before.unreadCount !== polled.unreadCount
     ) {
-      log(
-        `Mail of profile ${profileId}: ${polled.status}${polled.unreadCount === null ? "" : `, ${polled.unreadCount} unread`}${outcome.kind === "failed" ? ` (${outcome.reason})` : ""}`
-      );
+      log("mail-status-changed", {
+        profile: scrub.profile(profileId),
+        status: polled.status,
+        unread: polled.unreadCount ?? undefined,
+        reason:
+          outcome.kind === "failed" ? scrub.error(outcome.reason) : undefined,
+      });
       notify();
     } else if (addressBefore !== polled.address) {
       notify();
@@ -236,9 +242,7 @@ export const createMailPoller = ({
       outcome = await fetchFeed(profileId, controller.signal, label);
 
       if (label !== undefined && isNotFound(outcome)) {
-        log(
-          `Mail of profile ${profileId}: its inbox's label has no feed, so the whole inbox was read`
-        );
+        log("mail-label-unfed", { profile: scrub.profile(profileId) });
         label = undefined;
         outcome = await fetchFeed(profileId, controller.signal);
       }

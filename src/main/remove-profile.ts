@@ -1,3 +1,5 @@
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { AppWindow } from "#platform/window.ts";
 
 import {
@@ -9,7 +11,7 @@ import type { Profiles } from "./profiles.ts";
 export interface RemoveProfileDeps {
   profiles: Pick<Profiles, "get" | "remove">;
   window: Pick<AppWindow, "confirm">;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /** Asks to remove the profile, and removes it once confirmed. */
@@ -33,8 +35,9 @@ export const createRemoveProfile =
         await profiles.remove(profileId);
       }
     } catch (error) {
-      log(
-        `Profile ${profileId} was not removed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      log("profile-remove-failed", {
+        profile: scrub.profile(profileId),
+        error: scrub.error(error),
+      });
     }
   };

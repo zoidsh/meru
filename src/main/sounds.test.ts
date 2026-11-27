@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { SHELL_CHANNELS } from "#contract/shell-channels.ts";
+import { recordInto } from "#core/log.fake.ts";
 
 import { createSoundOutput } from "./sounds.ts";
 
@@ -20,9 +21,7 @@ const setup = ({ background = false, delivered = true } = {}) => {
     shellId: 7,
     shellOrigin: SHELL_ORIGIN,
     background,
-    log: (message) => {
-      logs.push(message);
-    },
+    log: recordInto(logs),
   });
 
   return { output, sent, logs };
@@ -56,7 +55,7 @@ describe(createSoundOutput, () => {
     expect([output.quiet, sent, logs]).toStrictEqual([
       true,
       [],
-      ["Did not play the duet sound under the background flag"],
+      ["sound-held sound=duet reason=background"],
     ]);
   });
 

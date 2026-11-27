@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import type { Platform } from "#core/platform.ts";
 import { createInitialSettings } from "#core/settings.ts";
 import type { BadgeContent } from "#platform/badge.ts";
@@ -122,7 +123,7 @@ describe(createUnreadBadge, () => {
       initial: createInitialSettings(),
       save: () => Promise.resolve(),
       platform: "darwin",
-      log: () => {},
+      log: silentLog,
     });
     const badge = createUnreadBadge({
       badge: {

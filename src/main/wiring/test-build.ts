@@ -8,6 +8,7 @@ import type { AppId } from "#core/apps.ts";
 import type { EntitlementFile } from "#core/entitlement-file.ts";
 import { KEEP_ALIVE_TIMING, KEEP_ALIVE_URL } from "#core/keep-alive.ts";
 import type { KeepAliveTiming } from "#core/keep-alive.ts";
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
 import { createBadge, createCapturedBadge } from "#platform/badge.ts";
@@ -267,8 +268,8 @@ export const systemBadge = (window: Parameters<typeof createBadge>[0]) =>
  * The suite's build saves downloads in its user data folder, never the real
  * Downloads, and records each file it would open or show.
  */
-export const downloadFiles = () =>
-  MERU_E2E_BUILD ? createCapturedDownloadFiles() : createDownloadFiles();
+export const downloadFiles = (log: Log) =>
+  MERU_E2E_BUILD ? createCapturedDownloadFiles() : createDownloadFiles(log);
 
 /**
  * The suite's build answers each prompt before a link leaves Meru itself,

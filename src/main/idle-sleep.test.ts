@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SLEEP_AFTER_MS, SOUND_RECHECK_MS } from "#core/idle-sleep.ts";
+import { silentLog } from "#core/log.fake.ts";
 import type { SleepAfter, SleepIdleTabs } from "#core/settings.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -57,7 +58,7 @@ const setup = ({ which = "unpinned" as SleepIdleTabs } = {}) => {
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
     now: Date.now,
-    log: () => false,
+    log: silentLog,
   });
   const pages = new Set(
     ["gmail", "c", "d"].map((tabId) => tabKey({ profileId: "p", tabId }))

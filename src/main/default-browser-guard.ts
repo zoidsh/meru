@@ -1,5 +1,7 @@
 import { t } from "@lingui/core/macro";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type {
   DefaultBrowser,
@@ -21,9 +23,6 @@ const webScheme = (url: string): WebScheme | undefined => {
 
   return protocol === "https:" ? "https" : undefined;
 };
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 const copyButton = () => ({
   choice: "copy" as const,
@@ -107,7 +106,7 @@ export const createDefaultBrowserGuard = ({
 }: {
   defaultBrowser: DefaultBrowser | undefined;
   clipboard: Clipboard;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   /** Whether the link stays, the alert shown and answered. */
   const holds = async (url: string) => {
@@ -129,7 +128,10 @@ export const createDefaultBrowserGuard = ({
         await openSettings?.();
       }
     } catch (error) {
-      log(`The default browser alert's ${choice} failed: ${describe(error)}`);
+      log("default-browser-alert-failed", {
+        choice,
+        error: scrub.error(error),
+      });
     }
 
     return true;

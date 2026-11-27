@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import type { Platform } from "#core/platform.ts";
 import { createInitialSettings } from "#core/settings.ts";
 
@@ -292,7 +293,7 @@ const setup = async (pro = true) => {
     initial: createInitialSettings(),
     save: () => Promise.resolve(),
     platform: "darwin",
-    log: () => {},
+    log: silentLog,
   });
   const keymap = createKeymap({
     platform: "darwin",

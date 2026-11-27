@@ -2,6 +2,8 @@ import type { ShellState } from "#contract/shell.ts";
 import type { FeedOutcome } from "#core/feed.ts";
 import { afterPoll, inboxKey, inboxRows } from "#core/inbox.ts";
 import type { PendingAction } from "#core/inbox.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { ActionOutcome, MailAction } from "#core/mail-actions.ts";
 import { messageUrl } from "#core/notifications.ts";
 import { enabledProfiles } from "#core/state.ts";
@@ -35,7 +37,7 @@ export interface InboxDeps {
   /** The entitlement's `can("unifiedInbox")`, asked at each open and change; always when absent. */
   allowed?: () => boolean;
   now?: () => number;
-  log: (message: string) => void;
+  log: Log;
 }
 
 type Notice = ShellState["inbox"]["notice"];
@@ -116,9 +118,7 @@ export const createInbox = ({
       }
 
       if (!inboxAvailable(state)) {
-        log(
-          "Refused to open the unified inbox, which needs Meru Pro and more than one profile enabled"
-        );
+        log("inbox-refused", { reason: "unavailable" });
 
         return;
       }
@@ -163,9 +163,10 @@ export const createInbox = ({
       const entry = isOpen() ? listed(profileId, messageId) : undefined;
 
       if (!entry) {
-        log(
-          `Refused to open a message the inbox does not list, of profile ${profileId}`
-        );
+        log("inbox-message-refused", {
+          profile: scrub.profile(profileId),
+          reason: "not-listed",
+        });
 
         return;
       }
@@ -181,9 +182,11 @@ export const createInbox = ({
       const key = inboxKey(profileId, messageId);
 
       if (!isOpen() || pending.has(key) || !listed(profileId, messageId)) {
-        log(
-          `Refused ${action} on a message the inbox does not offer, of profile ${profileId}`
-        );
+        log("inbox-message-refused", {
+          profile: scrub.profile(profileId),
+          action,
+          reason: "not-offered",
+        });
 
         return;
       }

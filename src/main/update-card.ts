@@ -1,5 +1,6 @@
 import { isEqual } from "es-toolkit";
 
+import type { Log } from "#core/log.ts";
 import {
   UPDATE_CARD_OFFERS,
   updateCard,
@@ -25,7 +26,7 @@ export const createUpdateCard = ({
   /** Shows What's new in Settings at the version's release. */
   showWhatsNew: (version: string) => void;
   overlays: Pick<Overlays, "current" | "open" | "close">;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   const dismissed = new Set<string>();
 
@@ -55,13 +56,13 @@ export const createUpdateCard = ({
       const open = overlays.current();
 
       if (open?.kind !== "update") {
-        log(`Refused the update card's ${action} with no card open`);
+        log("update-card-refused", { action, reason: "no-card" });
 
         return;
       }
 
       if (!UPDATE_CARD_OFFERS[open.card].includes(action)) {
-        log(`Refused the update card's ${action} on a ${open.card} card`);
+        log("update-card-refused", { action, card: open.card });
 
         return;
       }

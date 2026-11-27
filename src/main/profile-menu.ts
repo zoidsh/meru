@@ -1,6 +1,8 @@
 import { t } from "@lingui/core/macro";
 
 import { menuItem } from "#core/context-menu.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { profileMenu, profileMenuAt } from "#core/profile-menu.ts";
 import type {
   ProfileMenuItemId,
@@ -17,11 +19,8 @@ export interface ProfileMenuDeps {
   /** The main window, whose sidebar asks for a profile's menu. */
   window: Pick<PlainWindow, "showContextMenu" | "getContentAreaSize">;
   profiles: Pick<Profiles, "select" | "sleep">;
-  log: (message: string) => void;
+  log: Log;
 }
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 const label = (id: ProfileMenuItemId) =>
   id === "sleep"
@@ -50,14 +49,14 @@ export const createProfileMenu = ({
   const choose = async (profileId: string, item: ProfileMenuItemId) => {
     try {
       if (!menuItem(profileMenu(state(), profileId), item)?.enabled) {
-        log(`Refused the profile menu's ${item}, which it does not offer`);
+        log("profile-menu-refused", { item });
       } else if (item === "sleep") {
         await profiles.sleep(profileId);
       } else {
         await profiles.select(profileId);
       }
     } catch (error) {
-      log(`The profile menu's ${item} failed: ${describe(error)}`);
+      log("profile-menu-failed", { item, error: scrub.error(error) });
     }
   };
 
@@ -67,9 +66,11 @@ export const createProfileMenu = ({
       const entries = at && profileMenu(state(), at.profileId);
 
       if (!at || !entries) {
-        log(
-          `Refused a menu for profile ${request.profileId} at ${request.x},${request.y}`
-        );
+        log("profile-menu-refused", {
+          profile: scrub.profile(request.profileId),
+          x: request.x,
+          y: request.y,
+        });
 
         return;
       }

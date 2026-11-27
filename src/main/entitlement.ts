@@ -30,6 +30,8 @@ import type {
   EntitlementError,
   EntitlementRecord,
 } from "#core/entitlement.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Clipboard } from "#platform/clipboard.ts";
 import type {
   EntitlementServer,
@@ -51,7 +53,7 @@ export const saveEntitlementFile = (file: TextFile, value: EntitlementFile) =>
 export const openEntitlementFile = (deps: {
   file: TextFile;
   now: () => number;
-  log: (message: string) => void;
+  log: Log;
 }) =>
   openStore({
     ...deps,
@@ -104,10 +106,6 @@ export const entitlementErrorMessage = (error: EntitlementError) => {
   }
 };
 
-/** An error's name and message alone, never its stack or what it carries. */
-const describeError = (error: unknown) =>
-  error instanceof Error ? `${error.name}: ${error.message}` : typeof error;
-
 const failed = (error: EntitlementError): EntitlementResult => ({
   ok: false,
   error,
@@ -127,7 +125,7 @@ export interface EntitlementDeps {
   now: () => number;
   /** Where trial days are counted; the device's own zone when absent. */
   timeZone?: string;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**
@@ -256,7 +254,7 @@ export const createEntitlement = ({
     try {
       await save(next);
     } catch (error) {
-      log(`Could not save the entitlement: ${describeError(error)}`);
+      log("entitlement-save-failed", { error: scrub.error(error) });
 
       return false;
     }
@@ -310,7 +308,7 @@ export const createEntitlement = ({
     try {
       return await request();
     } catch (error) {
-      log(`The entitlement server's call failed: ${describeError(error)}`);
+      log("license-server-call-failed", { error: scrub.error(error) });
 
       return { error: "offline" } as const;
     }
@@ -337,9 +335,7 @@ export const createEntitlement = ({
         : undefined;
 
       if (!token) {
-        log(
-          "The entitlement server answered with a token that does not verify"
-        );
+        log("license-token-refused", { reason: "does-not-verify" });
 
         return failed("offline");
       }
@@ -347,7 +343,7 @@ export const createEntitlement = ({
       // The server agreed; a later answer already taken says where things
       // stand now, and that is what the person sees.
       if (isStale(made)) {
-        log(`Dropped an entitlement ${made.kind} that a later answer replaced`);
+        log("license-answer-dropped", { call: made.kind, reason: "stale" });
 
         return { ok: true };
       }
@@ -397,7 +393,7 @@ export const createEntitlement = ({
       // Every three hours and every wake would say it again.
       if (!toldNoDeviceId) {
         toldNoDeviceId = true;
-        log("Did not ask for the entitlement: this device's id is unknown");
+        log("license-check-skipped", { reason: "no-device-id" });
       }
 
       return;
@@ -419,11 +415,10 @@ export const createEntitlement = ({
       refreshing -= 1;
     });
 
-    if (!result.ok) {
-      log(
-        `Kept the stored entitlement: the refresh failed with ${result.error}`
-      );
-    }
+    log("license-checked", {
+      call: "refresh",
+      outcome: result.ok ? "valid" : result.error,
+    });
 
     // Time passes with or without an answer: an expiry or a day gone by, or
     // a clock moved, shows by the next refresh at most.
@@ -489,11 +484,17 @@ export const createEntitlement = ({
       }
 
       const made = call("activation", licenseKey);
-
-      return take(
+      const result = await take(
         await ask(() => server.activate({ deviceId, licenseKey })),
         made
       );
+
+      log("license-checked", {
+        call: "activation",
+        outcome: result.ok ? "valid" : result.error,
+      });
+
+      return result;
     },
     /**
      * Names this device on its license as the person typed it; an empty

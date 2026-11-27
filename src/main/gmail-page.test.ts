@@ -8,6 +8,7 @@ import {
   SEARCH_QUERY_MAX_LENGTH,
   searchHash,
 } from "#core/gmail-hash.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { Ipc, IpcSender } from "#platform/ipc.ts";
 
@@ -145,7 +146,11 @@ const setup = (
     onSent: (webContentsId, notice) => notices.push([webContentsId, notice]),
     onHealth: (key, health) => reports.push({ ...key, ...health }),
     onRefused: (origin) => refused.push(origin),
-    log: (message) => logs.push(message),
+    log: recordInto(logs, {
+      profiles: () => [
+        { id: "a", tabs: [{ id: "gmail", app: "gmail", url: "", title: "" }] },
+      ],
+    }),
   });
 
   const emit = (channel: string, sender: IpcSender, payload?: unknown) => {
@@ -221,7 +226,7 @@ describe(serveGmailContract, () => {
       "https://calendar.google.com",
     ]);
     expect(contract.logs).toContain(
-      `Refused Gmail's handshake from webContents ${CALENDAR_VIEW} (main frame, https://calendar.google.com)`
+      `gmail-message-refused message=handshake webContents=${CALENDAR_VIEW} frame=main origin=calendar.google.com`
     );
   });
 
@@ -331,8 +336,8 @@ describe(serveGmailContract, () => {
     });
 
     expect(contract.logs).toStrictEqual([
-      "Gmail's page in tab a/gmail (list): broken footer; absent promo, checked in 2 ms",
-      "Gmail's page in tab a/gmail (list): every hook matched, checked in 2 ms",
+      'gmail-hooks-checked tab="profile 1 tab 1 gmail" views=list broken=footer absent=promo ms=2',
+      'gmail-hooks-checked tab="profile 1 tab 1 gmail" views=list ms=2',
     ]);
     expect(contract.reports.map((report) => report.hooks.footer)).toStrictEqual(
       ["broken", "matched"]
@@ -351,14 +356,14 @@ describe(serveGmailContract, () => {
 
     expect(contract.reports).toStrictEqual([]);
     expect(
-      contract.logs.filter((line) => line.startsWith("Refused"))
+      contract.logs.filter((line) => line.startsWith("gmail-message-refused"))
     ).toHaveLength(5);
     // Nothing the page sent reaches the log.
     expect(
       contract.logs.filter((line) => line.includes("malformed"))
     ).toStrictEqual([
-      "Refused a malformed Gmail health report",
-      "Refused a malformed Gmail health report",
+      "gmail-message-refused message=health-report reason=malformed",
+      "gmail-message-refused message=health-report reason=malformed",
     ]);
   });
 
@@ -473,7 +478,7 @@ describe(serveGmailContract, () => {
     failing.shake(from(GMAIL_VIEW));
     await expect
       .poll(() => failing.logs)
-      .toStrictEqual(["Gmail's user styles were not read"]);
+      .toStrictEqual(["user-styles-read-failed"]);
     expect(failing.sent).toHaveLength(1);
   });
 });
@@ -555,7 +560,7 @@ describe("a compose window of its own", () => {
     expect(contract.notices).toStrictEqual([]);
     expect(contract.refused).toHaveLength(5);
     expect(contract.logs).toContain(
-      "Refused Gmail's sent notice from webContents 99 (main frame, https://mail.google.com)"
+      "gmail-message-refused message=sent-notice webContents=99 frame=main origin=mail.google.com"
     );
   });
 
@@ -621,7 +626,7 @@ describe("a compose window of its own", () => {
 
     expect(contract.notices).toStrictEqual([]);
     expect(contract.logs).toStrictEqual([
-      "Refused a malformed Gmail sent notice",
+      "gmail-message-refused message=sent-notice reason=malformed",
     ]);
   });
 

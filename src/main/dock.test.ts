@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import type { Settings } from "#core/settings.ts";
 import type { Dock } from "#platform/dock.ts";
 
@@ -55,7 +56,7 @@ const setup = (initial?: Settings) => {
       return Promise.resolve();
     },
     platform: "darwin",
-    log: () => false,
+    log: silentLog,
   });
   const icon = createDockIcon({
     dock,
@@ -63,7 +64,7 @@ const setup = (initial?: Settings) => {
     onShown: () => {
       calls.push("redraw");
     },
-    log: () => false,
+    log: silentLog,
   });
 
   return { calls, saved, settings, icon, settle };

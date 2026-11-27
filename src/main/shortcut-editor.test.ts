@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import { createInitialSettings } from "#core/settings.ts";
 
 import { COMMANDS } from "./commands.ts";
@@ -44,7 +45,7 @@ const setup = ({ pro = true } = {}) => {
     initial: createInitialSettings(),
     save: () => Promise.resolve(),
     platform: "darwin",
-    log: () => {},
+    log: silentLog,
     can: (capability) => pro || capability !== "shortcutCustomization",
   });
   const keymap = createKeymap({

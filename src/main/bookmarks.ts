@@ -2,6 +2,7 @@ import type { App } from "#core/apps.ts";
 import { findApp } from "#core/apps.ts";
 import { bookmarkablePage, bookmarks } from "#core/bookmarks.ts";
 import type { BookmarkedPage, PageNow } from "#core/bookmarks.ts";
+import type { Log } from "#core/log.ts";
 import { coversPage } from "#core/overlay.ts";
 import { inOwnWindow, selectedProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -22,7 +23,7 @@ export interface BookmarksDeps {
     profileId: string,
     page: BookmarkedPage
   ) => Promise<boolean | undefined>;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**
@@ -107,7 +108,7 @@ export const createBookmarks = ({
       const bookmarkable = pageOf(key);
 
       if (!bookmarkable) {
-        log("Refused to bookmark a tab whose page cannot be bookmarked");
+        log("bookmark-refused", { reason: "not-bookmarkable" });
 
         return;
       }

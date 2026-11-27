@@ -1,3 +1,4 @@
+import type { Log } from "#core/log.ts";
 import { coversPage } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
 import { tabKey } from "#core/tabs.ts";
@@ -66,6 +67,7 @@ export const wireMenu = ({
   canUpdate,
   checkForUpdates,
   keymap,
+  log,
 }: {
   /** Each command's key as this run hears it, which the menu follows. */
   keymap: Pick<KeymapService, "commands" | "onChange">;
@@ -100,6 +102,7 @@ export const wireMenu = ({
   settingsFocused: () => boolean;
   onSettingsFocusChange: (listener: () => void) => void;
   settingsPages: SettingsPages;
+  log: Log;
 }) => {
   /** The tab whose own window has focus, its page or its titlebar. */
   const focusedOwnWindow = (): TabKey | undefined => {
@@ -253,7 +256,7 @@ export const wireMenu = ({
         accelerator: devToolsAccelerator(platform),
       },
     }),
-    log: console.error,
+    log,
   });
 
   language.onChange(menu.refresh);

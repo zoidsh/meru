@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { recordInto } from "#core/log.fake.ts";
 import type { ReleasesSource } from "#platform/releases.ts";
 
 import { createReleases } from "./releases.ts";
@@ -44,7 +45,7 @@ const setup = (...answers: unknown[]) => {
   const logs: string[] = [];
 
   return {
-    releases: createReleases({ source, log: (line) => logs.push(line) }),
+    releases: createReleases({ source, log: recordInto(logs) }),
     asked,
     logs,
   };
@@ -87,7 +88,7 @@ describe(createReleases, () => {
     );
     await expect(releases.list()).resolves.toHaveLength(2);
     expect(asked.count).toBe(2);
-    expect(logs).toStrictEqual(["Meru's releases were not listed: offline"]);
+    expect(logs).toStrictEqual(["releases-list-failed error=offline"]);
   });
 
   it("drops an entry that is no release and fails an answer that is no list, logging none of it", async () => {
@@ -112,8 +113,6 @@ describe(createReleases, () => {
     await expect(failing.releases.list()).rejects.toThrow(
       "Meru's releases were not listed"
     );
-    expect(failing.logs).toStrictEqual([
-      "Meru's releases were not listed: the answer was no list",
-    ]);
+    expect(failing.logs).toStrictEqual(["releases-list-failed reason=no-list"]);
   });
 });

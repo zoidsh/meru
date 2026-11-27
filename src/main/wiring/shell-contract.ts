@@ -2,6 +2,7 @@ import type { ShellState } from "#contract/shell.ts";
 import type { App } from "#core/apps.ts";
 import type { Capability } from "#core/entitlement.ts";
 import { contentViewBounds } from "#core/layout.ts";
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import type { PickerCard } from "#core/screen-picker.ts";
 import { findTab, tabKey } from "#core/tabs.ts";
@@ -101,6 +102,7 @@ export const wireShellContract = ({
   language,
   can,
   keymap,
+  log,
 }: {
   platform: Platform;
   /** Each command's key, which the shell's hints and the tab menu show. */
@@ -145,6 +147,7 @@ export const wireShellContract = ({
   settings: Pick<SettingsStore, "get" | "onChange">;
   /** What this run may use; `onProChange` follows a change. */
   can: (capability: Capability) => boolean;
+  log: Log;
 }) => {
   let hints:
     | {
@@ -169,7 +172,7 @@ export const wireShellContract = ({
     resizeSplit: profiles.resizeSplit,
     areaSize: views.areaSize,
     preview: views.preview,
-    log: console.error,
+    log,
   });
   shell.window.onPageGone(paneResize.cancel);
 
@@ -193,13 +196,13 @@ export const wireShellContract = ({
     openSplit: openApp.openSplit,
     clipboard,
     systemBrowser,
-    log: console.error,
+    log,
   });
   const profileMenu = createProfileMenu({
     state: profiles.get,
     window: shell.window,
     profiles,
-    log: console.error,
+    log,
   });
 
   shellContract.start({
@@ -253,7 +256,7 @@ export const wireShellContract = ({
         focus,
         runCommand: menu.runCommand,
         doNotDisturbItems: menu.doNotDisturbItems,
-        log: console.error,
+        log,
       }),
       ...launchHandlers,
     },

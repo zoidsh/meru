@@ -7,6 +7,7 @@ import {
   SETTINGS_STATE,
 } from "#contract/settings.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import { windowBackground } from "#core/shell-grey.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
@@ -101,6 +102,7 @@ export const wireSettingsWindow = ({
   clipboard,
   updates,
   keymap,
+  log,
 }: {
   platform: Platform;
   /** Each command's key, which the Shortcuts page lists and changes. */
@@ -148,6 +150,7 @@ export const wireSettingsWindow = ({
   clipboard: Clipboard;
   /** Where updating stands, for the About page. */
   updates: Updates;
+  log: Log;
 }) => {
   const windows = createWindowFactory(contextMenus);
   const pages = createSettingsPages();
@@ -177,13 +180,13 @@ export const wireSettingsWindow = ({
       shortcutEditor.follow(window);
       createRendererRecovery({
         window,
-        name: "The Settings window's renderer",
+        renderer: "settings",
         now: Date.now,
         giveUp: window.destroy,
-        log: console.error,
+        log,
       });
     },
-    log: console.error,
+    log,
   });
 
   const picker = folderPicker();
@@ -204,7 +207,7 @@ export const wireSettingsWindow = ({
     },
     language,
     spellcheck,
-    log: console.error,
+    log,
   });
 
   // The system holds the answer, which a person changes outside Meru.
@@ -222,7 +225,7 @@ export const wireSettingsWindow = ({
     opener: pathOpener(),
     profiles,
     deleteBrowsingData,
-    log: console.error,
+    log,
   });
 
   const about = createAboutPage({
@@ -253,7 +256,7 @@ export const wireSettingsWindow = ({
 
   const releases = createReleases({
     source: releasesSource(),
-    log: console.error,
+    log,
   });
 
   profiles.onChange(() => {
@@ -304,9 +307,7 @@ export const wireSettingsWindow = ({
         const window = settingsWindow.current();
 
         if (window) {
-          await createRemoveProfile({ profiles, window, log: console.error })(
-            profileId
-          );
+          await createRemoveProfile({ profiles, window, log })(profileId);
         }
       },
     }),
@@ -347,7 +348,7 @@ export const wireSettingsWindow = ({
         shortcutEditor.onChange(listener);
       },
     },
-    log: console.error,
+    log,
   });
 
   return {

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { APPS } from "#core/apps.ts";
 import { bookmarks as bookmarksOf } from "#core/bookmarks.ts";
 import type { PageNow } from "#core/bookmarks.ts";
+import { silentLog } from "#core/log.fake.ts";
 import type { Overlay } from "#core/overlay.ts";
 import { gmailTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -49,7 +50,7 @@ const setup = (state: State = initial, overlay?: Overlay) => {
     profileName: (n) => `Profile ${n}`,
     clearSession: () => Promise.resolve(),
     now: () => 0,
-    log: () => false,
+    log: silentLog,
   });
   let open = overlay;
   const pages = new Map<string, PageNow>();
@@ -64,7 +65,7 @@ const setup = (state: State = initial, overlay?: Overlay) => {
     },
     page: (key) => pages.get(tabKey(key)) ?? { live: true, loading: false },
     toggle: profiles.toggleBookmark,
-    log: () => false,
+    log: silentLog,
   });
 
   return {

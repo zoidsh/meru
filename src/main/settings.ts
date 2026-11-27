@@ -6,6 +6,8 @@ import {
   settingWritable,
 } from "#core/entitled-settings.ts";
 import type { Capability } from "#core/entitlement.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import {
   OVERRIDABLE_SETTING_KEYS,
@@ -42,7 +44,7 @@ export const saveSettings = (file: TextFile, settings: Settings) =>
 export const openSettings = (deps: {
   file: TextFile;
   now: () => number;
-  log: (message: string) => void;
+  log: Log;
 }) =>
   openStore({
     ...deps,
@@ -57,7 +59,7 @@ export interface SettingsStoreDeps {
   save: (settings: Settings) => Promise<void>;
   /** Picks the defaults that differ by platform. */
   platform: Platform;
-  log: (message: string) => void;
+  log: Log;
   /**
    * Whether a profile's own values apply, the entitlement's
    * `can("profiles")`, asked again at each `recheck`; while not, each reads
@@ -78,9 +80,6 @@ const overridable = new Set<SettingKey>(OVERRIDABLE_SETTING_KEYS);
 
 const isOverridable = (key: SettingKey): key is OverridableSettingKey =>
   overridable.has(key);
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * What the person chose: an app value per setting, and a profile's own value
@@ -139,7 +138,7 @@ export const createSettingsStore = ({
         try {
           listener();
         } catch (error) {
-          log(`A listener of setting ${key} failed: ${describe(error)}`);
+          log("setting-listener-failed", { key, error: scrub.error(error) });
         }
       }
     }
@@ -190,6 +189,16 @@ export const createSettingsStore = ({
       settings = next;
 
       for (const changedKey of changed) {
+        // A text or a list may be a folder, a name or an address.
+        const value = readSetting(next, changedKey, platform);
+
+        log("setting-changed", {
+          key: changedKey,
+          value:
+            typeof value === "boolean" || typeof value === "number"
+              ? value
+              : undefined,
+        });
         tell([changedKey]);
       }
     } finally {
@@ -327,15 +336,15 @@ export const followRemovedProfiles = ({
 }: {
   settings: Pick<SettingsStore, "removeProfile">;
   profiles: Pick<Profiles, "onRemoved">;
-  log: (message: string) => void;
+  log: Log;
 }) => {
   const remove = async (profileId: string) => {
     try {
       await settings.removeProfile(profileId);
     } catch (error) {
-      log(
-        `The settings of removed profile ${profileId} were not deleted: ${describe(error)}`
-      );
+      log("removed-profile-settings-delete-failed", {
+        error: scrub.error(error),
+      });
     }
   };
 

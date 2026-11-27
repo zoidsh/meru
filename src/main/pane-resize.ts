@@ -1,5 +1,6 @@
 import { Mutex } from "es-toolkit";
 
+import type { Log } from "#core/log.ts";
 import type { PaneGapEnd, PaneTree, Split } from "#core/pane-tree.ts";
 import {
   evenedSplit,
@@ -20,7 +21,7 @@ export interface PaneResizeDeps {
   areaSize: () => Size;
   /** Places the panes as a tree until `undefined` places them as stored. */
   preview: (tree: PaneTree | undefined) => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /** A move of the gap where the panes of `before` and `after` part. */
@@ -93,7 +94,7 @@ export const createPaneResize = ({
       resizedSplit(profile, base, areaSize(), before, after, travel);
 
     if (!next) {
-      log(`Refused to resize the panes at ${before}|${after}`);
+      log("pane-resize-refused", { reason: "no-such-split" });
       gesture = undefined;
       preview(undefined);
 
@@ -127,7 +128,7 @@ export const createPaneResize = ({
     const shown = shownSplit(profile);
 
     if (!splitPanes(profile) || !shown) {
-      log(`Refused to even out the panes at ${before}|${after}`);
+      log("pane-even-out-refused", { reason: "no-such-split" });
 
       return;
     }

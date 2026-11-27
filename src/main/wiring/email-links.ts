@@ -1,3 +1,5 @@
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { incomingUrlsOf } from "#core/mailto.ts";
 import type { Platform } from "#core/platform.ts";
 import type { AppLifecycle } from "#platform/app.ts";
@@ -25,9 +27,13 @@ import { registerMailHandler } from "./test-build.ts";
  * arguments. They wait until `answerEmailLinks` is wired.
  */
 export const receiveEmailLinks = (
-  lifecycle: Pick<AppLifecycle, "onOpenUrl" | "onSecondInstance" | "launchArgv">
+  lifecycle: Pick<
+    AppLifecycle,
+    "onOpenUrl" | "onSecondInstance" | "launchArgv"
+  >,
+  log: Log
 ) => {
-  const incoming = createIncomingLinks({ log: console.error });
+  const incoming = createIncomingLinks({ log });
 
   lifecycle.onOpenUrl(incoming.receive);
 
@@ -50,14 +56,13 @@ export const receiveEmailLinks = (
  */
 export const registerAsMailApp = async (
   platform: Platform,
-  userDataPath: string
+  userDataPath: string,
+  log: Log
 ) => {
   try {
     await registerMailHandler(platform, userDataPath);
   } catch (error) {
-    console.error(
-      `Meru was not registered for email links: ${error instanceof Error ? error.message : String(error)}`
-    );
+    log("mail-app-register-failed", { error: scrub.error(error) });
   }
 };
 
@@ -73,6 +78,7 @@ export const wireComposeWindows = ({
   prepareSession,
   gmailHome,
   preload,
+  log,
 }: {
   background: boolean;
   profiles: Pick<Profiles, "get" | "onChange">;
@@ -81,6 +87,7 @@ export const wireComposeWindows = ({
   prepareSession: (partition: string) => void;
   gmailHome: string;
   preload: string | undefined;
+  log: Log;
 }) => {
   const composeWindows = createComposeWindows({
     openWindow: openSessionWindow,
@@ -91,7 +98,7 @@ export const wireComposeWindows = ({
     gmailHome,
     ...(preload !== undefined && { preload }),
     background,
-    log: console.error,
+    log,
   });
 
   profiles.onChange(composeWindows.follow);
@@ -113,6 +120,7 @@ export const answerEmailLinks = ({
   overlays,
   composeWindows,
   question,
+  log,
 }: {
   incoming: ReturnType<typeof receiveEmailLinks>;
   background: boolean;
@@ -122,6 +130,7 @@ export const answerEmailLinks = ({
   overlays: Pick<Overlays, "open" | "hasView" | "onChange">;
   composeWindows: Pick<ReturnType<typeof wireComposeWindows>, "open">;
   question: Pick<ProfileQuestion, "ask">;
+  log: Log;
 }) => {
   const answer = answerIncomingLink({
     can: entitlement.can,
@@ -136,7 +145,7 @@ export const answerEmailLinks = ({
       revealWindow(shell.window, background);
       overlays.open({ kind: "toast", message: "email-links-pro" });
     },
-    log: console.error,
+    log,
   });
 
   // Once the shell's overlay document is there, so the question and the

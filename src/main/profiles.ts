@@ -11,6 +11,8 @@ import {
 } from "#core/entitled-profiles.ts";
 import type { StateGrants } from "#core/entitled-profiles.ts";
 import type { Capability } from "#core/entitlement.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { PaneDirection, Split } from "#core/pane-tree.ts";
 import { firstUnusedColor } from "#core/profile-color.ts";
 import type { ProfileColorName } from "#core/profile-color.ts";
@@ -22,6 +24,7 @@ import {
 import type { SavedSearchRefusal } from "#core/saved-searches.ts";
 import {
   addProfile,
+  isAsleep,
   forgetEndedDoNotDisturb,
   forgetProfilesToClear,
   knownTabs,
@@ -75,7 +78,7 @@ export interface ProfilesDeps {
   clearSession: (partition: string) => Promise<void>;
   /** Milliseconds since the epoch, by which a write drops an ended Do Not Disturb. */
   now: () => number;
-  log: (message: string) => void;
+  log: Log;
   /**
    * Whether this run may use more than one profile, the entitlement's
    * `can("profiles")`, asked again at each `recheck`; every profile when
@@ -89,9 +92,6 @@ export interface ProfilesDeps {
    */
   can?: (capability: Capability) => boolean;
 }
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * The profiles, which main alone holds. A change is saved before it is
@@ -127,7 +127,7 @@ export const createProfiles = ({
       try {
         listener(state);
       } catch (error) {
-        log(`A profiles listener failed: ${describe(error)}`);
+        log("profiles-listener-failed", { error: scrub.error(error) });
       }
     }
   };
@@ -161,7 +161,9 @@ export const createProfiles = ({
         try {
           listener(profileId);
         } catch (error) {
-          log(`A profile removal listener failed: ${describe(error)}`);
+          log("profile-removal-listener-failed", {
+            error: scrub.error(error),
+          });
         }
       }
     }
@@ -178,9 +180,7 @@ export const createProfiles = ({
       const result = results[index];
 
       if (result?.status === "rejected") {
-        log(
-          `The data of removed profile ${profileId} in ${profilePartition(profileId)} was not deleted, and will be tried again at the next launch: ${describe(result.reason)}`
-        );
+        log("profile-data-clear-failed", { error: scrub.error(result.reason) });
       }
 
       return result?.status === "fulfilled";
@@ -189,9 +189,10 @@ export const createProfiles = ({
     try {
       await commit(forgetProfilesToClear(state, cleared));
     } catch (error) {
-      log(
-        `Deleted the data of ${cleared.join(", ")}, but the list of profiles to clear was not saved: ${describe(error)}`
-      );
+      log("profiles-to-clear-save-failed", {
+        cleared: cleared.length,
+        error: scrub.error(error),
+      });
     }
   };
 
@@ -209,17 +210,13 @@ export const createProfiles = ({
     );
 
     for (const profileId of stillListed) {
-      log(
-        `Kept the data of profile ${profileId}, which was on the list to clear but is still listed`
-      );
+      log("profile-data-kept", { profile: scrub.profile(profileId) });
     }
 
     if (stillListed.length > 0) {
       await commit(forgetProfilesToClear(state, stillListed)).catch(
         (error: unknown) => {
-          log(
-            `The list of profiles to clear was not saved: ${describe(error)}`
-          );
+          log("profiles-to-clear-save-failed", { error: scrub.error(error) });
         }
       );
     }
@@ -231,12 +228,12 @@ export const createProfiles = ({
    * Whether the run holds `grant`; a change that needs it is refused into
    * the log, whichever window or key asked.
    */
-  const allows = (grant: keyof StateGrants, what: string) => {
+  const allows = (grant: keyof StateGrants) => {
     if (grants[grant]) {
       return true;
     }
 
-    log(`Refused to ${what}, which needs Meru Pro`);
+    log("profile-change-refused", { needs: grant });
 
     return false;
   };
@@ -258,18 +255,21 @@ export const createProfiles = ({
     }
   };
 
+  const asleep = (profileId: string) => {
+    const profile = state.profiles.find((one) => one.id === profileId);
+
+    return profile !== undefined && isAsleep(state, profile);
+  };
+
   /** A change that needs `grant`, refused as one that changed nothing without it. */
   const gated =
     <Args extends unknown[]>(
       grant: keyof StateGrants,
-      what: string,
       change: (current: State, ...args: Args) => State | undefined
     ) =>
     (...args: Args) =>
       exclusive(() =>
-        allows(grant, what)
-          ? commit(change(state, ...args))
-          : Promise.resolve(false)
+        allows(grant) ? commit(change(state, ...args)) : Promise.resolve(false)
       );
 
   return {
@@ -305,10 +305,27 @@ export const createProfiles = ({
     },
     /** Selects the profile, waking it if it sleeps. */
     select: (profileId: string) =>
-      exclusive(() => commit(selectProfile(state, profileId))),
+      exclusive(async () => {
+        const wakes = asleep(profileId);
+        const committed = await commit(selectProfile(state, profileId));
+
+        if (committed && wakes) {
+          log("profile-woken", { profile: scrub.profile(profileId) });
+        }
+
+        return committed;
+      }),
     /** Puts the profile to sleep, selecting the next awake one if it was selected. */
     sleep: (profileId: string) =>
-      exclusive(() => commit(sleepProfile(state, profileId))),
+      exclusive(async () => {
+        const committed = await commit(sleepProfile(state, profileId));
+
+        if (committed) {
+          log("profile-slept", { profile: scrub.profile(profileId) });
+        }
+
+        return committed;
+      }),
     /**
      * Adds a profile, selected, with the first colour no profile has; gives
      * its id, or nothing when it could not be saved or this run may use one
@@ -325,9 +342,16 @@ export const createProfiles = ({
           color: firstUnusedColor(state),
         };
 
-        return (await commit(addProfile(state, profile)))
-          ? profile.id
-          : undefined;
+        if (!(await commit(addProfile(state, profile)))) {
+          return;
+        }
+
+        log("profile-added", {
+          profile: scrub.profile(profile.id),
+          profiles: state.profiles.length,
+        });
+
+        return profile.id;
       }),
     /** Nothing when it is not listed, the index is outside the row, or it is there. */
     move: (profileId: string, toIndex: number) =>
@@ -365,8 +389,8 @@ export const createProfiles = ({
           knownTabs(profile).some((tab) => tab.app === app.id);
 
         if (
-          (!opensNone && !allows("workspaceApps", "open a tab")) ||
-          (split !== undefined && !allows("splitView", "split a tab"))
+          (!opensNone && !allows("workspaceApps")) ||
+          (split !== undefined && !allows("splitView"))
         ) {
           return undefined;
         }
@@ -384,93 +408,67 @@ export const createProfiles = ({
         return opened && (await commit(opened.state)) ? opened : undefined;
       }),
     selectTab: (key: TabKey) => exclusive(() => commit(selectTab(state, key))),
-    closeTab: gated("workspaceApps", "close a tab", (current, key: TabKey) =>
+    closeTab: gated("workspaceApps", (current, key: TabKey) =>
       closeTab(current, key)
     ),
     splitTab: gated(
       "splitView",
-      "split a tab",
       (current, key: TabKey, direction: PaneDirection) =>
         splitTab(current, key, direction)
     ),
-    separateTab: gated(
-      "splitView",
-      "take a tab out of its split",
-      (current, key: TabKey) => separateTab(current, key)
+    separateTab: gated("splitView", (current, key: TabKey) =>
+      separateTab(current, key)
     ),
-    moveToOwnWindow: gated(
-      "workspaceApps",
-      "move a tab to a window of its own",
-      (current, key: TabKey) => moveToOwnWindow(current, key)
+    moveToOwnWindow: gated("workspaceApps", (current, key: TabKey) =>
+      moveToOwnWindow(current, key)
     ),
     moveToMainWindow: gated(
       "workspaceApps",
-      "move a tab to the main window",
       (current, key: TabKey, select: boolean) =>
         moveToMainWindow(current, key, select)
     ),
     setOwnWindowBounds: gated(
       "workspaceApps",
-      "place a tab's own window",
       (current, key: TabKey, bounds: Rectangle) =>
         setOwnWindowBounds(current, key, bounds)
     ),
-    maximizePane: gated(
-      "splitView",
-      "maximize a pane",
-      (current, key: TabKey, on: boolean) => maximizePane(current, key, on)
+    maximizePane: gated("splitView", (current, key: TabKey, on: boolean) =>
+      maximizePane(current, key, on)
     ),
     resizeSplit: gated(
       "splitView",
-      "resize a split",
       (current, profileId: string, split: Split) =>
         resizeSplit(current, profileId, split)
     ),
-    moveTab: gated(
-      "workspaceApps",
-      "move a tab",
-      (current, key: TabKey, before?: string) => moveTab(current, key, before)
+    moveTab: gated("workspaceApps", (current, key: TabKey, before?: string) =>
+      moveTab(current, key, before)
     ),
-    moveInBox: gated(
-      "splitView",
-      "move a tab in its split",
-      (current, key: TabKey, before?: string) => moveInBox(current, key, before)
+    moveInBox: gated("splitView", (current, key: TabKey, before?: string) =>
+      moveInBox(current, key, before)
     ),
-    splitOntoTab: gated(
-      "splitView",
-      "split a tab onto another",
-      (current, key: TabKey, target: string) =>
-        splitOntoTab(current, key, target)
+    splitOntoTab: gated("splitView", (current, key: TabKey, target: string) =>
+      splitOntoTab(current, key, target)
     ),
     dropInView: gated(
       "splitView",
-      "drop a tab into the page",
       (current, key: TabKey, size: Size, point: { x: number; y: number }) =>
         dropInView(current, key, size, point)
     ),
-    closeOtherTabs: gated(
-      "workspaceApps",
-      "close other tabs",
-      (current, key: TabKey) => closeOtherTabs(current, key)
+    closeOtherTabs: gated("workspaceApps", (current, key: TabKey) =>
+      closeOtherTabs(current, key)
     ),
-    closeTabsBelow: gated(
-      "workspaceApps",
-      "close the tabs below a tab",
-      (current, key: TabKey) => closeTabsBelow(current, key)
+    closeTabsBelow: gated("workspaceApps", (current, key: TabKey) =>
+      closeTabsBelow(current, key)
     ),
-    setPinned: gated(
-      "workspaceApps",
-      "pin or unpin a tab",
-      (current, key: TabKey, pinned: boolean) => setPinned(current, key, pinned)
+    setPinned: gated("workspaceApps", (current, key: TabKey, pinned: boolean) =>
+      setPinned(current, key, pinned)
     ),
     setOpenAtLaunch: gated(
       "workspaceApps",
-      "set a tab to open at launch",
       (current, key: TabKey, on: boolean) => setOpenAtLaunch(current, key, on)
     ),
     setSleepWhenIdle: gated(
       "workspaceApps",
-      "mark a tab to sleep when idle",
       (current, key: TabKey, on: boolean) => setSleepWhenIdle(current, key, on)
     ),
     updatePages: (updates: PageUpdate[]) =>
@@ -483,9 +481,14 @@ export const createProfiles = ({
      */
     remove: (profileId: string) =>
       exclusive(async () => {
+        const place =
+          state.profiles.findIndex((one) => one.id === profileId) + 1;
+
         if (!(await commit(removeProfile(state, profileId)))) {
           return false;
         }
+
+        log("profile-removed", { place, profiles: state.profiles.length });
 
         await settleClears([profileId]);
 
@@ -537,7 +540,7 @@ export const createProfiles = ({
      */
     toggleBookmark: (profileId: string, page: BookmarkedPage) =>
       exclusive(async () => {
-        if (!allows("bookmarks", "bookmark a page")) {
+        if (!allows("bookmarks")) {
           return;
         }
 
@@ -549,7 +552,6 @@ export const createProfiles = ({
       }),
     removeBookmark: gated(
       "bookmarks",
-      "remove a bookmark",
       (current, profileId: string, id: string) =>
         removeBookmark(current, profileId, id)
     ),

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { FeedOutcome } from "#core/feed.ts";
+import { recordInto } from "#core/log.fake.ts";
 
 import {
   FETCH_TIMEOUT,
@@ -60,7 +61,7 @@ const setup = () => {
     },
     inboxLabel: (profileId) => labels.get(profileId),
     isOnline: () => online,
-    log: (message) => logs.push(message),
+    log: recordInto(logs, { profiles: () => [{ id: "a", tabs: [] }] }),
   });
   const changes = vi.fn<() => void>();
 
@@ -241,9 +242,7 @@ describe(createMailPoller, () => {
 
     expect(poller.mail("a")).toStrictEqual({ status: "ok", unreadCount: 5 });
     expect(heard).toStrictEqual([undefined]);
-    expect(logs).toContain(
-      "Mail of profile a: its inbox's label has no feed, so the whole inbox was read"
-    );
+    expect(logs).toContain('mail-label-unfed profile="profile 1"');
 
     await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
 
@@ -677,7 +676,9 @@ describe(createMailPoller, () => {
     poller.reconcile(["a"], []);
     await answer("a", feed(2));
 
-    expect(logs).toStrictEqual(["Mail of profile a: ok, 2 unread"]);
+    expect(logs).toStrictEqual([
+      'mail-status-changed profile="profile 1" status=ok unread=2',
+    ]);
     expect(logs.join("\n")).not.toMatch(/Hello|Ada|example\.com/u);
   });
 });

@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { recordInto } from "#core/log.fake.ts";
 import { newProfile } from "#core/state.ts";
 import { fakeTextFile } from "#platform/text-file.fake.ts";
 import type { TextFile } from "#platform/text-file.ts";
@@ -28,7 +29,7 @@ const load = (file: TextFile) => {
     file,
     newId: () => "new-id",
     now: () => 1_763_290_000_000,
-    log: (message) => logs.push(message),
+    log: recordInto(logs),
   }).then(async (opened) => {
     await opened.settle();
 
@@ -207,9 +208,7 @@ describe(openState, () => {
     await expect(state).resolves.toMatchObject({
       selectedProfileId: "new-id",
     });
-    expect(logs).toStrictEqual([
-      "The new first profile was not saved: Error: disk full",
-    ]);
+    expect(logs).toStrictEqual(['first-profile-save-failed error="disk full"']);
   });
 
   it("stops startup on a newer version's file and leaves it alone", async () => {

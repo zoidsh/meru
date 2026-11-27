@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { DOWNLOAD_LIFETIME, downloads as historyOf } from "#core/downloads.ts";
 import type { DownloadEntry } from "#core/downloads.ts";
+import { silentLog } from "#core/log.fake.ts";
 import type { Platform } from "#core/platform.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -235,9 +236,8 @@ const setup = ({
         repeating.delete(run);
       };
     },
-    log: (message) => {
-      calls.push(`log ${message}`);
-    },
+    // What it logs is kept apart from the calls it makes.
+    log: silentLog,
   });
 
   /** Lets every save and file check that is under way finish. */

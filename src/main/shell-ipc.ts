@@ -6,6 +6,7 @@ import {
   SHELL_STATE,
 } from "#contract/shell.ts";
 import type { ShellState } from "#contract/shell.ts";
+import type { Log } from "#core/log.ts";
 import type { Ipc } from "#platform/ipc.ts";
 
 import { RefusedCallError, serveContract } from "./contract-ipc.ts";
@@ -30,7 +31,7 @@ export interface ShellIpcDeps {
   state: ContractStateSource<Partial<ShellState>>;
   /** Where the shell's page is served from: `meru-app://shell`, or the dev server. */
   shellOrigin: string;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /** Serves the shell contract to the shell's main frame alone. */

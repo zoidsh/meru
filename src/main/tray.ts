@@ -1,6 +1,8 @@
 import { t } from "@lingui/core/macro";
 import { isEqual } from "es-toolkit";
 
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import type { SettingKey, SettingValue } from "#core/settings.ts";
 import { enabledProfiles } from "#core/state.ts";
@@ -41,7 +43,7 @@ export interface TrayDeps {
   /** Selects the profile and its Gmail tab. */
   jumpTo: (profileId: string) => Promise<void>;
   quit: () => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
 const quitLabel = (platform: Platform, productName: string) => {
@@ -108,7 +110,10 @@ export const createTray = ({
       try {
         await jumpTo(profileId);
       } catch (error) {
-        log(`The tray's profile was not selected: ${String(error)}`);
+        log("profile-select-failed", {
+          from: "tray",
+          error: scrub.error(error),
+        });
       }
     }
 

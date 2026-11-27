@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
 
+import { recordInto } from "#core/log.fake.ts";
+
 import {
   SHELL_RELOAD_LIMIT,
   SHELL_RELOAD_WINDOW_MS,
   createShellRecovery,
 } from "./shell-recovery.ts";
 
+type Reason = Electron.RenderProcessGoneDetails["reason"];
+
 const recover = () => {
   const calls: string[] = [];
   const dialogs: string[] = [];
-  let gone: ((reason: string) => void) | undefined;
+  const logs: string[] = [];
+  let gone: ((reason: Reason) => void) | undefined;
   let time = 0;
 
   createShellRecovery({
@@ -29,13 +34,14 @@ const recover = () => {
     quit: () => {
       calls.push("quit");
     },
-    log: () => false,
+    log: recordInto(logs),
   });
 
   return {
     calls,
     dialogs,
-    die: (reason = "crashed") => {
+    logs,
+    die: (reason: Reason = "crashed") => {
       gone?.(reason);
     },
     wait: (ms: number) => {
@@ -53,6 +59,10 @@ describe(createShellRecovery, () => {
 
     expect(shell.calls).toStrictEqual(["reload", "reload"]);
     expect(shell.dialogs).toStrictEqual([]);
+    expect(shell.logs).toStrictEqual([
+      "renderer-gone renderer=shell reason=crashed next=reloaded",
+      "renderer-gone renderer=shell reason=oom next=reloaded",
+    ]);
   });
 
   it("leaves a clean exit alone", () => {

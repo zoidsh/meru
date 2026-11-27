@@ -1,6 +1,8 @@
 import { delay } from "es-toolkit";
 
 import { canHideDock, dockShown } from "#core/dock.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import type { Dock } from "#platform/dock.ts";
 
 import type { SettingsStore } from "./settings.ts";
@@ -17,7 +19,7 @@ export interface DockIconDeps {
   settings: Pick<SettingsStore, "get" | "update" | "onChange">;
   /** After the icon comes back, whose badge the Dock may not have kept. */
   onShown: () => void;
-  log: (message: string) => void;
+  log: Log;
 }
 
 /**
@@ -51,7 +53,7 @@ export const createDockIcon = ({
         dock.hide();
       }
     } catch (error) {
-      log(`Could not show the Dock icon: ${String(error)}`);
+      log("dock-icon-show-failed", { error: scrub.error(error) });
     }
   };
 
@@ -75,7 +77,7 @@ export const createDockIcon = ({
     try {
       await settings.update("dockIcon", () => true);
     } catch (error) {
-      log(`Could not turn the Dock icon back on: ${String(error)}`);
+      log("dock-icon-restore-failed", { error: scrub.error(error) });
     }
   };
 

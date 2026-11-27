@@ -1,3 +1,5 @@
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import {
   actionOutcome,
   actionRequest,
@@ -23,7 +25,7 @@ export interface MailActionsDeps {
   poke: (profileId: string) => void;
   /** Has the profile's open Gmail page show what an action changed. */
   catchUp: (profileId: string) => void;
-  log: (message: string) => void;
+  log: Log;
   now?: () => number;
 }
 
@@ -113,9 +115,13 @@ export const createMailActions = ({
         poke(profileId);
         catchUp(profileId);
       } else {
-        log(
-          `Mail action ${action} of profile ${profileId}: ${outcome.kind}${outcome.kind === "failed" ? ` (${outcome.reason})` : ""}`
-        );
+        log("mail-action-ended", {
+          action,
+          profile: scrub.profile(profileId),
+          outcome: outcome.kind,
+          reason:
+            outcome.kind === "failed" ? scrub.error(outcome.reason) : undefined,
+        });
       }
 
       return outcome;

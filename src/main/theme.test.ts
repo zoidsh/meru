@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { silentLog } from "#core/log.fake.ts";
 import type { Settings, ThemeChoice } from "#core/settings.ts";
 
 import { createSettingsStore } from "./settings.ts";
@@ -11,7 +12,7 @@ const setup = (initial: Settings) => {
     initial,
     save: () => Promise.resolve(),
     platform: "darwin",
-    log: () => false,
+    log: silentLog,
   });
 
   followThemeSetting({

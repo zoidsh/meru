@@ -4,6 +4,8 @@ import {
   rotatedAt,
 } from "#core/keep-alive.ts";
 import type { KeepAliveTiming } from "#core/keep-alive.ts";
+import { scrub } from "#core/log.ts";
+import type { Log } from "#core/log.ts";
 import { profilePartition } from "#core/state.ts";
 import type { HiddenPage, KeepAlivePages } from "#platform/keep-alive.ts";
 
@@ -20,11 +22,8 @@ export interface KeepAliveDeps {
   cookie: string;
   timing: KeepAliveTiming;
   now: () => number;
-  log: (message: string) => void;
+  log: Log;
 }
-
-const describe = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 /**
  * Keeps each profile's Google sign-in from going stale while nothing of it is
@@ -90,7 +89,7 @@ export const createKeepAlive = ({
 
     const partition = profilePartition(profileId);
 
-    log(`Keeping the sign-in of profile ${profileId} alive`);
+    log("keep-alive-started", { profile: scrub.profile(profileId) });
 
     try {
       prepareSession(partition);
@@ -98,14 +97,17 @@ export const createKeepAlive = ({
         profileId,
         page: pages.open(partition, url, log),
         timeout: setTimeout(() => {
-          log(`The sign-in of profile ${profileId} did not rotate`);
+          log("keep-alive-timed-out", { profile: scrub.profile(profileId) });
           failed.set(profileId, now());
           finish();
           check();
         }, timing.timeout),
       };
     } catch (error) {
-      log(`No keep-alive opened for profile ${profileId}: ${describe(error)}`);
+      log("keep-alive-failed", {
+        profile: scrub.profile(profileId),
+        error: scrub.error(error),
+      });
       failed.set(profileId, now());
     }
   };
@@ -122,9 +124,10 @@ export const createKeepAlive = ({
         noteRotation(profileId, at);
       }
     } catch (error) {
-      log(
-        `When profile ${profileId}'s sign-in rotated was not read: ${describe(error)}`
-      );
+      log("keep-alive-read-failed", {
+        profile: scrub.profile(profileId),
+        error: scrub.error(error),
+      });
     }
   };
 
