@@ -191,20 +191,23 @@ export const createPageMenu = ({
   downloads,
   log,
 }: PageMenuDeps) => {
-  const act = async (
-    item: PageMenuItemId,
+  const saveImage = (click: PageClick, target: PageMenuTarget) => {
+    const url = click.image?.url ?? "";
+
+    if (url === "") {
+      // Chromium gives no address for an image past its longest URL.
+      log("page-image-unsaved", { reason: "no-address" });
+    } else {
+      downloads.saveAs(url, target.download);
+    }
+  };
+
+  const actFixed = async (
+    fixed: FixedId,
     click: PageClick,
     target: PageMenuTarget
   ) => {
-    const suggestion = suggestionOf(click, item);
-
-    if (suggestion !== undefined) {
-      target.replaceMisspelling(suggestion);
-
-      return;
-    }
-
-    switch (item) {
+    switch (fixed) {
       case "learnSpelling": {
         target.learnSpelling(click.misspelledWord);
         break;
@@ -222,19 +225,11 @@ export const createPageMenu = ({
       case "paste":
       case "pasteAndMatchStyle":
       case "selectAll": {
-        target.edit(item);
+        target.edit(fixed);
         break;
       }
       case "saveImageAs": {
-        const url = click.image?.url ?? "";
-
-        if (url === "") {
-          // Chromium gives no address for an image past its longest URL.
-          log("page-image-unsaved", { reason: "no-address" });
-        } else {
-          downloads.saveAs(url, target.download);
-        }
-
+        saveImage(click, target);
         break;
       }
       case "copyImage": {
@@ -245,16 +240,39 @@ export const createPageMenu = ({
       case "copyEmailAddress":
       case "copyLinkAddress":
       case "copyUrl": {
-        await clipboard.writeText(copied(item, click, target));
+        await clipboard.writeText(copied(fixed, click, target));
         break;
       }
       case "openInBrowser": {
         await browser.open(target.url());
         break;
       }
-      default: {
+      case "inspectElement": {
         target.inspectElement();
+        break;
       }
+      // Disabled, so never chosen.
+      case "noGuesses": {
+        break;
+      }
+      default: {
+        fixed satisfies never;
+      }
+    }
+  };
+
+  const act = async (
+    item: PageMenuItemId,
+    click: PageClick,
+    target: PageMenuTarget
+  ) => {
+    const suggestion = suggestionOf(click, item);
+
+    if (suggestion === undefined) {
+      // Every id but a suggestion's is a fixed one.
+      await actFixed(item as FixedId, click, target);
+    } else {
+      target.replaceMisspelling(suggestion);
     }
   };
 
