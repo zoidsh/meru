@@ -392,7 +392,12 @@ test("a license the server no longer takes ends Pro at the next launch, then rea
   const mailto = supportMailto("Meru Pro license");
 
   // Signed out, the selected profile's Gmail can compose nothing, so the link
-  // goes to the system's mail app, which the stub keeps from opening.
+  // goes to the system's mail app, which the stub keeps from opening. Main
+  // knows it is signed out only once the first mail check ends, which on
+  // Windows can be seconds after Settings shows.
+  await openSection(page, "Profiles");
+  await expect(main(page).getByText("Not signed in")).toBeVisible();
+  await openSection(page, "Meru Pro");
   await stubSystemBrowser(first);
   await support.click();
   await expect.poll(() => readOpenedExternally(first)).toStrictEqual([mailto]);
