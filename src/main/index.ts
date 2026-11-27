@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import path from "node:path";
 
-import { pick } from "es-toolkit";
+import { once, pick } from "es-toolkit";
 
 import { SHELL_ENTITLEMENT_CALL_NAMES } from "#contract/entitlement-channels.ts";
 import { entitledApps } from "#core/apps.ts";
@@ -163,9 +163,12 @@ const start = async () => {
     arch: process.arch,
     electron: process.versions.electron,
   });
-  lifecycle.onBeforeQuit(() => {
-    log("app-quitting");
-  });
+  // Once, though a held quit runs the quit's listeners again.
+  lifecycle.onBeforeQuit(
+    once(() => {
+      log("app-quitting");
+    })
+  );
 
   // Before `ready`, so the link that launches Meru is heard.
   const emailLinks = receiveEmailLinks(lifecycle, log);

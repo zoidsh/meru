@@ -355,7 +355,7 @@ export const createTabViews = ({
     try {
       await view.loadURL(url);
     } catch (error) {
-      log("tab-load-failed", {
+      log("tab-load-rejected", {
         tab: scrub.tab(key),
         error: scrub.error(error),
       });
