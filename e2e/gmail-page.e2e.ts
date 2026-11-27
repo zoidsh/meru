@@ -320,7 +320,7 @@ const readSent = async (app: ElectronApplication) => {
   return sent.map(({ notice }) => notice);
 };
 
-test("keeps Gmail's pop-out inert without Close compose window after sending: its sent notice reaches main only once the setting is on", async ({
+test("Gmail's compose pop-out tells main of its sent notice only while Close compose window after sending is on, and closes once the notice has gone", async ({
   app,
   standIn,
 }) => {
@@ -335,7 +335,6 @@ test("keeps Gmail's pop-out inert without Close compose window after sending: it
   ).toBeVisible();
   await showSentNotice(popout, true);
   await showSentNotice(popout, false);
-  await showSentNotice(popout, true);
   await delay(500);
 
   expect(await readSent(app)).toStrictEqual([]);
@@ -345,8 +344,16 @@ test("keeps Gmail's pop-out inert without Close compose window after sending: it
 
   expect(health.every(({ tabId }) => tabId === "gmail")).toBeTruthy();
 
-  // Turned on, the pop-out tells of the notice it shows, and closes once it
-  // has gone; the tab's page is never told to watch, so its own tells nothing.
+  // Turned on and off again before any send, the pop-out stops telling.
+  await setSetting(app, "closeComposeWindowAfterSend", true);
+  await setSetting(app, "closeComposeWindowAfterSend", false);
+  await showSentNotice(popout, true);
+  await delay(500);
+
+  expect(await readSent(app)).toStrictEqual([]);
+
+  // On, it tells of the notice it shows, and closes once it has gone; the
+  // tab's page is never told to watch, so its own tells nothing.
   await setSetting(app, "closeComposeWindowAfterSend", true);
   await expect.poll(() => readSent(app)).toStrictEqual(["shown"]);
   await showSentNotice(view, true);
@@ -356,6 +363,41 @@ test("keeps Gmail's pop-out inert without Close compose window after sending: it
   await delay(500);
 
   expect(await readSent(app)).toHaveLength(2);
+});
+
+test("a Gmail window opened for a conversation is no compose window: a reply sent there tells nothing and the window stays", async ({
+  app,
+  standIn,
+}) => {
+  const view = await findPage(app, standIn.url);
+
+  await setSetting(app, "closeComposeWindowAfterSend", true);
+  await view
+    .getByRole("button", { name: "Open conversation in new window" })
+    .click();
+
+  const conversation = await findPage(
+    app,
+    `${standIn.url}${POPOUT_PATH.slice(1)}?ver=1&search=inbox`
+  );
+
+  await expect(
+    conversation.getByRole("heading", { name: POPOUT_TITLE })
+  ).toBeVisible();
+  await showSentNotice(conversation, true);
+  await delay(500);
+  await showSentNotice(conversation, false);
+  await delay(1000);
+
+  expect(await readSent(app)).toStrictEqual([]);
+  expect(conversation.isClosed()).toBeFalsy();
+  expect(
+    await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()
+        .filter((window) => window.webContents.getURL().includes("popout"))
+        .map((window) => window.isVisible())
+    )
+  ).toStrictEqual([true]);
 });
 
 const THREAD_FEATURES = [

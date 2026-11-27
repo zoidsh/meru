@@ -2,6 +2,7 @@ import { isSentNotice } from "#contract/gmail-channels.ts";
 import type { SentNotice } from "#contract/gmail-channels.ts";
 import { GMAIL_CHANNELS, GMAIL_HEALTH_SCHEMA } from "#contract/gmail.ts";
 import type { GmailFeatures, GmailHealth } from "#contract/gmail.ts";
+import { opensCompose } from "#core/compose-window.ts";
 import { isGmailHash } from "#core/gmail-hash.ts";
 import { HOOK_NAMES } from "#core/gmail-hooks.ts";
 import { tabKey } from "#core/tabs.ts";
@@ -22,8 +23,8 @@ export interface GmailPageDeps {
   features: () => GmailFeatures;
   /** The person's own CSS for the page as it is now, empty for none. */
   userStyles: () => Promise<string>;
-  /** Whether a compose window of its own watches for Gmail's sent notice now. */
-  watchSent: () => boolean;
+  /** Whether the compose window of its own watches for Gmail's sent notice now. */
+  watchSent: (webContentsId: number) => boolean;
   /** Told of each sent notice a watching window's page reports. */
   onSent?: (webContentsId: number, notice: SentNotice) => void;
   /** Told of each report that differs from the tab's last. */
@@ -71,8 +72,11 @@ export const serveGmailContract = ({
   const pages = new Map<number, TabKey>();
   /** The last report heard from each, as it was logged. */
   const reports = new Map<number, string>();
-  /** Each window that shook hands on Gmail's origin, by webContents. */
-  const windows = new Set<number>();
+  /**
+   * Each compose window that shook hands on Gmail's origin, by webContents,
+   * with whether it was last told to watch.
+   */
+  const windows = new Map<number, boolean>();
 
   const gmailTabOf = (webContentsId: number): TabKey | undefined => {
     const identity = senders.identify(webContentsId);
@@ -93,6 +97,20 @@ export const serveGmailContract = ({
 
   const isWindow = (webContentsId: number) =>
     senders.identify(webContentsId)?.role === "child-window";
+
+  /**
+   * A window opened for writing an email, by the URL it was opened for: a
+   * window of a conversation is no compose window, whatever it sends.
+   */
+  const isComposeWindow = (webContentsId: number) => {
+    const identity = senders.identify(webContentsId);
+
+    return (
+      identity?.role === "child-window" &&
+      identity.openedAt !== undefined &&
+      opensCompose(identity.openedAt)
+    );
+  };
 
   const onGmail = (sender: IpcSender) =>
     sender.isMainFrame && sender.origin === gmailOrigin;
@@ -139,15 +157,22 @@ export const serveGmailContract = ({
     }
   };
 
-  const sendWatch = (webContentsId: number, watch: boolean) => {
-    ipc.send(webContentsId, GMAIL_CHANNELS.watchSent, watch, {
-      mainFrameOrigin: gmailOrigin,
-    });
+  /** Tells the window to watch or stop, unless that is what it does. */
+  const sendWatch = (webContentsId: number) => {
+    const watch = watchSent(webContentsId);
+
+    if (windows.get(webContentsId) !== watch) {
+      windows.set(webContentsId, watch);
+      ipc.send(webContentsId, GMAIL_CHANNELS.watchSent, watch, {
+        mainFrameOrigin: gmailOrigin,
+      });
+    }
   };
 
   /**
-   * A window's page on Gmail's origin is told to watch only while the
-   * setting holds it; one elsewhere, as sign-in, is ordinary and forgotten.
+   * A compose window's page on Gmail's origin is told to watch only while
+   * the setting holds it; one elsewhere, as sign-in, and any other window,
+   * as a conversation's, is ordinary and forgotten.
    */
   const windowSync = (sender: IpcSender) => {
     if (!onGmail(sender)) {
@@ -160,11 +185,15 @@ export const serveGmailContract = ({
       return;
     }
 
-    windows.add(sender.webContentsId);
+    if (!isComposeWindow(sender.webContentsId)) {
+      forget(sender.webContentsId);
 
-    if (watchSent()) {
-      sendWatch(sender.webContentsId, true);
+      return;
     }
+
+    // A new document watches nothing until told.
+    windows.set(sender.webContentsId, false);
+    sendWatch(sender.webContentsId);
   };
 
   ipc.on(GMAIL_CHANNELS.sync, (sender) => {
@@ -258,17 +287,17 @@ export const serveGmailContract = ({
      * while its main frame is still on Gmail's origin.
      */
     undo: (webContentsId: number) => {
-      if (windows.has(webContentsId) && isWindow(webContentsId)) {
+      if (windows.has(webContentsId) && isComposeWindow(webContentsId)) {
         ipc.send(webContentsId, GMAIL_CHANNELS.undoSent, undefined, {
           mainFrameOrigin: gmailOrigin,
         });
       }
     },
-    /** Tells each window that shook hands whether to watch now. */
+    /** Tells each compose window that shook hands whether to watch now. */
     pushWatch: () => {
-      for (const webContentsId of windows) {
-        if (isWindow(webContentsId)) {
-          sendWatch(webContentsId, watchSent());
+      for (const webContentsId of windows.keys()) {
+        if (isComposeWindow(webContentsId)) {
+          sendWatch(webContentsId);
         } else {
           forget(webContentsId);
         }

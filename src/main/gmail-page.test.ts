@@ -19,6 +19,7 @@ const GMAIL_ORIGIN = "https://mail.google.com";
 const GMAIL_VIEW = 11;
 const CALENDAR_VIEW = 12;
 const CHILD_WINDOW = 13;
+const CONVERSATION_WINDOW = 14;
 const SHELL = 1;
 
 const ON: GmailFeatures = {
@@ -88,6 +89,7 @@ const setup = (
   const refused: (string | undefined)[] = [];
   let features = ON;
   let watching = false;
+  const waiting = new Set<number>();
   const notices: [number, SentNotice][] = [];
   const senders = createSenderRegistry();
   /** Views whose main frame is off Gmail's origin and has not shaken hands. */
@@ -108,6 +110,13 @@ const setup = (
     role: "child-window",
     profileId: "a",
     tabId: "gmail",
+    openedAt: `${GMAIL_ORIGIN}/mail/u/0/popout?ver=1#cmid%3D1`,
+  });
+  senders.register(CONVERSATION_WINDOW, {
+    role: "child-window",
+    profileId: "a",
+    tabId: "gmail",
+    openedAt: `${GMAIL_ORIGIN}/mail/u/0/popout?ver=1&search=inbox&type=thread&th=%23thread-f%3A1&cvid=1`,
   });
 
   const ipc: Pick<Ipc, "on" | "send"> = {
@@ -132,7 +141,7 @@ const setup = (
     gmailOrigin: GMAIL_ORIGIN,
     features: () => features,
     userStyles,
-    watchSent: () => watching,
+    watchSent: (webContentsId) => watching || waiting.has(webContentsId),
     onSent: (webContentsId, notice) => notices.push([webContentsId, notice]),
     onHealth: (key, health) => reports.push({ ...key, ...health }),
     onRefused: (origin) => refused.push(origin),
@@ -163,6 +172,13 @@ const setup = (
       emit(GMAIL_CHANNELS.sent, sender, payload),
     setWatching: (next: boolean) => {
       watching = next;
+    },
+    setWaiting: (webContentsId: number, waits: boolean) => {
+      if (waits) {
+        waiting.add(webContentsId);
+      } else {
+        waiting.delete(webContentsId);
+      }
     },
   };
 };
@@ -561,6 +577,40 @@ describe("a compose window of its own", () => {
         options: { mainFrameOrigin: GMAIL_ORIGIN },
       },
     ]);
+  });
+
+  it("keeps a window that waits on its send watching as the setting goes off, and stops it once it no longer waits", () => {
+    const contract = setup();
+
+    contract.setWatching(true);
+    contract.shake(from(CHILD_WINDOW));
+    contract.setWaiting(CHILD_WINDOW, true);
+    contract.setWatching(false);
+    contract.page.pushWatch();
+
+    expect(contract.sent).toStrictEqual([watchOf(CHILD_WINDOW, true)]);
+
+    contract.setWaiting(CHILD_WINDOW, false);
+    contract.page.pushWatch();
+    contract.page.pushWatch();
+
+    expect(contract.sent).toStrictEqual([
+      watchOf(CHILD_WINDOW, true),
+      watchOf(CHILD_WINDOW, false),
+    ]);
+  });
+
+  it("leaves a window opened for a conversation alone, so a reply sent there neither hides nor closes it", () => {
+    const contract = setup();
+
+    contract.setWatching(true);
+    contract.shake(from(CONVERSATION_WINDOW));
+    contract.page.pushWatch();
+    contract.page.undo(CONVERSATION_WINDOW);
+    contract.tellSent(from(CONVERSATION_WINDOW), "shown");
+
+    expect(contract.sent).toStrictEqual([]);
+    expect(contract.notices).toStrictEqual([]);
   });
 
   it("refuses a malformed notice without logging what it held", () => {

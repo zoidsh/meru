@@ -8,6 +8,7 @@ import { gmailOwnWindow, profilePartition } from "#core/state.ts";
 import { findTab } from "#core/tabs.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
+import type { PlainWindow } from "#platform/base-window.ts";
 import { createIpc } from "#platform/ipc.ts";
 import type { createPower } from "#platform/power.ts";
 import { createSentWindows } from "#platform/sent-windows.ts";
@@ -34,6 +35,7 @@ import {
   USER_STYLES_MAX_BYTES,
   createUserStyles,
 } from "../user-styles.ts";
+import { revealWindow } from "../windows.ts";
 import { exposeSettingsToSuite, gmailPageCapture } from "./test-build.ts";
 
 /**
@@ -50,7 +52,9 @@ const serveGmailPage = ({
   userStyles,
   overlays,
   background,
+  mainWindow,
 }: {
+  mainWindow: Pick<PlainWindow, "isVisible" | "isMinimized">;
   gmailOrigin: string | undefined;
   senders: SenderRegistry;
   profiles: Pick<Profiles, "get">;
@@ -71,11 +75,19 @@ const serveGmailPage = ({
 
   const sentCompose = createSentCompose({
     enabled: () => settings.get("closeComposeWindowAfterSend"),
-    windows: createSentWindows(background),
+    windows: createSentWindows((window) => {
+      revealWindow(window, background);
+    }),
     overlays,
+    mainWindowShown: () => mainWindow.isVisible() && !mainWindow.isMinimized(),
     undoPage: (webContentsId) => {
       // oxlint-disable-next-line no-use-before-define -- the page reports the sends this takes back
       gmailPage.undo(webContentsId);
+    },
+    // A window that waited while the setting went off stops watching now.
+    released: () => {
+      // oxlint-disable-next-line no-use-before-define -- the page reports the sends this takes back
+      gmailPage.pushWatch();
     },
   });
   const capture = gmailPageCapture();
@@ -86,7 +98,10 @@ const serveGmailPage = ({
     gmailOrigin,
     features: () => gmailFeatures(settings.get),
     userStyles,
-    watchSent: () => settings.get("closeComposeWindowAfterSend"),
+    // A window already waiting on its send finishes as it started.
+    watchSent: (webContentsId) =>
+      settings.get("closeComposeWindowAfterSend") ||
+      sentCompose.waits(webContentsId),
     ...capture,
     onSent: (webContentsId, notice) => {
       if (capture) {
@@ -135,8 +150,11 @@ export const wireGmail = ({
   revealGmail,
   entitlement,
   background,
+  mainWindow,
 }: {
   background: boolean;
+  /** The main window, whose toast says a compose window sent. */
+  mainWindow: Pick<PlainWindow, "isVisible" | "isMinimized">;
   entitlement: Pick<Entitlement, "can">;
   lifecycle: ReturnType<typeof createAppLifecycle>;
   sessions: ReturnType<typeof createSessions>;
@@ -186,6 +204,7 @@ export const wireGmail = ({
     }),
     overlays,
     background,
+    mainWindow,
   });
   const { catchUp, sentCompose } = gmailPage;
   const navigateGmail = createGmailNavigation({

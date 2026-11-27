@@ -19,6 +19,9 @@ import { undoSent, watchSentNotice } from "./sent.ts";
 // to settle and looks once more before calling a required hook broken.
 const SETTLE_MS = 1000;
 const HIDDEN_CHECK_MS = 100;
+// Long enough after the bar goes for Gmail to draw the draft its Undo brings
+// back; seen later, a window is left open rather than its draft lost.
+const UNDONE_SETTLE_MS = 500;
 const MIN_GAP_MS = 2000;
 
 const inserted = new Map<GmailFeature, string>();
@@ -237,6 +240,9 @@ ipcRenderer.on(GMAIL_CHANNELS.watchSent, (_event, watch: unknown) => {
           requestAnimationFrame(once);
           setTimeout(once, HIDDEN_CHECK_MS);
         },
+        afterGone: (look) => {
+          setTimeout(look, UNDONE_SETTLE_MS);
+        },
       },
       (notice) => {
         ipcRenderer.send(GMAIL_CHANNELS.sent, notice);
@@ -245,9 +251,7 @@ ipcRenderer.on(GMAIL_CHANNELS.watchSent, (_event, watch: unknown) => {
   }
 });
 ipcRenderer.on(GMAIL_CHANNELS.undoSent, () => {
-  if (stopWatchingSent) {
-    undoSent(document);
-  }
+  undoSent(document);
 });
 // A view's first, empty document is no page to ask about.
 if (location.protocol !== "about:") {

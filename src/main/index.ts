@@ -585,6 +585,7 @@ const start = async () => {
       revealGmail,
       entitlement,
       background,
+      mainWindow: shell.window,
     });
 
   const { livePageUrl, openApp, bookmarks } = wireLauncher({

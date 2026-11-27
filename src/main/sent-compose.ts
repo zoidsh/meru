@@ -1,43 +1,60 @@
 import type { SentNotice } from "#contract/gmail-channels.ts";
+import { leavesViewFree } from "#core/overlay.ts";
 import type { Overlay } from "#core/overlay.ts";
 import type { SentWindows } from "#platform/sent-windows.ts";
 
 import type { Overlays } from "./overlay.ts";
 
 /**
- * The longest a sent compose window waits hidden: Gmail's longest undo
- * period, 30 s, and a margin for its notice to go. v3 closed it at 30 s.
+ * The longest a sent compose window waits: Gmail's longest undo period,
+ * 30 s, and a margin for its notice to go. v3 closed it at 30 s.
  */
 export const SENT_WINDOW_BOUND_MS = 35_000;
 
 interface Waiting {
+  /** Taken off screen, its Undo on the main window's toast. */
+  hidden: boolean;
   /** Gmail's notice has gone, so its Undo has too: the send is final. */
   gone: boolean;
   timer: ReturnType<typeof setTimeout>;
 }
 
 /**
- * Close compose window after sending: a compose window whose send Gmail
- * shows is hidden at once, and the main window says so with Undo. Undo
- * presses Gmail's own Undo in that page and shows the window again; without
- * it the window closes once Gmail's notice has gone and the toast has ended,
- * whichever is later, or at the bound. Until then the page lives, since it
- * is the page that holds the send through Gmail's undo period. A quit waits
- * for none: a send still in that period when Meru quits may be lost.
+ * Close compose window after sending. A compose window whose send Gmail
+ * shows is hidden at once while the main window can say so with Undo: shown,
+ * not minimized, and nothing open in its overlay that a toast would replace,
+ * as the other toasts decide. Undo presses Gmail's own Undo in that page and
+ * shows the window again. Otherwise the window stays as Gmail leaves it,
+ * Gmail's own Undo in view. Either way it closes once Gmail's notice has gone
+ * with no compose left in the page and its toast has ended, whichever is
+ * later, or at the bound; a notice gone with a compose there was undone in
+ * the page, and the window is left be. Until then the page lives, since it
+ * holds the send through Gmail's undo period. A quit waits for none: a send
+ * still in that period when Meru quits may be lost.
  */
 export const createSentCompose = ({
   enabled,
   windows,
   overlays,
+  mainWindowShown,
   undoPage,
+  released,
 }: {
   enabled: () => boolean;
   windows: SentWindows;
-  overlays: Pick<Overlays, "open" | "close" | "current" | "onChange">;
+  overlays: Pick<
+    Overlays,
+    "open" | "close" | "current" | "onChange" | "webContentsId"
+  >;
+  /** Whether the main window is on screen: shown and not minimized. */
+  mainWindowShown: () => boolean;
   /** Presses Gmail's Undo in the window's page. */
   undoPage: (webContentsId: number) => void;
+  /** Told as a window stops waiting, which its page's watch may follow. */
+  released: (webContentsId: number) => void;
 }) => {
   const waiting = new Map<number, Waiting>();
+  const listening = new Set<number>();
   // The window the open toast is about, and the toast itself.
   let toast: { webContentsId: number; overlay: Overlay } | undefined;
   // The window the latest toast was about, which its Undo takes back: the
@@ -65,6 +82,14 @@ export const createSentCompose = ({
     if (toastOpenFor(webContentsId)) {
       overlays.close();
     }
+
+    released(webContentsId);
+  };
+
+  /** Shows a hidden window again, its page's timers kept as any other's. */
+  const bringBack = (webContentsId: number) => {
+    windows.setThrottling(webContentsId, true);
+    windows.show(webContentsId);
   };
 
   const close = (webContentsId: number) => {
@@ -87,21 +112,48 @@ export const createSentCompose = ({
     }
   });
 
+  /** Whether a toast would show now, replacing nothing but another toast. */
+  const toastShows = () => {
+    const open = overlays.current();
+
+    return (
+      mainWindowShown() &&
+      overlays.webContentsId() !== undefined &&
+      (leavesViewFree(open) || open?.kind === "toast")
+    );
+  };
+
   const shown = (webContentsId: number) => {
     if (!enabled() || waiting.has(webContentsId)) {
       return;
     }
 
-    windows.hide(webContentsId);
+    const hidden = toastShows();
+
     waiting.set(webContentsId, {
+      hidden,
       gone: false,
       timer: setTimeout(() => {
         close(webContentsId);
       }, SENT_WINDOW_BOUND_MS),
     });
-    windows.onClosed(webContentsId, () => {
-      forget(webContentsId);
-    });
+
+    if (!listening.has(webContentsId)) {
+      listening.add(webContentsId);
+      windows.onClosed(webContentsId, () => {
+        listening.delete(webContentsId);
+        forget(webContentsId);
+      });
+    }
+
+    if (!hidden) {
+      return;
+    }
+
+    // A hidden page's timers would run late: Gmail's send at the end of its
+    // undo period, and the watch that tells of its notice going.
+    windows.setThrottling(webContentsId, false);
+    windows.hide(webContentsId);
 
     // An earlier send's toast is closed first, since the overlays keep an
     // equal one open as it is, and this send's Undo gets a toast's full time.
@@ -137,13 +189,35 @@ export const createSentCompose = ({
     closeIfDone(webContentsId);
   };
 
+  const undone = (webContentsId: number) => {
+    const entry = waiting.get(webContentsId);
+
+    if (!entry) {
+      return;
+    }
+
+    forget(webContentsId);
+
+    if (entry.hidden) {
+      bringBack(webContentsId);
+    }
+  };
+
   return {
     /** What a compose window's page told of Gmail's sent notice. */
     notice: (webContentsId: number, notice: SentNotice) => {
-      if (notice === "shown") {
-        shown(webContentsId);
-      } else {
-        gone(webContentsId);
+      switch (notice) {
+        case "shown": {
+          shown(webContentsId);
+          break;
+        }
+        case "gone": {
+          gone(webContentsId);
+          break;
+        }
+        default: {
+          undone(webContentsId);
+        }
       }
     },
     /** Undo on the toast: the send taken back, the window shown again. */
@@ -156,8 +230,10 @@ export const createSentCompose = ({
 
       forget(webContentsId);
       undoPage(webContentsId);
-      windows.show(webContentsId);
+      bringBack(webContentsId);
     },
+    /** Whether the window waits on its send, whose watch must go on. */
+    waits: (webContentsId: number) => waiting.has(webContentsId),
   };
 };
 

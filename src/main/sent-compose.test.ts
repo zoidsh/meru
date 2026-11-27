@@ -10,8 +10,8 @@ import { SENT_WINDOW_BOUND_MS, createSentCompose } from "./sent-compose.ts";
  * The overlays as main's own keep them: one open, each change told, one
  * equal to what is open leaving it as it is.
  */
-const fakeOverlays = () => {
-  let open: Overlay | undefined;
+const fakeOverlays = (initial?: Overlay) => {
+  let open = initial;
   const listeners = new Set<() => void>();
   const set = (next: Overlay | undefined) => {
     if (isEqual(next, open)) {
@@ -36,6 +36,7 @@ const fakeOverlays = () => {
     onChange: (listener: () => void) => {
       listeners.add(listener);
     },
+    webContentsId: () => 7,
   };
 };
 
@@ -44,6 +45,7 @@ const fakeWindows = (ids: number[]) => {
   const state = new Map<number, "shown" | "hidden" | "closed">(
     ids.map((id) => [id, "shown"])
   );
+  const throttled = new Map<number, boolean>(ids.map((id) => [id, true]));
   const closedListeners = new Map<number, (() => void)[]>();
   const closed = (id: number) => {
     state.set(id, "closed");
@@ -62,30 +64,58 @@ const fakeWindows = (ids: number[]) => {
       state.set(id, "shown");
     },
     destroy: closed,
+    setThrottling: (id, on) => {
+      throttled.set(id, on);
+    },
     onClosed: (id, listener) => {
       closedListeners.set(id, [...(closedListeners.get(id) ?? []), listener]);
     },
   };
 
-  return { windows, state: (id: number) => state.get(id), closed };
+  return {
+    windows,
+    state: (id: number) => state.get(id),
+    throttled: (id: number) => throttled.get(id),
+    listeners: (id: number) => closedListeners.get(id)?.length ?? 0,
+    closed,
+  };
 };
 
 const SENT_TOAST: Overlay = { kind: "toast", message: "message-sent" };
 
-const setup = ({ enabled = true } = {}) => {
-  const overlays = fakeOverlays();
-  const { windows, state, closed } = fakeWindows([1, 2]);
+const setup = ({
+  enabled = true,
+  mainShown = true,
+  open,
+}: { enabled?: boolean; mainShown?: boolean; open?: Overlay } = {}) => {
+  const overlays = fakeOverlays(open);
+  const fake = fakeWindows([1, 2]);
   const undone: number[] = [];
+  const released: number[] = [];
+  let shown = mainShown;
   const sent = createSentCompose({
     enabled: () => enabled,
-    windows,
+    windows: fake.windows,
     overlays,
+    mainWindowShown: () => shown,
     undoPage: (id) => {
       undone.push(id);
     },
+    released: (id) => {
+      released.push(id);
+    },
   });
 
-  return { overlays, state, closed, undone, sent };
+  return {
+    ...fake,
+    overlays,
+    undone,
+    released,
+    sent,
+    showMain: (next: boolean) => {
+      shown = next;
+    },
+  };
 };
 
 describe(createSentCompose, () => {
@@ -97,35 +127,38 @@ describe(createSentCompose, () => {
     vi.useRealTimers();
   });
 
-  it("hides the window at once as its send shows, and says so with Undo", () => {
-    const { overlays, state, sent } = setup();
+  it("hides the window at once as its send shows, its timers kept on time, and says so with Undo", () => {
+    const { overlays, state, throttled, sent } = setup();
 
     sent.notice(1, "shown");
 
-    expect([state(1), overlays.current()]).toStrictEqual([
+    expect([state(1), throttled(1), overlays.current()]).toStrictEqual([
       "hidden",
+      false,
       SENT_TOAST,
     ]);
   });
 
-  it("presses Gmail's Undo in that page and shows the window again on Undo", () => {
-    const { overlays, state, undone, sent } = setup();
+  it("presses Gmail's Undo in that page and shows the window again on Undo, its timers as any other's", () => {
+    const { overlays, state, throttled, undone, released, sent } = setup();
 
     sent.notice(1, "shown");
     // The press on Undo closes the toast before the shell's call arrives.
     overlays.close();
     sent.undo();
 
-    expect([state(1), undone, overlays.current()]).toStrictEqual([
-      "shown",
-      [1],
-      undefined,
-    ]);
+    expect([
+      state(1),
+      throttled(1),
+      undone,
+      released,
+      overlays.current(),
+    ]).toStrictEqual(["shown", true, [1], [1], undefined]);
 
     // Taken back, it is no longer waiting: the bound leaves it be.
     vi.advanceTimersByTime(SENT_WINDOW_BOUND_MS);
 
-    expect(state(1)).toBe("shown");
+    expect([state(1), sent.waits(1)]).toStrictEqual(["shown", false]);
   });
 
   it("closes the window once the toast has ended and Gmail's notice gone, in that order", () => {
@@ -134,11 +167,11 @@ describe(createSentCompose, () => {
     sent.notice(1, "shown");
     overlays.close();
 
-    expect(state(1)).toBe("hidden");
+    expect([state(1), sent.waits(1)]).toStrictEqual(["hidden", true]);
 
     sent.notice(1, "gone");
 
-    expect(state(1)).toBe("closed");
+    expect([state(1), sent.waits(1)]).toStrictEqual(["closed", false]);
   });
 
   it("dismisses the toast when Gmail's notice goes first, offering no Undo it cannot keep, and closes the window", () => {
@@ -152,6 +185,20 @@ describe(createSentCompose, () => {
     sent.undo();
 
     expect(undone).toStrictEqual([]);
+  });
+
+  it("leaves a window whose notice went with a compose in its page, shown again, since Gmail's own Undo brought the draft back", () => {
+    const { overlays, state, throttled, sent } = setup();
+
+    sent.notice(1, "shown");
+    sent.notice(1, "undone");
+
+    expect([
+      state(1),
+      throttled(1),
+      overlays.current(),
+      sent.waits(1),
+    ]).toStrictEqual(["shown", true, undefined, false]);
   });
 
   it("closes a window whose notice never goes at the bound", () => {
@@ -174,7 +221,80 @@ describe(createSentCompose, () => {
     sent.notice(1, "shown");
     sent.notice(1, "gone");
 
-    expect([state(1), overlays.current()]).toStrictEqual(["shown", undefined]);
+    expect([state(1), overlays.current(), sent.waits(1)]).toStrictEqual([
+      "shown",
+      undefined,
+      false,
+    ]);
+  });
+
+  it.each([
+    ["the main window hidden or minimized", { mainShown: false }],
+    [
+      "the profile question open",
+      {
+        open: {
+          kind: "profile-question",
+          profileIds: ["a", "b"],
+        } satisfies Overlay,
+      },
+    ],
+    ["a card open", { open: { kind: "downloads" } satisfies Overlay }],
+    [
+      "the find bar open",
+      {
+        open: {
+          kind: "find",
+          profileId: "a",
+          tabId: "t",
+        } satisfies Overlay,
+      },
+    ],
+  ])(
+    "with %s, leaves the window as Gmail does, replacing nothing, and closes it once the notice has gone",
+    (_what, options) => {
+      const { overlays, state, throttled, sent } = setup(options);
+      const before = overlays.current();
+
+      sent.notice(1, "shown");
+
+      expect([state(1), throttled(1), overlays.current()]).toStrictEqual([
+        "shown",
+        true,
+        before,
+      ]);
+
+      sent.undo();
+
+      expect(state(1)).toBe("shown");
+
+      sent.notice(1, "gone");
+
+      expect([state(1), overlays.current()]).toStrictEqual(["closed", before]);
+    }
+  );
+
+  it("leaves a window shown as Gmail leaves it be once Gmail's own Undo there brings the draft back", () => {
+    const { state, sent } = setup({ mainShown: false });
+
+    sent.notice(1, "shown");
+    sent.notice(1, "undone");
+    vi.advanceTimersByTime(SENT_WINDOW_BOUND_MS);
+
+    expect(state(1)).toBe("shown");
+  });
+
+  it("shows its toast over another toast, which replaces nothing a person is answering", () => {
+    const { overlays, state, sent } = setup({
+      open: { kind: "toast", message: "bookmark-removed" },
+    });
+
+    sent.notice(1, "shown");
+
+    expect([state(1), overlays.current()]).toStrictEqual([
+      "hidden",
+      SENT_TOAST,
+    ]);
   });
 
   it("keeps the window while another notice replaces its toast, closing it once its own notice goes", () => {
@@ -212,22 +332,61 @@ describe(createSentCompose, () => {
   });
 
   it("forgets a window closed from elsewhere, so its toast goes and Undo presses nothing", () => {
-    const { overlays, closed, undone, sent } = setup();
+    const { overlays, closed, undone, released, sent } = setup();
 
     sent.notice(1, "shown");
     closed(1);
     sent.undo();
 
-    expect([overlays.current(), undone]).toStrictEqual([undefined, []]);
+    expect([overlays.current(), undone, released]).toStrictEqual([
+      undefined,
+      [],
+      [1],
+    ]);
   });
 
-  it("hides a window once however often its notice shows while it waits", () => {
-    const { overlays, sent } = setup();
+  it("hears a window's closing once however often it sends", () => {
+    const { overlays, listeners, sent } = setup();
 
     sent.notice(1, "shown");
     overlays.close();
+    sent.undo();
+    sent.notice(1, "shown");
     sent.notice(1, "shown");
 
-    expect(overlays.current()).toBeUndefined();
+    expect(listeners(1)).toBe(1);
+  });
+
+  it("finishes a window already waiting as it started when the setting goes off, Undo and closing alike", () => {
+    let enabled = true;
+    const overlays = fakeOverlays();
+    const fake = fakeWindows([1, 2]);
+    const undone: number[] = [];
+    const sent = createSentCompose({
+      enabled: () => enabled,
+      windows: fake.windows,
+      overlays,
+      mainWindowShown: () => true,
+      undoPage: (id) => {
+        undone.push(id);
+      },
+      released: () => {},
+    });
+
+    sent.notice(1, "shown");
+    sent.notice(2, "shown");
+    enabled = false;
+
+    // Its watch goes on while it waits.
+    expect([sent.waits(1), sent.waits(2)]).toStrictEqual([true, true]);
+
+    sent.undo();
+    sent.notice(1, "gone");
+
+    expect([undone, fake.state(2), fake.state(1)]).toStrictEqual([
+      [2],
+      "shown",
+      "closed",
+    ]);
   });
 });

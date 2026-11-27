@@ -41,9 +41,13 @@ export const GMAIL_CHANNELS = {
   undoSent: "gmail:undo-sent",
 } as const;
 
-export const SENT_NOTICES = ["shown", "gone"] as const;
+export const SENT_NOTICES = ["shown", "gone", "undone"] as const;
 
-/** Gmail's notice that the email was sent appeared, or went. */
+/**
+ * Gmail's notice that the email was sent appeared, or went: with no compose
+ * left in the page, or, `undone`, with one there, as Gmail's own Undo brings
+ * the draft back.
+ */
 export type SentNotice = (typeof SENT_NOTICES)[number];
 
 export const isSentNotice = (value: unknown): value is SentNotice =>

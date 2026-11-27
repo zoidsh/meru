@@ -1,5 +1,5 @@
 import type { SentNotice } from "#contract/gmail-channels.ts";
-import { findHook, guardedSelector } from "#core/gmail-hooks.ts";
+import { VIEW_ANCHORS, findHook, guardedSelector } from "#core/gmail-hooks.ts";
 
 const SENT_NOTICE = findHook("sentNotice");
 
@@ -19,14 +19,18 @@ export interface SentWatchPage {
   isVisible: (element: Element) => boolean;
   /** Runs `check` once before the next paint; many asks before it run it once. */
   beforePaint: (check: () => void) => void;
+  /** Runs `look` once the page has had time to draw what follows the notice. */
+  afterGone: (look: () => void) => void;
 }
 
 /**
  * Tells of Gmail's sent notice as it appears and as it goes, looking once per
- * frame of changes rather than at every mutation. Returns what stops it.
+ * frame of changes rather than at every mutation. As it goes, it waits for
+ * the page to settle and tells whether a compose is there, since Gmail's own
+ * Undo takes the bar away as it brings the draft back. Returns what stops it.
  */
 export const watchSentNotice = (
-  { root, isVisible, beforePaint }: SentWatchPage,
+  { root, isVisible, beforePaint, afterGone }: SentWatchPage,
   tell: (notice: SentNotice) => void
 ) => {
   let shown = false;
@@ -42,10 +46,23 @@ export const watchSentNotice = (
 
     const now = sentNoticeShown(root, isVisible);
 
-    if (now !== shown) {
-      shown = now;
-      tell(now ? "shown" : "gone");
+    if (now === shown) {
+      return;
     }
+
+    shown = now;
+
+    if (now) {
+      tell("shown");
+
+      return;
+    }
+
+    afterGone(() => {
+      if (!stopped && !shown) {
+        tell(root.querySelector(VIEW_ANCHORS.compose) ? "undone" : "gone");
+      }
+    });
   };
 
   const observer = new MutationObserver(() => {

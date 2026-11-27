@@ -113,6 +113,7 @@ export const OPENER_LINE = `<p id="opener"></p>
 export const gmailWindowLinks = (
   signIn: string
 ) => `<button type="button" onclick="window.open('${POPOUT_PATH}?ver=1#cmid%253D1', 'popout', 'width=${POPOUT_SIZE.width},location=0,height=${POPOUT_SIZE.height},left=40,top=40,resizable=1,scrollbars=1')">Pop out compose</button>
+    <button type="button" onclick="window.open('${POPOUT_PATH}?ver=1&amp;search=inbox&amp;type=thread&amp;th=%23thread-f%3A1&amp;cvid=1', 'conversation', 'width=${POPOUT_SIZE.width},location=0,height=${POPOUT_SIZE.height},left=40,top=40,resizable=1,scrollbars=1')">Open conversation in new window</button>
     <a href="${FULL_MESSAGE_PATH}?ui=2&amp;ik=1&amp;view=lg&amp;permmsgid=msg-a:r1" target="_blank">View entire message</a>
     <a href="https://www.google.com/url?q=${encodeURIComponent(ELSEWHERE_URL)}&amp;source=gmail&amp;ust=1&amp;usg=x" target="_blank">A link in mail</a>
     <a href="${signIn}AddSession?continue=x" target="_blank">Add another account</a>

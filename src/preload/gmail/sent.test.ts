@@ -53,6 +53,9 @@ const watch = (body: string) => {
       beforePaint: (check) => {
         check();
       },
+      afterGone: (look) => {
+        look();
+      },
     },
     (notice) => told.push(notice)
   );
@@ -85,6 +88,57 @@ describe(watchSentNotice, () => {
     await settle();
 
     expect(told).toStrictEqual(["shown", "gone"]);
+  });
+
+  it("tells the notice undone when it goes with a compose in the page, as Gmail's Undo brings the draft back", async () => {
+    const { document, bar, told } = watch(
+      `<div class="b8 UC" id="bar">${NOTICE}</div>`
+    );
+
+    bar?.replaceChildren();
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      '<div data-compose-id="1"></div>'
+    );
+    await settle();
+
+    expect(told).toStrictEqual(["shown", "undone"]);
+  });
+
+  it("tells no going of a notice that came back before the page settled", async () => {
+    const { document, window } = pageOf('<div id="bar"></div>');
+    const told: SentNotice[] = [];
+    const later: (() => void)[] = [];
+
+    vi.stubGlobal("MutationObserver", window.MutationObserver);
+    watchSentNotice(
+      {
+        root: document,
+        isVisible: shown,
+        beforePaint: (check) => {
+          check();
+        },
+        afterGone: (look) => {
+          later.push(look);
+        },
+      },
+      (notice) => told.push(notice)
+    );
+
+    const bar = document.querySelector("#bar");
+
+    bar?.insertAdjacentHTML("beforeend", NOTICE);
+    await settle();
+    bar?.replaceChildren();
+    await settle();
+    bar?.insertAdjacentHTML("beforeend", NOTICE);
+    await settle();
+
+    for (const look of later) {
+      look();
+    }
+
+    expect(told).toStrictEqual(["shown", "shown"]);
   });
 
   it("tells of a notice already there as it starts", () => {
