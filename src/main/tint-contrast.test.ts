@@ -131,14 +131,14 @@ const token = (name: string, theme: (typeof THEMES)[number]) => {
   return parse(value);
 };
 
-/** The shell's share of the tint per strength, read as `[data-tint]` sets it. */
-const strengths = (theme: (typeof THEMES)[number]) => {
-  const [medium, low, high] = declared("--tint-amount")
-    .slice(theme === "light" ? 0 : 3)
-    .map((value) => Number(value.replace("%", "")));
-
-  return { low, medium, high };
-};
+/** The shell's share of the tint, read as `[data-tint]` sets it per theme. */
+const amount = (theme: (typeof THEMES)[number]) =>
+  Number(
+    (declared("--tint-amount")[theme === "light" ? 0 : 1] ?? "").replace(
+      "%",
+      ""
+    )
+  );
 
 type Theme = (typeof THEMES)[number];
 
@@ -172,46 +172,39 @@ const below = (bar: number, cases: readonly (readonly [string, Lab, Lab])[]) =>
       ([where, one, other]) => `${where} ${contrast(one, other).toFixed(2)}`
     );
 
-/** Untinted, then each colour at each strength, the shell and the muted foreground. */
+/** Untinted, then each colour, the shell and the muted foreground. */
 const shells = (theme: Theme) => {
   const shell = token("shell", theme);
-  const amounts = strengths(theme);
 
   return [
     ["untinted", shell, mutedForeground(theme, undefined)] as const,
-    ...PROFILE_COLOR_NAMES.flatMap((name) => {
+    ...PROFILE_COLOR_NAMES.map((name) => {
       const tint = parse(paletteColor(name));
 
-      return (["low", "medium", "high"] as const).map(
-        (strength) =>
-          [
-            `${name} ${strength}`,
-            mix(shell, tint, amounts[strength] ?? 0),
-            mutedForeground(theme, tint),
-          ] as const
-      );
+      return [
+        name,
+        mix(shell, tint, amount(theme)),
+        mutedForeground(theme, tint),
+      ] as const;
     }),
   ];
 };
 
 describe("the profile tint", () => {
-  it("takes 12, 20 and 28% of the profile's colour in light and 8, 12 and 18% in dark", () => {
-    expect(THEMES.map(strengths)).toStrictEqual([
-      { low: 12, medium: 20, high: 28 },
-      { low: 8, medium: 12, high: 18 },
-    ]);
+  it("takes 20% of the profile's colour in light and 12% in dark", () => {
+    expect(THEMES.map(amount)).toStrictEqual([20, 12]);
   });
 
   it.each(THEMES)(
-    "keeps the text at least 4.5:1 on the shell at High for every profile colour, %s",
+    "keeps the text at least 4.5:1 on the shell for every profile colour, %s",
     (theme) => {
-      const high = strengths(theme).high ?? 0;
       const shell = token("shell", theme);
       const text = token("foreground", theme);
 
       const failing = PROFILE_COLOR_NAMES.filter(
         (name) =>
-          contrast(text, mix(shell, parse(paletteColor(name)), high)) < 4.5
+          contrast(text, mix(shell, parse(paletteColor(name)), amount(theme))) <
+          4.5
       );
 
       expect(failing).toStrictEqual([]);
@@ -219,7 +212,7 @@ describe("the profile tint", () => {
   );
 
   it.each(THEMES)(
-    "keeps the shell's muted text at least 4.5:1, so its icons pass 3:1, untinted and at every strength for every profile colour, %s",
+    "keeps the shell's muted text at least 4.5:1, so its icons pass 3:1, untinted and for every profile colour, %s",
     (theme) => {
       expect(
         below(

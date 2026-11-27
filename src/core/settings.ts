@@ -3,8 +3,6 @@ import { z } from "zod/mini";
 import { quietWindowSchema } from "./notification-gate.ts";
 import type { QuietWindow } from "./notification-gate.ts";
 import type { Platform } from "./platform.ts";
-import { PROFILE_TINT_STRENGTHS } from "./profile-color.ts";
-import type { ProfileTintStrength } from "./profile-color.ts";
 import { SOUND_CHOICES, soundVolumeSchema } from "./sounds.ts";
 import type { SoundChoice } from "./sounds.ts";
 import { decodeVersioned } from "./store-file.ts";
@@ -219,14 +217,6 @@ export const SETTINGS = {
   profileTint: setting<boolean>({
     schema: z.boolean(),
     default: true,
-  }),
-  /**
-   * How strong the tint is, a percentage of the profile's colour per theme
-   * that `styles.css` holds.
-   */
-  profileTintStrength: setting<ProfileTintStrength>({
-    schema: z.enum(PROFILE_TINT_STRENGTHS),
-    default: "medium",
   }),
   /**
    * Whether the titlebar shows New tab, which it does only while the sidebar

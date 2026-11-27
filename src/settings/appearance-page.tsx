@@ -2,8 +2,6 @@ import { useLingui } from "@lingui/react/macro";
 import { noop } from "es-toolkit";
 
 import type { SettingChange } from "#contract/settings.ts";
-import { PROFILE_TINT_STRENGTHS } from "#core/profile-color.ts";
-import type { ProfileTintStrength } from "#core/profile-color.ts";
 import { THEMES } from "#core/settings.ts";
 import type { ThemeChoice } from "#core/settings.ts";
 import {
@@ -92,24 +90,6 @@ export const AppearancePage = () => {
     }),
   };
 
-  const strengths: Record<ProfileTintStrength, string> = {
-    low: t({
-      message: "Low",
-      comment:
-        "Choice of the Tint strength menu in Settings: a little of the profile's color in the title bar and sidebar",
-    }),
-    medium: t({
-      message: "Medium",
-      comment:
-        "Choice of the Tint strength menu in Settings: some of the profile's color in the title bar and sidebar",
-    }),
-    high: t({
-      message: "High",
-      comment:
-        "Choice of the Tint strength menu in Settings: the most of the profile's color in the title bar and sidebar",
-    }),
-  };
-
   return (
     <SettingGroups>
       <SettingGroup>
@@ -174,57 +154,6 @@ export const AppearancePage = () => {
                   "Description of the Tint with profile color switch in Settings",
               }),
             }),
-            <SettingRow
-              key="profileTintStrength"
-              label={t({
-                message: "Tint strength",
-                comment:
-                  "Label of the menu in Settings choosing how much of the selected profile's color the title bar and the sidebar take",
-              })}
-              description={
-                settings.profileTint
-                  ? undefined
-                  : t({
-                      message: "Turn on Tint with profile color first.",
-                      comment:
-                        "Description of the Tint strength menu in Settings while Tint with profile color, the switch above it, is off; it says what to do to use the menu",
-                    })
-              }
-              disabled={!settings.profileTint}
-            >
-              {(ids) => (
-                <Select
-                  items={PROFILE_TINT_STRENGTHS.map((strength) => ({
-                    value: strength,
-                    label: strengths[strength],
-                  }))}
-                  value={settings.profileTintStrength}
-                  disabled={!settings.profileTint}
-                  onValueChange={(strength) => {
-                    if (strength !== null) {
-                      write({ key: "profileTintStrength", value: strength });
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    aria-labelledby={ids.label}
-                    aria-describedby={ids.description || undefined}
-                    className="min-w-28"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent alignItemWithTrigger={false}>
-                    <SelectGroup>
-                      {PROFILE_TINT_STRENGTHS.map((strength) => (
-                        <SelectItem key={strength} value={strength}>
-                          {strengths[strength]}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            </SettingRow>,
           ]}
         </Rows>
       </SettingGroup>

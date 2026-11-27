@@ -1333,11 +1333,6 @@ msgstr "Hides offers from Google above your inbox."
 msgid "Hides the storage and account details below your inbox."
 msgstr "Hides the storage and account details below your inbox."
 
-#. Choice of the Tint strength menu in Settings: the most of the profile's color in the title bar and sidebar
-#: src/settings/appearance-page.tsx
-msgid "High"
-msgstr "High"
-
 #. Label of the menu in Settings on Windows and Linux choosing the color of Meru's tray icon
 #: src/settings/menu-bar-page.tsx
 msgid "Icon color"
@@ -1503,11 +1498,6 @@ msgstr "Loading what's new"
 msgid "Loading…"
 msgstr "Loading…"
 
-#. Choice of the Tint strength menu in Settings: a little of the profile's color in the title bar and sidebar
-#: src/settings/appearance-page.tsx
-msgid "Low"
-msgstr "Low"
-
 #. Description of the Use the macOS screen picker switch in Settings
 #: src/settings/advanced-page.tsx
 msgid "macOS asks which screen or window you want to share."
@@ -1565,11 +1555,6 @@ msgstr "Maximize Pane"
 #: src/shell/tab-strip.tsx
 msgid "Maximized · Restore"
 msgstr "Maximized · Restore"
-
-#. Choice of the Tint strength menu in Settings: some of the profile's color in the title bar and sidebar
-#: src/settings/appearance-page.tsx
-msgid "Medium"
-msgstr "Medium"
 
 #. Heading of the group of Settings on macOS for Meru's icon in the menu bar at the top of the screen
 #: src/settings/menu-bar-page.tsx
@@ -3057,11 +3042,6 @@ msgstr "This setting isn't available in the free version. Upgrade to Meru Pro to
 msgid "Tim from Meru"
 msgstr "Tim from Meru"
 
-#. Label of the menu in Settings choosing how much of the selected profile's color the title bar and the sidebar take
-#: src/settings/appearance-page.tsx
-msgid "Tint strength"
-msgstr "Tint strength"
-
 #. Label of the switch in Settings that mixes the selected profile's color into the title bar and the sidebar
 #: src/settings/appearance-page.tsx
 msgid "Tint with profile color"
@@ -3192,11 +3172,6 @@ msgstr "Turn on Show in menu bar first."
 #: src/settings/menu-bar-page.tsx
 msgid "Turn on Show in system tray first."
 msgstr "Turn on Show in system tray first."
-
-#. Description of the Tint strength menu in Settings while Tint with profile color, the switch above it, is off; it says what to do to use the menu
-#: src/settings/appearance-page.tsx
-msgid "Turn on Tint with profile color first."
-msgstr "Turn on Tint with profile color first."
 
 #. Description of the Use hardware acceleration switch in Settings once it was changed, which applies only when Meru starts again
 #: src/settings/advanced-page.tsx

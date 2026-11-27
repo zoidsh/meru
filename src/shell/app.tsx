@@ -128,7 +128,6 @@ const MainWindow = ({ pro }: { pro: ShellState["pro"] }) => {
       {/* The selected profile's colour, which `styles.css` mixes into the shell's greys at the strength; with none set they stay plain. */}
       <div
         data-tint
-        data-tint-strength={appearance?.tintStrength}
         style={
           { "--tint": tint ? selected?.color : undefined } as CSSProperties
         }

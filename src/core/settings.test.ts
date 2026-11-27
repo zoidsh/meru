@@ -145,25 +145,22 @@ describe(readSetting, () => {
       version: 1,
       theme: "dark",
       profileTint: false,
-      profileTintStrength: "high",
     });
     const broken = read({
       version: 1,
       theme: "sepia",
       profileTint: "no",
-      profileTintStrength: 28,
     });
 
     expect(
       [defaults, chosen, broken].map((settings) => [
         readSetting(settings, "theme", "linux"),
         readSetting(settings, "profileTint", "linux"),
-        readSetting(settings, "profileTintStrength", "linux"),
       ])
     ).toStrictEqual([
-      ["system", true, "medium"],
-      ["dark", false, "high"],
-      ["system", true, "medium"],
+      ["system", true],
+      ["dark", false],
+      ["system", true],
     ]);
   });
 

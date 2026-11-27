@@ -14,14 +14,6 @@ const PALETTE = {
 
 export type ProfileColorName = keyof typeof PALETTE;
 
-/**
- * How much of the profile's colour the shell takes, weakest first; the
- * percentages, which differ by theme, are `styles.css`'s.
- */
-export const PROFILE_TINT_STRENGTHS = ["low", "medium", "high"] as const;
-
-export type ProfileTintStrength = (typeof PROFILE_TINT_STRENGTHS)[number];
-
 export const PROFILE_COLOR_NAMES = Object.keys(PALETTE) as [
   ProfileColorName,
   ...ProfileColorName[],

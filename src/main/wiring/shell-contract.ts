@@ -261,7 +261,6 @@ export const wireShellContract = ({
             sidebar: { state: sidebar.current() },
             appearance: {
               tint: settings.get("profileTint"),
-              tintStrength: settings.get("profileTintStrength"),
               buttons: {
                 sidebar: can("workspaceApps"),
                 newTab: settings.get("titlebarNewTab"),
@@ -326,7 +325,6 @@ export const wireShellContract = ({
         sidebar.onChange(listener);
         for (const key of [
           "profileTint",
-          "profileTintStrength",
           "titlebarNewTab",
           "titlebarUnifiedInbox",
           "titlebarDownloads",

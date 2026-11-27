@@ -367,7 +367,6 @@ describe("the settings contract", () => {
       downloadsFolder: "/Users/example/Mail",
       theme: "dark",
       profileTint: false,
-      profileTintStrength: "medium",
       titlebarNewTab: true,
       titlebarUnifiedInbox: false,
       titlebarDownloads: true,
