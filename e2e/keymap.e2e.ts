@@ -40,7 +40,7 @@ const profileButton = (shell: Page, name: string) =>
     .getByRole("group", { name: "Profiles" })
     .getByRole("button", { name: new RegExp(`^${name}(,|$)`, "u") });
 
-test("Meru's former keys for Reload, Find and Select Profile reach the page, which Google's apps use, and Meru does nothing with them; the keys that replaced them act", async ({
+test("Meru's former keys for Reload, Find and Select Profile reach the page, which Google's apps use, and Meru does nothing with them; the keys that replaced them act, as do Back's and Downloads'", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -114,6 +114,16 @@ test("Meru's former keys for Reload, Find and Select Profile reach the page, whi
     "true"
   );
 
+  // Off macOS an arrow's shortcut, which Meru hears before the page does.
+  await calendar.evaluate(() => {
+    history.pushState(undefined, "", "#later");
+  });
+  await pressInPage(app, standIn.calendarUrl, KEYS.back);
+  await expect.poll(() => calendar.url()).not.toContain("#later");
+  expect(
+    await calendar.evaluate(() => Reflect.get(globalThis, "seenKeys"))
+  ).toStrictEqual(former.map(({ keyCode }) => keyCode.toLowerCase()));
+
   await pressInPage(app, standIn.calendarUrl, KEYS.reload);
   await expect
     .poll(() =>
@@ -131,6 +141,13 @@ test("Meru's former keys for Reload, Find and Select Profile reach the page, whi
   await expect(bar).toBeVisible();
   await bar.getByRole("button", { name: "Close" }).click();
   await expect(bar).toHaveCount(0);
+
+  const downloads = overlay.getByRole("dialog", { name: "Downloads" });
+
+  await pressInPage(app, standIn.calendarUrl, KEYS.downloads);
+  await expect(downloads).toBeVisible();
+  await pressInPage(app, standIn.calendarUrl, KEYS.downloads);
+  await expect(downloads).toBeHidden();
 
   await pressInPage(app, standIn.calendarUrl, KEYS.profile(2));
   await expect(profileButton(shell, "Work")).toHaveAttribute(

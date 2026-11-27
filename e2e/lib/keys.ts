@@ -24,6 +24,8 @@ export const KEYS = {
     ? key("G", "control", "shift", "meta")
     : key("F3", "control", "shift"),
   reload: isMacOS ? key("R", "control", "shift") : key("F5"),
+  back: isMacOS ? key("[", "control", "meta") : key("Left", "control", "alt"),
+  downloads: isMacOS ? key("J", "control", "shift") : key("J", "alt", "shift"),
   bookmark: isMacOS
     ? key("D", "shift", "meta")
     : key("D", "control", "alt", "shift"),
