@@ -25,6 +25,7 @@ import { createSpellChecker } from "#platform/spellcheck.ts";
 import { createSystemInfo } from "#platform/system-info.ts";
 import { createTextFile } from "#platform/text-file.ts";
 import { createTheme } from "#platform/theme.ts";
+import { nodeUserDataFiles } from "#platform/user-data-files.ts";
 import { createWindowFactory } from "#platform/window.ts";
 
 import { buildLaunchMenuTemplate } from "./application-menu.ts";
@@ -38,6 +39,7 @@ import { createLanguage } from "./language.ts";
 import { createLogger, LOG_FILE } from "./logger.ts";
 import { createOverlays } from "./overlay.ts";
 import { createProfileQuestion } from "./profile-question.ts";
+import { wipeAfterReset } from "./reset-meru.ts";
 import { createSenderRegistry } from "./senders.ts";
 import { SETTINGS_FILE_NAME } from "./settings.ts";
 import { createShellSource, serveShellContract } from "./shell-ipc.ts";
@@ -162,6 +164,14 @@ const start = async () => {
     osVersion: process.getSystemVersion(),
     arch: process.arch,
     electron: process.versions.electron,
+  });
+  // Once the lock is held, so a second instance never wipes the running
+  // one's folder, and blocking, so it is done before `ready`, before any
+  // session exists and before the hardware acceleration's read below.
+  wipeAfterReset({
+    userDataPath: lifecycle.userDataPath,
+    files: nodeUserDataFiles,
+    log,
   });
   // Once, though a held quit runs the quit's listeners again.
   lifecycle.onBeforeQuit(
