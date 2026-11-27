@@ -1389,7 +1389,7 @@ describe("the Settings window's Advanced page", () => {
 });
 
 describe("the Settings window's Tabs & Google Apps page", () => {
-  it("sends Open Google apps in Meru on, no app excluded, and unpinned tabs sleeping after an hour where none is stored", () => {
+  it("sends Open Google apps in Meru on, in tabs, no app excluded, windows shown in the sidebar and unpinned tabs sleeping after an hour where none is stored", () => {
     const app = setup(stateOf("Work"));
 
     expect(
@@ -1401,7 +1401,9 @@ describe("the Settings window's Tabs & Google Apps page", () => {
       )
     ).toStrictEqual({
       openAppsInMeru: true,
+      openAppsIn: "tabs",
       appsInDefaultBrowser: [],
+      showWindowsInSidebar: true,
       sleepIdleTabs: "unpinned",
       sleepAfter: "1h",
     });
@@ -1498,6 +1500,22 @@ describe("the Settings window's Tabs & Google Apps page", () => {
     app.dispose();
   });
 
+  it("sets a profile's own Open Google apps in, the app value untouched", async () => {
+    const app = setup(stateOf("Work", "Home"));
+
+    await app.handlers.setOverride({
+      profileId: "work",
+      key: "openAppsIn",
+      value: "windows",
+    });
+
+    expect([
+      app.read().profiles.map((profile) => profile.overrides),
+      app.read().settings.openAppsIn,
+    ]).toStrictEqual([[{ openAppsIn: "windows" }, {}], "tabs"]);
+    app.dispose();
+  });
+
   it("refuses Gmail, which always opens in Meru", async () => {
     const app = setup(stateOf("Work"));
 
@@ -1515,7 +1533,12 @@ describe("the Settings window's Tabs & Google Apps page", () => {
   it("writes neither on the free version, and sends their free values with the stored ones kept", async () => {
     const app = setup(
       stateOf("Work"),
-      { version: 1, appsInDefaultBrowser: ["drive"] },
+      {
+        version: 1,
+        appsInDefaultBrowser: ["drive"],
+        openAppsIn: "windows",
+        showWindowsInSidebar: false,
+      },
       "darwin",
       ["en"],
       true
@@ -1523,6 +1546,12 @@ describe("the Settings window's Tabs & Google Apps page", () => {
 
     await expect(
       app.handlers.update({ key: "openAppsInMeru", value: false })
+    ).rejects.toThrow("Meru Pro");
+    await expect(
+      app.handlers.update({ key: "openAppsIn", value: "tabs" })
+    ).rejects.toThrow("Meru Pro");
+    await expect(
+      app.handlers.update({ key: "showWindowsInSidebar", value: true })
     ).rejects.toThrow("Meru Pro");
     await expect(
       app.handlers.setAppInDefaultBrowser({
@@ -1535,8 +1564,10 @@ describe("the Settings window's Tabs & Google Apps page", () => {
     expect([
       app.read().settings.openAppsInMeru,
       app.read().settings.appsInDefaultBrowser,
+      app.read().settings.openAppsIn,
+      app.read().settings.showWindowsInSidebar,
       app.saved,
-    ]).toStrictEqual([false, [], []]);
+    ]).toStrictEqual([false, [], "tabs", false, []]);
     app.dispose();
   });
 

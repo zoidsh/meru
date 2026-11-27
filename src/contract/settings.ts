@@ -90,6 +90,7 @@ export const PRIVACY_PAGE_KEYS = [
  */
 export const TABS_APPS_OVERRIDABLE_KEYS = [
   "openAppsInMeru",
+  "openAppsIn",
   "appsInDefaultBrowser",
 ] as const;
 
@@ -97,7 +98,11 @@ export const TABS_APPS_OVERRIDABLE_KEYS = [
  * The Tabs & Google Apps page's other settings, in its order, after those;
  * the app holds them, never a profile.
  */
-export const TABS_APPS_PAGE_KEYS = ["sleepIdleTabs", "sleepAfter"] as const;
+export const TABS_APPS_PAGE_KEYS = [
+  "showWindowsInSidebar",
+  "sleepIdleTabs",
+  "sleepAfter",
+] as const;
 
 /** The General page's setting a profile may hold a value of its own for. */
 export const GENERAL_OVERRIDABLE_KEYS = ["downloadsFolder"] as const;

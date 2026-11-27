@@ -381,6 +381,8 @@ describe("the settings contract", () => {
       confirmLinks: true,
       openAppsInMeru: false,
       appsInDefaultBrowser: ["drive"],
+      openAppsIn: "windows",
+      showWindowsInSidebar: false,
       sleepIdleTabs: "chosen",
       sleepAfter: "6h",
       hardwareAcceleration: false,

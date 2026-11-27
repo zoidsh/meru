@@ -103,6 +103,16 @@ describe(entitledSetting, () => {
     ]).toStrictEqual([false, [], true, ["drive"], false, false]);
   });
 
+  it("opens every new tab in the main window without Meru Pro and reads Show windows in the sidebar as stored, writing neither", () => {
+    expect([
+      entitledSetting("openAppsIn", "windows", free),
+      entitledSetting("openAppsIn", "windows", pro),
+      entitledSetting("showWindowsInSidebar", false, free),
+      settingWritable("openAppsIn", free),
+      settingWritable("showWindowsInSidebar", free),
+    ]).toStrictEqual(["tabs", "windows", false, false, false]);
+  });
+
   it("applies none of Gmail's page settings without Meru Pro but the inbox footer's hide, which was never Pro", () => {
     expect(
       gmailFeatures((feature) => entitledSetting(feature, true, free))

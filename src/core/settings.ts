@@ -66,6 +66,11 @@ export const SLEEP_AFTER = ["30m", "1h", "3h", "6h"] as const;
 
 export type SleepAfter = (typeof SLEEP_AFTER)[number];
 
+/** Where a Google app opened next arrives, the default first. */
+export const OPEN_APPS_IN = ["tabs", "windows"] as const;
+
+export type OpenAppsIn = (typeof OPEN_APPS_IN)[number];
+
 /** The default first. */
 export const VERIFICATION_CODE_COPY_MODES = [
   "notificationClick",
@@ -390,6 +395,20 @@ export const SETTINGS = {
       )
     ),
     default: [],
+  }),
+  /**
+   * Whether a new tab of a Google app other than Gmail starts in the main
+   * window or in a window of its own: v3's `workspaceApps.mode`. Tabs
+   * already open stay where they are.
+   */
+  openAppsIn: overridable<OpenAppsIn>({
+    schema: z.enum(OPEN_APPS_IN),
+    default: "tabs",
+  }),
+  /** Whether the sidebar lists tabs in windows of their own: v3's `verticalTabs.showWindows`. */
+  showWindowsInSidebar: setting<boolean>({
+    schema: z.boolean(),
+    default: true,
   }),
   /** Which tabs sleep once idle for `sleepAfter`: v3's Hibernate idle tabs. */
   sleepIdleTabs: setting<SleepIdleTabs>({

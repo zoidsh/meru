@@ -90,6 +90,8 @@ const APP: PageSettings = {
   confirmLinks: true,
   openAppsInMeru: true,
   appsInDefaultBrowser: [],
+  openAppsIn: "tabs",
+  showWindowsInSidebar: true,
   sleepIdleTabs: "unpinned",
   sleepAfter: "1h",
   hardwareAcceleration: true,

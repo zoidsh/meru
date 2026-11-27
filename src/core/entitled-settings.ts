@@ -52,6 +52,9 @@ export const GATED_SETTINGS: {
   // No Google app but Gmail opens in Meru without the capability anyway.
   openAppsInMeru: { capability: "workspaceApps", free: () => false },
   appsInDefaultBrowser: { capability: "workspaceApps", free: () => [] },
+  openAppsIn: { capability: "workspaceApps", free: () => "tabs" },
+  // The free version has no tab in a window of its own to list.
+  showWindowsInSidebar: { capability: "workspaceApps" },
   // The free version's one tab is always on screen, so neither does anything.
   sleepIdleTabs: { capability: "workspaceApps" },
   sleepAfter: { capability: "workspaceApps" },

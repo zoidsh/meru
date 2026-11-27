@@ -321,7 +321,26 @@ describe("a profile's overrides", () => {
       "unifiedInbox",
       "openAppsInMeru",
       "appsInDefaultBrowser",
+      "openAppsIn",
     ]);
+  });
+
+  it("open Google apps in tabs and show windows in the sidebar by default, a value no build wrote reading as the default, and a profile's own Open Google apps in read for it", () => {
+    const settings = read({
+      version: 1,
+      openAppsIn: "popups",
+      showWindowsInSidebar: "no",
+      profiles: { p: { openAppsIn: "windows" }, q: { openAppsIn: 3 } },
+    });
+
+    expect([
+      readSetting(read({ version: 1 }), "openAppsIn", "darwin"),
+      readSetting(read({ version: 1 }), "showWindowsInSidebar", "darwin"),
+      readSetting(settings, "openAppsIn", "darwin"),
+      readSetting(settings, "showWindowsInSidebar", "darwin"),
+      readSetting(settings, "openAppsIn", "darwin", "p"),
+      readSetting(settings, "openAppsIn", "darwin", "q"),
+    ]).toStrictEqual(["tabs", true, "tabs", true, "windows", "tabs"]);
   });
 
   it("lists every profile's mail in the Unified inbox by default", () => {
