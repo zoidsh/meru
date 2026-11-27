@@ -6,7 +6,13 @@ export type SenderIdentity =
   /** The shell's overlay document, which the shell draws into; never a caller. */
   | { role: "overlay" }
   | { role: "content-view"; profileId: string; tabId: string }
-  | { role: "child-window"; profileId: string; tabId: string };
+  | {
+      role: "child-window";
+      profileId: string;
+      tabId: string;
+      /** The URL it was opened for, which says what kind of window it is. */
+      openedAt?: string;
+    };
 
 /**
  * Every webContents Meru creates, by id, with what it is. Entered when it is

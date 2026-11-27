@@ -231,8 +231,12 @@ export const createComposeWindows = ({
         onWindowOpen: (url, asked) =>
           windowOpening.onWindowOpen(key, url, asked),
         onChildNavigation: (url) => windowOpening.onChildNavigation(key, url),
-        onWebContents: (webContentsId) =>
-          senders.register(webContentsId, { role: "child-window", ...key }),
+        onWebContents: (webContentsId, openedAt) =>
+          senders.register(webContentsId, {
+            role: "child-window",
+            ...key,
+            ...(openedAt !== undefined && { openedAt }),
+          }),
         // Never called before `openWindow` returns.
         onClosed: () => {
           // oxlint-disable-next-line no-use-before-define -- closed only once open

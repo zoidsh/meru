@@ -613,12 +613,16 @@ export const createTabViews = ({
       onWindowOpen: (url, request) =>
         routing.onWindowOpen(tabKeyed, url, request),
       onChildNavigation: (url) => routing.onChildNavigation(tabKeyed, url),
-      onWebContents: (webContentsId, role) => {
-        const drop = senders.register(webContentsId, { role, ...tabKeyed });
-
-        if (role !== "content-view") {
-          return drop;
+      onWebContents: (webContentsId, role, openedAt) => {
+        if (role === "child-window") {
+          return senders.register(webContentsId, {
+            role,
+            ...tabKeyed,
+            ...(openedAt !== undefined && { openedAt }),
+          });
         }
+
+        const drop = senders.register(webContentsId, { role, ...tabKeyed });
 
         pageViews.set(webContentsId, key);
 

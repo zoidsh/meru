@@ -57,11 +57,13 @@ export interface ContentViewOptions {
   background: boolean;
   /**
    * Told of the view's webContents and of each child window's as it is
-   * created; what it returns is called when that webContents is destroyed.
+   * created, a window with the URL it was opened for; what it returns is
+   * called when that webContents is destroyed.
    */
   onWebContents: (
     webContentsId: number,
-    kind: "content-view" | "child-window"
+    kind: "content-view" | "child-window",
+    openedAt?: string
   ) => () => void;
   /** Told of the view's own page, never of its child windows'. */
   onEvent: (event: ContentViewEvent) => void;
@@ -153,9 +155,10 @@ export interface ContentView {
 const trackDestroyed = (
   webContents: WebContents,
   kind: "content-view" | "child-window",
-  onWebContents: ContentViewOptions["onWebContents"]
+  onWebContents: ContentViewOptions["onWebContents"],
+  openedAt?: string
 ) => {
-  webContents.once("destroyed", onWebContents(webContents.id, kind));
+  webContents.once("destroyed", onWebContents(webContents.id, kind, openedAt));
 };
 
 /** Shown on whichever comes first, since Wayland can skip `ready-to-show`. */
@@ -247,10 +250,10 @@ const routeWindowOpens = (
       },
     };
   });
-  webContents.on("did-create-window", (child) => {
+  webContents.on("did-create-window", (child, { url }) => {
     children.add(child);
     child.once("closed", () => children.delete(child));
-    trackDestroyed(child.webContents, "child-window", onWebContents);
+    trackDestroyed(child.webContents, "child-window", onWebContents, url);
     guardNavigation(child, onChildNavigation);
     // Windows and Linux would give it the app's menu, whose commands act on
     // the main window.
@@ -274,8 +277,11 @@ export type SessionWindowOptions = Pick<
   | "background"
 > & {
   url: string;
-  /** Told of its webContents and its pop-ups', as a view's windows' are. */
-  onWebContents: (webContentsId: number) => () => void;
+  /**
+   * Told of its webContents and its pop-ups', as a view's windows' are, each
+   * with the URL it was opened for.
+   */
+  onWebContents: (webContentsId: number, openedAt?: string) => () => void;
   /** Told once it has closed, by the page's own `window.close()` or `close`. */
   onClosed: () => void;
 };
@@ -311,7 +317,9 @@ export const openSessionWindow = (
     },
   });
 
-  trackDestroyed(window.webContents, "child-window", onWebContents);
+  trackDestroyed(window.webContents, "child-window", (id) =>
+    onWebContents(id, url)
+  );
   guardNavigation(window, options.onChildNavigation);
   window.removeMenu();
 
