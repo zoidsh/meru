@@ -1,5 +1,4 @@
-import { realpathSync } from "node:fs";
-import { copyFile, readdir, rm, mkdir, writeFile } from "node:fs/promises";
+import { copyFile, rm, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { BuildOptions } from "rolldown";
@@ -78,67 +77,6 @@ export const copyTrayImages = async (target: BuildTarget) => {
       )
     )
   );
-};
-
-/** The audio addon's package, which holds a binary for every platform. */
-export const SOUND_ADDON_FOLDER = realpathSync(
-  path.join(repositoryRoot, "node_modules", "node-web-audio-api")
-);
-
-/**
- * Where the packed app holds the addon's BSD-3 license, which a binary
- * distribution must carry, beside the addon in `app.asar.unpacked`.
- */
-export const SOUND_ADDON_LICENSE = "node-web-audio-api/LICENSE";
-
-// What its loader adds after `<platform>-<arch>` on Linux and on Windows.
-const SOUND_ADDON_SUFFIXES = ["", "-gnu", "-msvc"];
-
-/**
- * The glob of the addon's binary for one platform and architecture, as its
- * loader names it and requires it from beside `main.mjs`; it matches one
- * file, never another architecture's or Linux's 32-bit arm.
- */
-export const soundAddonGlob = (platform: string, arch: string) =>
-  `node-web-audio-api.${platform}-${arch}{${SOUND_ADDON_SUFFIXES.join(",")}}.node`;
-
-/** Whether `name` is the addon's binary for that platform and architecture. */
-export const isSoundAddon = (name: string, platform: string, arch: string) =>
-  SOUND_ADDON_SUFFIXES.some(
-    (suffix) => name === `node-web-audio-api.${platform}-${arch}${suffix}.node`
-  );
-
-/**
- * The sounds main plays, into `sounds`, and the audio addon's binary for the
- * machine this builds on beside main's bundle, which `pnpm start` and
- * `pnpm dev` load; packing puts in the one for the architecture it packs.
- */
-export const copySounds = async (target: BuildTarget) => {
-  const directory = path.join(outDir(target), "sounds");
-  const source = path.join(repositoryRoot, "src", "shell", "sounds");
-  const binaries = await readdir(SOUND_ADDON_FOLDER);
-  const addon = binaries.find((name) =>
-    isSoundAddon(name, process.platform, process.arch)
-  );
-
-  if (!addon) {
-    throw new Error(
-      `node-web-audio-api has no binary for ${process.platform} ${process.arch}`
-    );
-  }
-
-  const sounds = await readdir(source);
-
-  await mkdir(directory, { recursive: true });
-  await Promise.all([
-    ...sounds.map((name) =>
-      copyFile(path.join(source, name), path.join(directory, name))
-    ),
-    copyFile(
-      path.join(SOUND_ADDON_FOLDER, addon),
-      path.join(outDir(target), addon)
-    ),
-  ]);
 };
 
 /** Gmail's preload, which loads with every document in Gmail's view. */

@@ -11,7 +11,6 @@ import {
   SETTINGS_ONLY,
   appBundles,
   cleanOutDir,
-  copySounds,
   copyTrayImages,
   identityFor,
   outDir,
@@ -47,7 +46,6 @@ await Promise.all([
   ),
   writeAppManifest(target),
   copyTrayImages(target),
-  copySounds(target),
 ]);
 
 const entries = await readdir(out, { recursive: true, withFileTypes: true });

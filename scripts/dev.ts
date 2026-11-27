@@ -11,7 +11,6 @@ import type { ViteDevServer } from "vite";
 import {
   appBundles,
   cleanOutDir,
-  copySounds,
   copyTrayImages,
   outDir,
   rendererViteConfig,
@@ -149,7 +148,6 @@ setup = (async () => {
   await cleanOutDir("dev");
   await writeAppManifest("dev");
   await copyTrayImages("dev");
-  await copySounds("dev");
 
   vite = await createServer({
     configFile: rendererViteConfig,

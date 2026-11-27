@@ -24,12 +24,6 @@ const ELECTRON_TYPES_ONLY = {
     "Only platform and the preloads import Electron by value; reach it through a platform adapter.",
 };
 
-const SOUND_ADDON_IN_ITS_ADAPTER = {
-  name: "node-web-audio-api",
-  message:
-    "Only src/platform/sound-player.ts loads the audio addon; play through its SoundPlayer.",
-};
-
 export default defineConfig({
   extends: [core, react, vitest],
   // Installed by `skills add shadcn/ui` and kept as it comes.
@@ -40,27 +34,12 @@ export default defineConfig({
       rules: {
         "no-restricted-imports": [
           "error",
-          {
-            paths: [ELECTRON_TYPES_ONLY, SOUND_ADDON_IN_ITS_ADAPTER],
-            patterns: [NO_RELATIVE_CROSSING],
-          },
+          { paths: [ELECTRON_TYPES_ONLY], patterns: [NO_RELATIVE_CROSSING] },
         ],
       },
     },
     {
       files: ["src/platform/**", "src/preload/**"],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: [SOUND_ADDON_IN_ITS_ADAPTER],
-            patterns: [NO_RELATIVE_CROSSING],
-          },
-        ],
-      },
-    },
-    {
-      files: ["src/platform/sound-player.ts"],
       rules: {
         "no-restricted-imports": [
           "error",
@@ -275,15 +254,6 @@ export default defineConfig({
         "react/no-object-type-as-default-prop": "off",
         "react/jsx-no-literals": "off",
         "prefer-destructuring": "off",
-      },
-    },
-    {
-      files: ["e2e/**", "scripts/**"],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          { paths: [SOUND_ADDON_IN_ITS_ADAPTER] },
-        ],
       },
     },
     {

@@ -50,12 +50,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
-      # The audio addon's Linux binary links PipeWire's and ALSA's client
-      # libraries and does not load without them, `none` sink or not; the
-      # runner's image has ALSA's, which Electron needs too, but not PipeWire's.
-      # Ubuntu 24.04 names both with the t64 suffix.
-      - if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpipewire-0.3-0t64 libasound2t64
       - run: ${{ runner.os == 'Linux' && 'xvfb-run -a ' || '' }}pnpm test:e2e
       # always(), not failure(): a job killed for its timeout counts as
       # cancelled, and its trace is the one most worth having.
