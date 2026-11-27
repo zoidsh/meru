@@ -100,7 +100,8 @@ const item = (
   more: Pick<Item, "checked" | "command"> = {}
 ): Item => ({ kind: "item", id, enabled, ...more });
 
-const opensInBrowser = (url: string) =>
+/** Whether Open in Default Browser can take the URL: a web page's, with no credentials. */
+export const opensInBrowser = (url: string) =>
   URL.canParse(url) && isWebUrl(new URL(url));
 
 /** Bookmark tab or Remove bookmark, while the page can be bookmarked. */

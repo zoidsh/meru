@@ -1,7 +1,7 @@
 import { menuOfGroups } from "./context-menu.ts";
 import type { MenuEntry, MenuItemEntry } from "./context-menu.ts";
-import { isWebUrl } from "./google-redirect.ts";
 import type { Platform } from "./platform.ts";
+import { opensInBrowser } from "./tab-menu.ts";
 
 /** Every fixed item a page's context menu can hold, in the design's order. */
 export const PAGE_MENU_ITEMS = [
@@ -126,9 +126,6 @@ const item = (id: PageMenuItemId, enabled = true): Item => ({
   id,
   enabled,
 });
-
-const opensInBrowser = (url: string) =>
-  URL.canParse(url) && isWebUrl(new URL(url));
 
 const spellingGroups = (click: PageClick): Item[][] => {
   if (!click.editable || click.misspelledWord === "") {
