@@ -131,7 +131,7 @@ test("the log holds what happened, a failed load and a download included, and no
     'view-created tab="profile 1 tab 1 gmail" app=gmail',
     'tab-load-failed tab="profile 1 tab 1 gmail" host=127.0.0.1 code=-102',
     "download-started",
-    "store-set-aside file=<data>/entitlement.json kept=<data>/entitlement.corrupt-",
+    `store-set-aside file=<data>${path.sep}entitlement.json kept=<data>${path.sep}entitlement.corrupt-`,
   ]) {
     expect(log).toContain(event);
   }
