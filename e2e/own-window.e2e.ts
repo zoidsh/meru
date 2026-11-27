@@ -929,6 +929,10 @@ test("the shell's renderer lets go of the documents of find bars, Downloads card
   const windowOpen = async () => {
     await pressShifted(app, standIn.calendarUrl, "N");
     await expect.poll(() => ownWindowCount(app)).toBe(1);
+    // Playwright holds a page the shell opens, and the shell's renderer
+    // with it, until it has attached; a titlebar closed before then holds
+    // the shell for good. Found, it has been let go.
+    await findTitlebar(app);
   };
   const windowClose = async () => {
     await pressShifted(app, standIn.calendarUrl, "M");
@@ -1061,6 +1065,8 @@ test("closing the window by its control closes its tab, as Close Tab does, the m
 
   await clickMenuItem(app, "tab.moveToNewWindow");
   await expect.poll(() => ownWindowPage(app)).toBe(standIn.calendarUrl);
+  // Closed before Playwright has let its titlebar go, it would hold the shell.
+  await findTitlebar(app);
   await closeWindow(app, "own");
 
   await expect.poll(() => ownWindowCount(app)).toBe(0);
@@ -1257,6 +1263,8 @@ test("on macOS closing the main window hides it, the tab's own window still clos
 
   await clickMenuItem(app, "tab.moveToNewWindow");
   await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
+  // Each titlebar found before its window closes, as in the windows loop.
+  await findTitlebar(app);
   await closeWindow(app, "main");
   await expect.poll(() => mainWindowVisible(app)).toBeFalsy();
 
@@ -1268,6 +1276,7 @@ test("on macOS closing the main window hides it, the tab's own window still clos
   // Calendar closed with its window, so Drive, selected, is the one to move.
   await clickMenuItem(app, "tab.moveToNewWindow");
   await expect.poll(() => ownWindowPage(app)).toBe(standIn.driveUrl);
+  await findTitlebar(app);
   await clickMenuItem(app, "tab.moveToMainWindow");
   await expect.poll(() => mainWindowVisible(app)).toBeTruthy();
   await expect.poll(() => ownWindowCount(app)).toBe(0);
