@@ -141,6 +141,32 @@ const FREE_KEY = isMacOS
       } satisfies Key,
     };
 
+/**
+ * Types the free key into the recorder. On macOS it arrives as Chromium
+ * there sends it, Option changing the K to ˚ though Command is held, which
+ * Playwright's own press, giving k, never shows.
+ */
+const typeFreeKey = async (page: Page) => {
+  if (!isMacOS) {
+    await page.keyboard.press(FREE_KEY.press);
+
+    return;
+  }
+
+  const cdp = await page.context().newCDPSession(page);
+  // Alt is 1 and Meta 4 in CDP's modifiers.
+  const event = {
+    key: "˚",
+    code: "KeyK",
+    modifiers: 5,
+    windowsVirtualKeyCode: 75,
+  };
+
+  await cdp.send("Input.dispatchKeyEvent", { type: "rawKeyDown", ...event });
+  await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", ...event });
+  await cdp.detach();
+};
+
 /** A key Google Chat uses, and no Meru command. */
 const CHAT_KEY = isMacOS
   ? {
@@ -342,7 +368,7 @@ test("records a new key for Reload, which the menu, the title bar's tooltip and 
   const page = await openShortcuts(app);
 
   await startRecording(page);
-  await page.keyboard.press(FREE_KEY.press);
+  await typeFreeKey(page);
 
   await expect(reloadButton(page)).toHaveAccessibleName(
     `Reload ${FREE_KEY.spoken}`

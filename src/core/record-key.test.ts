@@ -104,6 +104,32 @@ const LAYOUTS: Record<string, LayoutKey[]> = {
     ["Backquote", "Dead", "°"],
     ...NAMED,
   ],
+  // What Chromium on macOS gives with Option held, Command or not.
+  "US with Option": [
+    ["KeyK", "˚", ""],
+    ["KeyN", "Dead", "˜"],
+    ["KeyE", "Dead", "´"],
+    ["KeyA", "å", "Å"],
+    ["Digit1", "¡", "⁄"],
+    ["Digit2", "™", "€"],
+    ["Minus", "–", "—"],
+    ["BracketLeft", "“", "”"],
+    ["Comma", "≤", "¯"],
+    ["Period", "≥", "˘"],
+    ["Slash", "÷", "¿"],
+    ["Semicolon", "…", "Ú"],
+    ["Quote", "æ", "Æ"],
+    ["Backslash", "«", "»"],
+    ["Backquote", "Dead", "`"],
+  ],
+  "AZERTY with Option": [
+    ["KeyQ", "æ", "Æ"],
+    ["KeyA", "‡", "Ω"],
+    ["KeyM", "∞", "¿"],
+    ["Semicolon", "µ", "Ó"],
+    ["Digit1", "", "´"],
+    ["BracketLeft", "ô", "Ô"],
+  ],
 };
 
 const MODIFIERS = ["control", "alt", "shift", "meta"] as const;
@@ -140,6 +166,16 @@ const kindOf = (key: string, control = false) =>
     false
   ).kind;
 
+/** With Option and Command held, on macOS. */
+const option = (key: string, code: string, shift = false): PressedKey => ({
+  key,
+  code,
+  control: false,
+  shift,
+  alt: true,
+  meta: true,
+});
+
 const pressesOf = (layout: LayoutKey[]) =>
   layout.flatMap(([code, key, shifted]) =>
     HELD.map((held): PressedKey => ({
@@ -159,7 +195,10 @@ describe(recordKey, () => {
   it.each(Object.keys(LAYOUTS))(
     "records on %s only what the matcher then hears from the same key, on macOS and elsewhere",
     (layout) => {
-      for (const isMacOS of [true, false]) {
+      // Option changes what a key types on macOS alone.
+      for (const isMacOS of layout.includes("Option")
+        ? [true]
+        : [true, false]) {
         const presses = pressesOf(LAYOUTS[layout] ?? []);
         const recordedCount = presses.filter(
           (pressed) => recordKey(pressed, isMacOS).kind === "key"
@@ -216,17 +255,113 @@ describe(recordKey, () => {
     );
   });
 
+  it("names a key Option changes on macOS by where it is on a US keyboard, as the matcher hears it", () => {
+    // As Chromium on macOS gives them, Option applied though Command is held.
+    const presses = [
+      option("˚", "KeyK"),
+      option("Dead", "KeyN"),
+      option("¡", "Digit1"),
+      option("“", "BracketLeft"),
+      option("≥", "Period"),
+      option("÷", "Slash"),
+      option("Ò", "KeyL", true),
+      // German ⌥L types @.
+      option("@", "KeyL"),
+      // French AZERTY ⌥A, where US has Q: Option names it by US place.
+      option("æ", "KeyQ"),
+    ];
+    const recorded = presses.map((pressed) => recordKey(pressed, true));
+
+    expect(recorded).toStrictEqual(
+      [
+        "Alt+Command+K",
+        "Alt+Command+N",
+        "Alt+Command+1",
+        "Alt+Command+[",
+        "Alt+Command+.",
+        "Alt+Command+/",
+        "Alt+Shift+Command+L",
+        "Alt+Command+L",
+        "Alt+Command+Q",
+      ].map((accelerator) => ({ kind: "key", accelerator }))
+    );
+    expect(
+      presses.every((pressed, index) => {
+        const result = recorded[index];
+
+        return (
+          result?.kind === "key" &&
+          matchesAccelerator(result.accelerator, asInput(pressed), true)
+        );
+      })
+    ).toBeTruthy();
+    // Split Right's default, which Option otherwise turns into a dead key.
+    expect(
+      matchesAccelerator("Command+Alt+N", asInput(option("Dead", "KeyN")), true)
+    ).toBeTruthy();
+  });
+
+  it("keeps the character Alt or AltGr types off macOS, and names a letter of another script by where it is", () => {
+    expect([
+      recordKey(
+        {
+          key: "ù",
+          code: "Quote",
+          control: false,
+          shift: false,
+          alt: true,
+          meta: false,
+        },
+        false
+      ),
+      withControl("к", "KeyR"),
+      withControl(",", "KeyM"),
+      withControl("m", "Semicolon"),
+      // AltGr on Polish, which reports Ctrl+Alt and types ą.
+      recordKey(
+        {
+          key: "ą",
+          code: "KeyA",
+          control: true,
+          shift: false,
+          alt: true,
+          meta: false,
+        },
+        false
+      ),
+    ]).toStrictEqual([
+      { kind: "refused" },
+      { kind: "key", accelerator: "Control+R" },
+      { kind: "key", accelerator: "Control+," },
+      { kind: "key", accelerator: "Control+M" },
+      { kind: "refused" },
+    ]);
+    expect(
+      matchesAccelerator(
+        "Control+Alt+A",
+        asInput({
+          key: "ą",
+          code: "KeyA",
+          control: true,
+          shift: false,
+          alt: true,
+          meta: false,
+        }),
+        false
+      )
+    ).toBeFalsy();
+  });
+
   it("refuses a dead key, a character no accelerator names and, off macOS, the Windows key, recording nothing", () => {
     const refused = [
-      { key: "Dead", code: "BracketLeft", control: true },
-      { key: "Dead", code: "KeyN", meta: true, alt: true },
-      { key: "ö", code: "Semicolon", control: true },
-      { key: "ù", code: "Quote", alt: true },
-      { key: "Unidentified", code: "", control: true },
-      { key: "Process", code: "KeyA", control: true },
+      { key: "Dead", code: "BracketLeft" },
+      { key: "ö", code: "Semicolon" },
+      { key: "ù", code: "Quote" },
+      { key: "Unidentified", code: "" },
+      { key: "Process", code: "KeyA" },
     ].map((pressed) =>
       recordKey(
-        { control: false, shift: false, alt: false, meta: false, ...pressed },
+        { control: true, shift: false, alt: false, meta: false, ...pressed },
         true
       )
     );

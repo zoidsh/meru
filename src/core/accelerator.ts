@@ -55,6 +55,54 @@ const KEY_NAMES: Record<string, string> = {
 
 const DIGIT = /^\d$/u;
 
+const LETTER = /^[a-z]$/iu;
+
+const LETTER_CODE = /^Key(?<letter>[A-Z])$/u;
+
+/** Where the punctuation Option changes sits on a US keyboard. */
+const PUNCTUATION_PLACES: Record<string, string> = {
+  Period: ".",
+  Slash: "/",
+  Semicolon: ";",
+  Quote: "'",
+  Backslash: "\\",
+  Backquote: "`",
+};
+
+/**
+ * The key as a shortcut names it. Option on macOS changes what a key types
+ * even with Command held (⌥⌘K types ˚, ⌥⌘N a dead tilde), so such a key is
+ * named by where it is on a US keyboard, as is a letter of another script.
+ * Without Option an ASCII character keeps its name, as AZERTY's comma where
+ * US has M, and so does ö where US has ;, which Electron's menu would not
+ * hear as that key. Off macOS a character typed with Ctrl+Alt keeps it too:
+ * that is AltGr, as Polish's ą, which must type and run nothing.
+ */
+const heardKey = (
+  {
+    key,
+    code,
+    control,
+    alt,
+  }: Pick<KeyInput, "key" | "code" | "control" | "alt">,
+  isMacOS: boolean
+) => {
+  if (LETTER.test(key) || key === "Process") {
+    return key;
+  }
+
+  const option = isMacOS && alt;
+  const altGraph = !isMacOS && control && alt;
+  const letter = LETTER_CODE.exec(code)?.groups?.letter;
+  const isASCII = key.length === 1 && (key.codePointAt(0) ?? 0) < 128;
+
+  if (letter !== undefined && (option || (!isASCII && !altGraph))) {
+    return letter;
+  }
+
+  return option ? (PUNCTUATION_PLACES[code] ?? key) : key;
+};
+
 type Modifier = "control" | "shift" | "alt" | "meta";
 
 const modifierOf = (part: string, isMacOS: boolean): Modifier | undefined => {
@@ -119,15 +167,16 @@ export const matchesAccelerator = (
     (modifier) => wanted[modifier] === input[modifier]
   );
 
+  const heard = heardKey(input, isMacOS);
   // A digit typed names itself, as on a layout whose digit row types other
   // digits with Shift, where by place it would also match another.
   const byPlace =
-    !DIGIT.test(input.key) &&
+    !DIGIT.test(heard) &&
     codeOf(key) !== undefined &&
     input.code === codeOf(key);
 
   const named = KEY_NAMES[key.toLowerCase()] ?? key;
-  const typed = input.key === " " ? "Space" : input.key;
+  const typed = heard === " " ? "Space" : heard;
 
   return (
     sameModifiers && (typed.toLowerCase() === named.toLowerCase() || byPlace)
@@ -185,8 +234,6 @@ const NAMED_KEYS: Record<string, string> = {
 
 const FUNCTION_KEY = /^F(?:[1-9]|1\d|2[0-4])$/u;
 
-const LETTER = /^[a-z]$/iu;
-
 /** The characters Electron's accelerators name, apart from Plus. */
 const PUNCTUATION = new Set("`~!@#$%^&*()-_=[{]}\\|;:'\",<.>/?");
 
@@ -195,7 +242,13 @@ const PLACES = Object.fromEntries(
 );
 
 /** The key's name in an accelerator as the matcher hears it, if it has one. */
-const recordedName = ({ key, code }: PressedKey): string | undefined => {
+const recordedName = (
+  pressed: PressedKey,
+  isMacOS: boolean
+): string | undefined => {
+  const { code } = pressed;
+  const key = heardKey(pressed, isMacOS);
+
   // A dead key types nothing yet, so it has no stable name, wherever it is.
   if (key === "Dead" || key === "Unidentified" || key === "Process") {
     return undefined;
@@ -278,7 +331,7 @@ export const recordKey = (
     return { kind: "leave" };
   }
 
-  const name = recordedName(pressed);
+  const name = recordedName(pressed, isMacOS);
 
   if (name === undefined || (meta && !isMacOS)) {
     return { kind: "refused" };
