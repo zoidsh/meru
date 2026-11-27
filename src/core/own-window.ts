@@ -62,6 +62,24 @@ export const ownWindowFindOfFrame = (name: string) =>
 export const ownWindowCardOfFrame = (name: string) =>
   keyOfFrame(OWN_WINDOW_CARD_FRAME_PREFIX, name);
 
+/**
+ * Whether the shell may open a document under `name`: one of a tab's own
+ * window, its titlebar, find bar or card, only while that window is open,
+ * since a shell that lags behind main can ask for one after the window has
+ * closed. Any other name is not this rule's to refuse.
+ */
+export const ownWindowDocumentWanted = (
+  name: string,
+  isOpen: (key: TabKey) => boolean
+) => {
+  const key =
+    ownWindowOfFrame(name) ??
+    ownWindowFindOfFrame(name) ??
+    ownWindowCardOfFrame(name);
+
+  return key === undefined || isOpen(key);
+};
+
 /** How far the page sits in from a tab's own window's sides and bottom. */
 export const OWN_WINDOW_INSET = 8;
 

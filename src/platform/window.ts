@@ -65,6 +65,12 @@ export interface AppWindow extends PlainWindow {
   onShellDocument: (
     listener: (view: OverlayView, frameName: string) => void
   ) => void;
+  /**
+   * Asked before each such document is made, by its name; one it declines
+   * is refused, the page's `window.open` returning null, so no web contents
+   * is made only to be closed. Every one allowed until it is set.
+   */
+  filterShellDocuments: (wanted: (frameName: string) => boolean) => void;
   /** Told when the page's document goes, loaded anew or its process gone. */
   onPageGone: (listener: () => void) => void;
   /**
@@ -103,6 +109,8 @@ export interface AppWindow extends PlainWindow {
 export interface WindowFactory {
   create: (options: WindowOptions) => AppWindow;
 }
+
+const anyDocument = () => true;
 
 export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
   create: (options) => {
@@ -155,8 +163,10 @@ export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
     // It lives in the page's process, gone with it.
     webContents.on("render-process-gone", pageGone);
 
+    let documentWanted: (frameName: string) => boolean = anyDocument;
+
     webContents.setWindowOpenHandler((request) =>
-      options.isShellDocument(request)
+      options.isShellDocument(request) && documentWanted(request.frameName)
         ? {
             action: "allow",
             createWindow: (created) => {
@@ -207,6 +217,9 @@ export const createWindowFactory = (menus: ContextMenus): WindowFactory => ({
       },
       onShellDocument: (listener) => {
         documentListeners.add(listener);
+      },
+      filterShellDocuments: (wanted) => {
+        documentWanted = wanted;
       },
       onPageGone: (listener) => {
         pageGoneListeners.add(listener);

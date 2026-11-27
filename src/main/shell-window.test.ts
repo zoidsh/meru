@@ -51,6 +51,7 @@ const createFakeWindow = () => {
     focusPage: () => false,
     onPageFocus: () => false,
     onShellDocument: () => false,
+    filterShellDocuments: () => false,
     onPageGone: () => false,
     onRendererGone: () => false,
     reload: () => false,

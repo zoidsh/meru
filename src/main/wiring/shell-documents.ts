@@ -1,6 +1,7 @@
 import { OVERLAY_FRAME_NAME, staysOpenOnBlur } from "#core/overlay.ts";
 import {
   ownWindowCardOfFrame,
+  ownWindowDocumentWanted,
   ownWindowFindOfFrame,
   ownWindowOfFrame,
 } from "#core/own-window.ts";
@@ -51,6 +52,12 @@ export const wireShellDocuments = ({
     }
   });
 
+  // Refused rather than made and closed at once: a debugger that pauses new
+  // pages, as the end-to-end suite's does, would otherwise hold the shell's
+  // renderer inside `window.open` for a page it never sees.
+  shell.window.filterShellDocuments((frameName) =>
+    ownWindowDocumentWanted(frameName, ownWindows.isOpen)
+  );
   shell.window.onShellDocument((view, frameName) => {
     const id = view.webContentsId;
 

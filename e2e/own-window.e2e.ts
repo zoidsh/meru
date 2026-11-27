@@ -3,11 +3,13 @@ import path from "node:path";
 
 import { chromium } from "@playwright/test";
 import type { ElectronApplication, Page } from "@playwright/test";
+import { delay } from "es-toolkit";
 
 import { FIND_INSET } from "#core/find.ts";
 import {
   OWN_WINDOW_CARD_FRAME_PREFIX,
   OWN_WINDOW_FIND_FRAME_PREFIX,
+  OWN_WINDOW_FRAME_PREFIX,
 } from "#core/own-window.ts";
 
 import {
@@ -952,6 +954,64 @@ test("the shell's renderer lets go of the documents of find bars, Downloads card
     beforeCard,
     beforeWindows,
   ]);
+});
+
+test("a shell that lags behind main opens no titlebar for a window already gone, and goes on answering", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, shell } = await launch(launchApp, userDataDir, standIn);
+
+  await app.evaluate(({ app: electronApp }) => {
+    const made: string[] = [];
+
+    Object.assign(globalThis, { madeDocuments: made });
+    electronApp.on("web-contents-created", (_event, contents) => {
+      made.push(contents.mainFrame.name);
+    });
+  });
+
+  const titlebarsMade = async () => {
+    const made = await app.evaluate(
+      () => (globalThis as unknown as { madeDocuments: string[] }).madeDocuments
+    );
+
+    return made.filter((name) => name.startsWith(OWN_WINDOW_FRAME_PREFIX))
+      .length;
+  };
+
+  // Busy for three seconds, so the shell hears of the window only once
+  // main has opened and closed it, and asks for its titlebar then.
+  await shell.evaluate(() => {
+    setTimeout(() => {
+      const end = Date.now() + 3000;
+
+      while (Date.now() < end) {
+        // Holds the shell's thread.
+      }
+    }, 0);
+  });
+  await pressShifted(app, standIn.calendarUrl, "N");
+  await expect.poll(() => ownWindowCount(app)).toBe(1);
+  await pressShifted(app, standIn.calendarUrl, "M");
+  await expect.poll(() => ownWindowCount(app)).toBe(0);
+
+  // Answering at all says the shell is past its busy spell; answering
+  // again half a second on, past the effects that ask for the titlebar.
+  await expect
+    .poll(() => shell.evaluate(() => 1 + 1), { timeout: 10_000 })
+    .toBe(2);
+  await delay(500);
+  await expect
+    .poll(() => shell.evaluate(() => 1 + 1), { timeout: 10_000 })
+    .toBe(2);
+  expect(await titlebarsMade()).toBe(0);
+
+  // A window still open gets its titlebar, as ever.
+  await pressShifted(app, standIn.calendarUrl, "N");
+  await findTitlebar(app);
+  expect(await titlebarsMade()).toBe(1);
 });
 
 test("moving a tab back to the main window with its find bar open closes the bar with its document; the main window opens none", async ({
