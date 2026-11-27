@@ -510,7 +510,9 @@ test("notes the Google app that shares a key a person set, which Meru hears befo
   );
 });
 
-test("runs no shortcut while recording: the window's close and quit keys typed into the recorder leave it open", async ({
+// The menu itself never hears a synthesized key, on macOS or Linux, so that
+// it ignores a key typed while recording is a check by hand.
+test("takes the window's close and quit keys typed into the recorder as keys to record, refused and named, the window left open", async ({
   app,
 }) => {
   const page = await openShortcuts(app);
