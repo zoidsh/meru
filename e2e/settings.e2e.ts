@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { ElectronApplication, Locator, Page } from "@playwright/test";
 import { delay } from "es-toolkit";
 
 import {
@@ -74,7 +74,8 @@ const notifications = (app: ElectronApplication) =>
     }))
   );
 
-const pausedLines = (page: Page) => page.getByText("Do Not Disturb is on.");
+const pausedLines = (within: Page | Locator) =>
+  within.getByText("Do Not Disturb is on.");
 
 test("Settings… opens one Settings window, which closes and opens again", async ({
   app,
@@ -288,8 +289,9 @@ test("Do Not Disturb from the titlebar turns the row on and pauses the rows it o
   await expect(
     page.getByText("On until you turn it off. Silences all notifications.")
   ).toBeVisible();
-  // Allow notifications, Only important mail, Sound, Volume and Quiet hours.
-  await expect(pausedLines(page)).toHaveCount(6);
+  // Allow notifications, Only important mail, New email sound and Quiet
+  // hours; a verification code still sounds, so its sound and Volume do not.
+  await expect(pausedLines(page)).toHaveCount(4);
   await expect(
     page.getByRole("switch", { name: "Allow notifications" })
   ).toBeChecked();
@@ -298,6 +300,31 @@ test("Do Not Disturb from the titlebar turns the row on and pauses the rows it o
 
   await expect(moon).toHaveAttribute("aria-pressed", "false");
   await expect(pausedLines(page)).toHaveCount(0);
+});
+
+test("Do Not Disturb pauses Other notifications sound and Volume only while it holds verification codes too", async ({
+  app,
+}) => {
+  const page = await openSettings(app);
+  const newEmail = page.getByRole("combobox", { name: "New email sound" });
+  const other = page.getByRole("combobox", {
+    name: "Other notifications sound",
+  });
+  // The slider's root, a group, carries the row's descriptions.
+  const volume = page.getByRole("group", { name: "Volume", exact: true });
+  const paused = /Do Not Disturb is on\./u;
+
+  await page.getByRole("switch", { name: "Do Not Disturb" }).click();
+
+  await expect(newEmail).toHaveAccessibleDescription(paused);
+  await expect(other).not.toHaveAccessibleDescription(paused);
+  await expect(volume).not.toHaveAccessibleDescription(paused);
+
+  await setSetting(app, "verificationCodesDuringDoNotDisturb", false);
+
+  await expect(other).toHaveAccessibleDescription(paused);
+  await expect(volume).toHaveAccessibleDescription(paused);
+  await expect(pausedLines(page)).toHaveCount(6);
 });
 
 test("quiet hours are added, a day changed and removed, each edit writing the whole list", async ({
@@ -585,7 +612,7 @@ test("with two profiles Do Not Disturb holds whatever a profile sets, lives unde
     )
   ).toBeVisible();
   await page.getByRole("switch", { name: "Do Not Disturb" }).click();
-  await expect(offForAll).toHaveCount(6);
+  await expect(offForAll).toHaveCount(4);
 
   await scopeTab(page, "Work").click();
 
@@ -1018,7 +1045,7 @@ test.describe("shots", () => {
 
     await emulateTheme(app, "light");
     await page.getByRole("switch", { name: "Do Not Disturb" }).click();
-    await expect(pausedLines(page)).toHaveCount(6);
+    await expect(pausedLines(page)).toHaveCount(4);
     // Lets the switch's transition finish.
     await delay(500);
     await page.screenshot({

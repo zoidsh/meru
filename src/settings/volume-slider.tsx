@@ -14,11 +14,14 @@ const single = (value: number | readonly number[]) =>
  */
 export const VolumeSlider = ({
   labelId,
+  describedBy,
   volume,
   disabled,
   onCommit,
 }: {
   labelId: string;
+  /** The row's descriptions, a paused line among them. */
+  describedBy: string | undefined;
   volume: number;
   disabled: boolean;
   onCommit: (volume: number) => void;
@@ -43,6 +46,7 @@ export const VolumeSlider = ({
     <div className="flex h-5 w-32 items-center">
       <Slider
         aria-labelledby={labelId}
+        aria-describedby={describedBy}
         min={0.05}
         max={1}
         step={0.05}

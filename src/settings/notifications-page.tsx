@@ -101,6 +101,11 @@ export const NotificationsPage = () => {
           "Line under a notification setting in Settings while Do Not Disturb holds every notification, whatever the setting or a profile says",
       })
     : undefined;
+  // A verification code still sounds under Do Not Disturb while Show during
+  // Do Not Disturb is on, so its sound, and the volume it plays at, stay live.
+  const otherPaused = settings.verificationCodesDuringDoNotDisturb
+    ? undefined
+    : paused;
 
   const soundNames: Record<SoundChoice, string> = {
     none: t({
@@ -256,12 +261,13 @@ export const NotificationsPage = () => {
     order: readonly Choice[];
     value: Choice;
     scope: ReturnType<typeof scopeOf>;
+    paused: string | undefined;
     onChange: (value: Choice) => void;
   }) => (
     <SettingRow
       key={row.key}
       label={row.label}
-      paused={paused}
+      paused={row.paused}
       scope={row.scope}
       pro={needsPro.capability("notificationSound")}
       disabled={needsPro.capability("notificationSound")}
@@ -298,7 +304,11 @@ export const NotificationsPage = () => {
               }
             }}
           >
-            <SelectTrigger aria-labelledby={ids.label} className="min-w-28">
+            <SelectTrigger
+              aria-labelledby={ids.label}
+              aria-describedby={ids.description || undefined}
+              className="min-w-28"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent alignItemWithTrigger={false}>
@@ -421,6 +431,7 @@ export const NotificationsPage = () => {
                 order: NEW_EMAIL_ORDER,
                 value: values.notificationSound,
                 scope: scopeOf("notificationSound", newEmailSoundLabel),
+                paused,
                 onChange: (value) => {
                   write("notificationSound", value);
                 },
@@ -439,6 +450,7 @@ export const NotificationsPage = () => {
                       order: OTHER_ORDER,
                       value: settings.otherNotificationSound,
                       scope: {},
+                      paused: otherPaused,
                       onChange: (value) => {
                         void calls.update({
                           key: "otherNotificationSound",
@@ -449,13 +461,14 @@ export const NotificationsPage = () => {
                     <SettingRow
                       key="notificationSoundVolume"
                       label={volumeLabel}
-                      paused={paused}
+                      paused={otherPaused}
                       scope={{}}
                       disabled={!volumeHeardIn}
                     >
                       {(ids) => (
                         <VolumeSlider
                           labelId={ids.label}
+                          describedBy={ids.description || undefined}
                           volume={settings.notificationSoundVolume}
                           disabled={!volumeHeardIn}
                           onCommit={async (volume) => {
