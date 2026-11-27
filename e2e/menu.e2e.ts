@@ -39,7 +39,7 @@ const zoomOf = (app: ElectronApplication, url: string) =>
     url
   );
 
-test("the view sits as the shell draws it, on the shell grey the window has too tinted by the profile's colour, whatever design and vibrancy an earlier build saved, which the View menu no longer offers", async ({
+test("the view sits as the shell draws it, on the profile's tonal frame, which the window's own colour is too, whatever design and vibrancy an earlier build saved, which the View menu no longer offers", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -94,7 +94,9 @@ test("the view sits as the shell draws it, on the shell grey the window has too 
     isDark: nativeTheme.shouldUseDarkColors,
   }));
 
-  expect(window.color?.toLowerCase()).toBe(windowBackground(window.isDark));
+  expect(window.color?.toLowerCase()).toBe(
+    windowBackground(window.isDark, paletteColor("blue"))
+  );
   expect(
     await Promise.all(
       [

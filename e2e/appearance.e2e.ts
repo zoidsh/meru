@@ -3,7 +3,8 @@ import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
 
-import { SHELL_GREY } from "#core/shell-grey.ts";
+import { paletteColor } from "#core/profile-color.ts";
+import { SHELL_GREY, windowBackground } from "#core/shell-grey.ts";
 
 import {
   SHELL_URL,
@@ -55,6 +56,16 @@ const setSetting = (app: ElectronApplication, key: string, value: unknown) =>
  * emulates the light scheme in every page, so the pages' own media query
  * says nothing here.
  */
+/**
+ * The main window's own colour, its first profile's tonal frame, and the
+ * Settings window's, which no profile tints, sorted as `readTheme` sorts them.
+ */
+const windowColors = (dark: boolean, settings = true) =>
+  [
+    windowBackground(dark, paletteColor("blue")),
+    ...(settings ? [dark ? SHELL_GREY.dark : SHELL_GREY.light] : []),
+  ].toSorted();
+
 const readTheme = (app: ElectronApplication) =>
   app.evaluate(({ BrowserWindow, nativeTheme }) => ({
     source: nativeTheme.themeSource,
@@ -258,7 +269,7 @@ test.describe("Theme", () => {
     expect(await readTheme(app)).toStrictEqual({
       source: "dark",
       dark: true,
-      windows: [SHELL_GREY.dark],
+      windows: windowColors(true, false),
     });
   });
 
@@ -273,7 +284,7 @@ test.describe("Theme", () => {
       .toStrictEqual({
         source: "dark",
         dark: true,
-        windows: [SHELL_GREY.dark, SHELL_GREY.dark],
+        windows: windowColors(true),
       });
 
     await setSetting(app, "theme", "light");
@@ -282,7 +293,7 @@ test.describe("Theme", () => {
       .toStrictEqual({
         source: "light",
         dark: false,
-        windows: [SHELL_GREY.light, SHELL_GREY.light],
+        windows: windowColors(false),
       });
 
     await setSetting(app, "theme", "system");
@@ -351,7 +362,7 @@ test.describe("the Appearance page", () => {
       .toStrictEqual({
         source: "dark",
         dark: true,
-        windows: [SHELL_GREY.dark, SHELL_GREY.dark],
+        windows: windowColors(true),
       });
 
     await themeMenu(page).click();
