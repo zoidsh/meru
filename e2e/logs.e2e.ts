@@ -1,5 +1,6 @@
 import { realpathSync } from "node:fs";
 import { mkdir, readFile, readdir } from "node:fs/promises";
+import { homedir } from "node:os";
 import path from "node:path";
 
 import type { ElectronApplication, Page } from "@playwright/test";
@@ -70,7 +71,10 @@ test("the log holds what happened, a failed load and a download included, and no
   standIn,
   userDataDir,
 }) => {
-  const home = path.join(realpathSync.native(userDataDir), "Home");
+  const home = path.join(
+    realpathSync.native(userDataDir),
+    "Ada Lovelace Files"
+  );
 
   await mkdir(home);
   await writeSettings(userDataDir, { downloadsSaveAs: true });
@@ -136,10 +140,14 @@ test("the log holds what happened, a failed load and a download included, and no
     SAVED_AS,
     "tax return",
     DOWNLOAD_FILES.small.name,
-    realpathSync.native(userDataDir),
-    userDataDir,
+    // The person's own folders, by the last name in each, however a line
+    // escapes them.
+    path.basename(homedir()),
+    path.basename(userDataDir),
+    path.basename(home),
   ]) {
     expect(log).not.toContain(personal);
+    expect(log).not.toContain(JSON.stringify(personal).slice(1, -1));
   }
 });
 
