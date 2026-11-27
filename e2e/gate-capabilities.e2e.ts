@@ -17,6 +17,7 @@ import {
   findPage,
   readState,
   readOpenedExternally,
+  readSounds,
   readUnreadTotal,
   retitle,
   stubSystemBrowser,
@@ -440,11 +441,7 @@ test("the free version finds no verification code, so its mail is notified as an
   await expect.poll(() => copied(app)).toStrictEqual([CODE]);
 });
 
-/** Each sound the suite's build captured in place of playing it, never heard. */
-const sounds = (app: ElectronApplication) =>
-  app.evaluate(() => [
-    ...(Reflect.get(globalThis, "meruTestSounds") as unknown[]),
-  ]);
+const sounds = readSounds;
 
 /** Each notification captured, as its title and whether it was silent. */
 const silences = (app: ElectronApplication) =>

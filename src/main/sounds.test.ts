@@ -1,70 +1,94 @@
+import path from "node:path";
+
+import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
-import { SHELL_CHANNELS } from "#contract/shell-channels.ts";
 import { recordInto } from "#core/log.fake.ts";
+import type { SoundPlayer, SoundResult } from "#platform/sound-player.ts";
 
 import { createSoundOutput } from "./sounds.ts";
 
-const SHELL_ORIGIN = "meru-app://shell";
+const FOLDER = path.join("app", "sounds");
 
-const setup = ({ background = false, delivered = true } = {}) => {
-  const sent: unknown[][] = [];
-  const logs: string[] = [];
-  const output = createSoundOutput({
-    ipc: {
-      send: (...args) => {
-        sent.push(args);
+/** A player that plays nothing and ends each sound as the test says. */
+const fakePlayer = () => {
+  const asked: { file: string; volume: number }[] = [];
+  const ending: PromiseWithResolvers<SoundResult>[] = [];
+  const player: SoundPlayer = {
+    play: (file, volume) => {
+      const end = Promise.withResolvers<SoundResult>();
 
-        return delivered;
-      },
+      asked.push({ file, volume });
+      ending.push(end);
+
+      return end.promise;
     },
-    shellId: 7,
-    shellOrigin: SHELL_ORIGIN,
+  };
+
+  return { player, asked, ending };
+};
+
+const setup = ({ background = false } = {}) => {
+  const logs: string[] = [];
+  const { player, asked, ending } = fakePlayer();
+  const output = createSoundOutput({
+    player,
+    folder: FOLDER,
     background,
     log: recordInto(logs),
   });
 
-  return { output, sent, logs };
+  return { output, asked, ending, logs };
 };
 
 describe(createSoundOutput, () => {
-  it("sends the sound to the shell's main frame on the shell's origin alone", () => {
-    const { output, sent, logs } = setup();
+  it("plays the sound's file at the volume, returning before it has ended", async () => {
+    const { output, asked, ending, logs } = setup();
 
-    output.play({ sound: "linen", volume: 0.5 });
+    output.play({ sound: "duet", volume: 0.5 });
 
-    expect([output.quiet, sent, logs]).toStrictEqual([
+    expect([output.quiet, asked]).toStrictEqual([
       false,
-      [
-        [
-          7,
-          SHELL_CHANNELS.sound,
-          { sound: "linen", volume: 0.5 },
-          { mainFrameOrigin: SHELL_ORIGIN },
-        ],
-      ],
-      [],
+      [{ file: path.join(FOLDER, "duet.wav"), volume: 0.5 }],
+    ]);
+
+    ending[0]?.resolve("played");
+    await delay(0);
+
+    expect(logs).toStrictEqual([]);
+  });
+
+  it("logs a sound that failed by its code alone, and one cut off by its time limit", async () => {
+    const { output, ending, logs } = setup();
+
+    output.play({ sound: "duet", volume: 1 });
+    output.play({ sound: "knock", volume: 1 });
+    output.play({ sound: "duet", volume: 1 });
+    ending[0]?.resolve({
+      error: Object.assign(new Error("open /Users/ada/x.wav"), {
+        code: "ENOENT",
+      }),
+    });
+    ending[1]?.resolve({ error: new Error("DeviceNotAvailable: AirPods") });
+    ending[2]?.resolve("timedOut");
+    await delay(0);
+
+    expect(logs).toStrictEqual([
+      "sound-failed sound=duet code=ENOENT",
+      "sound-failed sound=knock code=other",
+      "sound-failed sound=duet reason=timed-out",
     ]);
   });
 
-  it("under the background flag sends nothing, logs the sound, and keeps notifications silent", () => {
-    const { output, sent, logs } = setup({ background: true });
+  it("under the background flag plays nothing, logs the sound, and keeps notifications silent", () => {
+    const { output, asked, logs } = setup({ background: true });
 
     output.play({ sound: "duet", volume: 1 });
 
-    expect([output.quiet, sent, logs]).toStrictEqual([
+    expect([output.quiet, asked, logs]).toStrictEqual([
       true,
       [],
       ["sound-held sound=duet reason=background"],
     ]);
-  });
-
-  it("does not throw when the shell is gone or on another origin", () => {
-    const { output, sent } = setup({ delivered: false });
-
-    expect(() => {
-      output.play({ sound: "knock", volume: 1 });
-    }).not.toThrow();
-    expect(sent).toHaveLength(1);
   });
 });

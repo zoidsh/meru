@@ -3,6 +3,8 @@ import type { ElectronApplication } from "@playwright/test";
 import {
   expect,
   findPage,
+  readSoundResults,
+  readSounds,
   readUnreadTotal,
   test,
   writeSettings,
@@ -10,9 +12,6 @@ import {
 } from "./lib/app.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import { ANY_SESSION, listing } from "./lib/stand-in.ts";
-
-// The suite's build captures every sound on `meruTestSounds` and never sends
-// one to the shell, so nothing here is ever heard.
 
 interface Captured {
   title: string;
@@ -27,10 +26,7 @@ const notifications = (app: ElectronApplication) =>
       .toSorted((a, b) => a.title.localeCompare(b.title))
   );
 
-const sounds = (app: ElectronApplication) =>
-  app.evaluate(() => [
-    ...(Reflect.get(globalThis, "meruTestSounds") as unknown[]),
-  ]);
+const sounds = readSounds;
 
 const HOME = {
   profiles: [{ id: "p0", name: "Home" }],
@@ -68,7 +64,7 @@ test("new mail asks for one sound, the chosen one at the chosen volume, and each
 }) => {
   await writeState(userDataDir, HOME);
   await writeSettings(userDataDir, {
-    notificationSound: "chime",
+    notificationSound: "duet",
     notificationSoundVolume: 0.4,
   });
 
@@ -80,7 +76,9 @@ test("new mail asks for one sound, the chosen one at the chosen volume, and each
       { title: "Sender 2", silent: true },
       { title: "Sender 3", silent: true },
     ]);
-  expect(await sounds(app)).toStrictEqual([{ sound: "chime", volume: 0.4 }]);
+  expect(await sounds(app)).toStrictEqual([{ sound: "duet", volume: 0.4 }]);
+  // The packed app's audio addon plays it to its end, through no device.
+  await expect.poll(() => readSoundResults(app)).toStrictEqual(["played"]);
 });
 
 test("mail Do Not Disturb holds asks for no sound", async ({
@@ -95,29 +93,6 @@ test("mail Do Not Disturb holds asks for no sound", async ({
 
   expect(await notifications(app)).toStrictEqual([]);
   expect(await sounds(app)).toStrictEqual([]);
-});
-
-// The suite's build plays only through the addon's `none` sink, which opens
-// no output device.
-test("the packed app's audio addon plays a sound to its end", async ({
-  app,
-}) => {
-  await expect
-    .poll(() =>
-      app.evaluate(() => typeof Reflect.get(globalThis, "meruTestPlaySound"))
-    )
-    .toBe("function");
-
-  const played = await app.evaluate(() =>
-    (
-      Reflect.get(globalThis, "meruTestPlaySound") as (
-        name: string,
-        volume: number
-      ) => Promise<string>
-    )("nod.wav", 0.5)
-  );
-
-  expect(played).toBe("played");
 });
 
 test("with the system's sound, Meru plays none and the notification is not silent", async ({

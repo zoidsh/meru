@@ -5,7 +5,6 @@ import path from "node:path";
 
 import type { SentNotice } from "#contract/gmail-channels.ts";
 import type { GmailHealth } from "#contract/gmail.ts";
-import type { SoundRequest } from "#contract/shell-sound.ts";
 import {
   storedLicenseKey,
   storedToken,
@@ -52,34 +51,36 @@ export const captureGmailPage = () => {
   };
 };
 
+/** A sound `player` was asked for, and how it ended once it has. */
+export interface RecordedSound {
+  file: string;
+  volume: number;
+  result?: "played" | "timedOut" | { error: string };
+}
+
 /**
- * Each sound asked for, in order, on the main process's global under
- * `meruTestSounds`, in place of playing it: the suite never makes a sound.
+ * Plays through `player`, keeping each sound asked for, in order, with its
+ * file's name, on the main process's global under `meruTestSounds`.
  */
-export const captureSounds = () => {
-  const captured: SoundRequest[] = [];
+export const recordSounds = (player: SoundPlayer): SoundPlayer => {
+  const recorded: RecordedSound[] = [];
 
-  Reflect.set(globalThis, "meruTestSounds", captured);
+  Reflect.set(globalThis, "meruTestSounds", recorded);
 
-  return (request: SoundRequest) => {
-    captured.push(request);
+  return {
+    play: async (file, volume) => {
+      const sound: RecordedSound = { file: path.basename(file), volume };
+
+      recorded.push(sound);
+
+      const result = await player.play(file, volume);
+
+      sound.result =
+        typeof result === "string" ? result : { error: String(result.error) };
+
+      return result;
+    },
   };
-};
-
-/**
- * Plays one of the app's sounds through `player` from the suite, on the main
- * process's global under `meruTestPlaySound`, answering how it ended.
- */
-export const exposeSoundProbe = (player: SoundPlayer, folder: string) => {
-  Reflect.set(
-    globalThis,
-    "meruTestPlaySound",
-    async (name: string, volume: number) => {
-      const result = await player.play(path.join(folder, name), volume);
-
-      return typeof result === "string" ? result : String(result.error);
-    }
-  );
 };
 
 /**

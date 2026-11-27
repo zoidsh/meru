@@ -1,43 +1,57 @@
-import { SHELL_CHANNELS } from "#contract/shell-channels.ts";
-import type { SoundRequest } from "#contract/shell-sound.ts";
+import path from "node:path";
+
+import { scrub } from "#core/log.ts";
 import type { Log } from "#core/log.ts";
-import type { Ipc } from "#platform/ipc.ts";
+import type { NotificationSound, SoundRequest } from "#core/sounds.ts";
+import type { SoundPlayer } from "#platform/sound-player.ts";
 
 export interface SoundOutput {
   /** Every notification shown silent, so the system's sound never plays either. */
   quiet: boolean;
+  /** Starts the sound and returns at once, whatever comes of it. */
   play: (request: SoundRequest) => void;
 }
 
+/** The one place a sound's name becomes a file. */
+export const soundFile = (folder: string, sound: NotificationSound) =>
+  path.join(folder, `${sound}.wav`);
+
 /**
- * Plays a sound in the shell's page while its main frame is on the shell's
- * origin, and nothing when it is gone or elsewhere. Under the background flag,
- * for a desktop other sessions share, it only logs and keeps every
- * notification silent.
+ * Plays each sound from `folder` through `player`, logging one that does not
+ * play to its end. Under the background flag, for a desktop other sessions
+ * share, it only logs and keeps every notification silent.
  */
 export const createSoundOutput = ({
-  ipc,
-  shellId,
-  shellOrigin,
+  player,
+  folder,
   background,
   log,
 }: {
-  ipc: Pick<Ipc, "send">;
-  shellId: number;
-  shellOrigin: string;
+  player: SoundPlayer;
+  folder: string;
   background: boolean;
   log: Log;
-}): SoundOutput => ({
-  quiet: background,
-  play: (request) => {
-    if (background) {
-      log("sound-held", { sound: request.sound, reason: "background" });
+}): SoundOutput => {
+  const play = async ({ sound, volume }: SoundRequest) => {
+    const result = await player.play(soundFile(folder, sound), volume);
 
-      return;
+    if (result === "timedOut") {
+      log("sound-failed", { sound, reason: "timed-out" });
+    } else if (result !== "played") {
+      log("sound-failed", { sound, code: scrub.code(result.error) });
     }
+  };
 
-    ipc.send(shellId, SHELL_CHANNELS.sound, request, {
-      mainFrameOrigin: shellOrigin,
-    });
-  },
-});
+  return {
+    quiet: background,
+    play: (request) => {
+      if (background) {
+        log("sound-held", { sound: request.sound, reason: "background" });
+
+        return;
+      }
+
+      void play(request);
+    },
+  };
+};

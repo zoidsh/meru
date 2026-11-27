@@ -1,7 +1,6 @@
 import { delay } from "es-toolkit";
 import { describe, expect, it } from "vitest";
 
-import type { SoundRequest } from "#contract/shell-sound.ts";
 import { entitledSetting } from "#core/entitled-settings.ts";
 import type { FeedEntry, FeedOutcome } from "#core/feed.ts";
 import { recordInto } from "#core/log.fake.ts";
@@ -17,6 +16,7 @@ import type {
   SettingValue,
   Settings,
 } from "#core/settings.ts";
+import type { SoundRequest } from "#core/sounds.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import type {

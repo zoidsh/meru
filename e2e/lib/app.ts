@@ -557,6 +557,35 @@ export const readUnreadTotal = (app: ElectronApplication) =>
       )?.count ?? 0
   );
 
+interface RecordedSound {
+  file: string;
+  volume: number;
+  result?: unknown;
+}
+
+/**
+ * Each sound main asked for, by name, in order. The suite's build plays each
+ * through the audio addon's `none` sink, which opens no output device, so
+ * nothing is ever heard.
+ */
+export const readSounds = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (Reflect.get(globalThis, "meruTestSounds") as RecordedSound[]).map(
+      ({ file, volume }) => ({ sound: file.replace(/\.wav$/u, ""), volume })
+    )
+  );
+
+/**
+ * How each sound asked for ended so far: `played` once the addon has played
+ * it to its end, `undefined` while it plays.
+ */
+export const readSoundResults = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (Reflect.get(globalThis, "meruTestSounds") as RecordedSound[]).map(
+      ({ result }) => result
+    )
+  );
+
 /**
  * Gives the window `width` by `height` of content and waits for its views
  * to follow. A test whose panes need room sets it, since the default size

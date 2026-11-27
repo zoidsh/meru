@@ -9,6 +9,7 @@ import {
   clickMenuItem,
   expect,
   findPage,
+  readSounds,
   test,
   writeSettings,
 } from "./lib/app.ts";
@@ -53,12 +54,7 @@ const setSetting = (app: ElectronApplication, key: string, value: unknown) =>
     { key, value }
   );
 
-// The suite's build captures each sound on `meruTestSounds` in place of
-// playing it, so nothing here is heard.
-const sounds = (app: ElectronApplication) =>
-  app.evaluate(() => [
-    ...(Reflect.get(globalThis, "meruTestSounds") as unknown[]),
-  ]);
+const sounds = readSounds;
 
 /** What each notification the suite's notifier captured shows. */
 const notifications = (app: ElectronApplication) =>
