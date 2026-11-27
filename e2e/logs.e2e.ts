@@ -229,7 +229,6 @@ test.describe("shots", () => {
     userDataDir,
   }) => {
     const page = await openAdvanced(app);
-    const logs = page.getByRole("group", { name: "Troubleshooting" });
 
     await answerSaveDialog(
       app,
@@ -241,7 +240,7 @@ test.describe("shots", () => {
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await expect(exportButton(page)).toHaveText("Export…");
       // oxlint-disable-next-line no-await-in-loop -- one after another
-      await logs.screenshot({
+      await page.screenshot({
         path: shotPath("settings-advanced-logs", theme),
       });
       // oxlint-disable-next-line no-await-in-loop -- one after another
@@ -249,7 +248,7 @@ test.describe("shots", () => {
       // oxlint-disable-next-line no-await-in-loop -- one after another
       await expect(exportButton(page)).toHaveText("Saved");
       // oxlint-disable-next-line no-await-in-loop -- one after another
-      await logs.screenshot({
+      await page.screenshot({
         path: shotPath("settings-advanced-logs-saved", theme),
       });
     }
