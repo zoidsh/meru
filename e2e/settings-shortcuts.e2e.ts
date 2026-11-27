@@ -544,6 +544,9 @@ test("ends recording, the key kept, when the window loses the keys, hides, or Ta
     // macOS tells of a hide by the window's occlusion changing, which a
     // window other test apps already cover never does.
     window?.emit("hide");
+    // A hidden window draws no frames, which Playwright's waits poll on, so
+    // the page is read with the window shown again, without the focus.
+    window?.showInactive();
   }, SETTINGS_URL);
   await expectNotRecording(page);
   await expect(reloadButton(page)).toHaveAccessibleName(kept);
