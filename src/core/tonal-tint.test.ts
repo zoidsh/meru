@@ -8,9 +8,9 @@ import type { TonalRole, TonalTheme } from "./tonal-tint.ts";
 const THEMES = ["light", "dark"] as const satisfies readonly TonalTheme[];
 
 /**
- * What the prototype's engine (`TONAL_ENGINE` in the architect's
- * `tonal-prototype.html`, Tim's choice of 27 November 2026) gives each
- * palette colour at Balanced, run once in Node, in `TONAL_ROLES`' order.
+ * Each palette colour's tokens in `TONAL_ROLES`' order, as the design
+ * prototype the palette was chosen from computed them with its own engine,
+ * independent of this code; this must match it hex for hex.
  */
 const PROTOTYPE: Record<ProfileColorName, Record<TonalTheme, string>> = {
   blue: {
@@ -56,8 +56,8 @@ const PROTOTYPE: Record<ProfileColorName, Record<TonalTheme, string>> = {
 };
 
 /**
- * Where each role is read, and what it needs there, as the prototype's
- * `PAIRS` measure them; its exempt and decorative pairs need nothing.
+ * Where each role is read, and the contrast it needs there, as the prototype
+ * measured them; a pair that is decorative or exempt needs none.
  */
 const PAIRS: readonly (readonly [
   where: string,
@@ -91,7 +91,7 @@ const cases = PROFILE_COLOR_NAMES.flatMap((name) =>
 
 describe(tonalTokens, () => {
   it.each(cases)(
-    "gives %s in %s the prototype's Balanced palette, hex for hex",
+    "gives %s in %s the prototype's palette, hex for hex",
     (name, theme) => {
       const tokens = tonalTokens(paletteColor(name), theme);
 

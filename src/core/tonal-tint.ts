@@ -45,9 +45,9 @@ type Surface =
   | "background";
 
 /**
- * The tone each role aims for, in OKLCH, the profile's hue its own; the
- * prototype's Balanced strength (Tim, 27 November 2026). A foreground is a
- * target the contrast step may push further from its surfaces.
+ * The tone each role aims for, in OKLCH, the profile's hue its own. A
+ * foreground is a target the contrast step may push further from its
+ * surfaces.
  */
 const TONES: Record<TonalTheme, Record<TonalRole | "background", Tone>> = {
   light: {
