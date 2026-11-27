@@ -22,6 +22,7 @@ import {
 import { findTitlebar, readOwnWindows } from "./lib/own-window.ts";
 import {
   gmailOf,
+  menuEnabled,
   openSection,
   openSettings,
   scopeTab,
@@ -34,7 +35,12 @@ import {
   shootWindow,
   shotPath,
 } from "./lib/shots.ts";
-import { CALENDAR_TITLE, DRIVE_TITLE, STAND_IN_TITLE } from "./lib/stand-in.ts";
+import {
+  CALENDAR_TITLE,
+  DRIVE_TITLE,
+  MEET_TITLE,
+  STAND_IN_TITLE,
+} from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 
 const OPEN_IN = "Open Google apps in";
@@ -73,13 +79,13 @@ const storedTabs = async (userDataDir: string) => {
   );
 };
 
-/** The page each own window shows. */
+/** The page each own window shows, sorted, as the windows come in no set order. */
 const ownWindowPages = async (app: ElectronApplication) => {
   const windows = await readOwnWindows(app);
 
-  return windows.map(
-    (window) => window.views.find((view) => view.name === "")?.url
-  );
+  return windows
+    .map((window) => window.views.find((view) => view.name === "")?.url ?? "")
+    .toSorted();
 };
 
 /**
@@ -105,6 +111,26 @@ const viewsOf = async (app: ElectronApplication, profileId: string) => {
   return views
     .filter((view) => view.partition === `persist:${profileId}`)
     .map((view) => view.url);
+};
+
+/**
+ * Whether the page holds Chromium's keyboard focus, which Playwright
+ * otherwise makes every page claim, and whether the commands act on a tab's
+ * own window, as they do while its page holds the focus main last gave.
+ */
+const focusRecord = async (app: ElectronApplication, page: Page) => {
+  const cdp = await page.context().newCDPSession(page);
+
+  await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: false });
+
+  return async () => {
+    const pageFocused = await page
+      .evaluate(() => document.hasFocus())
+      .catch(() => false);
+    const [inOwnWindow] = await menuEnabled(app, ["tab.moveToMainWindow"]);
+
+    return { pageFocused, inOwnWindow };
+  };
 };
 
 const sidebarTab = (shell: Page, name: string) =>
@@ -199,8 +225,26 @@ test("under New window for one profile, its Gmail's Drive link and New tab's Dri
     `${DRIVE_TITLE} · in its own window`
   );
 
-  // The main window keeps its selection; a click on Calendar takes the keys
-  // back from the new window, so the menu acts on the main window again.
+  // Brought forward with the keys in its page, as Move to New Window does,
+  // while the main window keeps Gmail selected.
+  const driveFocus = await focusRecord(
+    app,
+    await findPage(app, standIn.driveUrl)
+  );
+
+  await expect
+    .poll(driveFocus)
+    .toStrictEqual({ pageFocused: true, inOwnWindow: true });
+  await expect(sidebarTab(shell, STAND_IN_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  expect(await storedTabs(userDataDir)).toMatchObject({
+    home: { selected: "gmail" },
+  });
+
+  // A click on Calendar takes the keys back from the new window, so the
+  // menu acts on the main window again.
   await sidebarTab(shell, CALENDAR_TITLE).click();
   await expect(sidebarTab(shell, CALENDAR_TITLE)).toHaveAttribute(
     "aria-selected",
@@ -329,6 +373,70 @@ test("with Show windows in the sidebar off, a tab in its own window leaves the s
   await chooseContextMenuItem(app, "Move to Main Window");
   await expect(calendar).toHaveAttribute("aria-selected", "true");
   await expect(calendar).not.toHaveAccessibleDescription(/own window/u);
+});
+
+test("with Show windows in the sidebar off, Close Other Tabs on a listed tab under New window closes only the tabs the sidebar lists, leaving each window of its own open", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  await writeState(userDataDir, {
+    profiles: [
+      {
+        id: "p",
+        name: "Default",
+        tabs: [
+          { id: "gmail", app: "gmail", url: standIn.url, title: "" },
+          {
+            id: "c",
+            app: "calendar",
+            url: standIn.calendarUrl,
+            title: "",
+            ownWindow: true,
+          },
+          { id: "m", app: "meet", url: standIn.meetUrl, title: "" },
+        ],
+        selectedTabId: "m",
+      },
+    ],
+    selectedProfileId: "p",
+  });
+  await writeSettings(userDataDir, {
+    openAppsIn: "windows",
+    showWindowsInSidebar: false,
+  });
+
+  const app = await launchApp();
+  const shell = await findPage(app, SHELL_URL);
+
+  await findTitlebar(app);
+  await expect(sidebarTab(shell, MEET_TITLE)).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  await pickInLauncher(app, "Drive");
+  const both = [standIn.calendarUrl, standIn.driveUrl].toSorted();
+
+  await expect.poll(() => ownWindowPages(app)).toStrictEqual(both);
+  await expect.poll(() => titlebarCount(app)).toBe(2);
+  await expect(
+    shell.getByRole("tablist", { name: "Tabs" }).getByRole("tab")
+  ).toHaveText([STAND_IN_TITLE, MEET_TITLE]);
+
+  await openContextMenu(app, () =>
+    sidebarTab(shell, STAND_IN_TITLE).click({ button: "right" })
+  );
+  await chooseContextMenuItem(app, "Close Other Tabs");
+  await expect
+    .poll(() => storedTabs(userDataDir))
+    .toStrictEqual({
+      p: {
+        tabs: ["gmail", "calendar:window", "drive:window"],
+        selected: "gmail",
+        splits: 0,
+      },
+    });
+  expect(await ownWindowPages(app)).toStrictEqual(both);
 });
 
 test.describe("shots", () => {
