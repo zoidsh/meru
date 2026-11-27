@@ -117,6 +117,85 @@ describe(matchesAccelerator, () => {
     ]).toStrictEqual([true, false]);
   });
 
+  it("matches an arrow by the name a key event gives it, ArrowLeft for Electron's Left", () => {
+    expect([
+      matchesAccelerator(
+        "Control+Alt+Left",
+        press("ArrowLeft", "ArrowLeft", { control: true, alt: true }),
+        false
+      ),
+      matchesAccelerator(
+        "Control+Alt+Shift+Down",
+        press("ArrowDown", "ArrowDown", {
+          control: true,
+          alt: true,
+          shift: true,
+        }),
+        false
+      ),
+      matchesAccelerator(
+        "Control+Alt+Left",
+        press("ArrowRight", "ArrowRight", { control: true, alt: true }),
+        false
+      ),
+      matchesAccelerator(
+        "Control+Alt+Left",
+        press("ArrowLeft", "ArrowLeft", { alt: true }),
+        false
+      ),
+    ]).toStrictEqual([true, true, false, false]);
+  });
+
+  it("matches a function key by its name, alone or with modifiers", () => {
+    expect([
+      matchesAccelerator("F5", press("F5", "F5"), false),
+      matchesAccelerator("F3", press("F3", "F3"), false),
+      matchesAccelerator(
+        "Control+F3",
+        press("F3", "F3", { control: true }),
+        false
+      ),
+      matchesAccelerator(
+        "Control+Shift+F3",
+        press("F3", "F3", { control: true, shift: true }),
+        false
+      ),
+      matchesAccelerator("F3", press("F3", "F3", { control: true }), false),
+    ]).toStrictEqual([true, true, true, true, false]);
+  });
+
+  it("matches a bracket or a comma by where it is, on a layout that types another character there", () => {
+    // Where QWERTY has [ and ], QWERTZ types ü and +, AZERTY a dead
+    // circumflex and $; AZERTY's , key is QWERTY's M, its ; key QWERTY's ,.
+    expect([
+      matchesAccelerator(
+        "Control+Command+[",
+        press("ü", "BracketLeft", { control: true, meta: true }),
+        true
+      ),
+      matchesAccelerator(
+        "Control+Command+[",
+        press("Dead", "BracketLeft", { control: true, meta: true }),
+        true
+      ),
+      matchesAccelerator(
+        "Control+Command+]",
+        press("+", "BracketRight", { control: true, meta: true }),
+        true
+      ),
+      matchesAccelerator(
+        "Control+Alt+Shift+,",
+        press(".", "Comma", { control: true, alt: true, shift: true }),
+        false
+      ),
+      matchesAccelerator(
+        "Control+Alt+Shift+,",
+        press("?", "KeyM", { control: true, alt: true, shift: true }),
+        false
+      ),
+    ]).toStrictEqual([true, true, true, true, false]);
+  });
+
   it("acts on the press alone", () => {
     expect(
       matchesAccelerator(
@@ -206,6 +285,27 @@ describe(acceleratorParts, () => {
     ["CommandOrControl+Plus", ["⌘", "+"], ["Ctrl", "+"]],
     ["CommandOrControl+-", ["⌘", "-"], ["Ctrl", "-"]],
     ["F11", ["F11"], ["F11"]],
+    ["F5", ["F5"], ["F5"]],
+    ["Control+F3", ["⌃", "F3"], ["Ctrl", "F3"]],
+    ["Control+Shift+F3", ["⌃", "⇧", "F3"], ["Ctrl", "Shift", "F3"]],
+    ["Control+Alt+Left", ["⌃", "⌥", "←"], ["Ctrl", "Alt", "Left"]],
+    [
+      "Control+Alt+Shift+Down",
+      ["⌃", "⌥", "⇧", "↓"],
+      ["Ctrl", "Alt", "Shift", "Down"],
+    ],
+    [
+      "Control+Alt+Shift+Enter",
+      ["⌃", "⌥", "⇧", "↩"],
+      ["Ctrl", "Alt", "Shift", "Enter"],
+    ],
+    [
+      "Control+Shift+Command+F",
+      ["⌃", "⇧", "⌘", "F"],
+      ["Ctrl", "Shift", "Super", "F"],
+    ],
+    ["Control+Command+[", ["⌃", "⌘", "["], ["Ctrl", "Super", "["]],
+    ["Control+Alt+1", ["⌃", "⌥", "1"], ["Ctrl", "Alt", "1"]],
   ])(
     "splits %s one part per key on macOS and elsewhere",
     (accelerator, mac, other) => {

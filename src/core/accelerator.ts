@@ -32,6 +32,26 @@ const CODES: Record<string, string> = {
 
 const codeOf = (key: string) => CODES[key];
 
+/**
+ * Named keys as a key event and `aria-keyshortcuts` name them, by Electron's
+ * name, lower case: Electron's `Left` is the event's `ArrowLeft`.
+ */
+const KEY_NAMES: Record<string, string> = {
+  up: "ArrowUp",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+  right: "ArrowRight",
+  backspace: "Backspace",
+  delete: "Delete",
+  enter: "Enter",
+  return: "Enter",
+  escape: "Escape",
+  esc: "Escape",
+  tab: "Tab",
+  space: "Space",
+  plus: "+",
+};
+
 const DIGIT = /^\d$/u;
 
 type Modifier = "control" | "shift" | "alt" | "meta";
@@ -105,8 +125,11 @@ export const matchesAccelerator = (
     codeOf(key) !== undefined &&
     input.code === codeOf(key);
 
+  const named = KEY_NAMES[key.toLowerCase()] ?? key;
+
   return (
-    sameModifiers && (input.key.toLowerCase() === key.toLowerCase() || byPlace)
+    sameModifiers &&
+    (input.key.toLowerCase() === named.toLowerCase() || byPlace)
   );
 };
 
@@ -144,23 +167,6 @@ const MAC_KEYS: Record<string, string> = {
 
 const OTHER_KEYS: Record<string, string> = { plus: "+" };
 
-/** Named keys as `aria-keyshortcuts` names them, by Electron's name, lower case. */
-const ARIA_KEYS: Record<string, string> = {
-  up: "ArrowUp",
-  down: "ArrowDown",
-  left: "ArrowLeft",
-  right: "ArrowRight",
-  backspace: "Backspace",
-  delete: "Delete",
-  enter: "Enter",
-  return: "Enter",
-  escape: "Escape",
-  esc: "Escape",
-  tab: "Tab",
-  space: "Space",
-  plus: "+",
-};
-
 const ARIA_MODIFIERS = [
   ["control", "Control"],
   ["alt", "Alt"],
@@ -184,7 +190,7 @@ export const ariaKeyShortcut = (accelerator: string, platform: Platform) => {
     ...ARIA_MODIFIERS.filter(([modifier]) => held.has(modifier)).map(
       ([, name]) => name
     ),
-    ARIA_KEYS[key.toLowerCase()] ??
+    KEY_NAMES[key.toLowerCase()] ??
       (key.length === 1 ? key.toUpperCase() : key),
   ].join("+");
 };
