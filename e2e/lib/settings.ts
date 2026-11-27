@@ -81,6 +81,69 @@ export const seedProfiles = (
   });
 };
 
+/**
+ * The profile's Gmail page: main marks the page of its session, since both
+ * profiles' pages have the same address.
+ */
+export const gmailOf = async (
+  app: ElectronApplication,
+  standIn: StandIn,
+  profileId: string
+) => {
+  const partition = `persist:${profileId}`;
+
+  await expect
+    .poll(() =>
+      app.evaluate(
+        async ({ session, webContents }, { url, mark }) => {
+          const page = webContents
+            .getAllWebContents()
+            .find(
+              (contents) =>
+                contents.session === session.fromPartition(mark) &&
+                contents.getURL().startsWith(url)
+            );
+
+          if (!page || page.isLoading()) {
+            return false;
+          }
+
+          await page.executeJavaScript(
+            `document.documentElement.dataset.e2eProfile = ${JSON.stringify(mark)}`
+          );
+
+          return true;
+        },
+        { url: standIn.url, mark: partition }
+      )
+    )
+    .toBe(true);
+
+  let found: Page | undefined;
+
+  await expect
+    .poll(async () => {
+      const marks = await Promise.all(
+        app
+          .windows()
+          .map((page) =>
+            page.url().startsWith(standIn.url)
+              ? page
+                  .evaluate(() => document.documentElement.dataset.e2eProfile)
+                  .catch(() => null)
+              : null
+          )
+      );
+
+      found = app.windows()[marks.indexOf(partition)];
+
+      return found !== undefined;
+    })
+    .toBe(true);
+
+  return found as Page;
+};
+
 export const scopeTab = (page: Page, name: string) =>
   page
     .getByRole("tablist", { name: "Scope" })
