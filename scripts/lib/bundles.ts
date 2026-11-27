@@ -115,7 +115,7 @@ export const isSoundAddon = (name: string, platform: string, arch: string) =>
  */
 export const copySounds = async (target: BuildTarget) => {
   const directory = path.join(outDir(target), "sounds");
-  const source = path.join(repositoryRoot, "resources", "sounds");
+  const source = path.join(repositoryRoot, "src", "shell", "sounds");
   const binaries = await readdir(SOUND_ADDON_FOLDER);
   const addon = binaries.find((name) =>
     isSoundAddon(name, process.platform, process.arch)

@@ -45,7 +45,7 @@ const setup = ({ background = false } = {}) => {
 
 describe(soundFile, () => {
   it("names a file the build copies for each of Meru's sounds, and the build copies no other", async () => {
-    const folder = path.join(import.meta.dirname, "../../resources/sounds");
+    const folder = path.join(import.meta.dirname, "../shell/sounds");
     const files = await readdir(folder);
 
     expect(
