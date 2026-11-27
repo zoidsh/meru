@@ -336,7 +336,8 @@ test("gives Gmail's tab and its pop-out the menu without the tab's items, and co
     "Copy (off)",
     "Paste",
     "Paste and Match Style",
-    ...SELECT_ALL,
+    // An empty field has nothing to select.
+    ...(isMacOS ? [] : ["Select All (off)"]),
     "—",
     ...TAB_ITEMS,
     "—",
