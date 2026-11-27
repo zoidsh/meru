@@ -100,7 +100,7 @@ test("each card is a group its heading names, holding its rows", async ({
   await expect(
     page.getByRole("switch", { name: "Close compose window after sending" })
   ).toHaveAccessibleDescription(
-    "Separate compose windows close as soon as you send. You can still undo from the main window."
+    "Compose windows close after you send. You can still undo."
   );
 });
 

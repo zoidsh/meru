@@ -770,6 +770,11 @@ msgstr "Command"
 msgid "Compose"
 msgstr "Compose"
 
+#. Description of the Close compose window after sending switch in Settings; a compose window is a separate window for writing one email, opened for an email link or by Gmail's pop-out, not the one docked in Gmail's page; undo takes the send back, from a short notice in Meru's main window or Gmail's own in the window
+#: src/settings/gmail-page.tsx
+msgid "Compose windows close after you send. You can still undo."
+msgstr "Compose windows close after you send. You can still undo."
+
 #. Button on the Meru Pro page of Settings, when the license can't be used, that opens an email to Meru's support
 #: src/settings/pro-page.tsx
 msgid "Contact support"
@@ -2501,11 +2506,6 @@ msgstr "Select Profile {first} to {last}"
 #: src/main/commands.ts
 msgid "Select Profile {position}"
 msgstr "Select Profile {position}"
-
-#. Description of the Close compose window after sending switch in Settings; a separate compose window is one for writing one email, opened for an email link or by Gmail's pop-out, not the one docked in Gmail's page; undo takes the send back from a short notice in Meru's main window
-#: src/settings/gmail-page.tsx
-msgid "Separate compose windows close as soon as you send. You can still undo from the main window."
-msgstr "Separate compose windows close as soon as you send. You can still undo from the main window."
 
 #. Menu item, in the Tabs menu and a tab's context menu, that takes the tab out of the split view, to show alone
 #: src/main/menu-labels.ts

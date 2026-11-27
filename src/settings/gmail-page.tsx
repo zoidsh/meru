@@ -314,9 +314,9 @@ export const GmailPage = () => {
               }),
               t({
                 message:
-                  "Separate compose windows close as soon as you send. You can still undo from the main window.",
+                  "Compose windows close after you send. You can still undo.",
                 comment:
-                  "Description of the Close compose window after sending switch in Settings; a separate compose window is one for writing one email, opened for an email link or by Gmail's pop-out, not the one docked in Gmail's page; undo takes the send back from a short notice in Meru's main window",
+                  "Description of the Close compose window after sending switch in Settings; a compose window is a separate window for writing one email, opened for an email link or by Gmail's pop-out, not the one docked in Gmail's page; undo takes the send back, from a short notice in Meru's main window or Gmail's own in the window",
               })
             ),
           ]}
