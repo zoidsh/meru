@@ -31,6 +31,7 @@ import {
   STAND_IN_TITLE,
   refreshMarkup,
 } from "./gmail-page.ts";
+import { PAGE_MENU_PAGE, PAGE_MENU_PATH } from "./page-menu.ts";
 import {
   CALENDAR_TITLE,
   DRIVE_TITLE,
@@ -364,6 +365,7 @@ export const startStandIn = async (): Promise<StandIn> => {
       "/": body,
       [NEXT_WEEK_PATH]: body,
       [FRAME_PATH]: page("Frame", "<p>Notes</p>"),
+      [PAGE_MENU_PATH]: PAGE_MENU_PAGE,
     };
   }, current);
   const drive = await listen(

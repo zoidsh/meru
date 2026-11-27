@@ -5,5 +5,6 @@ export * from "./stand-in/downloads.ts";
 export * from "./stand-in/feed.ts";
 export * from "./stand-in/gmail-dark.ts";
 export * from "./stand-in/gmail-page.ts";
+export * from "./stand-in/page-menu.ts";
 export * from "./stand-in/pages.ts";
 export * from "./stand-in/server.ts";
