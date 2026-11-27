@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 
 import { app, shell } from "electron";
 
+import { startedExecutable } from "#core/executable.ts";
 import type { Platform } from "#core/platform.ts";
 import {
   choseMeruForMail,
@@ -64,10 +65,7 @@ const queryChoice = async (subKey: string) => {
   }
 };
 
-// electron-builder's portable target sets this to the .exe the person
-// started; `execPath` there is an unpacked copy that does not outlive the run.
-const executablePath = () =>
-  process.env.PORTABLE_EXECUTABLE_FILE ?? process.execPath;
+const executablePath = () => startedExecutable(process.env, process.execPath);
 
 /**
  * Lets Default apps offer this executable for email links. Run at every

@@ -1,6 +1,8 @@
 import { app } from "electron";
 import { delay } from "es-toolkit";
 
+import { relaunchOptions } from "#core/executable.ts";
+
 export interface AppLifecycle {
   readonly name: string;
   /** Where this run keeps its data, a `--user-data-dir` given to it included. */
@@ -52,8 +54,8 @@ export interface AppLifecycle {
   quit: () => void;
   /**
    * Quits as `quit` does and starts Meru again once this run has exited,
-   * with this run's arguments, so a run on another user data folder comes
-   * back on it.
+   * from the file the person started, with this run's arguments, so a run on
+   * another user data folder comes back on it.
    */
   relaunch: () => void;
   exit: (code: number) => void;
@@ -159,9 +161,14 @@ export const createAppLifecycle = (): AppLifecycle => {
       app.quit();
     },
     quit: () => app.quit(),
-    // Electron's relaunch, given no options, keeps this run's arguments.
     relaunch: () => {
-      app.relaunch();
+      app.relaunch(
+        relaunchOptions({
+          env: process.env,
+          execPath: process.execPath,
+          argv: process.argv,
+        })
+      );
       app.quit();
     },
     exit: (code) => app.exit(code),
