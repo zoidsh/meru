@@ -197,8 +197,8 @@ export const wireSettingsWindow = ({
   });
 
   const picker = folderPicker();
-  // One for the General page and the reset, since the suite's records on a
-  // global.
+  // The General page and the reset share one login item because the test
+  // build's records its calls on a global, which a second one would replace.
   const loginItem = systemLoginItem();
   const general = createGeneralPage({
     platform,
