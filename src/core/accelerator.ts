@@ -35,8 +35,7 @@ const codeOf = (key: string) => CODES[key];
 /**
  * Named keys as `aria-keyshortcuts` names them, by Electron's name, lower
  * case: Electron's `Left` is `ArrowLeft`. A key event uses the same names
- * but for Space, which it calls " ", so no shortcut on Space is heard
- * before the page; no default uses one.
+ * but for Space, which it calls " ".
  */
 const KEY_NAMES: Record<string, string> = {
   up: "ArrowUp",
@@ -128,11 +127,177 @@ export const matchesAccelerator = (
     input.code === codeOf(key);
 
   const named = KEY_NAMES[key.toLowerCase()] ?? key;
+  const typed = input.key === " " ? "Space" : input.key;
 
   return (
-    sameModifiers &&
-    (input.key.toLowerCase() === named.toLowerCase() || byPlace)
+    sameModifiers && (typed.toLowerCase() === named.toLowerCase() || byPlace)
   );
+};
+
+/** What a key pressed while a shortcut is recorded asks for. */
+export type RecordedKey =
+  /** A modifier alone, so the key is still to come. */
+  | { kind: "pending" }
+  | { kind: "cancel" }
+  /** Leave the command without a key. */
+  | { kind: "clear" }
+  /** Tab, which moves focus on. */
+  | { kind: "leave" }
+  /** A key no accelerator can name, recorded as nothing. */
+  | { kind: "refused" }
+  /** A key with no modifier but Shift, which types text. */
+  | { kind: "needsModifier" }
+  | { kind: "key"; accelerator: string };
+
+/** A key event's keys as the recorder reads them. */
+export type PressedKey = Pick<
+  KeyInput,
+  "key" | "code" | "control" | "shift" | "alt" | "meta"
+>;
+
+const MODIFIER_KEYS = new Set([
+  "Shift",
+  "Control",
+  "Alt",
+  "AltGraph",
+  "Meta",
+  "OS",
+  "Fn",
+  "CapsLock",
+]);
+
+/** The named keys a key event gives that an accelerator can name, by Electron's name. */
+const NAMED_KEYS: Record<string, string> = {
+  ArrowUp: "Up",
+  ArrowDown: "Down",
+  ArrowLeft: "Left",
+  ArrowRight: "Right",
+  Enter: "Enter",
+  Tab: "Tab",
+  " ": "Space",
+  Home: "Home",
+  End: "End",
+  PageUp: "PageUp",
+  PageDown: "PageDown",
+  Insert: "Insert",
+  "+": "Plus",
+};
+
+const FUNCTION_KEY = /^F(?:[1-9]|1\d|2[0-4])$/u;
+
+const LETTER = /^[a-z]$/iu;
+
+/** The characters Electron's accelerators name, apart from Plus. */
+const PUNCTUATION = new Set("`~!@#$%^&*()-_=[{]}\\|;:'\",<.>/?");
+
+const PLACES = Object.fromEntries(
+  Object.entries(CODES).map(([key, code]) => [code, key])
+);
+
+/** The key's name in an accelerator as the matcher hears it, if it has one. */
+const recordedName = ({ key, code }: PressedKey): string | undefined => {
+  // A dead key types nothing yet, so it has no stable name, wherever it is.
+  if (key === "Dead" || key === "Unidentified" || key === "Process") {
+    return undefined;
+  }
+
+  if (DIGIT.test(key)) {
+    return key;
+  }
+
+  // Heard by where it is, as the matcher hears these keys.
+  if (PLACES[code] !== undefined) {
+    return PLACES[code];
+  }
+
+  if (LETTER.test(key)) {
+    return key.toUpperCase();
+  }
+
+  if (NAMED_KEYS[key] !== undefined || FUNCTION_KEY.test(key)) {
+    return NAMED_KEYS[key] ?? key;
+  }
+
+  return PUNCTUATION.has(key) ? key : undefined;
+};
+
+const RECORDED_NAMES = new Set(
+  [...Object.values(PLACES), ...Object.values(NAMED_KEYS), ...PUNCTUATION].map(
+    (name) => name.toLowerCase()
+  )
+);
+
+/**
+ * Whether the recorder could have recorded `accelerator`, so a stored one
+ * that names a key it never would, or with no modifier it needs, is read
+ * as none.
+ */
+export const isRecordable = (accelerator: string, isMacOS: boolean) => {
+  const parts = accelerator.split("+");
+  const key = parts.pop() ?? "";
+  const modifiers = parts.map((part) => modifierOf(part, isMacOS));
+  const lower = key.toLowerCase();
+  const isFunctionKey = FUNCTION_KEY.test(key.toUpperCase());
+
+  return (
+    !modifiers.includes(undefined) &&
+    (isMacOS || !modifiers.includes("meta")) &&
+    (isFunctionKey || modifiers.some((modifier) => modifier !== "shift")) &&
+    (isFunctionKey ||
+      LETTER.test(key) ||
+      DIGIT.test(key) ||
+      RECORDED_NAMES.has(lower))
+  );
+};
+
+/**
+ * What a key pressed into the shortcut recorder records: an accelerator
+ * `matchesAccelerator` hears from the same key, or why none. A dead key, a
+ * character no accelerator can name and, off macOS, anything with the
+ * Windows key, which the system keeps, are refused.
+ */
+export const recordKey = (
+  pressed: PressedKey,
+  isMacOS: boolean
+): RecordedKey => {
+  const { key, control, shift, alt, meta } = pressed;
+
+  if (MODIFIER_KEYS.has(key)) {
+    return { kind: "pending" };
+  }
+
+  if (key === "Escape") {
+    return { kind: "cancel" };
+  }
+
+  if (key === "Backspace" || key === "Delete") {
+    return { kind: "clear" };
+  }
+
+  if (key === "Tab" && !control && !alt && !meta) {
+    return { kind: "leave" };
+  }
+
+  const name = recordedName(pressed);
+
+  if (name === undefined || (meta && !isMacOS)) {
+    return { kind: "refused" };
+  }
+
+  if (!FUNCTION_KEY.test(name) && !control && !alt && !meta) {
+    return { kind: "needsModifier" };
+  }
+
+  return {
+    kind: "key",
+    accelerator: [
+      ...(control ? ["Control"] : []),
+      ...(alt ? ["Alt"] : []),
+      ...(shift ? ["Shift"] : []),
+      ...(meta ? ["Command"] : []),
+      name,
+    ].join("+"),
+  };
 };
 
 /** Names Electron takes for one key, by the one this file compares. */

@@ -26,6 +26,19 @@ const press = (
 });
 
 describe(matchesAccelerator, () => {
+  it("hears Space, which a key event calls a space", () => {
+    expect(
+      matchesAccelerator(
+        "Control+Space",
+        press(" ", "Space", { control: true }),
+        false
+      )
+    ).toBeTruthy();
+    expect(
+      matchesAccelerator("Control+Space", press(" ", "Space"), false)
+    ).toBeFalsy();
+  });
+
   it("reads CommandOrControl as Command on macOS and Control elsewhere", () => {
     const commandR = press("r", "KeyR", { meta: true });
     const controlR = press("r", "KeyR", { control: true });
