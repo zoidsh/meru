@@ -19,8 +19,9 @@ import { undoSent, watchSentNotice } from "./sent.ts";
 // to settle and looks once more before calling a required hook broken.
 const SETTLE_MS = 1000;
 const HIDDEN_CHECK_MS = 100;
-// Long enough after the bar goes for Gmail to draw the draft its Undo brings
-// back; seen later, a window is left open rather than its draft lost.
+// How long after the bar goes, with no press of its Undo, a compose in the
+// page says Gmail's keyboard Undo brought the draft back. A slower round trip
+// reads as the send gone and closes the window, the draft kept in Drafts.
 const UNDONE_SETTLE_MS = 500;
 const MIN_GAP_MS = 2000;
 

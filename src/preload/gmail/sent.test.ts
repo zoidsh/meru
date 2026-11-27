@@ -61,7 +61,7 @@ const watch = (body: string) => {
   );
   const bar = document.querySelector("#bar");
 
-  return { document, bar, told, stop };
+  return { document, window, bar, told, stop };
 };
 
 /** Lets the observer deliver what changed. */
@@ -139,6 +139,39 @@ describe(watchSentNotice, () => {
     }
 
     expect(told).toStrictEqual(["shown", "shown"]);
+  });
+
+  it("tells the notice undone at once as its own Undo is pressed, before the bar goes, and tells nothing more as it goes", async () => {
+    const { document, window, bar, told } = watch(
+      `<div class="b8 UC" id="bar">${NOTICE}</div>`
+    );
+
+    document
+      .querySelector("#link_undo")
+      ?.dispatchEvent(new window.Event("click", { bubbles: true }));
+
+    expect(told).toStrictEqual(["shown", "undone"]);
+
+    bar?.replaceChildren();
+    await settle();
+
+    expect(told).toStrictEqual(["shown", "undone"]);
+  });
+
+  it("hears no press of Undo quoted in a message, nor of the bar's other links", () => {
+    const { document, window, told } = watch(
+      `<div class="b8 UC">${NOTICE}</div><div data-message-id="m">${NOTICE.replace('id="link_undo"', 'id="link_undo" class="quoted"')}</div>`
+    );
+    const Click = window.Event;
+
+    document
+      .querySelector(".quoted")
+      ?.dispatchEvent(new Click("click", { bubbles: true }));
+    document
+      .querySelector("#link_vsm")
+      ?.dispatchEvent(new Click("click", { bubbles: true }));
+
+    expect(told).toStrictEqual(["shown"]);
   });
 
   it("tells of a notice already there as it starts", () => {

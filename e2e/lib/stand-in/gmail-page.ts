@@ -115,6 +115,25 @@ export const openThread = (view: Page, count: number) =>
  */
 export const SENT_NOTICE_MARKUP = `<div class="b8 UC"><div class="vh"><span class="aT"><span class="bAq">Message sent</span><span id="link_undo" class="ag a8k" role="link">Undo</span><span id="link_vsm" class="ag a8k" role="link">View message</span></span></div></div>`;
 
+/**
+ * Makes the sent notice's Undo behave as Gmail's does: the bar goes at once
+ * and the draft comes back only after `ms`, Gmail's round trip.
+ */
+export const answerUndoLate = (page: Page, ms: number) =>
+  page.evaluate((wait) => {
+    document.addEventListener("click", (event) => {
+      if (event.target instanceof Element && event.target.id === "link_undo") {
+        document.querySelector(".b8.UC")?.remove();
+        setTimeout(() => {
+          document.body.insertAdjacentHTML(
+            "beforeend",
+            '<div data-compose-id="1">Draft</div>'
+          );
+        }, wait);
+      }
+    });
+  }, ms);
+
 /** Shows Gmail's sent notice in the page, or takes it away. */
 export const showSentNotice = (page: Page, shown: boolean) =>
   page.evaluate(

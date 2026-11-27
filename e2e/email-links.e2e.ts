@@ -38,7 +38,11 @@ import {
   shootWindow,
   shotPath,
 } from "./lib/shots.ts";
-import { ELSEWHERE_URL, showSentNotice } from "./lib/stand-in.ts";
+import {
+  ELSEWHERE_URL,
+  answerUndoLate,
+  showSentNotice,
+} from "./lib/stand-in.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 
 const LINK =
@@ -428,7 +432,30 @@ test("with the main window hidden, a sent email's window stays as Gmail leaves i
   expect(await mainWindowVisible(app)).toBe(false);
 });
 
-test("a window left in view whose send Gmail's own Undo takes back keeps its draft", async ({
+test("a window left in view whose send Gmail's own Undo takes back stays, though the draft comes back a second later", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, compose } = await openCompose(
+    launchApp,
+    userDataDir,
+    standIn,
+    true
+  );
+
+  await hideMainWindow(app);
+  await answerUndoLate(compose, 1000);
+  await showSentNotice(compose, true);
+  await delay(500);
+  await compose.getByRole("link", { name: "Undo" }).click();
+  await delay(2500);
+
+  expect(await composeShown(app)).toBe(true);
+  await expect(compose.getByText("Draft", { exact: true })).toBeVisible();
+});
+
+test("a window left in view whose send Gmail's keyboard Undo takes back stays once its draft is back", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -447,6 +474,32 @@ test("a window left in view whose send Gmail's own Undo takes back keeps its dra
   await delay(1500);
 
   expect(await composeShown(app)).toBe(true);
+});
+
+test("Undo in the main window shows the hidden window again and keeps it, though Gmail brings the draft back a second later", async ({
+  launchApp,
+  userDataDir,
+  standIn,
+}) => {
+  const { app, compose, overlay } = await openCompose(
+    launchApp,
+    userDataDir,
+    standIn,
+    true
+  );
+
+  await answerUndoLate(compose, 1000);
+  await showSentNotice(compose, true);
+  await expect(sentToast(overlay)).toBeVisible();
+  await overlay
+    .getByRole("region", { name: "Notifications" })
+    .getByRole("button", { name: "Undo" })
+    .click();
+  await expect.poll(() => composeShown(app)).toBe(true);
+  await delay(2500);
+
+  expect(await composeShown(app)).toBe(true);
+  await expect(compose.getByText("Draft", { exact: true })).toBeVisible();
 });
 
 test("with the profile question open for another link, a sent email's window stays in view and the question stays, answered as ever", async ({
