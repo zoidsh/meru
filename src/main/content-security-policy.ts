@@ -21,6 +21,5 @@ export const createContentSecurityPolicy = () =>
     // The screen picker's thumbnails, which main makes as data URLs.
     "img-src": ["'self'", "data:"],
     "font-src": ["'self'"],
-    "media-src": ["'self'"],
     "connect-src": ["'self'"],
   });
