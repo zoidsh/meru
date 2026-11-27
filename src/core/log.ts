@@ -441,7 +441,9 @@ const ADDRESS =
 const ABSOLUTE = String.raw`(?:[A-Za-z]:[\\/]|\\\\|~[\\/]|/[^/\s"'<>|]+/)`;
 
 const SCRUBS: readonly [RegExp, string | ((match: string) => string)][] = [
-  [/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>`]*/giu, urlText],
+  // The scheme is bounded, or a long run of dotted or dashed words is read
+  // to its end from every word in it.
+  [/\b[a-z][a-z0-9+.-]{0,31}:\/\/[^\s"'<>`]*/giu, urlText],
   [
     /\b(?:mailto|tel|sms|data|blob|javascript):[^\s"'<>`]*/giu,
     (match) => `${match.slice(0, match.indexOf(":")).toLowerCase()}:`,
