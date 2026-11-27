@@ -19,7 +19,8 @@ const POPOUT = 3;
 const IDENTITIES: Record<number, SenderIdentity> = {
   [GMAIL]: { role: "content-view", profileId: "p", tabId: "gmail" },
   [CALENDAR]: { role: "content-view", profileId: "p", tabId: "c" },
-  [POPOUT]: { role: "child-window", profileId: "p", tabId: "gmail" },
+  // A window Calendar's page opened, whose tab would have Copy URL.
+  [POPOUT]: { role: "child-window", profileId: "p", tabId: "c" },
   10: { role: "shell" },
   11: { role: "settings" },
   12: { role: "overlay" },
