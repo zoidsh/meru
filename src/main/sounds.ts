@@ -76,7 +76,10 @@ export const createSoundOutput = ({
     if (end === "timedOut") {
       log("sound-failed", { sound, error: "timed-out" });
     } else if (end !== "played") {
-      log("sound-failed", { sound, error: soundErrorName(end.error) });
+      log("sound-failed", {
+        sound,
+        error: end.loading ? "addon-unavailable" : soundErrorName(end.error),
+      });
     }
 
     if ("closeError" in result) {

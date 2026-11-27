@@ -274,8 +274,11 @@ describe(createSoundPlayer, () => {
 
     expect(loads).toBe(0);
     await expect(player.play("welcome.wav", 1)).resolves.toStrictEqual({
-      end: { error: new Error("dlopen failed") },
+      end: { error: new Error("dlopen failed"), loading: true },
     });
-    expect(loads).toBe(1);
+    await expect(player.play("nod.wav", 1)).resolves.toStrictEqual({
+      end: { error: new Error("dlopen failed"), loading: true },
+    });
+    expect([loads, reads]).toStrictEqual([1, []]);
   });
 });

@@ -3,8 +3,15 @@
 
 import { readFile } from "node:fs/promises";
 
-/** How a sound ended: to its end, cut off by its time limit, or not at all. */
-export type SoundEnd = "played" | "timedOut" | { error: unknown };
+/**
+ * How a sound ended: to its end, cut off by its time limit, or not at all,
+ * `loading` when the addon itself did not load, as on Linux without
+ * PipeWire's client library, which its binary links.
+ */
+export type SoundEnd =
+  | "played"
+  | "timedOut"
+  | { error: unknown; loading?: true };
 
 export interface SoundResult {
   end: SoundEnd;
@@ -211,14 +218,18 @@ export const createSoundPlayer = ({
 
   return {
     play: async (file, volume) => {
+      let audio: WebAudio;
       let sound: DecodedSound;
       let context: SoundContext;
 
       try {
         library ??= load();
+        audio = await library;
+      } catch (error) {
+        return { end: { error, loading: true } };
+      }
 
-        const audio = await library;
-
+      try {
         sound = await decode(audio, file);
         context = audio.open(sink);
       } catch (error) {

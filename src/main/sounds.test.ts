@@ -118,6 +118,25 @@ describe(createSoundOutput, () => {
     ]);
   });
 
+  it("logs an addon that did not load as unavailable, never the library file its message names", async () => {
+    const { output, ending, logs } = setup();
+
+    output.play({ sound: "welcome", volume: 1 });
+    ending[0]?.resolve({
+      end: {
+        error: new Error(
+          "libpipewire-0.3.so.0: cannot open shared object file: No such file or directory"
+        ),
+        loading: true,
+      },
+    });
+    await delay(0);
+
+    expect(logs).toStrictEqual([
+      "sound-failed sound=welcome error=addon-unavailable",
+    ]);
+  });
+
   it("logs a context that did not close once, by its error's name, beside how the sound ended", async () => {
     const { output, ending, logs } = setup();
 
