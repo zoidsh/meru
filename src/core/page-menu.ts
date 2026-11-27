@@ -113,6 +113,12 @@ export const suggestionOf = (click: PageClick, id: PageMenuItemId) =>
     ? click.suggestions[Number(id.slice("suggestion-".length))]
     : undefined;
 
+/**
+ * Whether anything is selected. A right click on macOS selects what is under
+ * the pointer, which between words is only white space.
+ */
+const hasSelection = (click: PageClick) => click.selection.trim() !== "";
+
 type Item = MenuItemEntry<PageMenuItemId>;
 
 const item = (id: PageMenuItemId, enabled = true): Item => ({
@@ -141,7 +147,7 @@ const spellingGroups = (click: PageClick): Item[][] => {
 
 const editGroup = (click: PageClick, platform: Platform): Item[] => {
   const { editable, edit } = click;
-  const selected = click.selection !== "";
+  const selected = hasSelection(click);
 
   return [
     ...(editable ? [item("cut", edit.canCut && selected)] : []),
@@ -168,7 +174,7 @@ export const pageMenu = (
   host: PageHost,
   platform: Platform
 ): MenuEntry<PageMenuItemId>[] => {
-  const selected = click.selection !== "";
+  const selected = hasSelection(click);
   const linked = click.linkUrl !== "";
   const { image } = click;
 

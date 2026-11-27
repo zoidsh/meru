@@ -73,6 +73,13 @@ describe("a page's context menu", () => {
       "lookUp, |, searchWithGoogle, |, copy, |, inspectElement",
     ],
     [
+      "white space macOS selected between words, as nothing selected",
+      { selection: " \n", edit: { ...click().edit, canCopy: true } },
+      GMAIL,
+      "darwin",
+      "inspectElement",
+    ],
+    [
       "a selection on Windows, with no Look Up",
       { selection: "standup", edit: { ...click().edit, canCopy: true } },
       GMAIL,
