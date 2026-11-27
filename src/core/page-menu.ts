@@ -83,19 +83,25 @@ export const lookUpText = (selection: string) => {
   return graphemes.join("");
 };
 
-/** The address a `mailto:` link writes to, without its query; none for another link. */
+/**
+ * The address a `mailto:` link writes to, without its query; none for
+ * another link, or for one that names no address before its query.
+ */
 export const emailAddressOf = (linkUrl: string) => {
   if (!linkUrl.toLowerCase().startsWith(MAILTO)) {
     return;
   }
 
   const [address = ""] = linkUrl.slice(MAILTO.length).split("?", 1);
+  let decoded = address;
 
   try {
-    return decodeURIComponent(address);
+    decoded = decodeURIComponent(address);
   } catch {
-    return address;
+    // A malformed escape is copied as written.
   }
+
+  return decoded.trim() === "" ? undefined : decoded;
 };
 
 /** Google's search for the selection. */

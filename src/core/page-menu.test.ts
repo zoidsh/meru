@@ -155,6 +155,20 @@ describe("a page's context menu", () => {
       "copyEmailAddress, |, copyLinkAddress, |, inspectElement",
     ],
     [
+      "a mailto: link with no address, which has none to copy",
+      { linkUrl: "mailto:" },
+      GMAIL,
+      "darwin",
+      "copyLinkAddress, |, inspectElement",
+    ],
+    [
+      "a mailto: link whose recipients are in its query alone",
+      { linkUrl: "mailto:?to=ada@example.com" },
+      GMAIL,
+      "darwin",
+      "copyLinkAddress, |, inspectElement",
+    ],
+    [
       "an image",
       { image: { url: "https://lh3.googleusercontent.com/a.png" } },
       GMAIL,
@@ -232,10 +246,14 @@ describe("what the items take", () => {
       emailAddressOf("MAILTO:ada%2Bmeru@example.com"),
       emailAddressOf("mailto:%E0%A4%A"),
       emailAddressOf("https://example.com/"),
+      emailAddressOf("mailto:"),
+      emailAddressOf("mailto:%20?cc=b@example.com"),
     ]).toStrictEqual([
       "ada@example.com",
       "ada+meru@example.com",
       "%E0%A4%A",
+      undefined,
+      undefined,
       undefined,
     ]);
   });
