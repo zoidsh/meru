@@ -85,6 +85,12 @@ export const SOUND_ADDON_FOLDER = realpathSync(
   path.join(repositoryRoot, "node_modules", "node-web-audio-api")
 );
 
+/**
+ * Where the packed app holds the addon's BSD-3 license, which a binary
+ * distribution must carry, beside the addon in `app.asar.unpacked`.
+ */
+export const SOUND_ADDON_LICENSE = "node-web-audio-api/LICENSE";
+
 // What its loader adds after `<platform>-<arch>` on Linux and on Windows.
 const SOUND_ADDON_SUFFIXES = ["", "-gnu", "-msvc"];
 

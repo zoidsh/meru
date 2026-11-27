@@ -10,6 +10,7 @@ import manifest from "./package.json" with { type: "json" };
 import {
   isSoundAddon,
   SOUND_ADDON_FOLDER,
+  SOUND_ADDON_LICENSE,
   soundAddonGlob,
 } from "./scripts/lib/bundles.ts";
 
@@ -51,8 +52,9 @@ const copyAssetCatalog: Configuration["afterPack"] = async (context) => {
 
 /**
  * Fails a pack whose app holds anything but its own architecture's audio
- * addon, once: a file set that matched nothing on some target, or another
- * platform's binaries, 46 MB of them, would otherwise ship unnoticed.
+ * addon, once, with its license beside it: a file set that matched nothing on
+ * some target, or another platform's binaries, 46 MB of them, would otherwise
+ * ship unnoticed.
  */
 const checkSoundAddon: Configuration["afterPack"] = async (context) => {
   const arch = Arch[context.arch];
@@ -60,16 +62,32 @@ const checkSoundAddon: Configuration["afterPack"] = async (context) => {
     recursive: true,
     withFileTypes: true,
   });
-  const found = entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".node"))
-    .map((entry) => entry.name);
+  const addons = entries.filter(
+    (entry) => entry.isFile() && entry.name.endsWith(".node")
+  );
+  const found = addons.map((entry) => entry.name);
+  const [addon] = addons;
 
   if (
-    found.length !== 1 ||
-    !isSoundAddon(found[0] ?? "", context.electronPlatformName, arch)
+    !addon ||
+    addons.length !== 1 ||
+    !isSoundAddon(addon.name, context.electronPlatformName, arch)
   ) {
     throw new Error(
       `The ${context.electronPlatformName} ${arch} app must hold its own audio addon alone, and holds ${found.length === 0 ? "no .node" : found.join(", ")}`
+    );
+  }
+
+  const license = path.join(addon.parentPath, SOUND_ADDON_LICENSE);
+
+  if (
+    !entries.some(
+      (entry) =>
+        entry.isFile() && path.join(entry.parentPath, entry.name) === license
+    )
+  ) {
+    throw new Error(
+      `The ${context.electronPlatformName} ${arch} app must hold the audio addon's license at ${license}`
     );
   }
 };
@@ -113,9 +131,15 @@ export const createConfig = (variant: PackageVariant): Configuration => {
         to: ".",
         filter: [soundAddonGlob(process.platform, "${arch}")],
       },
+      {
+        from: SOUND_ADDON_FOLDER,
+        to: path.dirname(SOUND_ADDON_LICENSE),
+        filter: [path.basename(SOUND_ADDON_LICENSE)],
+      },
     ],
-    // A native file loads from disk, never from inside the archive.
-    asarUnpack: ["**/*.node"],
+    // A native file loads from disk, never from inside the archive; its
+    // license sits beside it, where a person looking at the binary finds it.
+    asarUnpack: ["**/*.node", `**/${SOUND_ADDON_LICENSE}`],
     npmRebuild: false,
     nodeGypRebuild: false,
     asar: true,
