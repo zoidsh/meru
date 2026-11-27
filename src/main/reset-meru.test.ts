@@ -8,7 +8,118 @@ import { recordInto } from "#core/log.fake.ts";
 import { nodeUserDataFiles } from "#platform/user-data-files.ts";
 import type { UserDataFiles } from "#platform/user-data-files.ts";
 
-import { RESET_MARKER, wipeAfterReset } from "./reset-meru.ts";
+import {
+  RESET_MARKER,
+  createResetMeru,
+  resetConfirmation,
+  wipeAfterReset,
+} from "./reset-meru.ts";
+
+const DETAIL =
+  "You'll be signed out of every profile and lose all your settings. This can't be undone.";
+
+/** Each step the reset takes, in order, against fakes of what it is given. */
+const resetWith = ({
+  confirms = true,
+  licensed = false,
+  licenseRemoved = true,
+  markerWritten = true,
+} = {}) => {
+  const steps: string[] = [];
+  const lines: string[] = [];
+  const reset = createResetMeru({
+    confirm: (confirmation) => {
+      steps.push(`confirm: ${confirmation.detail}`);
+
+      return Promise.resolve(confirms);
+    },
+    hasLicense: () => licensed,
+    removeLicense: () => {
+      steps.push("remove license");
+
+      return Promise.resolve(licenseRemoved);
+    },
+    writeMarker: () => {
+      steps.push("write marker");
+
+      return markerWritten
+        ? Promise.resolve()
+        : Promise.reject(
+            Object.assign(new Error("ENOSPC: no space left on device"), {
+              code: "ENOSPC",
+            })
+          );
+    },
+    relaunch: () => {
+      steps.push("relaunch");
+    },
+    log: recordInto(lines),
+  });
+
+  return { reset, steps, lines };
+};
+
+describe("the reset's confirmation", () => {
+  it("asks with the system's alert, Cancel the default, saying what goes", () => {
+    expect(resetConfirmation(false)).toStrictEqual({
+      message: "Reset Meru?",
+      detail: DETAIL,
+      confirmLabel: "Reset",
+      cancelLabel: "Cancel",
+    });
+  });
+
+  it("says in a second paragraph that the license goes too while one is stored", () => {
+    expect(resetConfirmation(true).detail).toBe(
+      `${DETAIL}\n\nThis also removes your Meru Pro license from this device. You can activate it again with your key.`
+    );
+  });
+});
+
+describe(createResetMeru, () => {
+  it("does nothing once canceled", async () => {
+    const { reset, steps, lines } = resetWith({ confirms: false });
+
+    await expect(reset()).resolves.toBe("canceled");
+    expect(steps).toStrictEqual([`confirm: ${DETAIL}`]);
+    expect(lines).toStrictEqual([]);
+  });
+
+  it("removes the license, then writes the marker, then relaunches", async () => {
+    const { reset, steps, lines } = resetWith({ licensed: true });
+
+    await expect(reset()).resolves.toBe("resetting");
+    expect(steps).toStrictEqual([
+      expect.stringContaining("This also removes your Meru Pro license"),
+      "remove license",
+      "write marker",
+      "relaunch",
+    ]);
+    expect(lines).toStrictEqual(["meru-reset-confirmed"]);
+  });
+
+  it("stops before the marker when the license could not be removed", async () => {
+    const { reset, steps, lines } = resetWith({ licenseRemoved: false });
+
+    await expect(reset()).resolves.toBe("failed");
+    expect(steps.slice(1)).toStrictEqual(["remove license"]);
+    expect(lines).toStrictEqual([
+      "meru-reset-confirmed",
+      "meru-reset-failed step=license",
+    ]);
+  });
+
+  it("stops before the relaunch when the marker could not be written", async () => {
+    const { reset, steps, lines } = resetWith({ markerWritten: false });
+
+    await expect(reset()).resolves.toBe("failed");
+    expect(steps.slice(1)).toStrictEqual(["remove license", "write marker"]);
+    expect(lines).toStrictEqual([
+      "meru-reset-confirmed",
+      "meru-reset-failed step=marker code=ENOSPC",
+    ]);
+  });
+});
 
 let folder: string;
 

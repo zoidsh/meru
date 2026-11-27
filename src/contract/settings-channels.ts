@@ -38,6 +38,7 @@ export const SETTINGS_CALL_NAMES = [
   "openSettingsFile",
   "clearCache",
   "exportLogs",
+  "resetMeru",
   "copyAboutValue",
   "checkForUpdates",
   "restartToUpdate",

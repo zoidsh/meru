@@ -1,8 +1,12 @@
 import path from "node:path";
 
+import { t } from "@lingui/core/macro";
+
+import type { ResetOutcome } from "#contract/settings.ts";
 import { scrub } from "#core/log.ts";
 import type { Log } from "#core/log.ts";
 import type { UserDataFiles } from "#platform/user-data-files.ts";
+import type { Confirmation } from "#platform/window.ts";
 
 import { LOG_FILE } from "./logger.ts";
 import { SETTINGS_FILE_NAME } from "./settings.ts";
@@ -85,6 +89,93 @@ const removeAll = (files: UserDataFiles, target: string): Failure[] => {
     }
   }
 };
+
+export const resetConfirmation = (licensed: boolean): Confirmation => {
+  const detail = t({
+    message:
+      "You'll be signed out of every profile and lose all your settings. This can't be undone.",
+    comment: "Explanation in the dialog that confirms resetting Meru",
+  });
+
+  return {
+    message: t({
+      message: "Reset Meru?",
+      comment:
+        "Question in the dialog that confirms resetting Meru, which signs out of every profile and deletes all its settings and data",
+    }),
+    detail: licensed
+      ? `${detail}\n\n${t({
+          message:
+            "This also removes your Meru Pro license from this device. You can activate it again with your key.",
+          comment:
+            "Second paragraph of the dialog that confirms resetting Meru, shown while a Meru Pro license is stored",
+        })}`
+      : detail,
+    confirmLabel: t({
+      message: "Reset",
+      comment:
+        "Button in the dialog that confirms resetting Meru, which erases its settings and data",
+    }),
+    cancelLabel: t({
+      message: "Cancel",
+      comment:
+        "Button in the dialog that confirms resetting Meru, which keeps everything as it is",
+    }),
+  };
+};
+
+export interface ResetMeruDeps {
+  /** The system's alert, as a sheet on the window that asked. */
+  confirm: (confirmation: Confirmation) => Promise<boolean>;
+  hasLicense: () => boolean;
+  /** Answers whether the license is gone from the file. */
+  removeLicense: () => Promise<boolean>;
+  writeMarker: () => Promise<void>;
+  /** Quits, and starts Meru again once this run has exited. */
+  relaunch: () => void;
+  log: Log;
+}
+
+/**
+ * Asks, then removes the license and leaves the marker for the next launch,
+ * which wipes the rest, and relaunches. Nothing else is deleted while Meru
+ * runs, so no store or session writes itself back at quit. Stops before the
+ * relaunch when the license or the marker could not be written.
+ */
+export const createResetMeru =
+  ({
+    confirm,
+    hasLicense,
+    removeLicense,
+    writeMarker,
+    relaunch,
+    log,
+  }: ResetMeruDeps) =>
+  async (): Promise<ResetOutcome> => {
+    if (!(await confirm(resetConfirmation(hasLicense())))) {
+      return "canceled";
+    }
+
+    log("meru-reset-confirmed");
+
+    if (!(await removeLicense())) {
+      log("meru-reset-failed", { step: "license" });
+
+      return "failed";
+    }
+
+    try {
+      await writeMarker();
+    } catch (error) {
+      log("meru-reset-failed", { step: "marker", code: scrub.code(error) });
+
+      return "failed";
+    }
+
+    relaunch();
+
+    return "resetting";
+  };
 
 /**
  * After a reset, before any store is read and before any session exists:

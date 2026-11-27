@@ -310,6 +310,7 @@ const setup = (
     showTestNotification: (profileId: string | undefined) => {
       tested.push(profileId);
     },
+    resetMeru: () => Promise.resolve("canceled" as const),
     removeProfile: createRemoveProfile({
       profiles,
       window: {

@@ -18,6 +18,7 @@ import type { DownloadFiles } from "#platform/downloads.ts";
 import type { Ipc } from "#platform/ipc.ts";
 import type { SystemBrowser } from "#platform/system-browser.ts";
 import { createSystemInfo } from "#platform/system-info.ts";
+import { createTextFile } from "#platform/text-file.ts";
 import type { TextFile } from "#platform/text-file.ts";
 import type { Theme } from "#platform/theme.ts";
 import { createWindowFactory } from "#platform/window.ts";
@@ -35,6 +36,7 @@ import type { MailPoller } from "../mail.ts";
 import type { Profiles } from "../profiles.ts";
 import { createReleases } from "../releases.ts";
 import { createRemoveProfile } from "../remove-profile.ts";
+import { RESET_MARKER, createResetMeru } from "../reset-meru.ts";
 import type { SenderRegistry } from "../senders.ts";
 import {
   onSettingsStateChange,
@@ -53,6 +55,7 @@ import type { TrustedSites } from "../trusted-sites.ts";
 import type { Updates } from "../updates.ts";
 import { openingOptions } from "../windows.ts";
 import {
+  appRelaunch,
   folderPicker,
   pathOpener,
   saveFilePicker,
@@ -245,6 +248,23 @@ export const wireSettingsWindow = ({
     log,
   });
 
+  const resetMeru = createResetMeru({
+    // As a sheet on the Settings window, which asked.
+    confirm: (confirmation) => {
+      const window = settingsWindow.current();
+
+      return window
+        ? window.confirm(confirmation)
+        : Promise.reject(new Error("The Settings window is not open"));
+    },
+    hasLicense: () => entitlement.snapshot().licenseKey !== null,
+    removeLicense: entitlement.removeLicense,
+    writeMarker: () =>
+      createTextFile(path.join(lifecycle.userDataPath, RESET_MARKER)).write(""),
+    relaunch: appRelaunch(lifecycle),
+    log,
+  });
+
   const about = createAboutPage({
     platform,
     system: createSystemInfo(),
@@ -319,6 +339,7 @@ export const wireSettingsWindow = ({
       entitlement,
       licenseRequests,
       systemBrowser,
+      resetMeru,
       // The system's confirmation shows as a sheet on the window that asked.
       removeProfile: async (profileId) => {
         const window = settingsWindow.current();

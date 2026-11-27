@@ -112,6 +112,14 @@ export const LOGS_EXPORTS = ["saved", "canceled", "failed"] as const;
 
 export type LogsExport = (typeof LOGS_EXPORTS)[number];
 
+/**
+ * How Reset Meru ended; `resetting` is rarely heard, since Meru is quitting
+ * as it answers.
+ */
+export const RESET_OUTCOMES = ["canceled", "failed", "resetting"] as const;
+
+export type ResetOutcome = (typeof RESET_OUTCOMES)[number];
+
 /** The About page's settings, in its order; the app holds them, never a profile. */
 export const ABOUT_PAGE_KEYS = ["autoUpdate", "updateChannel"] as const;
 
@@ -451,6 +459,11 @@ export const SETTINGS_CALLS = {
    * person saves it.
    */
   exportLogs: { request: none, response: z.enum(LOGS_EXPORTS) },
+  /**
+   * Asks in the system's alert, then removes the license, signs out of every
+   * profile and deletes every setting and all data, restarting Meru as new.
+   */
+  resetMeru: { request: none, response: z.enum(RESET_OUTCOMES) },
   /** Puts main's own string of one of the About page's values on the clipboard. */
   copyAboutValue: {
     request: z.object({ item: z.enum(ABOUT_ITEMS) }),

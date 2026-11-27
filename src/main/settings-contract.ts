@@ -8,6 +8,7 @@ import type {
   PageOverrides,
   PageSettingKey,
   PageSettings,
+  ResetOutcome,
   SettingChange,
   SETTINGS_CALLS,
   SettingsState,
@@ -87,6 +88,8 @@ export interface SettingsContractDeps {
   addProfile: () => Promise<string | undefined>;
   /** Asks to remove the profile, and removes it once confirmed. */
   removeProfile: (profileId: string) => Promise<void>;
+  /** Asks to reset Meru, and resets it once confirmed. */
+  resetMeru: () => Promise<ResetOutcome>;
   /** Deletes the kinds of the profile's browsing data asked for. */
   deleteBrowsingData: (
     profileId: string,
@@ -230,6 +233,7 @@ export const settingsHandlers = ({
   pages,
   showTestNotification,
   removeProfile,
+  resetMeru,
   deleteBrowsingData,
   signIn,
   contactSupport,
@@ -513,6 +517,7 @@ export const settingsHandlers = ({
     openSettingsFile: () => advanced.openSettingsFile(),
     clearCache: () => advanced.clearCache(),
     exportLogs: () => advanced.exportLogs(),
+    resetMeru: () => resetMeru(),
     copyAboutValue: ({ item }) => about.copy(item),
     checkForUpdates: () =>
       Promise.try(() => {

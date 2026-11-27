@@ -127,6 +127,49 @@ const ExportLogs = ({
   );
 };
 
+/** Reset…, disabled while the system's alert is up; Meru restarts once confirmed. */
+const ResetMeru = ({
+  describedBy,
+  onDone,
+}: {
+  describedBy: string;
+  onDone: (failed: boolean) => void;
+}) => {
+  const { t } = useLingui();
+  const [asking, setAsking] = useState(false);
+
+  return (
+    <Button
+      variant="destructive"
+      size="sm"
+      disabled={asking}
+      aria-label={t({
+        message: "Reset Meru",
+        comment:
+          "Accessible name of the Reset button in Settings, which signs out of every profile and deletes all of Meru's settings and data after a confirmation",
+      })}
+      aria-describedby={describedBy || undefined}
+      onClick={async () => {
+        setAsking(true);
+        onDone(false);
+
+        const answer = await settingsCalls()
+          .resetMeru({})
+          .catch(() => "failed" as const);
+
+        setAsking(false);
+        onDone(answer === "failed");
+      }}
+    >
+      {t({
+        message: "Reset…",
+        comment:
+          "Button of the Reset Meru row in Settings, which asks to confirm before signing out of every profile and deleting all settings and data",
+      })}
+    </Button>
+  );
+};
+
 /**
  * Hardware acceleration, which applies at the next launch, the macOS screen
  * picker, and the troubleshooting that needs no setting: app-wide alone, so
@@ -138,6 +181,7 @@ export const AdvancedPage = () => {
   const advanced = useSettingsState("advanced");
   const [clearFailed, setClearFailed] = useState(false);
   const [exportFailed, setExportFailed] = useState(false);
+  const [resetFailed, setResetFailed] = useState(false);
   const needsPro = useNeedsPro();
 
   if (!settings || !advanced) {
@@ -235,7 +279,7 @@ export const AdvancedPage = () => {
         title={t({
           message: "Troubleshooting",
           comment:
-            "Title of the group of Settings for opening the settings file, clearing the cache and exporting the logs, when something goes wrong",
+            "Title of the group of Settings for opening the settings file, clearing the cache, exporting the logs and resetting Meru, when something goes wrong",
         })}
       >
         <Rows>
@@ -328,6 +372,35 @@ export const AdvancedPage = () => {
                 <ExportLogs
                   describedBy={ids.description}
                   onDone={setExportFailed}
+                />
+              )}
+            </SettingRow>,
+            <SettingRow
+              key="reset"
+              label={t({
+                message: "Reset Meru",
+                comment:
+                  "Label of the last row in Settings' Troubleshooting group, which signs out of every profile and deletes all settings and data",
+              })}
+              description={t({
+                message:
+                  "Signs you out of every profile and deletes all your settings and data on this computer.",
+                comment: "Description of the Reset Meru row in Settings",
+              })}
+              error={
+                resetFailed
+                  ? t({
+                      message: "Couldn't reset Meru. Try again.",
+                      comment:
+                        "Under the Reset Meru row in Settings, when the license could not be removed or the reset could not be started",
+                    })
+                  : undefined
+              }
+            >
+              {(ids) => (
+                <ResetMeru
+                  describedBy={ids.description}
+                  onDone={setResetFailed}
                 />
               )}
             </SettingRow>,

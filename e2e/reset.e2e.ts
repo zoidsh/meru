@@ -1,21 +1,45 @@
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { ElectronApplication } from "@playwright/test";
+import type { ElectronApplication, Page } from "@playwright/test";
 
-import { SHELL_URL, expect, findPage, test } from "./lib/app.ts";
-import { seedProfiles } from "./lib/settings.ts";
+import {
+  NO_TRIAL,
+  SHELL_URL,
+  expect,
+  findPage,
+  test,
+  writeSettings,
+} from "./lib/app.ts";
+import {
+  askedRemovals,
+  confirmRemovals,
+  openSection,
+  openSettings,
+  seedProfiles,
+} from "./lib/settings.ts";
+import { THEMES, emulateTheme, onlyWithShots, shotPath } from "./lib/shots.ts";
 
 const HOUR = 60 * 60;
+const KEY = "MERU-TEST-AAAA-BBBB-CCCC-7Q2K";
+const DETAIL =
+  "You'll be signed out of every profile and lose all your settings. This can't be undone.";
+const LICENSE_PARAGRAPH =
+  "This also removes your Meru Pro license from this device. You can activate it again with your key.";
 
-/** The log as the file holds it, empty while there is none yet. */
-const readLog = async (userDataDir: string) => {
+const read = async (userDataDir: string, ...file: string[]) => {
   try {
-    return await readFile(path.join(userDataDir, "logs", "main.log"), "utf-8");
+    return await readFile(path.join(userDataDir, ...file), "utf-8");
   } catch {
     return "";
   }
 };
+
+const readJson = async (userDataDir: string, file: string) =>
+  JSON.parse((await read(userDataDir, file)) || "{}") as Record<
+    string,
+    unknown
+  >;
 
 const listed = async (folder: string) => {
   try {
@@ -53,52 +77,161 @@ const cookieNames = (app: ElectronApplication, profileId: string) =>
     return cookies.map(({ name }) => name);
   }, `persist:${profileId}`);
 
-/**
- * Ends the app at once, as the suite's stand-in for the relaunch does, so the
- * next launch starts while the system may still hold what this run had open.
- */
-const exitNow = async (app: ElectronApplication) => {
-  const closed = app.waitForEvent("close");
+interface Snapshot {
+  status: string;
+  licenseKey: string | null;
+}
 
-  await app.evaluate(({ app: electronApp }) => {
-    setTimeout(() => {
-      electronApp.exit(0);
-    }, 0);
-  });
-  await closed;
+const snapshot = (app: ElectronApplication) =>
+  app.evaluate(() =>
+    (
+      Reflect.get(globalThis, "meruTestEntitlement") as {
+        snapshot: () => Snapshot;
+      }
+    ).snapshot()
+  );
+
+const activate = (app: ElectronApplication) =>
+  app.evaluate(
+    (_electron, key) =>
+      (
+        Reflect.get(globalThis, "meruTestEntitlement") as {
+          activate: (key: string) => Promise<{ ok: boolean }>;
+        }
+      ).activate(key),
+    KEY
+  );
+
+const openAdvanced = async (app: ElectronApplication) => {
+  const page = await openSettings(app);
+
+  await openSection(page, "Advanced");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Advanced");
+
+  return page;
 };
 
-test("a launch that finds the reset's marker deletes every profile's session before any exists, signing each out", async ({
+const resetButton = (page: Page) =>
+  page.getByRole("button", { name: "Reset Meru" });
+
+test("Reset Meru asks first, then removes the license, ends the app with the relaunch asked, and the next launch is a first run with every profile signed out and the trial as it was", async ({
   launchApp,
   standIn,
   userDataDir,
 }) => {
   await seedProfiles(userDataDir, standIn, ["Work", "Home"]);
+  await writeSettings(userDataDir, { theme: "dark", confirmLinks: false });
+  await writeFile(
+    path.join(userDataDir, "gmail-user-styles.css"),
+    "body { color: red; }"
+  );
+  await writeFile(path.join(userDataDir, "state.corrupt-1.json"), "garbage");
 
   const first = await launchApp();
 
   await findPage(first, SHELL_URL);
+  await expect.poll(() => snapshot(first)).toMatchObject({ status: "trial" });
+  await expect(activate(first)).resolves.toStrictEqual({ ok: true });
   await keepCookie(first, "work", standIn.url);
   await keepCookie(first, "home", standIn.url);
-  expect(await cookieNames(first, "work")).toContain("kept");
-  await writeFile(path.join(userDataDir, "reset-pending"), "");
-  await exitNow(first);
-  expect(await listed(path.join(userDataDir, "Partitions"))).toStrictEqual(
-    expect.arrayContaining(["work", "home"])
+
+  const stub = await readJson(userDataDir, "entitlement-stub.json");
+
+  expect(stub.trialStartedAt).toStrictEqual(expect.any(Number));
+
+  const page = await openAdvanced(first);
+  const troubleshooting = page.getByRole("group", { name: "Troubleshooting" });
+
+  await expect(resetButton(page)).toHaveText("Reset…");
+  await expect(resetButton(page)).toHaveAccessibleDescription(
+    "Signs you out of every profile and deletes all your settings and data on this computer."
+  );
+  // The last row of the group.
+  await expect(troubleshooting.getByRole("button").last()).toHaveAccessibleName(
+    "Reset Meru"
   );
 
-  const second = await launchApp();
+  // Cancel: nothing changes, and the page stays.
+  await confirmRemovals(first, false);
+  await resetButton(page).click();
+  await expect.poll(() => askedRemovals(first)).toHaveLength(1);
 
-  await findPage(second, SHELL_URL);
-  await expect.poll(() => readLog(userDataDir)).toContain("meru-reset-wiped");
+  const [asked] = await askedRemovals(first);
 
-  const log = await readLog(userDataDir);
-
-  expect(log).toContain("meru-reset-wiped kept=0");
-  expect(log).not.toContain("reset-delete-failed");
-  expect(log.split("\n")[0]).toContain("run-started");
-  expect(log.split("\n")[1]).toContain("meru-reset-wiped");
+  expect(asked).toMatchObject({
+    type: "warning",
+    message: "Reset Meru?",
+    detail: `${DETAIL}\n\n${LICENSE_PARAGRAPH}`,
+    buttons: ["Reset", "Cancel"],
+    defaultId: 1,
+    cancelId: 1,
+    window: "Settings",
+  });
+  await expect(resetButton(page)).toBeEnabled();
+  await expect(page.getByText("Couldn't reset Meru. Try again.")).toHaveCount(
+    0
+  );
   expect(await listed(userDataDir)).not.toContain("reset-pending");
+  expect(await readJson(userDataDir, "entitlement.json")).toMatchObject({
+    licenseKey: KEY,
+  });
+  expect(await cookieNames(first, "work")).toContain("kept");
+
+  // Reset: the license goes, the marker is left, and the app ends in place
+  // of relaunching.
+  const output: string[] = [];
+
+  first.process().stderr?.on("data", (chunk: Buffer) => {
+    output.push(chunk.toString());
+  });
+  await confirmRemovals(first, true);
+
+  const closed = first.waitForEvent("close");
+
+  await resetButton(page)
+    .click()
+    .catch((error: unknown) => {
+      // The app can end before the click answers.
+      if (!String(error).includes("has been closed")) {
+        throw error;
+      }
+    });
+  await closed;
+
+  expect(output.join("")).toContain("meruTestRelaunch: relaunch");
+  expect(await listed(userDataDir)).toContain("reset-pending");
+
+  const entitlementAfterReset = await readJson(userDataDir, "entitlement.json");
+
+  expect(entitlementAfterReset).not.toHaveProperty("licenseKey");
+  expect(entitlementAfterReset).not.toHaveProperty("token");
+  expect(await readJson(userDataDir, "entitlement-stub.json")).toMatchObject({
+    trialStartedAt: stub.trialStartedAt,
+    deactivations: 1,
+    licenses: {},
+  });
+
+  // The next launch, on the same folder and with no trial seeded, so the
+  // trial it shows is the one the server kept.
+  const second = await launchApp(NO_TRIAL);
+  const shell = await findPage(second, SHELL_URL);
+
+  await expect
+    .poll(() => read(userDataDir, "logs", "main.log"))
+    .toContain("meru-reset-wiped");
+
+  const log = await read(userDataDir, "logs", "main.log");
+  const [started, wiped] = log.split("\n");
+
+  expect(started).toContain("run-started");
+  expect(wiped).toContain("meru-reset-wiped kept=0");
+  expect(log).not.toContain("reset-delete-failed");
+
+  const files = await listed(userDataDir);
+
+  expect(files).not.toContain("reset-pending");
+  expect(files).not.toContain("gmail-user-styles.css");
+  expect(files).not.toContain("state.corrupt-1.json");
 
   const partitions = await listed(path.join(userDataDir, "Partitions"));
 
@@ -106,4 +239,45 @@ test("a launch that finds the reset's marker deletes every profile's session bef
   expect(partitions).not.toContain("home");
   expect(await cookieNames(second, "work")).toStrictEqual([]);
   expect(await cookieNames(second, "home")).toStrictEqual([]);
+
+  // One default profile, so no profile row, and default settings.
+  await expect(shell.getByRole("group", { name: "Profiles" })).toHaveCount(0);
+
+  const state = await readJson(userDataDir, "state.json");
+
+  expect(state.profiles).toStrictEqual([
+    expect.objectContaining({ name: "Default" }),
+  ]);
+  expect(await readJson(userDataDir, "settings.json")).not.toHaveProperty(
+    "theme"
+  );
+  await expect
+    .poll(() => snapshot(second))
+    .toMatchObject({ status: "trial", licenseKey: null });
+  expect(await readJson(userDataDir, "entitlement-stub.json")).toMatchObject({
+    trialStartedAt: stub.trialStartedAt,
+  });
+});
+
+test.describe("shots", () => {
+  test.beforeEach(onlyWithShots);
+
+  test("the Advanced page with the Reset Meru row, light and dark", async ({
+    app,
+  }) => {
+    const page = await openAdvanced(app);
+
+    // The description, which wraps below the button.
+    await page
+      .getByText("Signs you out of every profile", { exact: false })
+      .scrollIntoViewIfNeeded();
+    for (const theme of THEMES) {
+      // oxlint-disable-next-line no-await-in-loop -- one theme at a time
+      await emulateTheme(app, theme);
+      // oxlint-disable-next-line no-await-in-loop -- one after another
+      await page.screenshot({
+        path: shotPath("settings-advanced-reset", theme),
+      });
+    }
+  });
 });

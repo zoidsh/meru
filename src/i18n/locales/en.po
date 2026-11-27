@@ -584,12 +584,14 @@ msgstr "Cached images and files"
 #. Button in the alert saying Meru is the default browser, which opens nothing
 #. Button in the dialog that asks before a link opens in the default browser, which opens nothing
 #. Button in the dialog that confirms removing a profile, which keeps it
+#. Button in the dialog that confirms resetting Meru, which keeps everything as it is
 #. Button in the license key dialog that closes it, changing nothing
 #. Button of the card that asks which profile writes a new email for an email link; it opens no email
 #. Button of the screen sharing card that closes it and shares nothing
 #: src/main/default-browser-guard.ts
 #: src/main/link-opener.ts
 #: src/main/profile-copy.ts
+#: src/main/reset-meru.ts
 #: src/settings/delete-browsing-data.tsx
 #: src/settings/saved-searches-card.tsx
 #: src/shared/license-dialog.tsx
@@ -950,6 +952,11 @@ msgstr "Couldn’t move the message to Trash."
 #: src/shell/inbox.tsx
 msgid "Couldn’t report the message as spam."
 msgstr "Couldn’t report the message as spam."
+
+#. Under the Reset Meru row in Settings, when the license could not be removed or the reset could not be started
+#: src/settings/advanced-page.tsx
+msgid "Couldn't reset Meru. Try again."
+msgstr "Couldn't reset Meru. Try again."
 
 #. Under the Logs row in Settings, when the copy of the logs could not be written
 #: src/settings/advanced-page.tsx
@@ -2384,7 +2391,9 @@ msgid "Requires Meru Pro"
 msgstr "Requires Meru Pro"
 
 #. Button beside a changed key on the Shortcuts page of Settings, which gives the command its default key again
+#. Button in the dialog that confirms resetting Meru, which erases its settings and data
 #. Button under a Settings row in a profile's scope that drops the profile's own value so it follows All profiles again
+#: src/main/reset-meru.ts
 #: src/settings/row-scope.tsx
 #: src/settings/shortcuts-page.tsx
 msgid "Reset"
@@ -2399,6 +2408,22 @@ msgstr "Reset {label} to All profiles"
 #: src/settings/shortcuts-page.tsx
 msgid "Reset {title} to its default"
 msgstr "Reset {title} to its default"
+
+#. Accessible name of the Reset button in Settings, which signs out of every profile and deletes all of Meru's settings and data after a confirmation
+#. Label of the last row in Settings' Troubleshooting group, which signs out of every profile and deletes all settings and data
+#: src/settings/advanced-page.tsx
+msgid "Reset Meru"
+msgstr "Reset Meru"
+
+#. Question in the dialog that confirms resetting Meru, which signs out of every profile and deletes all its settings and data
+#: src/main/reset-meru.ts
+msgid "Reset Meru?"
+msgstr "Reset Meru?"
+
+#. Button of the Reset Meru row in Settings, which asks to confirm before signing out of every profile and deleting all settings and data
+#: src/settings/advanced-page.tsx
+msgid "Reset…"
+msgstr "Reset…"
 
 #. Accessible name of the gap between two panes of a split view, which a drag or the arrow keys move to resize them
 #: src/shell/pane-handle.tsx
@@ -2838,6 +2863,11 @@ msgstr "Signs you out and deletes this profile from this computer. Your Google a
 msgid "Signs you out of {name}."
 msgstr "Signs you out of {name}."
 
+#. Description of the Reset Meru row in Settings
+#: src/settings/advanced-page.tsx
+msgid "Signs you out of every profile and deletes all your settings and data on this computer."
+msgstr "Signs you out of every profile and deletes all your settings and data on this computer."
+
 #. What the Do Not Disturb switch in Settings does
 #: src/settings/do-not-disturb.ts
 msgid "Silences all notifications."
@@ -3062,6 +3092,11 @@ msgstr "These apply to every profile unless you change them for one."
 msgid "These change how Gmail looks in Meru. Your Gmail settings stay the same."
 msgstr "These change how Gmail looks in Meru. Your Gmail settings stay the same."
 
+#. Second paragraph of the dialog that confirms resetting Meru, shown while a Meru Pro license is stored
+#: src/main/reset-meru.ts
+msgid "This also removes your Meru Pro license from this device. You can activate it again with your key."
+msgstr "This also removes your Meru Pro license from this device. You can activate it again with your key."
+
 #. The first card of the About page of Settings, in place of where updating stands, for a build of Meru that cannot install new versions
 #: src/settings/updates-group.tsx
 msgid "This build doesn't update itself."
@@ -3178,7 +3213,7 @@ msgstr "Toggle Full Screen"
 msgid "Tray & Taskbar"
 msgstr "Tray & Taskbar"
 
-#. Title of the group of Settings for opening the settings file, clearing the cache and exporting the logs, when something goes wrong
+#. Title of the group of Settings for opening the settings file, clearing the cache, exporting the logs and resetting Meru, when something goes wrong
 #: src/settings/advanced-page.tsx
 msgid "Troubleshooting"
 msgstr "Troubleshooting"
@@ -3538,6 +3573,11 @@ msgstr "You need Meru Pro to use this profile."
 #: src/settings/notifications-page.tsx
 msgid "You set Do Not Disturb under All profiles. It applies to every profile."
 msgstr "You set Do Not Disturb under All profiles. It applies to every profile."
+
+#. Explanation in the dialog that confirms resetting Meru
+#: src/main/reset-meru.ts
+msgid "You'll be signed out of every profile and lose all your settings. This can't be undone."
+msgstr "You'll be signed out of every profile and lose all your settings. This can't be undone."
 
 #. Explanation in the dialog that confirms removing a profile
 #: src/main/profile-copy.ts
