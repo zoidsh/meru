@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { ElectronApplication, Page } from "@playwright/test";
+import type { ElectronApplication, Locator, Page } from "@playwright/test";
 
 import { DAY } from "#core/entitlement.ts";
 
@@ -31,6 +31,9 @@ const IN_MERU = "Open Google apps in Meru";
 const IN_BROWSER = "Always open in your default browser";
 const SWITCHED_OFF = "Google apps open in your default browser.";
 const TURN_ON_FIRST = "Turn on Open Google apps in Meru first.";
+
+const OPEN_IN = "Open Google apps in";
+const SHOW_WINDOWS = "Show windows in the sidebar";
 
 const SLEEP_IDLE = "Sleep idle tabs";
 const SLEEP_AFTER = "Sleep after";
@@ -68,6 +71,18 @@ const manageDialog = (page: Page) =>
 const appBox = (page: Page, name: string) =>
   manageDialog(page).getByRole("checkbox", { name, exact: true });
 
+/** Whether each of `locators` is drawn below the one before it. */
+const tops = async (locators: readonly Locator[]) => {
+  const boxes = await Promise.all(
+    locators.map((locator) => locator.boundingBox())
+  );
+  const ys = boxes.map((box) => box?.y ?? Number.NaN);
+
+  return ys.every((y, index) => index === 0 || y > (ys[index - 1] ?? y))
+    ? "ascending"
+    : ys;
+};
+
 /** The URL each content view shows. */
 const viewUrls = async (app: ElectronApplication) => {
   const { views } = await readViews(app);
@@ -75,7 +90,7 @@ const viewUrls = async (app: ElectronApplication) => {
   return views.map(({ url }) => url);
 };
 
-test("opens from the sidebar after Gmail with no scopes, Manage… listing every Google app but Gmail, and a Sleep group of two menus at their defaults", async ({
+test("opens from the sidebar after Gmail with no scopes, Open Google apps in second at Tabs, Manage… listing every Google app but Gmail, Show windows in the sidebar on in a Sidebar group, and a Sleep group of two menus at their defaults", async ({
   app,
 }) => {
   const page = await openSettings(app);
@@ -101,6 +116,38 @@ test("opens from the sidebar after Gmail with no scopes, Manage… listing every
   await expect(manage(page)).toBeEnabled();
   await expect(manage(page)).toHaveAccessibleDescription("None");
 
+  const openIn = group.getByRole("combobox", { name: OPEN_IN });
+  const sidebar = page.getByRole("group", { name: "Sidebar" });
+  const sleep = page.getByRole("group", { name: "Sleep" });
+
+  // Open Google apps in second in its group, and the Sidebar group between
+  // it and Sleep.
+  expect(
+    await tops([
+      group.getByRole("switch", { name: IN_MERU }),
+      openIn,
+      manage(page),
+      sidebar,
+      sleep,
+    ])
+  ).toStrictEqual("ascending");
+  await expect(openIn).toBeEnabled();
+  await expect(openIn).toContainText("Tabs");
+  await expect(openIn).toHaveAccessibleDescription("");
+  await openIn.click();
+  await expect(page.getByRole("option")).toHaveText(["Tabs", "New window"]);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("option")).toHaveCount(0);
+
+  await expect(
+    sidebar.getByRole("switch", { name: SHOW_WINDOWS })
+  ).toBeChecked();
+  await expect(
+    sidebar.getByRole("switch", { name: SHOW_WINDOWS })
+  ).toHaveAccessibleDescription(
+    "Lists Google app windows with your tabs so you can switch to them."
+  );
+
   await manage(page).click();
   await expect(
     manageDialog(page).getByRole("row").getByRole("checkbox")
@@ -117,7 +164,6 @@ test("opens from the sidebar after Gmail with no scopes, Manage… listing every
   await expect(manageDialog(page)).toHaveCount(0);
   await expect(manage(page)).toBeFocused();
 
-  const sleep = page.getByRole("group", { name: "Sleep" });
   const which = sleep.getByRole("combobox", { name: SLEEP_IDLE });
   const after = sleep.getByRole("combobox", { name: SLEEP_AFTER });
 
@@ -235,7 +281,7 @@ test("Tabs you choose brings Sleep When Idle to a tab's menu after Sleep, whose 
   expect(await calendarMenu(again)).toContain(`${SLEEP_WHEN_IDLE} [x]`);
 });
 
-test("turning the switch off sends Gmail's Calendar link to the default browser and disables Manage… saying why, its value kept", async ({
+test("turning the switch off sends Gmail's Calendar link to the default browser and disables Open Google apps in and Manage… saying why, Manage…'s value kept, Show windows in the sidebar staying enabled", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -260,6 +306,12 @@ test("turning the switch off sends Gmail's Calendar link to the default browser 
   );
   await expect(manage(page)).toBeDisabled();
   await expect(manage(page)).toHaveAccessibleDescription(TURN_ON_FIRST);
+
+  const openIn = page.getByRole("combobox", { name: OPEN_IN });
+
+  await expect(openIn).toBeDisabled();
+  await expect(openIn).toHaveAccessibleDescription(TURN_ON_FIRST);
+  await expect(page.getByRole("switch", { name: SHOW_WINDOWS })).toBeEnabled();
   await expect
     .poll(async () => {
       const stored = await readStored(userDataDir);
@@ -409,6 +461,8 @@ test("on the free version every row is a Pro row, disabled, its stored value kep
   const stored = {
     openAppsInMeru: true,
     appsInDefaultBrowser: ["drive"],
+    openAppsIn: "windows",
+    showWindowsInSidebar: false,
     sleepIdleTabs: "all",
     sleepAfter: "3h",
   };
@@ -420,7 +474,14 @@ test("on the free version every row is a Pro row, disabled, its stored value kep
 
   await openTabsApps(page);
 
-  for (const label of [IN_MERU, IN_BROWSER, SLEEP_IDLE, SLEEP_AFTER]) {
+  for (const label of [
+    IN_MERU,
+    OPEN_IN,
+    IN_BROWSER,
+    SHOW_WINDOWS,
+    SLEEP_IDLE,
+    SLEEP_AFTER,
+  ]) {
     // oxlint-disable-next-line no-await-in-loop -- one row after another
     await expect(
       page.getByRole("button", { name: `Meru Pro ${label}`, exact: true })
@@ -435,8 +496,17 @@ test("on the free version every row is a Pro row, disabled, its stored value kep
   await expect(
     page.getByRole("combobox", { name: SLEEP_AFTER })
   ).toBeDisabled();
+  await expect(page.getByRole("combobox", { name: OPEN_IN })).toBeDisabled();
+  // The free version opens every app as a tab, whatever is stored.
+  await expect(page.getByRole("combobox", { name: OPEN_IN })).toContainText(
+    "Tabs"
+  );
+  await expect(page.getByRole("switch", { name: SHOW_WINDOWS })).toBeDisabled();
   // The Pro state outranks the reason the switch would give.
   await expect(manage(page)).not.toHaveAccessibleDescription(TURN_ON_FIRST);
+  await expect(
+    page.getByRole("combobox", { name: OPEN_IN })
+  ).not.toHaveAccessibleDescription(TURN_ON_FIRST);
 
   await app.close();
 
