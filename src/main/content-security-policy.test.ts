@@ -28,10 +28,10 @@ describe(createContentSecurityPolicy, () => {
     ]);
   });
 
-  it("plays no media, as main plays Meru's sounds", () => {
-    expect(
-      directive(createContentSecurityPolicy(), "media-src")
-    ).toBeUndefined();
+  it("plays media, the bundled sounds, only from its own origin", () => {
+    expect(directive(createContentSecurityPolicy(), "media-src")).toStrictEqual(
+      ["'self'"]
+    );
   });
 });
 
@@ -58,7 +58,7 @@ describe(createDevContentSecurityPolicy, () => {
     expect(policy).not.toMatch(/unsafe|'self'|\*/u);
   });
 
-  it("plays no media", () => {
+  it("plays media only from the dev server", () => {
     expect(
       directive(
         createDevContentSecurityPolicy({
@@ -67,7 +67,7 @@ describe(createDevContentSecurityPolicy, () => {
         }),
         "media-src"
       )
-    ).toBeUndefined();
+    ).toStrictEqual(["http://127.0.0.1:5173"]);
   });
 });
 

@@ -688,7 +688,13 @@ const start = async () => {
   });
 
   // One for both, since the suite's build captures what the last one made.
-  const sound = soundOutput({ background, log });
+  const sound = soundOutput({
+    ipc,
+    shellId: shell.window.webContentsId,
+    shellOrigin,
+    background,
+    log,
+  });
 
   const { showTestNotification } = wireNotifications({
     log,

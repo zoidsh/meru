@@ -45,6 +45,7 @@ export const createDevContentSecurityPolicy = (devServer: DevServer) => {
     "style-src": [origin, nonce],
     "img-src": [origin, "data:"],
     "font-src": [origin],
+    "media-src": [origin],
     "connect-src": [origin, socket],
   });
 };

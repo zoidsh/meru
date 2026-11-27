@@ -74,12 +74,6 @@ export const DEFAULT_SOUNDS = {
  */
 export const soundVolumeSchema = z.number().check(z.gte(0.05), z.lte(1));
 
-/** One of Meru's sounds to play now, at a volume `soundVolumeSchema` takes. */
-export interface SoundRequest {
-  sound: NotificationSound;
-  volume: number;
-}
-
 /**
  * After a sound, none plays for this long, so notifications shown together,
  * one poll's or several profiles' at once, make one sound.

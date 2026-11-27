@@ -61,4 +61,8 @@ export const NAVIGATE_ACTIONS = ["back", "forward", "reload", "stop"] as const;
 
 export type ShellCallName = (typeof SHELL_CALL_NAMES)[number];
 
-export const SHELL_CHANNELS = contractChannels<ShellCallName>("shell");
+export const SHELL_CHANNELS = {
+  ...contractChannels<ShellCallName>("shell"),
+  /** Main to renderer: a `SoundRequest` to play now. */
+  sound: "shell:sound",
+} as const;

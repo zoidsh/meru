@@ -11,6 +11,7 @@ import {
   TABS_APPS_OVERRIDABLE_KEYS,
   TABS_APPS_PAGE_KEYS,
 } from "#contract/settings.ts";
+import type { SoundRequest } from "#contract/shell-sound.ts";
 import type { BrowsingDataKinds } from "#core/browsing-data.ts";
 import { withToken } from "#core/entitlement-file.ts";
 import { DAY, MERU_PRO_URL } from "#core/entitlement.ts";
@@ -19,7 +20,6 @@ import { silentLog } from "#core/log.fake.ts";
 import type { Platform } from "#core/platform.ts";
 import type { Release } from "#core/releases.ts";
 import type { Settings } from "#core/settings.ts";
-import type { SoundRequest } from "#core/sounds.ts";
 import { mailPolls, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 import { fakeLogFile } from "#platform/log-file.fake.ts";

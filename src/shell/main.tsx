@@ -7,6 +7,7 @@ import { firstLanguage, showLanguage } from "#i18n/document.ts";
 import { i18n } from "#i18n/index.ts";
 
 import { App } from "./app.tsx";
+import { playSounds } from "./sound.ts";
 import { followLanguage } from "./sync.ts";
 
 const root = document.querySelector("#root");
@@ -21,6 +22,7 @@ const show = (language: string) => {
 
 show(firstLanguage(location.search));
 followLanguage(show);
+playSounds(window.meru);
 
 createRoot(root).render(
   <StrictMode>

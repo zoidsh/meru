@@ -739,4 +739,10 @@ export type ShellState = ContractState<typeof SHELL_STATE>;
 export type ShellSyncMessage = SyncMessage<ShellState>;
 
 /** What the shell's preload exposes on `window.meru`, and nothing else. */
-export type ShellBridge = ContractBridge<ShellCalls, ShellState>;
+export interface ShellBridge extends ContractBridge<ShellCalls, ShellState> {
+  /**
+   * `listener` gets each sound main asks for, unchecked, which
+   * `soundRequestSchema` validates. Returns what stops listening.
+   */
+  onSound: (listener: (request: unknown) => void) => () => void;
+}

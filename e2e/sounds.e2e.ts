@@ -3,7 +3,6 @@ import type { ElectronApplication } from "@playwright/test";
 import {
   expect,
   findPage,
-  readSoundResults,
   readSounds,
   readUnreadTotal,
   retitle,
@@ -78,8 +77,6 @@ test("new mail asks for one sound, the chosen one at the chosen volume, and each
       { title: "Sender 3", silent: true },
     ]);
   expect(await sounds(app)).toStrictEqual([{ sound: "duet", volume: 0.4 }]);
-  // The packed app's audio addon plays it to its end, through no device.
-  await expect.poll(() => readSoundResults(app)).toStrictEqual(["played"]);
 });
 
 test("mail Do Not Disturb holds asks for no sound", async ({
@@ -153,5 +150,4 @@ test("a verification code asks for the other notifications' sound, not new email
     .poll(() => notifications(app))
     .toStrictEqual([{ title: "Example", silent: true }]);
   expect(await sounds(app)).toStrictEqual([{ sound: "glint", volume: 0.4 }]);
-  await expect.poll(() => readSoundResults(app)).toStrictEqual(["played"]);
 });

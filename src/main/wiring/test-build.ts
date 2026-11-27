@@ -81,7 +81,6 @@ import {
   createCapturedScreenSources,
   createScreenSources,
 } from "#platform/screen-sources.ts";
-import { createSoundPlayer } from "#platform/sound-player.ts";
 import {
   createCapturedSystemBrowser,
   createSystemBrowser,
@@ -101,10 +100,10 @@ import { createSoundOutput } from "../sounds.ts";
 import type { SoundOutput } from "../sounds.ts";
 import {
   captureGmailPage,
+  captureSounds,
   exposeTestEntitlement,
   exposeTestSettings,
   holdEntitlementServer,
-  recordSounds,
   seedTestEntitlement,
 } from "../test-hooks.ts";
 
@@ -189,36 +188,16 @@ export const suiteRunsInBackground = () =>
   MERU_E2E_BUILD && process.env.MERU_TEST_BACKGROUND === "1";
 
 /**
- * The suite's build, always under the background flag, still plays each
- * sound, through the addon's `none` sink, which opens no output device
- * whatever the machine has, so the packed app's addon plays it to its end and
- * nothing is heard; it records each, and leaves each notification's `silent`
- * as decided, since its notifier shows nothing and its tests read the
- * decision.
+ * The suite's build, always under the background flag, captures each sound
+ * in place of playing it and leaves each notification's `silent` as decided,
+ * since its notifier shows nothing and its tests read the decision.
  */
-export const soundOutput = ({
-  background,
-  log,
-}: {
-  background: boolean;
-  log: Log;
-}): SoundOutput => {
-  const folder = path.join(import.meta.dirname, "sounds");
-
-  return MERU_E2E_BUILD
-    ? createSoundOutput({
-        player: recordSounds(createSoundPlayer({ sink: "none" })),
-        folder,
-        background: false,
-        log,
-      })
-    : createSoundOutput({
-        player: createSoundPlayer({ sink: "device" }),
-        folder,
-        background,
-        log,
-      });
-};
+export const soundOutput = (
+  options: Parameters<typeof createSoundOutput>[0]
+): SoundOutput =>
+  MERU_E2E_BUILD
+    ? { quiet: false, play: captureSounds() }
+    : createSoundOutput(options);
 
 /** The suite switches settings while the app runs, as a settings page will. */
 export const exposeSettingsToSuite = (settings: SettingsStore) => {

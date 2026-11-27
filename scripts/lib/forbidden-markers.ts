@@ -103,7 +103,7 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
     },
     {
       marker: "meruTestSounds",
-      why: "only the end-to-end build may record the sounds it plays through no output device",
+      why: "only the end-to-end build may capture sounds in place of playing them",
     },
     {
       marker: "meruTestBadge",

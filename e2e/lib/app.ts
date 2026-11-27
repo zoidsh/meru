@@ -557,33 +557,19 @@ export const readUnreadTotal = (app: ElectronApplication) =>
       )?.count ?? 0
   );
 
-interface RecordedSound {
-  file: string;
-  volume: number;
-  result?: unknown;
-}
-
 /**
- * Each sound main asked for, by name, in order. The suite's build plays each
- * through the audio addon's `none` sink, which opens no output device, so
- * nothing is ever heard.
+ * Each sound main asked for, by name and volume, in order. The suite's build
+ * captures each in place of sending it to the shell, so no audio element is
+ * ever made and nothing is heard.
  */
 export const readSounds = (app: ElectronApplication) =>
   app.evaluate(() =>
-    (Reflect.get(globalThis, "meruTestSounds") as RecordedSound[]).map(
-      ({ file, volume }) => ({ sound: file.replace(/\.wav$/u, ""), volume })
-    )
-  );
-
-/**
- * How each sound asked for ended so far: `played` once the addon has played
- * it to its end, `undefined` while it plays.
- */
-export const readSoundResults = (app: ElectronApplication) =>
-  app.evaluate(() =>
-    (Reflect.get(globalThis, "meruTestSounds") as RecordedSound[]).map(
-      ({ result }) => result
-    )
+    (
+      Reflect.get(globalThis, "meruTestSounds") as {
+        sound: string;
+        volume: number;
+      }[]
+    ).map(({ sound, volume }) => ({ sound, volume }))
   );
 
 /**

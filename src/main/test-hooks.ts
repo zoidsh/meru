@@ -1,10 +1,9 @@
 // Only the suite's build calls these, behind `MERU_E2E_BUILD`, and a release
 // build fails if any global's name here is in its output.
 
-import path from "node:path";
-
 import type { SentNotice } from "#contract/gmail-channels.ts";
 import type { GmailHealth } from "#contract/gmail.ts";
+import type { SoundRequest } from "#contract/shell-sound.ts";
 import {
   storedLicenseKey,
   storedToken,
@@ -19,7 +18,6 @@ import type {
 } from "#core/settings.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { EntitlementServer } from "#platform/entitlement-server.ts";
-import type { SoundPlayer } from "#platform/sound-player.ts";
 
 import { signDevToken } from "./entitlement-stub.ts";
 import type { Entitlement } from "./entitlement.ts";
@@ -51,37 +49,17 @@ export const captureGmailPage = () => {
   };
 };
 
-/** A sound `player` was asked for, and how it ended once it has. */
-export interface RecordedSound {
-  file: string;
-  volume: number;
-  result?: "played" | "timedOut" | { error: string };
-}
-
 /**
- * Plays through `player`, keeping each sound asked for, in order, with its
- * file's name, on the main process's global under `meruTestSounds`.
+ * Each sound asked for, in order, on the main process's global under
+ * `meruTestSounds`, in place of playing it: the suite never makes a sound.
  */
-export const recordSounds = (player: SoundPlayer): SoundPlayer => {
-  const recorded: RecordedSound[] = [];
+export const captureSounds = () => {
+  const captured: SoundRequest[] = [];
 
-  Reflect.set(globalThis, "meruTestSounds", recorded);
+  Reflect.set(globalThis, "meruTestSounds", captured);
 
-  return {
-    play: async (file, volume) => {
-      const sound: RecordedSound = { file: path.basename(file), volume };
-
-      recorded.push(sound);
-
-      const result = await player.play(file, volume);
-
-      sound.result =
-        typeof result.end === "string"
-          ? result.end
-          : { error: String(result.end.error) };
-
-      return result;
-    },
+  return (request: SoundRequest) => {
+    captured.push(request);
   };
 };
 
