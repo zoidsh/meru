@@ -111,7 +111,8 @@ const MainWindow = ({ pro }: { pro: ShellState["pro"] }) => {
   const { t } = useLingui();
   const tabs = useShellState("tabs");
   const profiles = useShellState("profiles");
-  const sidebar = useShellState("sidebar")?.state ?? "hidden";
+  const sidebarSlice = useShellState("sidebar");
+  const sidebar = sidebarSlice?.state ?? "hidden";
   const footerDays = pro.trialFooterDays;
   const { inset, radius } = viewFrame({
     sidebar,
@@ -139,6 +140,7 @@ const MainWindow = ({ pro }: { pro: ShellState["pro"] }) => {
             <Sidebar
               tabs={tabs}
               state={sidebar}
+              showWindows={sidebarSlice?.showWindows ?? true}
               unreadCount={selected?.mail.unreadCount ?? 0}
               signedOut={selected?.mail.status === "signedOut"}
             />

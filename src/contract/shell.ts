@@ -480,7 +480,6 @@ export const SHELL_STATE = {
      */
     boxes: z.array(z.object({ tabs: z.array(tabId), maximized: z.boolean() })),
   }),
-  /** How the sidebar shows, which also sets where the content view sits. */
   /** The tabs in windows of their own, each its window's titlebar to draw. */
   windows: z.array(
     z.object({
@@ -518,7 +517,12 @@ export const SHELL_STATE = {
       ),
     })
   ),
-  sidebar: z.object({ state: z.enum(SIDEBAR_STATES) }),
+  /** How the sidebar shows, which also sets where the content view sits. */
+  sidebar: z.object({
+    state: z.enum(SIDEBAR_STATES),
+    /** Whether it lists the tabs in windows of their own, as Settings says. */
+    showWindows: z.boolean(),
+  }),
   /** What the Appearance settings ask of the shell. */
   appearance: z.object({
     /** Whether the shell draws in tones of the profile's colour, or in shadcn's greys. */

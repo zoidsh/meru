@@ -19,6 +19,7 @@ import { APPS, findApp, isAppId } from "#core/apps.ts";
 import {
   itemTabs,
   listRoom,
+  listedTabs,
   moveStep,
   pinnedRuns,
   sidebarLayout,
@@ -833,19 +834,26 @@ const blocksDrag = (overlay: ShellState["overlay"] | undefined) =>
  * Tab the selected one.
  */
 export const Sidebar = ({
-  tabs,
+  tabs: profileTabs,
   state,
+  showWindows,
   unreadCount,
   signedOut,
 }: {
   tabs: ShellState["tabs"];
   state: "narrow" | "wide";
+  /** Whether the tabs in windows of their own are listed. */
+  showWindows: boolean;
   /** The profile's unread mail, shown on Gmail's tile. */
   unreadCount: number;
   /** Whether the profile's Google account is signed out, marked on Gmail's tile. */
   signedOut: boolean;
 }) => {
   const { t } = useLingui();
+  const tabs = {
+    ...profileTabs,
+    tabs: listedTabs(profileTabs.tabs, showWindows),
+  };
   const { profileId } = tabs;
   const [hovered, setHovered] = useState<string>();
   const shortcuts = useShellState("shortcuts");

@@ -516,7 +516,7 @@ const CHROME = {
       hasLicenseKey: true,
     },
   } as ShellState["pro"],
-  sidebar: { state: "hidden" },
+  sidebar: { state: "hidden", showWindows: true },
   appearance: {
     tint: true,
     buttons: {

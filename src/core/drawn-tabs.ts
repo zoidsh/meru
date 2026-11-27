@@ -73,6 +73,16 @@ export const itemTabs = <T extends DrawnTab>(
   items.flatMap((item) => (item.kind === "box" ? item.tabs : [item.tab]));
 
 /**
+ * The tabs the sidebar lists: all of them, or with Show windows in the
+ * sidebar off those in the main window alone. Only the drawing leaves the
+ * others out; every count and key reads the tabs as stored.
+ */
+export const listedTabs = <T extends { ownWindow: boolean }>(
+  tabs: readonly T[],
+  showWindows: boolean
+): readonly T[] => (showWindows ? tabs : tabs.filter((tab) => !tab.ownWindow));
+
+/**
  * The profile's shown tabs in the order the sidebar draws them, which Close
  * tabs below, the next and previous tab and the pinned shortcuts count in.
  */

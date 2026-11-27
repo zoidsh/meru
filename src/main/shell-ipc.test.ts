@@ -96,7 +96,7 @@ const setup = () => {
     },
     profiles: profilesSlice("a"),
     tabs: TABS,
-    sidebar: { state: "hidden" },
+    sidebar: { state: "hidden", showWindows: true },
     appearance: {
       tint: true,
       buttons: {

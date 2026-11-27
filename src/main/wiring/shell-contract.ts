@@ -280,7 +280,10 @@ export const wireShellContract = ({
           {
             language: language.current(),
             pro: pro(),
-            sidebar: { state: sidebar.current() },
+            sidebar: {
+              state: sidebar.current(),
+              showWindows: settings.get("showWindowsInSidebar"),
+            },
             appearance: {
               tint: settings.get("profileTint"),
               buttons: {
@@ -351,6 +354,7 @@ export const wireShellContract = ({
           "titlebarUnifiedInbox",
           "titlebarDownloads",
           "titlebarDoNotDisturb",
+          "showWindowsInSidebar",
         ] as const) {
           settings.onChange(key, listener);
         }

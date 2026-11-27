@@ -308,7 +308,7 @@ describe("an end no date holds", () => {
                 hasLicenseKey: true,
               },
             },
-            sidebar: { state: "hidden" },
+            sidebar: { state: "hidden", showWindows: true },
             appearance: {
               tint: true,
               buttons: {

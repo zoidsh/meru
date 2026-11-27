@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   drawnTabs,
   listRoom,
+  listedTabs,
   moveStep,
   pinnedRuns,
   sidebarLayout,
@@ -188,6 +189,24 @@ describe(drawnTabs, () => {
         ],
       }).map(({ id }) => id)
     ).toStrictEqual(["gmail", "c", "a", "n", "b"]);
+  });
+});
+
+describe(listedTabs, () => {
+  const tabs = [
+    { id: "g", ownWindow: false },
+    { id: "c", ownWindow: true },
+    { id: "d", ownWindow: false },
+  ];
+
+  it("lists every tab while windows show, and those in the main window alone, in their order, while they do not", () => {
+    expect([
+      listedTabs(tabs, true).map(({ id }) => id),
+      listedTabs(tabs, false).map(({ id }) => id),
+    ]).toStrictEqual([
+      ["g", "c", "d"],
+      ["g", "d"],
+    ]);
   });
 });
 
