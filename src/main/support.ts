@@ -41,7 +41,7 @@ export const createContactSupport =
       try {
         await openExternal(mailto);
       } catch (error) {
-        log("support-email-failed", { error: scrub.error(error) });
+        log("support-email-failed", { code: scrub.code(error) });
       }
 
       return;

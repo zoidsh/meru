@@ -117,8 +117,6 @@ describe(createUserStyles, () => {
 
     await expect(read()).resolves.toBe("");
     expect(logs).toHaveLength(1);
-    expect(logs[0]).toMatch(
-      /^user-styles-read-failed error="[^"/]*\(E[A-Z]+\)"$/u
-    );
+    expect(logs[0]).toMatch(/^user-styles-read-failed code=E[A-Z]+$/u);
   });
 });

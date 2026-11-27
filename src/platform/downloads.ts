@@ -305,7 +305,7 @@ const revealInFinder = async (file: string, log: Log) => {
   try {
     await run("/usr/bin/open", ["-R", file]);
   } catch (error) {
-    log("download-reveal-failed", { error: scrub.error(error) });
+    log("download-reveal-failed", { code: scrub.code(error) });
   }
 };
 

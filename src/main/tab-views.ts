@@ -357,7 +357,7 @@ export const createTabViews = ({
     } catch (error) {
       log("tab-load-rejected", {
         tab: scrub.tab(key),
-        error: scrub.error(error),
+        code: scrub.code(error),
       });
     }
   };
@@ -589,7 +589,7 @@ export const createTabViews = ({
       }
     } catch (error) {
       pendingUrls.delete(key);
-      log("tab-open-failed", { error: scrub.error(error) });
+      log("tab-open-failed", { code: scrub.code(error) });
     }
   };
 

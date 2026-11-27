@@ -62,7 +62,7 @@ export const registerAsMailApp = async (
   try {
     await registerMailHandler(platform, userDataPath);
   } catch (error) {
-    log("mail-app-register-failed", { error: scrub.error(error) });
+    log("mail-app-register-failed", { code: scrub.code(error) });
   }
 };
 

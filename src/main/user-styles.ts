@@ -33,7 +33,7 @@ export const createUserStyles =
     try {
       result = await read();
     } catch (error) {
-      log("user-styles-read-failed", { error: scrub.error(error) });
+      log("user-styles-read-failed", { code: scrub.code(error) });
 
       return "";
     }

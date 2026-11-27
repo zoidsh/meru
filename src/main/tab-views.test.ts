@@ -83,8 +83,11 @@ const setup = async ({
   state = initial,
   tabApps,
   appOpening,
+  loadsReject = false,
 }: {
   state?: State;
+  /** Each load rejects as Electron's does, quoting the whole URL. */
+  loadsReject?: boolean;
   /** The apps a link may open a tab of, every one when absent. */
   tabApps?: () => readonly App[];
   /** Tabs & Google Apps' settings by profile, at their defaults when absent. */
@@ -213,7 +216,14 @@ const setup = async ({
             // As Electron's view tells of the load starting before it returns.
             options.onEvent({ kind: "load-started" });
 
-            return Promise.resolve();
+            return loadsReject
+              ? Promise.reject(
+                  Object.assign(new Error(`ERR_FAILED (-2) loading '${url}'`), {
+                    code: "ERR_FAILED",
+                    errno: -2,
+                  })
+                )
+              : Promise.resolve();
           },
           setVisible: (visible) => {
             view.visible = visible;
@@ -377,6 +387,41 @@ describe(createTabViews, () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("logs a load Electron rejects by its code alone, never the URL its message quotes", async () => {
+    const search = "/r/search?q=(Ada),Lovelace's+appointment";
+    const window = await setup({
+      loadsReject: true,
+      state: {
+        ...initial,
+        profiles: [
+          {
+            ...newProfile("a", "Default"),
+            selectedTabId: "c1",
+            tabs: [
+              gmailTab(),
+              {
+                id: "c1",
+                app: "calendar",
+                url: `${CALENDAR}${search}`,
+                title: "",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(window.views.at(-1)?.loaded).toStrictEqual([`${CALENDAR}${search}`]);
+    expect(
+      window.logs.filter((line) => line.startsWith("tab-load-rejected"))
+    ).toStrictEqual([
+      'tab-load-rejected tab="profile 1 tab 1 gmail" code=ERR_FAILED',
+      'tab-load-rejected tab="profile 1 tab 2 calendar" code=ERR_FAILED',
+    ]);
   });
 
   it("creates only the selected tab's view at first, loading Gmail at its home beside the strip", async () => {

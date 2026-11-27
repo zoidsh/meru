@@ -42,7 +42,7 @@ export const createWindowOpenRouting = ({
     try {
       await systemBrowser.open(url);
     } catch (error) {
-      log("system-browser-open-failed", { error: scrub.error(error) });
+      log("system-browser-open-failed", { code: scrub.code(error) });
     }
   };
 

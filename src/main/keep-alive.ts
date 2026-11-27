@@ -106,7 +106,7 @@ export const createKeepAlive = ({
     } catch (error) {
       log("keep-alive-failed", {
         profile: scrub.profile(profileId),
-        error: scrub.error(error),
+        code: scrub.code(error),
       });
       failed.set(profileId, now());
     }

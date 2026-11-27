@@ -66,7 +66,7 @@ export const createIncomingLinks = ({ log }: { log: Log }) => {
       try {
         await answerWith(url);
       } catch (error) {
-        log("email-link-open-failed", { error: scrub.error(error) });
+        log("email-link-open-failed", { code: scrub.code(error) });
       } finally {
         waiting -= 1;
       }

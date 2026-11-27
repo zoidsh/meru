@@ -75,7 +75,7 @@ export const createAdvancedPage = ({
 
       await opener.open(settingsFile.path);
     } catch (error) {
-      log("settings-file-open-failed", { error: scrub.error(error) });
+      log("settings-file-open-failed", { code: scrub.code(error) });
     }
   },
   /**
@@ -126,7 +126,7 @@ export const createAdvancedPage = ({
 
       return "saved";
     } catch (error) {
-      log("logs-export-failed", { error: scrub.error(error) });
+      log("logs-export-failed", { code: scrub.code(error) });
 
       return "failed";
     }

@@ -67,7 +67,7 @@ const setup = ({
         steps.push(`open ${path} holding ${files.get(path) ?? "nothing"}`);
 
         return openFails
-          ? Promise.reject(new Error("no application knows .json"))
+          ? Promise.reject(new Error(`no application knows ${path}`))
           : Promise.resolve();
       },
     },
@@ -146,9 +146,7 @@ describe(createAdvancedPage, () => {
     const { page, logs } = setup({ stored: "{}", openFails: true });
 
     await expect(page.openSettingsFile()).resolves.toBeUndefined();
-    expect(logs).toStrictEqual([
-      'settings-file-open-failed error="no application knows .json"',
-    ]);
+    expect(logs).toStrictEqual(["settings-file-open-failed code=other"]);
   });
 
   it("clears the cache alone of every profile, disabled, asleep and unused ones included, and reloads each one's pages", async () => {
@@ -207,13 +205,14 @@ describe(createAdvancedPage, () => {
     expect(logs).toStrictEqual([]);
   });
 
-  it("answers failed, and logs why, when the copy cannot be written", async () => {
-    const { page, logs } = setup({ logFails: true });
+  it("answers failed, and logs the code alone, when the copy cannot be written where the person chose", async () => {
+    const { page, logs } = setup({
+      logFails: true,
+      saveAs: () => Promise.resolve("/Users/ada/Ada Lovelace taxes/logs.txt"),
+    });
 
     await expect(page.exportLogs()).resolves.toBe("failed");
-    expect(logs).toStrictEqual([
-      'logs-export-failed error="ENOSPC: no space left on device"',
-    ]);
+    expect(logs).toStrictEqual(["logs-export-failed code=ENOSPC"]);
   });
 
   it("answers failed when the Save dialog cannot be shown", async () => {

@@ -229,7 +229,7 @@ export const createDownloads = ({
       await files
         .quarantine(filePath, new Date(now()))
         .catch((error: unknown) => {
-          log("download-quarantine-failed", { error: scrub.error(error) });
+          log("download-quarantine-failed", { code: scrub.code(error) });
         });
 
       // The Dock tells nothing a window in front already shows.
@@ -247,7 +247,7 @@ export const createDownloads = ({
     } else {
       // Chromium removes its partial file; this covers one it left.
       await files.remove(filePath).catch((error: unknown) => {
-        log("download-remove-failed", { error: scrub.error(error) });
+        log("download-remove-failed", { code: scrub.code(error) });
       });
     }
 

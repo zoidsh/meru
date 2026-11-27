@@ -103,7 +103,7 @@ export const createKeepAlivePages = (): KeepAlivePages => ({
       } catch (error) {
         // Closing the page aborts a load still under way.
         if (!closed) {
-          log("keep-alive-load-failed", { error: scrub.error(error) });
+          log("keep-alive-load-failed", { code: scrub.code(error) });
         }
       }
     };

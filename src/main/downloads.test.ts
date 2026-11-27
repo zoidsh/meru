@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { DOWNLOAD_LIFETIME, downloads as historyOf } from "#core/downloads.ts";
 import type { DownloadEntry } from "#core/downloads.ts";
-import { silentLog } from "#core/log.fake.ts";
+import { recordInto } from "#core/log.fake.ts";
 import type { Platform } from "#core/platform.ts";
 import { newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -120,6 +120,7 @@ const setup = ({
   onDisk = [],
   focused = false,
   folders = [],
+  filesFail = false,
 }: {
   entries?: DownloadEntry[];
   platform?: Platform;
@@ -127,7 +128,10 @@ const setup = ({
   focused?: boolean;
   /** The folders there to be chosen, each writable. */
   folders?: string[];
+  /** Quarantining and removing a file fail as the system says, naming it. */
+  filesFail?: boolean;
 } = {}) => {
+  const logs: string[] = [];
   let state = initial(entries);
   let open = false;
   let ids = 0;
@@ -154,12 +158,28 @@ const setup = ({
       calls.push(`remove ${file}`);
       disk.delete(file);
 
-      return Promise.resolve();
+      return filesFail
+        ? Promise.reject(
+            Object.assign(
+              new Error(`EACCES: permission denied, unlink '${file}'`),
+              { code: "EACCES" }
+            )
+          )
+        : Promise.resolve();
     },
     quarantine: (file) => {
       calls.push(`quarantine ${file}`);
 
-      return Promise.resolve();
+      return filesFail
+        ? Promise.reject(
+            Object.assign(
+              new Error(
+                `Command failed: /usr/bin/xattr -w com.apple.quarantine ${file}`
+              ),
+              { code: 1 }
+            )
+          )
+        : Promise.resolve();
     },
     open: (file) => {
       calls.push(`open ${file}`);
@@ -237,13 +257,14 @@ const setup = ({
       };
     },
     // What it logs is kept apart from the calls it makes.
-    log: silentLog,
+    log: recordInto(logs),
   });
 
   /** Lets every save and file check that is under way finish. */
 
   return {
     downloads,
+    logs,
     /**
      * The folder Settings holds, `null` for the system's: the app's, or the
      * profile's own.
@@ -657,6 +678,25 @@ describe("a download ending", () => {
       "landed /Downloads/report.pdf",
     ]);
     expect(history()[0]).toMatchObject({ state: "completed", size: 1200 });
+  });
+
+  it("logs a file that could not be quarantined or removed by the code alone, never its name or folder", async () => {
+    const { downloads, logs } = setup({ filesFail: true });
+    const finished = fakeItem();
+    const failed = fakeItem({ fileName: "minutes.pdf" });
+
+    downloads.take(finished, "a");
+    finished.end("completed");
+    downloads.take(failed, "a");
+    failed.end("failed");
+    await settle();
+
+    expect(
+      logs.filter((line) => /quarantine|remove/u.test(line))
+    ).toStrictEqual([
+      "download-quarantine-failed code=1",
+      "download-remove-failed code=EACCES",
+    ]);
   });
 
   it("leaves the Dock still while a window of Meru has the focus", async () => {

@@ -35,7 +35,7 @@ export const wireUpdates = async ({
       try {
         await systemBrowser.open(url);
       } catch (error) {
-        log("release-page-open-failed", { error: scrub.error(error) });
+        log("release-page-open-failed", { code: scrub.code(error) });
       }
     },
     now: Date.now,

@@ -255,7 +255,9 @@ describe(createIncomingLinks, () => {
 
     incoming.start((url) => {
       if (url === "mailto:secret") {
-        return Promise.reject(new Error("no window"));
+        return Promise.reject(
+          new Error("no window for mailto:ada@example.com?subject=Taxes")
+        );
       }
 
       answered.push(url);
@@ -267,7 +269,7 @@ describe(createIncomingLinks, () => {
     await settle();
 
     expect(answered).toStrictEqual(["mailto:2"]);
-    expect(logs).toStrictEqual(['email-link-open-failed error="no window"']);
+    expect(logs).toStrictEqual(["email-link-open-failed code=other"]);
   });
 });
 
