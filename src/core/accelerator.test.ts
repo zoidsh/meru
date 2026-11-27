@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  acceleratorIdentity,
   acceleratorParts,
   ariaKeyShortcut,
   formatAccelerator,
@@ -337,5 +338,31 @@ describe(acceleratorParts, () => {
         sample.map((accelerator) => formatAccelerator(accelerator, platform))
       );
     }
+  });
+});
+
+describe(acceleratorIdentity, () => {
+  it("is the same however an accelerator spells the same keys", () => {
+    expect([
+      acceleratorIdentity("CmdOrCtrl+Shift+W", true),
+      acceleratorIdentity("Shift+Command+w", true),
+      acceleratorIdentity("CommandOrControl+Shift+W", false),
+      acceleratorIdentity("Control+Return", false),
+      acceleratorIdentity("Ctrl+Enter", false),
+      acceleratorIdentity("Control++", false),
+      acceleratorIdentity("Control+Plus", false),
+    ]).toStrictEqual([
+      "shift+meta+w",
+      "shift+meta+w",
+      "control+shift+w",
+      "control+enter",
+      "control+enter",
+      "control+plus",
+      "control+plus",
+    ]);
+  });
+
+  it("knows no modifier Electron does not", () => {
+    expect(acceleratorIdentity("Hyper+W", true)).toBeUndefined();
   });
 });

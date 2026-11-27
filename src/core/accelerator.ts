@@ -135,6 +135,42 @@ export const matchesAccelerator = (
   );
 };
 
+/** Names Electron takes for one key, by the one this file compares. */
+const KEY_ALIASES: Record<string, string> = {
+  return: "enter",
+  esc: "escape",
+  "+": "plus",
+};
+
+/**
+ * One string per key however an accelerator spells it, so two that press
+ * the same keys compare equal: `CmdOrCtrl+Shift+W` and `Shift+Command+W` on
+ * macOS. `undefined` for a modifier Electron does not know.
+ */
+export const acceleratorIdentity = (accelerator: string, isMacOS: boolean) => {
+  const parts = accelerator.split("+");
+  let key = parts.pop() ?? "";
+
+  // `Control++` names Plus by its symbol, which splits into two empties.
+  if (key === "" && parts.at(-1) === "") {
+    parts.pop();
+    key = "+";
+  }
+
+  const modifiers = parts.map((part) => modifierOf(part, isMacOS));
+  const held = new Set(modifiers);
+  const lower = key.toLowerCase();
+
+  return held.has(undefined)
+    ? undefined
+    : [
+        ...(["control", "alt", "shift", "meta"] as const).filter((modifier) =>
+          held.has(modifier)
+        ),
+        KEY_ALIASES[lower] ?? lower,
+      ].join("+");
+};
+
 /** In the order macOS's menus show them. */
 const MAC_MODIFIERS = [
   ["control", "⌃"],

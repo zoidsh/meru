@@ -372,8 +372,8 @@ export const savedSearchCommands = (state: State) =>
 
 /**
  * Every command, declared once. No default shortcut takes a key a Google
- * app uses on its platform, which `commands.test.ts` checks against
- * `#core/google-app-keys.ts`.
+ * app uses on its platform, but Settings' Cmd or Ctrl+Comma, which
+ * `commands.test.ts` checks against `#core/google-app-keys.ts`.
  */
 export const COMMANDS: readonly Command[] = [
   {

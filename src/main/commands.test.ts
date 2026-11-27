@@ -300,8 +300,15 @@ describe("the command registry", () => {
   );
 
   it.each(["darwin", "win32", "linux"] as const)(
-    "gives no command on %s a key a Google app uses there",
+    "gives no command on %s a key a Google app uses there, but Settings",
     (platform) => {
+      // Docs' Subscript, Slides' and Chat's own keys, and Gmail's off macOS:
+      // Settings keeps the key every app's settings open with.
+      const settings =
+        platform === "darwin"
+          ? "app.settings Command+, Docs, Slides, Chat"
+          : "app.settings Control+, Gmail, Docs, Slides, Chat";
+
       expect(
         COMMANDS.flatMap(({ id, shortcut }) => {
           const accelerator = shortcut?.[platform];
@@ -314,7 +321,7 @@ describe("the command registry", () => {
             ? [`${id} ${accelerator} ${apps.join(", ")}`]
             : [];
         })
-      ).toStrictEqual([]);
+      ).toStrictEqual([settings]);
     }
   );
 
