@@ -23,6 +23,7 @@ import {
   writeSetting,
 } from "#core/settings.ts";
 import type {
+  OpenAppsIn,
   OverridableSettingKey,
   SettingKey,
   SettingValue,
@@ -322,6 +323,17 @@ export const createSettingsStore = ({
 };
 
 export type SettingsStore = ReturnType<typeof createSettingsStore>;
+
+/**
+ * Where the profile's Google apps open: New window acts only while Open
+ * Google apps in Meru is on for it, the row standing disabled otherwise.
+ */
+export const openAppsInOf =
+  (settings: Pick<SettingsStore, "get">) =>
+  (profileId: string): OpenAppsIn =>
+    settings.get("openAppsInMeru", profileId)
+      ? settings.get("openAppsIn", profileId)
+      : "tabs";
 
 /**
  * Deletes the overrides of each profile taken off the stored list, after that

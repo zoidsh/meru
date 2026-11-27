@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import { APPS } from "#core/apps.ts";
 import type { Capability } from "#core/entitlement.ts";
 import { recordInto, silentLog } from "#core/log.fake.ts";
+import { createInitialSettings } from "#core/settings.ts";
 import { decodeState, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
 
 import { createProfiles } from "./profiles.ts";
+import { createSettingsStore, openAppsInOf } from "./settings.ts";
 
 const two: State = {
   version: 1,
@@ -847,5 +849,54 @@ describe("opening a tab under Open Google apps in", () => {
       [true, undefined, undefined],
       ["c3", "c2"],
     ]);
+  });
+
+  it("opens Duplicate of a pinned app as a tab while Open Google apps in Meru is off for the profile, New window though it is", async () => {
+    const calendar = APPS.find((app) => app.id === "calendar");
+
+    if (!calendar) {
+      throw new Error("The registry lacks Calendar");
+    }
+
+    const pinned = {
+      id: "c",
+      app: "calendar",
+      url: calendar.home,
+      title: "",
+      pinned: true,
+    };
+    const settings = createSettingsStore({
+      initial: {
+        ...createInitialSettings(),
+        openAppsIn: "windows",
+        profiles: { a: { openAppsInMeru: false } },
+      },
+      save: () => Promise.resolve(),
+      platform: "linux",
+      log: silentLog,
+    });
+    const profiles = createProfiles({
+      initial: {
+        ...two,
+        profiles: two.profiles.map((profile) => ({
+          ...profile,
+          tabs: [...profile.tabs, pinned],
+        })),
+      },
+      save: () => Promise.resolve(),
+      newId: () => "unused",
+      profileName: (n) => `Profile ${n}`,
+      clearSession: () => Promise.resolve(),
+      now: () => 0,
+      log: silentLog,
+      openAppsIn: openAppsInOf(settings),
+    });
+    const duplicate = (profileId: string) =>
+      profiles.openTab(profileId, calendar, pinned.url, `${profileId}-copy`);
+
+    const off = await duplicate("a");
+    const on = await duplicate("b");
+
+    expect([off?.ownWindow, on?.ownWindow]).toStrictEqual([undefined, true]);
   });
 });

@@ -15,6 +15,7 @@ import {
   SETTINGS_FILE_NAME,
   createSettingsStore,
   followRemovedProfiles,
+  openAppsInOf,
   saveSettings,
 } from "../settings.ts";
 import { createSidebar } from "../sidebar.ts";
@@ -85,7 +86,7 @@ export const wireStores = async ({
     log,
     multipleProfiles,
     can: entitlement.can,
-    openAppsIn: (profileId) => settings.get("openAppsIn", profileId),
+    openAppsIn: openAppsInOf(settings),
   });
   // Ahead of every other listener of the profiles, so each reads the
   // sidebar as the change leaves it.
