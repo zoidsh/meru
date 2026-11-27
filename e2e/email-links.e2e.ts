@@ -160,6 +160,17 @@ test("a mailto link opens a compose window in the one profile's session, asking 
   const app = await launchApp();
 
   await findPage(app, standIn.url);
+  // Main saves the page's title a moment after it loads, which would
+  // otherwise land between the two reads below.
+  await expect
+    .poll(async () => {
+      const { profiles } = await readState<{
+        profiles: { tabs: { title: string }[] }[];
+      }>(userDataDir);
+
+      return profiles[0]?.tabs[0]?.title;
+    })
+    .toBe("Gmail stand-in");
 
   const before = await readState<{ profiles: { tabs: unknown[] }[] }>(
     userDataDir
