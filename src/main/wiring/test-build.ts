@@ -11,6 +11,8 @@ import type { KeepAliveTiming } from "#core/keep-alive.ts";
 import type { Log } from "#core/log.ts";
 import type { Platform } from "#core/platform.ts";
 import { SIGN_IN_ORIGINS } from "#core/window-open.ts";
+import { capturedRelaunch } from "#platform/app.ts";
+import type { AppLifecycle } from "#platform/app.ts";
 import { createBadge, createCapturedBadge } from "#platform/badge.ts";
 import {
   createCapturedClipboard,
@@ -354,6 +356,13 @@ export const registerMailHandler = async (
     await registerWindowsMailHandler(userDataPath);
   }
 };
+
+/**
+ * The suite's build never starts a second Meru: its relaunch says so and ends
+ * the app, and the test launches again on the same folder.
+ */
+export const appRelaunch = (lifecycle: Pick<AppLifecycle, "relaunch">) =>
+  MERU_E2E_BUILD ? capturedRelaunch : lifecycle.relaunch;
 
 /** The suite's build answers the folder picker as the test says. */
 export const folderPicker = () =>

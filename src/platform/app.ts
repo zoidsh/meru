@@ -50,8 +50,29 @@ export interface AppLifecycle {
    */
   preventActivation: () => void;
   quit: () => void;
+  /**
+   * Quits as `quit` does and starts Meru again once this run has exited,
+   * with this run's arguments, so a run on another user data folder comes
+   * back on it.
+   */
+  relaunch: () => void;
   exit: (code: number) => void;
 }
+
+/**
+ * The end-to-end build's relaunch, which starts nothing: it says so on main's
+ * log, which a test reads once the app is gone and which a pipe on macOS
+ * writes asynchronously, then ends the app at once, as the captured updater's
+ * install does, and the test launches again on the same folder.
+ */
+export const capturedRelaunch = () => {
+  process.stderr.write(
+    `meruTestRelaunch: relaunch ${JSON.stringify(process.argv.slice(1))}\n`,
+    () => {
+      app.exit(0);
+    }
+  );
+};
 
 export const createAppLifecycle = (): AppLifecycle => {
   let finishQuit: (() => void) | undefined;
@@ -138,6 +159,11 @@ export const createAppLifecycle = (): AppLifecycle => {
       app.quit();
     },
     quit: () => app.quit(),
+    // Electron's relaunch, given no options, keeps this run's arguments.
+    relaunch: () => {
+      app.relaunch();
+      app.quit();
+    },
     exit: (code) => app.exit(code),
   };
 };

@@ -150,6 +150,10 @@ export const FORBIDDEN_IN_RELEASE: readonly { marker: string; why: string }[] =
       why: "only the end-to-end build may stand in for GitHub's list of releases, which a test answers",
     },
     {
+      marker: "meruTestRelaunch",
+      why: "only the end-to-end build may end the app in place of relaunching it",
+    },
+    {
       marker: "en-XA",
       why: "only the end-to-end build may show its pseudo-language",
     },
