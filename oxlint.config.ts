@@ -278,6 +278,15 @@ export default defineConfig({
       },
     },
     {
+      files: ["e2e/**", "scripts/**"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          { paths: [SOUND_ADDON_IN_ITS_ADAPTER] },
+        ],
+      },
+    },
+    {
       files: ["e2e/**"],
       rules: {
         "no-restricted-properties": [
