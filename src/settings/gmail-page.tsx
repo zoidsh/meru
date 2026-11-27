@@ -298,6 +298,32 @@ export const GmailPage = () => {
       </SettingGroup>
       <SettingGroup
         title={t({
+          message: "Compose",
+          comment:
+            "Title of the group of Settings for writing emails in Gmail; Compose is Gmail's own name for writing a new email",
+        })}
+      >
+        <Rows>
+          {[
+            switchRow(
+              "closeComposeWindowAfterSend",
+              t({
+                message: "Close compose window after sending",
+                comment:
+                  "Label of the switch in Settings that closes a compose window, one Meru opened for an email link or Gmail's pop-out, once its email is sent",
+              }),
+              t({
+                message:
+                  "Separate compose windows close as soon as you send. You can still undo from the main window.",
+                comment:
+                  "Description of the Close compose window after sending switch in Settings; a separate compose window is one for writing one email, opened for an email link or by Gmail's pop-out, not the one docked in Gmail's page; undo takes the send back from a short notice in Meru's main window",
+              })
+            ),
+          ]}
+        </Rows>
+      </SettingGroup>
+      <SettingGroup
+        title={t({
           message: "Verification codes",
           comment:
             "Title of the group of Settings for one-time codes found in new mail",

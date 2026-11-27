@@ -713,6 +713,11 @@ msgstr "Close"
 msgid "Close {title}"
 msgstr "Close {title}"
 
+#. Label of the switch in Settings that closes a compose window, one Meru opened for an email link or Gmail's pop-out, once its email is sent
+#: src/settings/gmail-page.tsx
+msgid "Close compose window after sending"
+msgstr "Close compose window after sending"
+
 #. Item of a tab's context menu that closes every other tab of the profile but pinned ones
 #: src/main/tab-menu.ts
 msgid "Close Other Tabs"
@@ -759,7 +764,9 @@ msgid "Command"
 msgstr "Command"
 
 #. Menu item in the Mail menu that opens a new message in the selected profile's Gmail
+#. Title of the group of Settings for writing emails in Gmail; Compose is Gmail's own name for writing a new email
 #: src/main/commands.ts
+#: src/settings/gmail-page.tsx
 msgid "Compose"
 msgstr "Compose"
 
@@ -2494,6 +2501,11 @@ msgstr "Select Profile {first} to {last}"
 #: src/main/commands.ts
 msgid "Select Profile {position}"
 msgstr "Select Profile {position}"
+
+#. Description of the Close compose window after sending switch in Settings; a separate compose window is one for writing one email, opened for an email link or by Gmail's pop-out, not the one docked in Gmail's page; undo takes the send back from a short notice in Meru's main window
+#: src/settings/gmail-page.tsx
+msgid "Separate compose windows close as soon as you send. You can still undo from the main window."
+msgstr "Separate compose windows close as soon as you send. You can still undo from the main window."
 
 #. Menu item, in the Tabs menu and a tab's context menu, that takes the tab out of the split view, to show alone
 #: src/main/menu-labels.ts

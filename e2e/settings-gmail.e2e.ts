@@ -34,6 +34,7 @@ const SWITCHES = [
   ["Newest message first", "reverseConversation"],
   ["Show attachments first", "moveAttachmentsToTop"],
   ["Show trimmed content", "showTrimmedContent"],
+  ["Close compose window after sending", "closeComposeWindowAfterSend"],
   ["Find verification codes", "verificationCodes"],
   ["Show during Do Not Disturb", "verificationCodesDuringDoNotDisturb"],
 ] as const;
@@ -80,6 +81,7 @@ test("each card is a group its heading names, holding its rows", async ({
   for (const [group, label] of [
     ["Gmail appearance", "Hide promotions"],
     ["Conversations", "Show trimmed content"],
+    ["Compose", "Close compose window after sending"],
     ["Verification codes", "Show during Do Not Disturb"],
   ] as const) {
     // oxlint-disable-next-line no-await-in-loop -- one group after another
@@ -95,12 +97,11 @@ test("each card is a group its heading names, holding its rows", async ({
   ).toHaveAccessibleDescription(
     "These change how Gmail looks in Meru. Your Gmail settings stay the same."
   );
-  // Closing a compose window after sending has no behaviour yet, so its
-  // setting has no row.
-  await expect(page.getByRole("group", { name: "Compose" })).toHaveCount(0);
   await expect(
     page.getByRole("switch", { name: "Close compose window after sending" })
-  ).toHaveCount(0);
+  ).toHaveAccessibleDescription(
+    "Separate compose windows close as soon as you send. You can still undo from the main window."
+  );
 });
 
 test("each switch shows the stored value and writes the one it is turned to", async ({
@@ -122,6 +123,7 @@ test("each switch shows the stored value and writes the one it is turned to", as
     reverseConversation: true,
     moveAttachmentsToTop: false,
     showTrimmedContent: false,
+    closeComposeWindowAfterSend: false,
     verificationCodes: true,
     verificationCodesDuringDoNotDisturb: true,
   };
