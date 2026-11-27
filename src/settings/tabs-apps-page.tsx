@@ -4,7 +4,7 @@ import { noop } from "es-toolkit";
 
 import { TABS_APPS_OVERRIDABLE_KEYS } from "#contract/settings.ts";
 import { APPS } from "#core/apps.ts";
-import { SLEEP_AFTER, SLEEP_IDLE_TABS } from "#core/settings.ts";
+import { OPEN_APPS_IN, SLEEP_AFTER, SLEEP_IDLE_TABS } from "#core/settings.ts";
 import {
   Select,
   SelectContent,
@@ -16,6 +16,7 @@ import {
 import { Switch } from "#ui/switch.tsx";
 
 import { AppsInBrowserDialog } from "./apps-in-browser-dialog.tsx";
+import { dependentRow } from "./opening-rows.ts";
 import { usePageScope } from "./page-scope.tsx";
 import { useNeedsPro } from "./pro-badge.tsx";
 import { effectiveSettings, switchValueText } from "./scope.ts";
@@ -27,9 +28,10 @@ import { settingsCalls, useSettingsState } from "./sync.ts";
 const OFFERED = APPS.filter((app) => app.id !== "gmail");
 
 /**
- * Whether a link or New tab opens a Google app in Meru, which always leave
- * for the default browser, each of which a profile may set for itself, and
- * which idle tabs sleep after how long, which only the app sets and a
+ * Whether a link or New tab opens a Google app in Meru, as a tab or in a
+ * window of its own, and which always leave for the default browser, each
+ * of which a profile may set for itself; whether the sidebar lists windows,
+ * and which idle tabs sleep after how long, which only the app sets and a
  * profile's scope leaves out.
  */
 export const TabsAppsPage = () => {
@@ -85,15 +87,48 @@ export const TabsAppsPage = () => {
   const calls = settingsCalls();
   const inMeruPro = needsPro.setting("openAppsInMeru");
   const excludedPro = needsPro.setting("appsInDefaultBrowser");
-  // On the free version the row says Pro, not to turn the switch on.
-  const excludedOff = !values.openAppsInMeru && !excludedPro;
-  const excludedDescription = excludedOff
-    ? t({
-        message: "Turn on Open Google apps in Meru first.",
-        comment:
-          "Description of the Always open in your default browser row in Settings while Open Google apps in Meru, the switch above it, is off; it says what to do to use the row",
-      })
-    : countText(excluded);
+  const turnOnFirst = () =>
+    t({
+      message: "Turn on Open Google apps in Meru first.",
+      comment:
+        "Description of a row in Settings under Open Google apps in Meru, such as Always open in your default browser or Open Google apps in, while that switch is off; it says what to do to use the row",
+    });
+  const excludedState = dependentRow({
+    inMeru: values.openAppsInMeru,
+    needsPro: excludedPro,
+  });
+  const excludedDescription =
+    excludedState === "turn-on-first" ? turnOnFirst() : countText(excluded);
+  const openInPro = needsPro.setting("openAppsIn");
+  const openInState = dependentRow({
+    inMeru: values.openAppsInMeru,
+    needsPro: openInPro,
+  });
+  const openInLabel = t({
+    message: "Open Google apps in",
+    comment:
+      "Label of the menu in Settings choosing whether a Google app opened next, such as Calendar or Drive, arrives as a tab in the main window or in a new window of its own",
+  });
+  const openAppsIn = {
+    tabs: t({
+      message: "Tabs",
+      context: "Open Google apps in",
+      comment:
+        "Option of the Open Google apps in menu in Settings: each Google app opened next arrives as a tab in the main window; also the app value in a profile's caption: For all profiles, it's Tabs.",
+    }),
+    windows: t({
+      message: "New window",
+      context: "Open Google apps in",
+      comment:
+        "Option of the Open Google apps in menu in Settings: each Google app opened next arrives in a new window of its own, as Move to New Window puts a tab; also the app value in a profile's caption: For all profiles, it's New window.",
+    }),
+  };
+  const showWindowsPro = needsPro.setting("showWindowsInSidebar");
+  const showWindowsLabel = t({
+    message: "Show windows in the sidebar",
+    comment:
+      "Label of the switch in Settings that lists the tabs moved to windows of their own in the main window's sidebar",
+  });
   const inMeruLabel = t({
     message: "Open Google apps in Meru",
     comment:
@@ -194,13 +229,68 @@ export const TabsAppsPage = () => {
               )}
             </SettingRow>,
             <SettingRow
+              key="openAppsIn"
+              label={openInLabel}
+              description={
+                openInState === "turn-on-first" ? turnOnFirst() : undefined
+              }
+              scope={rowScope(
+                "openAppsIn",
+                openInLabel,
+                () => openAppsIn[settings.openAppsIn]
+              )}
+              disabled={openInState !== undefined}
+              pro={openInPro}
+            >
+              {(ids) => (
+                <Select
+                  items={OPEN_APPS_IN.map((where) => ({
+                    value: where,
+                    label: openAppsIn[where],
+                  }))}
+                  value={values.openAppsIn}
+                  disabled={openInState !== undefined}
+                  onValueChange={(where) => {
+                    if (where === null) {
+                      return;
+                    }
+
+                    const change = { key: "openAppsIn", value: where } as const;
+
+                    // Main refuses a profile removed since the page last
+                    // heard, and the page then shows main's state.
+                    (profile
+                      ? calls.setOverride({ ...change, profileId: profile.id })
+                      : calls.update(change)
+                    ).catch(noop);
+                  }}
+                >
+                  <SelectTrigger
+                    aria-labelledby={ids.label}
+                    aria-describedby={ids.description || undefined}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    <SelectGroup>
+                      {OPEN_APPS_IN.map((where) => (
+                        <SelectItem key={where} value={where}>
+                          {openAppsIn[where]}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            </SettingRow>,
+            <SettingRow
               key="appsInDefaultBrowser"
               label={excludedLabel}
               description={excludedDescription}
               scope={rowScope("appsInDefaultBrowser", excludedLabel, () =>
                 countText(settings.appsInDefaultBrowser, true)
               )}
-              disabled={excludedOff || excludedPro}
+              disabled={excludedState !== undefined}
               pro={excludedPro}
             >
               {(ids) => (
@@ -209,7 +299,7 @@ export const TabsAppsPage = () => {
                   chosen={excluded}
                   profileId={profile?.id ?? null}
                   title={excludedLabel}
-                  disabled={excludedOff || excludedPro}
+                  disabled={excludedState !== undefined}
                   describedBy={ids.description}
                 />
               )}
@@ -217,6 +307,47 @@ export const TabsAppsPage = () => {
           ]}
         </Rows>
       </SettingGroup>
+      {!profile && (
+        <SettingGroup
+          title={t({
+            message: "Sidebar",
+            context: "settings group",
+            comment:
+              "Title of the group of Settings for what the main window's sidebar lists",
+          })}
+        >
+          <Rows>
+            {[
+              <SettingRow
+                key="showWindowsInSidebar"
+                label={showWindowsLabel}
+                description={t({
+                  message:
+                    "Lists Google app windows with your tabs so you can switch to them.",
+                  comment:
+                    "Description of the Show windows in the sidebar switch in Settings",
+                })}
+                disabled={showWindowsPro}
+                pro={showWindowsPro}
+              >
+                {(ids) => (
+                  <Switch
+                    checked={settings.showWindowsInSidebar}
+                    disabled={showWindowsPro}
+                    aria-labelledby={ids.label}
+                    aria-describedby={ids.description || undefined}
+                    onCheckedChange={(checked) => {
+                      calls
+                        .update({ key: "showWindowsInSidebar", value: checked })
+                        .catch(noop);
+                    }}
+                  />
+                )}
+              </SettingRow>,
+            ]}
+          </Rows>
+        </SettingGroup>
+      )}
       {!profile && (
         <SettingGroup
           title={t({

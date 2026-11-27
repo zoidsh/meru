@@ -1540,6 +1540,11 @@ msgstr "Links to the Google apps you check open in your default browser instead 
 msgid "Links to these sites open without asking."
 msgstr "Links to these sites open without asking."
 
+#. Description of the Show windows in the sidebar switch in Settings
+#: src/settings/tabs-apps-page.tsx
+msgid "Lists Google app windows with your tabs so you can switch to them."
+msgstr "Lists Google app windows with your tabs so you can switch to them."
+
 #. Said by screen readers after a tab's title while its page loads
 #: src/shell/tab-strip.tsx
 msgid "Loading"
@@ -1878,6 +1883,12 @@ msgstr "New tab"
 msgid "New Tab…"
 msgstr "New Tab…"
 
+#. Option of the Open Google apps in menu in Settings: each Google app opened next arrives in a new window of its own, as Move to New Window puts a tab; also the app value in a profile's caption: For all profiles, it's New window.
+#: src/settings/tabs-apps-page.tsx
+msgctxt "Open Google apps in"
+msgid "New window"
+msgstr "New window"
+
 #. Label of the switch in Settings that shows an open Gmail conversation with its latest message at the top
 #: src/settings/gmail-page.tsx
 msgid "Newest message first"
@@ -2080,6 +2091,11 @@ msgstr "Open Gmail, Calendar or another Google app in this profile."
 #: src/shell/open-app.tsx
 msgid "Open Google app or bookmark"
 msgstr "Open Google app or bookmark"
+
+#. Label of the menu in Settings choosing whether a Google app opened next, such as Calendar or Drive, arrives as a tab in the main window or in a new window of its own
+#: src/settings/tabs-apps-page.tsx
+msgid "Open Google apps in"
+msgstr "Open Google apps in"
 
 #. Label of the switch in Settings that has links to Google apps, such as Calendar or Drive, open as tabs in Meru rather than in the default browser
 #: src/settings/tabs-apps-page.tsx
@@ -2774,6 +2790,11 @@ msgstr "Show trimmed content"
 msgid "Show unread count"
 msgstr "Show unread count"
 
+#. Label of the switch in Settings that lists the tabs moved to windows of their own in the main window's sidebar
+#: src/settings/tabs-apps-page.tsx
+msgid "Show windows in the sidebar"
+msgstr "Show windows in the sidebar"
+
 #. Description of the Find verification codes switch in Settings
 #: src/settings/gmail-page.tsx
 msgid "Shows a notification with the code when an email has one."
@@ -2823,6 +2844,12 @@ msgstr "Shows the quoted text that Gmail hides behind the ••• button."
 #: src/settings/profile-page.tsx
 msgid "Shows unread counts and notifies you about new mail for this profile."
 msgstr "Shows unread counts and notifies you about new mail for this profile."
+
+#. Title of the group of Settings for what the main window's sidebar lists
+#: src/settings/tabs-apps-page.tsx
+msgctxt "settings group"
+msgid "Sidebar"
+msgstr "Sidebar"
 
 #. Accessible name of the title bar button that shows or hides the list of tabs down the left of the window, read by screen readers with whether it is pressed
 #: src/shell/titlebar.tsx
@@ -3023,6 +3050,12 @@ msgstr "Tab"
 #. Name of the menu of commands on the selected profile's tabs
 #: src/main/application-menu.ts
 #: src/shell/tab-strip.tsx
+msgid "Tabs"
+msgstr "Tabs"
+
+#. Option of the Open Google apps in menu in Settings: each Google app opened next arrives as a tab in the main window; also the app value in a profile's caption: For all profiles, it's Tabs.
+#: src/settings/tabs-apps-page.tsx
+msgctxt "Open Google apps in"
 msgid "Tabs"
 msgstr "Tabs"
 
@@ -3285,7 +3318,7 @@ msgstr "Turn on Enabled first."
 msgid "Turn on Find verification codes first."
 msgstr "Turn on Find verification codes first."
 
-#. Description of the Always open in your default browser row in Settings while Open Google apps in Meru, the switch above it, is off; it says what to do to use the row
+#. Description of a row in Settings under Open Google apps in Meru, such as Always open in your default browser or Open Google apps in, while that switch is off; it says what to do to use the row
 #: src/settings/tabs-apps-page.tsx
 msgid "Turn on Open Google apps in Meru first."
 msgstr "Turn on Open Google apps in Meru first."
