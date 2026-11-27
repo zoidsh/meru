@@ -11,6 +11,7 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
+import { KEYS } from "./lib/keys.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import {
   CALENDAR_TITLE,
@@ -293,19 +294,18 @@ test("a pinned app with Open at Launch off is drawn asleep until opened, and the
   await expect(drive).toHaveCSS("opacity", "0.5");
   await expect(drive).toHaveAttribute("title", `${DRIVE_TITLE} · asleep`);
 
-  await app.evaluate(({ webContents }, url) => {
-    const page = webContents
-      .getAllWebContents()
-      .find((candidate) => candidate.getURL().startsWith(url));
+  await app.evaluate(
+    ({ webContents }, { url, keyCode, modifiers }) => {
+      const page = webContents
+        .getAllWebContents()
+        .find((candidate) => candidate.getURL().startsWith(url));
 
-    for (const type of ["keyDown", "keyUp"] as const) {
-      page?.sendInputEvent({
-        type,
-        keyCode: "2",
-        modifiers: ["control", "shift"],
-      });
-    }
-  }, standIn.calendarUrl);
+      for (const type of ["keyDown", "keyUp"] as const) {
+        page?.sendInputEvent({ type, keyCode, modifiers });
+      }
+    },
+    { url: standIn.calendarUrl, ...KEYS.pinned(2) }
+  );
 
   await findPage(app, standIn.driveUrl);
   await expect(drive).toHaveAttribute("aria-selected", "true");

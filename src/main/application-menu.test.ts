@@ -362,8 +362,8 @@ describe(buildMenuTemplate, () => {
     expect(
       windowItems.map(({ id, label, accelerator }) => [id, label, accelerator])
     ).toStrictEqual([
-      ["profile.select.1", "Default", "CommandOrControl+1"],
-      ["profile.select.2", "Work", "CommandOrControl+2"],
+      ["profile.select.1", "Default", "Control+Command+1"],
+      ["profile.select.2", "Work", "Control+Command+2"],
       ["profile.next", "Select Next Profile", "Command+Shift+]"],
       ["profile.previous", "Select Previous Profile", "Command+Shift+["],
       ["profile.sleep", "Sleep Profile", undefined],
@@ -390,8 +390,8 @@ describe(buildMenuTemplate, () => {
     expect(
       selectItems.map(({ id, label, accelerator }) => [id, label, accelerator])
     ).toStrictEqual([
-      ["profile.select.1", "Default", "CommandOrControl+1"],
-      ["profile.select.2", "Club", "CommandOrControl+2"],
+      ["profile.select.1", "Default", "Control+Command+1"],
+      ["profile.select.2", "Club", "Control+Command+2"],
     ]);
   });
 
@@ -448,15 +448,15 @@ describe(buildMenuTemplate, () => {
         .map(({ id, label, accelerator }) => [id, label, accelerator])
     ).toStrictEqual([
       ["app.open", "New Tab…", "CommandOrControl+T"],
-      ["tab.bookmark", "Bookmark Tab", "CommandOrControl+D"],
+      ["tab.bookmark", "Bookmark Tab", "Command+Shift+D"],
       ["tab.next", expect.any(String), expect.any(String)],
       ["tab.previous", expect.any(String), expect.any(String)],
-      ["tab.pinned.1", "Gmail", "Control+Shift+1"],
-      ["tab.pinned.2", "Drive", "Control+Shift+2"],
+      ["tab.pinned.1", "Gmail", "Control+Alt+1"],
+      ["tab.pinned.2", "Drive", "Control+Alt+2"],
       ["tab.sleep", "Sleep Tab", undefined],
-      ["tab.splitRight", "Split Right", "CommandOrControl+Alt+N"],
-      ["tab.splitDown", "Split Down", "CommandOrControl+Alt+Shift+N"],
-      ["tab.maximize", "Maximize Pane", "CommandOrControl+Shift+Enter"],
+      ["tab.splitRight", "Split Right", "Command+Alt+N"],
+      ["tab.splitDown", "Split Down", "Command+Alt+Shift+N"],
+      ["tab.maximize", "Maximize Pane", "Control+Command+Enter"],
       ["tab.separate", "Separate from Split", undefined],
       ["tab.moveToNewWindow", "Move to New Window", "CommandOrControl+Shift+N"],
       [
@@ -773,11 +773,16 @@ describe(createApplicationMenu, () => {
         ...modifiers,
       });
 
-    expect(key("KeyR", { meta: true })).toBeTruthy();
+    expect(key("KeyR", { control: true, shift: true })).toBeTruthy();
     await expect.poll(() => app.reloads()).toBe(1);
 
-    expect(key("KeyR", { control: true })).toBeFalsy();
-    expect(key("KeyX", { meta: true })).toBeFalsy();
+    // Cmd+R is Sheets' Fill right, and Cmd+F the page's own Find.
+    expect([
+      key("KeyR", { meta: true }),
+      key("KeyF", { meta: true }),
+      key("KeyR", { control: true }),
+      key("KeyX", { meta: true }),
+    ]).toStrictEqual([false, false, false, false]);
     // There is no other profile to select.
     expect(key("BracketRight", { meta: true, shift: true })).toBeFalsy();
   });

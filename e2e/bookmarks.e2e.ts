@@ -11,19 +11,17 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
+import { KEYS } from "./lib/keys.ts";
 import { findTitlebar } from "./lib/own-window.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import { CALENDAR_TITLE, DRIVE_TITLE, STAND_IN_TITLE } from "./lib/stand-in.ts";
-
-const isMacOS = process.platform === "darwin";
-const command = isMacOS ? ("meta" as const) : ("control" as const);
 
 /** A shortcut pressed in the page at `url`, as the system hands keys to it. */
 const press = (
   app: ElectronApplication,
   url: string,
   keyCode: string,
-  modifiers: ("meta" | "control" | "alt")[]
+  modifiers: ("meta" | "control" | "alt" | "shift")[]
 ) =>
   app.evaluate(
     ({ webContents }, request) => {
@@ -43,7 +41,7 @@ const press = (
   );
 
 const pressBookmark = (app: ElectronApplication, url: string) =>
-  press(app, url, "D", [command]);
+  press(app, url, KEYS.bookmark.keyCode, KEYS.bookmark.modifiers);
 
 interface StoredBookmark {
   id: string;
@@ -118,7 +116,7 @@ const rowButton = (shell: Page, name: string) =>
 // Away from every control, so no row shows its hover.
 const rest = (shell: Page) => shell.mouse.move(700, 20);
 
-test("Cmd or Ctrl+D bookmarks the selected tab's page with a toast and removes it with another, the wide row's button kept filled at rest while it is bookmarked, and offers nothing on Gmail", async ({
+test("Bookmark Tab's key bookmarks the selected tab's page with a toast and removes it with another, the wide row's button kept filled at rest while it is bookmarked, and offers nothing on Gmail", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -185,7 +183,7 @@ test("Cmd or Ctrl+D bookmarks the selected tab's page with a toast and removes i
   ).toHaveCount(0);
 });
 
-test("Cmd or Ctrl+D right after the page moves within its document and retitles bookmarks it where it is now, and back at the first page, its title back too, adds that rather than removing the other", async ({
+test("Bookmark Tab's key right after the page moves within its document and retitles bookmarks it where it is now, and back at the first page, its title back too, adds that rather than removing the other", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -233,7 +231,7 @@ test("Cmd or Ctrl+D right after the page moves within its document and retitles 
     ]);
 });
 
-test("Cmd or Ctrl+D with the find bar open bookmarks the page without a toast, the bar left open", async ({
+test("Bookmark Tab's key with the find bar open bookmarks the page without a toast, the bar left open", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -694,7 +692,7 @@ test("Open in split lists the bookmarks too, and one chosen opens as a new tab i
     });
 });
 
-test("a tab's own window shows its star first in the titlebar's right group, which bookmarks its page, filled, and Cmd or Ctrl+D there removes it", async ({
+test("a tab's own window shows its star first in the titlebar's right group, which bookmarks its page, filled, and Bookmark Tab's key there removes it", async ({
   launchApp,
   userDataDir,
   standIn,

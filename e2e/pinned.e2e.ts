@@ -7,6 +7,8 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
+import { KEYS } from "./lib/keys.ts";
+import type { Key } from "./lib/keys.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import {
   ANY_SESSION,
@@ -54,8 +56,7 @@ const closeButton = (shell: Page, title: string) =>
 const pressIn = (
   app: ElectronApplication,
   url: string,
-  keyCode: string,
-  modifiers: ("control" | "shift")[]
+  { keyCode, modifiers }: Key
 ) =>
   app.evaluate(
     ({ webContents }, request) => {
@@ -201,7 +202,7 @@ test("the arrow keys go from the pinned area into the list and back, and Delete 
   await expect(gmail).toBeFocused();
 });
 
-test("Control+Shift and a digit in a page select the profile's pinned tab at that place, loading it", async ({
+test("Select Pinned Tab's key with a digit in a page selects the profile's pinned tab at that place, loading it", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -221,13 +222,13 @@ test("Control+Shift and a digit in a page select the profile's pinned tab at tha
   await tab(shell, CALENDAR_TITLE).click();
   await findPage(app, standIn.calendarUrl);
 
-  await pressIn(app, standIn.calendarUrl, "2", ["control", "shift"]);
+  await pressIn(app, standIn.calendarUrl, KEYS.pinned(2));
   await expect(tab(shell, DRIVE_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"
   );
 
-  await pressIn(app, standIn.driveUrl, "1", ["control", "shift"]);
+  await pressIn(app, standIn.driveUrl, KEYS.pinned(1));
   await expect(tab(shell, STAND_IN_TITLE)).toHaveAttribute(
     "aria-selected",
     "true"

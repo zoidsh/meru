@@ -12,6 +12,7 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
+import { ACCELERATORS } from "./lib/keys.ts";
 import { findTitlebar } from "./lib/own-window.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import { CALENDAR_TITLE, DRIVE_TITLE, STAND_IN_TITLE } from "./lib/stand-in.ts";
@@ -155,17 +156,17 @@ test("a right-click on a tab pops up its native menu at the pointer in the main 
   expect(calendar.items).toStrictEqual([
     "Sleep",
     "—",
-    "Reload CommandOrControl+R",
+    `Reload ${ACCELERATORS.reload}`,
     "Duplicate",
     "Copy URL",
     "Open in Default Browser",
     "—",
     "Pin",
-    "Bookmark Tab CommandOrControl+D",
+    `Bookmark Tab ${ACCELERATORS.bookmark}`,
     "—",
-    "Split Right CommandOrControl+Alt+N",
-    "Split Down CommandOrControl+Alt+Shift+N",
-    "Maximize Pane (off) CommandOrControl+Shift+Enter",
+    `Split Right ${ACCELERATORS.splitRight}`,
+    `Split Down ${ACCELERATORS.splitDown}`,
+    `Maximize Pane (off) ${ACCELERATORS.maximize}`,
     "Separate from Split (off)",
     "—",
     "Move to New Window CommandOrControl+Shift+N",
@@ -360,11 +361,11 @@ test("Bookmark Tab bookmarks the menu's page, which the next menu offers to remo
   await choose(app, shell, CALENDAR_TITLE, "Bookmark Tab");
   await expect
     .poll(() => menuItems(app, shell, CALENDAR_TITLE))
-    .toContain("Remove Bookmark CommandOrControl+D");
+    .toContain(`Remove Bookmark ${ACCELERATORS.bookmark}`);
   await chooseContextMenuItem(app, "Remove Bookmark");
   await expect
     .poll(() => menuItems(app, shell, CALENDAR_TITLE))
-    .toContain("Bookmark Tab CommandOrControl+D");
+    .toContain(`Bookmark Tab ${ACCELERATORS.bookmark}`);
 });
 
 test("Move to New Window, then the own window's tab in the sidebar and its More options offer Move to main window, which puts it back", async ({

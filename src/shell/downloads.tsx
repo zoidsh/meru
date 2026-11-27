@@ -23,7 +23,7 @@ import {
 
 import { useListSelection } from "./list-selection.ts";
 import type { ListRowProps } from "./list-selection.ts";
-import { shellCalls } from "./sync.ts";
+import { shellCalls, useShellState } from "./sync.ts";
 import { TitlebarButton } from "./titlebar-button.tsx";
 import { TitledOverlay, TitledOverlayBody } from "./titled-overlay.tsx";
 
@@ -455,6 +455,7 @@ export const DownloadsButton = ({
       : shownIn?.profileId === ownWindow.profileId &&
         shownIn.tabId === ownWindow.tabId);
   const button = downloads?.button ?? { kind: "plain" };
+  const shortcut = useShellState("shortcuts")?.["downloads.toggle"];
   const label = t({
     message: "Downloads",
     comment:
@@ -502,6 +503,7 @@ export const DownloadsButton = ({
       data-downloads={button.kind}
       pressed={open}
       label={label}
+      shortcut={shortcut}
       aria-description={description}
       onClick={() => {
         shellCalls().setDownloadsOpen({

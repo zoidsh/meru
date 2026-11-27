@@ -1,7 +1,9 @@
 import { describe, expect, it, onTestFinished } from "vitest";
 
-import { matchesAccelerator } from "#core/accelerator.ts";
+import { formatAccelerator, matchesAccelerator } from "#core/accelerator.ts";
+import { BUILT_IN_SHORTCUTS } from "#core/built-in-shortcuts.ts";
 import type { Capability } from "#core/entitlement.ts";
+import { googleAppsUsing } from "#core/google-app-keys.ts";
 import { savedSearches } from "#core/saved-searches.ts";
 import { gmailTab, isAsleep, isTab, newProfile } from "#core/state.ts";
 import type { State } from "#core/state.ts";
@@ -33,6 +35,14 @@ const twoProfiles: State = {
 
 const commandOf = (id: string) =>
   COMMANDS.find((candidate) => candidate.id === id) as Command;
+
+/** A command's keys as a person reads them on macOS, Windows and Linux. */
+const keysOf = (id: string) =>
+  (["darwin", "win32", "linux"] as const).map((platform) => {
+    const accelerator = commandOf(id).shortcut?.[platform];
+
+    return accelerator && formatAccelerator(accelerator, platform);
+  });
 
 /** The real profiles, saving nowhere, behind the actions. */
 const setup = (initial: State = twoProfiles) => {
@@ -288,6 +298,83 @@ describe("the command registry", () => {
       ).toStrictEqual([]);
     }
   );
+
+  it.each(["darwin", "win32", "linux"] as const)(
+    "gives no command on %s a key a Google app uses there",
+    (platform) => {
+      expect(
+        COMMANDS.flatMap(({ id, shortcut }) => {
+          const accelerator = shortcut?.[platform];
+          const apps =
+            accelerator === undefined
+              ? []
+              : googleAppsUsing(accelerator, platform);
+
+          return apps.length > 0
+            ? [`${id} ${accelerator} ${apps.join(", ")}`]
+            : [];
+        })
+      ).toStrictEqual([]);
+    }
+  );
+
+  it("has the keymap decided for the commands that moved off Google's keys, on macOS, Windows and Linux", () => {
+    expect(
+      Object.fromEntries(
+        [
+          "tab.reload",
+          "tab.back",
+          "tab.forward",
+          "profile.select.1",
+          "profile.select.9",
+          "gmail.settings",
+          "tab.splitRight",
+          "tab.splitDown",
+          "tab.maximize",
+          "tab.pinned.1",
+          "tab.pinned.9",
+          "tab.bookmark",
+          "downloads.toggle",
+          "tab.find",
+          "tab.findNext",
+          "tab.findPrevious",
+        ].map((id) => [id, keysOf(id)])
+      )
+    ).toStrictEqual({
+      "tab.reload": ["⌃⇧R", "F5", "F5"],
+      "tab.back": ["⌃⌘[", "Ctrl+Alt+Left", "Ctrl+Alt+Left"],
+      "tab.forward": ["⌃⌘]", "Ctrl+Alt+Right", "Ctrl+Alt+Right"],
+      "profile.select.1": ["⌃⌘1", "Ctrl+1", "Ctrl+1"],
+      "profile.select.9": ["⌃⌘9", "Ctrl+9", "Ctrl+9"],
+      "gmail.settings": ["⌃⌘,", "Ctrl+Alt+Shift+,", "Ctrl+Alt+Shift+,"],
+      "tab.splitRight": ["⌥⌘N", "Ctrl+Alt+Shift+V", "Ctrl+Alt+Shift+V"],
+      "tab.splitDown": ["⌥⇧⌘N", "Ctrl+Alt+Shift+Down", "Ctrl+Alt+Shift+Down"],
+      "tab.maximize": ["⌃⌘↩", "Ctrl+Alt+Shift+Enter", "Ctrl+Alt+Shift+Enter"],
+      "tab.pinned.1": ["⌃⌥1", "Ctrl+Alt+Shift+1", "Ctrl+Alt+Shift+1"],
+      "tab.pinned.9": ["⌃⌥9", "Ctrl+Alt+Shift+9", "Ctrl+Alt+Shift+9"],
+      "tab.bookmark": ["⇧⌘D", "Ctrl+Alt+Shift+D", "Ctrl+Alt+Shift+D"],
+      "downloads.toggle": ["⌃⇧J", "Alt+Shift+J", "Alt+Shift+J"],
+      "tab.find": ["⌃⇧⌘F", "F3", "F3"],
+      "tab.findNext": ["⌃⌘G", "Ctrl+F3", "Ctrl+F3"],
+      "tab.findPrevious": ["⌃⇧⌘G", "Ctrl+Shift+F3", "Ctrl+Shift+F3"],
+    });
+  });
+
+  it("gives each command a key of its own on each platform, none a built-in one", () => {
+    for (const platform of ["darwin", "win32", "linux"] as const) {
+      const keys = [...COMMANDS, ...BUILT_IN_SHORTCUTS].flatMap(
+        ({ shortcut }) => {
+          const accelerator = shortcut?.[platform];
+
+          return accelerator === undefined
+            ? []
+            : [formatAccelerator(accelerator, platform)];
+        }
+      );
+
+      expect(new Set(keys).size).toBe(keys.length);
+    }
+  });
 
   it("closes the selected tab, but never a pinned one", async () => {
     const app = setup();
@@ -751,7 +838,7 @@ describe("the command registry", () => {
     expect(app.isAvailable("inbox.toggle")).toBeFalsy();
   });
 
-  it("selects the first nine profiles by place, on v3's keys, offering each only while it exists", async () => {
+  it("selects the first nine profiles by place, on Ctrl+Cmd or Ctrl and a digit, offering each only while it exists", async () => {
     const app = setup();
 
     expect(
@@ -761,9 +848,9 @@ describe("the command registry", () => {
       COMMANDS.filter((command) => command.id.startsWith("profile.select."))
     ).toHaveLength(9);
     expect(commandOf("profile.select.9").shortcut).toStrictEqual({
-      darwin: "CommandOrControl+9",
-      win32: "CommandOrControl+9",
-      linux: "Alt+9",
+      darwin: "Control+Command+9",
+      win32: "Control+9",
+      linux: "Control+9",
     });
 
     await app.run("inbox.toggle");
@@ -791,9 +878,9 @@ describe("the command registry", () => {
     ]).toStrictEqual([
       9,
       {
-        darwin: "Control+Shift+9",
-        win32: "Control+Shift+9",
-        linux: "Control+Shift+9",
+        darwin: "Control+Alt+9",
+        win32: "Control+Alt+Shift+9",
+        linux: "Control+Alt+Shift+9",
       },
     ]);
 
@@ -910,12 +997,6 @@ describe("the command registry", () => {
       offered(),
       app.profiles.get().profiles[0]?.splits?.[0],
     ]).toStrictEqual([[true, true, false], undefined]);
-    expect(commandOf("tab.splitRight").shortcut?.darwin).toBe(
-      "CommandOrControl+Alt+N"
-    );
-    expect(commandOf("tab.splitDown").shortcut?.darwin).toBe(
-      "CommandOrControl+Alt+Shift+N"
-    );
   });
 
   it("maximizes the focused pane and restores the panes, labelled as it is, only in a split", async () => {
@@ -940,9 +1021,6 @@ describe("the command registry", () => {
     await app.run("tab.maximize");
 
     expect([maximized(), label()]).toStrictEqual([undefined, "Maximize Pane"]);
-    expect(commandOf("tab.maximize").shortcut?.darwin).toBe(
-      "CommandOrControl+Shift+Enter"
-    );
   });
 
   it("offers Back, Forward, Reload and Stop as the front tab's page allows, and none with no page", async () => {
@@ -967,14 +1045,9 @@ describe("the command registry", () => {
     await app.run("tab.stop");
 
     expect(app.moves).toStrictEqual(["back", "forward", "stop"]);
-    expect(commandOf("tab.back").shortcut).toStrictEqual({
-      darwin: "Command+[",
-      win32: "Alt+Left",
-      linux: "Alt+Left",
-    });
   });
 
-  it("offers Find over a page, and Find Next and Previous once there is a term, on Cmd or Ctrl+F and G", async () => {
+  it("offers Find over a page, and Find Next and Previous once there is a term", async () => {
     const app = setup();
     const offered = () =>
       ["tab.find", "tab.findNext", "tab.findPrevious"].map((id) =>
@@ -995,15 +1068,6 @@ describe("the command registry", () => {
       [true, false, false],
       [true, true, true],
       ["open", "next", "previous"],
-    ]);
-    expect(
-      ["tab.find", "tab.findNext", "tab.findPrevious"].map(
-        (id) => commandOf(id).shortcut?.darwin
-      )
-    ).toStrictEqual([
-      "CommandOrControl+F",
-      "CommandOrControl+G",
-      "Shift+CommandOrControl+G",
     ]);
   });
 
@@ -1059,13 +1123,8 @@ describe("the Mail menu's commands", () => {
     expect(app.isAvailable("gmail.settings")).toBeTruthy();
   });
 
-  it("takes no shortcut for compose, and v3's for Gmail's settings", () => {
+  it("takes no shortcut for compose", () => {
     expect(commandOf("gmail.compose").shortcut).toBeUndefined();
-    expect(commandOf("gmail.settings").shortcut).toStrictEqual({
-      darwin: "CommandOrControl+Shift+,",
-      win32: "CommandOrControl+Shift+,",
-      linux: "CommandOrControl+Shift+,",
-    });
   });
 
   it("reads the search the selected profile's Gmail shows while it is in front", () => {

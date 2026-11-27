@@ -12,6 +12,7 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
+import { KEYS } from "./lib/keys.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import { CALENDAR_TITLE, DRIVE_TITLE, STAND_IN_TITLE } from "./lib/stand-in.ts";
 
@@ -159,20 +160,16 @@ const focusPage = (app: ElectronApplication, url: string) =>
 /** Presses Maximize's shortcut in the page at `url`, as the system hands it the key. */
 const pressMaximize = (app: ElectronApplication, url: string) =>
   app.evaluate(
-    ({ webContents }, { prefix, mac }) => {
+    ({ webContents }, { prefix, keyCode, modifiers }) => {
       const view = webContents
         .getAllWebContents()
         .find((candidate) => candidate.getURL().startsWith(prefix));
 
       for (const type of ["keyDown", "keyUp"] as const) {
-        view?.sendInputEvent({
-          type,
-          keyCode: "Enter",
-          modifiers: [mac ? "meta" : "control", "shift"],
-        });
+        view?.sendInputEvent({ type, keyCode, modifiers });
       }
     },
-    { prefix: url, mac: process.platform === "darwin" }
+    { prefix: url, ...KEYS.maximize }
   );
 
 const boxFill = (shell: Page) =>

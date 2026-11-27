@@ -1061,6 +1061,11 @@ msgstr "Dock"
 msgid "Done"
 msgstr "Done"
 
+#. The down arrow key, as a screen reader says it in a keyboard shortcut
+#: src/main/shortcuts-page.ts
+msgid "Down Arrow"
+msgstr "Down Arrow"
+
 #. Button of the main window's card saying a downloaded update could not be verified; it opens the version's release page in the default browser, to download it by hand
 #. Button on the About page of Settings that opens the release page of a version Meru could not verify, to download it by hand
 #: src/settings/updates-group.tsx

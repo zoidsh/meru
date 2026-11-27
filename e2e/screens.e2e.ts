@@ -17,6 +17,7 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
+import { KEYS } from "./lib/keys.ts";
 import {
   findTitlebar,
   findWindowCard,
@@ -1281,25 +1282,24 @@ test("the find bar over a tab's page in its own window", async ({
   const { app, shell } = await launch(launchApp, userDataDir);
   const titlebar = await ownWindowDrawn(app);
 
-  // A click on its tab gives its page the focus, and Cmd or Ctrl+F there
+  // A click on its tab gives its page the focus, and Find's key there
   // opens its bar, as the system hands the keys to it.
   await shell
     .getByRole("tablist", { name: "Tabs" })
     .getByRole("tab", { name: CALENDAR_TITLE, exact: true })
     .click();
-  await app.evaluate(({ webContents }, url) => {
-    const page = webContents
-      .getAllWebContents()
-      .find((candidate) => candidate.getURL().startsWith(url));
+  await app.evaluate(
+    ({ webContents }, { url, keyCode, modifiers }) => {
+      const page = webContents
+        .getAllWebContents()
+        .find((candidate) => candidate.getURL().startsWith(url));
 
-    for (const type of ["keyDown", "keyUp"] as const) {
-      page?.sendInputEvent({
-        type,
-        keyCode: "F",
-        modifiers: [process.platform === "darwin" ? "meta" : "control"],
-      });
-    }
-  }, standIn.calendarUrl);
+      for (const type of ["keyDown", "keyUp"] as const) {
+        page?.sendInputEvent({ type, keyCode, modifiers });
+      }
+    },
+    { url: standIn.calendarUrl, ...KEYS.find }
+  );
 
   const document = await findWindowFind(app);
   const bar = document.getByRole("search", { name: "Find in page" });

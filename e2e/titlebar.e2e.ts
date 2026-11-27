@@ -158,10 +158,8 @@ test("each control's title names it and its shortcut, a narrow tab's names the t
   const shell = await findPage(app, "meru-app:");
   const bar = titlebar(shell);
   const reload = bar.getByRole("button", { name: "Reload" });
-  const reloadTitle = `Reload (${keys("⌘R", "Ctrl+R")})`;
-  // Alt and the digit on Linux.
-  const workKeys =
-    { darwin: "⌘2", linux: "Alt+2" }[process.platform as string] ?? "Ctrl+2";
+  const reloadTitle = `Reload (${keys("⌃⇧R", "F5")})`;
+  const workKeys = keys("⌃⌘2", "Ctrl+2");
 
   await findPage(app, standIn.url);
   await expect(reload).toBeEnabled();

@@ -85,34 +85,34 @@ describe(readShortcuts, () => {
         ["Settings…", "⌘ ,"],
       ],
       [
-        ["Find…", "⌘ F"],
-        ["Find Next", "⌘ G"],
-        ["Find Previous", "⇧ ⌘ G"],
+        ["Find…", "⌃ ⇧ ⌘ F"],
+        ["Find Next", "⌃ ⌘ G"],
+        ["Find Previous", "⌃ ⇧ ⌘ G"],
       ],
       [
         ["Sidebar", "⌃ ⌘ L"],
         ["Unified Inbox", "⇧ ⌘ I"],
-        ["Downloads", "None"],
-        ["Back", "⌘ ["],
-        ["Forward", "⌘ ]"],
-        ["Reload", "⌘ R"],
+        ["Downloads", "⌃ ⇧ J"],
+        ["Back", "⌃ ⌘ ["],
+        ["Forward", "⌃ ⌘ ]"],
+        ["Reload", "⌃ ⇧ R"],
         ["Stop", "None"],
       ],
       [
         ["Compose", "None"],
         ["Save Current Search", "None"],
-        ["Gmail Settings", "⇧ ⌘ ,"],
+        ["Gmail Settings", "⌃ ⌘ ,"],
       ],
       [
         ["New Tab…", "⌘ T"],
-        ["Bookmark Tab", "⌘ D"],
+        ["Bookmark Tab", "⇧ ⌘ D"],
         ["Select Next Tab", "⌃ ⇥"],
         ["Select Previous Tab", "⌃ ⇧ ⇥"],
-        ["Select Pinned Tab 1 to 9", "⌃ ⇧ 1", "⌃ ⇧ 9"],
+        ["Select Pinned Tab 1 to 9", "⌃ ⌥ 1", "⌃ ⌥ 9"],
         ["Sleep Tab", "None"],
         ["Split Right", "⌥ ⌘ N"],
         ["Split Down", "⌥ ⇧ ⌘ N"],
-        ["Maximize Pane", "⇧ ⌘ ↩"],
+        ["Maximize Pane", "⌃ ⌘ ↩"],
         ["Separate from Split", "None"],
         ["Move to New Window", "⇧ ⌘ N"],
         ["Move to Main Window", "⇧ ⌘ M"],
@@ -121,7 +121,7 @@ describe(readShortcuts, () => {
         ["Close Tab", "⇧ ⌘ W"],
       ],
       [
-        ["Select Profile 1 to 9", "⌘ 1", "⌘ 9"],
+        ["Select Profile 1 to 9", "⌃ ⌘ 1", "⌃ ⌘ 9"],
         ["Select Next Profile", "⇧ ⌘ ]"],
         ["Select Previous Profile", "⇧ ⌘ ["],
         ["Sleep Profile", "None"],
@@ -139,9 +139,9 @@ describe(readShortcuts, () => {
     }
   );
 
-  it("shows Linux's keys, Alt and a digit for a profile and none to step through them", () => {
+  it("shows Windows' and Linux's keys, Ctrl and a digit for a profile and none to step through them", () => {
     expect(card("linux", "Window")?.rows.map(shown)).toStrictEqual([
-      ["Select Profile 1 to 9", "Alt 1", "Alt 9"],
+      ["Select Profile 1 to 9", "Ctrl 1", "Ctrl 9"],
       ["Select Next Profile", "None"],
       ["Select Previous Profile", "None"],
       ["Sleep Profile", "None"],
@@ -151,13 +151,50 @@ describe(readShortcuts, () => {
       "Ctrl 1",
       "Ctrl 9",
     ]);
-    expect(card("linux", "Tabs")?.rows.map(shown).slice(0, 5)).toStrictEqual([
-      ["New Tab…", "Ctrl T"],
-      ["Bookmark Tab", "Ctrl D"],
-      ["Select Next Tab", "Ctrl Tab"],
-      ["Select Previous Tab", "Ctrl Shift Tab"],
-      ["Select Pinned Tab 1 to 9", "Ctrl Shift 1", "Ctrl Shift 9"],
-    ]);
+    for (const platform of ["win32", "linux"] as const) {
+      expect(card(platform, "Tabs")?.rows.map(shown)).toStrictEqual([
+        ["New Tab…", "Ctrl T"],
+        ["Bookmark Tab", "Ctrl Alt Shift D"],
+        ["Select Next Tab", "Ctrl Tab"],
+        ["Select Previous Tab", "Ctrl Shift Tab"],
+        ["Select Pinned Tab 1 to 9", "Ctrl Alt Shift 1", "Ctrl Alt Shift 9"],
+        ["Sleep Tab", "None"],
+        ["Split Right", "Ctrl Alt Shift V"],
+        ["Split Down", "Ctrl Alt Shift Down"],
+        ["Maximize Pane", "Ctrl Alt Shift Enter"],
+        ["Separate from Split", "None"],
+        ["Move to New Window", "Ctrl Shift N"],
+        ["Move to Main Window", "Ctrl Shift M"],
+        ["Pin Tab", "None"],
+        ["Open at Launch", "None"],
+        ["Close Tab", "Ctrl Shift W"],
+      ]);
+      expect(
+        ["Edit", "View", "Mail"].map((title) =>
+          card(platform, title)?.rows.map(shown)
+        )
+      ).toStrictEqual([
+        [
+          ["Find…", "F3"],
+          ["Find Next", "Ctrl F3"],
+          ["Find Previous", "Ctrl Shift F3"],
+        ],
+        [
+          ["Sidebar", "Ctrl Alt D"],
+          ["Unified Inbox", "Ctrl Shift I"],
+          ["Downloads", "Alt Shift J"],
+          ["Back", "Ctrl Alt Left"],
+          ["Forward", "Ctrl Alt Right"],
+          ["Reload", "F5"],
+          ["Stop", "None"],
+        ],
+        [
+          ["Compose", "None"],
+          ["Save Current Search", "None"],
+          ["Gmail Settings", "Ctrl Alt Shift ,"],
+        ],
+      ]);
+    }
   });
 
   it("says each key's name for a screen reader", () => {
@@ -167,25 +204,29 @@ describe(readShortcuts, () => {
         spoken(platform, "Back"),
         spoken(platform, "Maximize Pane"),
         spoken(platform, "Settings…"),
+        spoken(platform, "Split Down"),
       ])
     ).toStrictEqual([
       [
-        "Shift Command G",
-        "Command Left Bracket",
-        "Shift Command Return",
+        "Control Shift Command G",
+        "Control Command Left Bracket",
+        "Control Command Return",
         "Command Comma",
+        "Option Shift Command N",
       ],
       [
-        "Control Shift G",
-        "Alt Left Arrow",
-        "Control Shift Enter",
+        "Control Shift F3",
+        "Control Alt Left Arrow",
+        "Control Alt Shift Enter",
         "Control Comma",
+        "Control Alt Shift Down Arrow",
       ],
       [
-        "Control Shift G",
-        "Alt Left Arrow",
-        "Control Shift Enter",
+        "Control Shift F3",
+        "Control Alt Left Arrow",
+        "Control Alt Shift Enter",
         "Control Comma",
+        "Control Alt Shift Down Arrow",
       ],
     ]);
   });

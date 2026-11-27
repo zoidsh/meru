@@ -18,7 +18,6 @@ import type { DoNotDisturbDuration } from "#core/notification-gate.ts";
 import type { PaneDirection } from "#core/pane-tree.ts";
 import {
   PINNED_SHORTCUT_COUNT,
-  pinnedShortcut,
   selectPinnedCommandId,
 } from "#core/pinned-tabs.ts";
 import type { Platform } from "#core/platform.ts";
@@ -372,8 +371,8 @@ export const savedSearchCommands = (state: State) =>
   });
 
 /**
- * Every command, declared once. The default shortcuts are v3's where v3 has
- * the command.
+ * Every command, declared once. No default shortcut takes a key a Google
+ * app uses on its platform, which `#core/google-app-keys.ts` checks.
  */
 export const COMMANDS: readonly Command[] = [
   {
@@ -473,8 +472,13 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Menu item in the View menu, checked while the list of downloaded files is open over the page",
       }),
-    // No key until the keymap is decided.
+    shortcut: {
+      darwin: "Control+Shift+J",
+      win32: "Alt+Shift+J",
+      linux: "Alt+Shift+J",
+    },
     isChecked: ({ downloadsOpen }) => downloadsOpen,
+    once: true,
     // In the window that holds the keys, a tab's own one included.
     run: ({ downloadsOpen, ownWindow }, { setDownloadsOpen }) => {
       setDownloadsOpen(!downloadsOpen, ownWindow);
@@ -487,9 +491,9 @@ export const COMMANDS: readonly Command[] = [
     inOwnWindow: true,
     title: () => MENU_LABELS.reload(),
     shortcut: {
-      darwin: "CommandOrControl+R",
-      win32: "CommandOrControl+R",
-      linux: "CommandOrControl+R",
+      darwin: "Control+Shift+R",
+      win32: "F5",
+      linux: "F5",
     },
     // A sleeping tab has no page, and Reload wakes it.
     isAvailable: ({ navigation, selectedTabAsleep }) =>
@@ -509,7 +513,11 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Menu item in the View menu that goes to the page the selected tab showed before",
       }),
-    shortcut: { darwin: "Command+[", win32: "Alt+Left", linux: "Alt+Left" },
+    shortcut: {
+      darwin: "Control+Command+[",
+      win32: "Control+Alt+Left",
+      linux: "Control+Alt+Left",
+    },
     isAvailable: ({ navigation, settingsHistory }) =>
       (settingsHistory ?? navigation)?.canGoBack ?? false,
     run: (_context, { goBack }) => {
@@ -527,7 +535,11 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Menu item in the View menu that goes to the page the selected tab left by going back",
       }),
-    shortcut: { darwin: "Command+]", win32: "Alt+Right", linux: "Alt+Right" },
+    shortcut: {
+      darwin: "Control+Command+]",
+      win32: "Control+Alt+Right",
+      linux: "Control+Alt+Right",
+    },
     isAvailable: ({ navigation, settingsHistory }) =>
       (settingsHistory ?? navigation)?.canGoForward ?? false,
     run: (_context, { goForward }) => {
@@ -562,9 +574,9 @@ export const COMMANDS: readonly Command[] = [
           "Menu item in the Edit menu that opens a small bar over the page to search its text",
       }),
     shortcut: {
-      darwin: "CommandOrControl+F",
-      win32: "CommandOrControl+F",
-      linux: "CommandOrControl+F",
+      darwin: "Control+Shift+Command+F",
+      win32: "F3",
+      linux: "F3",
     },
     // Unavailable, the key reaches the page or the card over it.
     isAvailable: ({ findable }) => findable,
@@ -584,9 +596,9 @@ export const COMMANDS: readonly Command[] = [
           "Menu item in the Edit menu that goes to the next match of the text searched for in the page",
       }),
     shortcut: {
-      darwin: "CommandOrControl+G",
-      win32: "CommandOrControl+G",
-      linux: "CommandOrControl+G",
+      darwin: "Control+Command+G",
+      win32: "Control+F3",
+      linux: "Control+F3",
     },
     isAvailable: ({ findable, canFindAgain }) => findable && canFindAgain,
     run: ({ ownWindow }, { findAgain }) => {
@@ -605,9 +617,9 @@ export const COMMANDS: readonly Command[] = [
           "Menu item in the Edit menu that goes to the previous match of the text searched for in the page",
       }),
     shortcut: {
-      darwin: "Shift+CommandOrControl+G",
-      win32: "Shift+CommandOrControl+G",
-      linux: "Shift+CommandOrControl+G",
+      darwin: "Control+Shift+Command+G",
+      win32: "Control+Shift+F3",
+      linux: "Control+Shift+F3",
     },
     isAvailable: ({ findable, canFindAgain }) => findable && canFindAgain,
     run: ({ ownWindow }, { findAgain }) => {
@@ -648,9 +660,9 @@ export const COMMANDS: readonly Command[] = [
         ? MENU_LABELS.removeBookmark()
         : MENU_LABELS.bookmarkTab(),
     shortcut: {
-      darwin: "CommandOrControl+D",
-      win32: "CommandOrControl+D",
-      linux: "CommandOrControl+D",
+      darwin: "Command+Shift+D",
+      win32: "Control+Alt+Shift+D",
+      linux: "Control+Alt+Shift+D",
     },
     isAvailable: ({ bookmarked }) => bookmarked !== undefined,
     once: true,
@@ -663,9 +675,9 @@ export const COMMANDS: readonly Command[] = [
     capability: "splitView",
     title: () => MENU_LABELS.splitRight(),
     shortcut: {
-      darwin: "CommandOrControl+Alt+N",
-      win32: "CommandOrControl+Alt+N",
-      linux: "CommandOrControl+Alt+N",
+      darwin: "Command+Alt+N",
+      win32: "Control+Alt+Shift+V",
+      linux: "Control+Alt+Shift+V",
     },
     isAvailable: ({ state }) =>
       splitTarget(selectedProfile(state)) !== undefined,
@@ -681,9 +693,9 @@ export const COMMANDS: readonly Command[] = [
     capability: "splitView",
     title: () => MENU_LABELS.splitDown(),
     shortcut: {
-      darwin: "CommandOrControl+Alt+Shift+N",
-      win32: "CommandOrControl+Alt+Shift+N",
-      linux: "CommandOrControl+Alt+Shift+N",
+      darwin: "Command+Alt+Shift+N",
+      win32: "Control+Alt+Shift+Down",
+      linux: "Control+Alt+Shift+Down",
     },
     isAvailable: ({ state }) =>
       splitTarget(selectedProfile(state)) !== undefined,
@@ -748,9 +760,9 @@ export const COMMANDS: readonly Command[] = [
         : this.title();
     },
     shortcut: {
-      darwin: "CommandOrControl+Shift+Enter",
-      win32: "CommandOrControl+Shift+Enter",
-      linux: "CommandOrControl+Shift+Enter",
+      darwin: "Control+Command+Enter",
+      win32: "Control+Alt+Shift+Enter",
+      linux: "Control+Alt+Shift+Enter",
     },
     isAvailable: ({ state }) =>
       splitPanes(selectedProfile(state)) !== undefined,
@@ -927,7 +939,6 @@ export const COMMANDS: readonly Command[] = [
     isAvailable: ({ state }) => canSleepProfile(state, state.selectedProfileId),
     run: ({ state }, { sleepProfile }) => sleepProfile(state.selectedProfileId),
   },
-  // v3's: Alt on Linux, whose desktops take Ctrl with a digit.
   ...Array.from({ length: PROFILE_SHORTCUT_COUNT }, (_, index): Command => {
     const position = index + 1;
 
@@ -940,9 +951,9 @@ export const COMMANDS: readonly Command[] = [
             "Command that selects the profile at this place in the title bar's row, counting from 1; the Window menu shows the profile's name instead",
         }),
       shortcut: {
-        darwin: `CommandOrControl+${position}`,
-        win32: `CommandOrControl+${position}`,
-        linux: `Alt+${position}`,
+        darwin: `Control+Command+${position}`,
+        win32: `Control+${position}`,
+        linux: `Control+${position}`,
       },
       isAvailable: ({ state }) => enabledProfiles(state).length > index,
       once: true,
@@ -979,9 +990,9 @@ export const COMMANDS: readonly Command[] = [
         return (tab && findApp(APPS, tab.app)?.name) ?? tab?.app ?? "";
       },
       shortcut: {
-        darwin: pinnedShortcut(position),
-        win32: pinnedShortcut(position),
-        linux: pinnedShortcut(position),
+        darwin: `Control+Alt+${position}`,
+        win32: `Control+Alt+Shift+${position}`,
+        linux: `Control+Alt+Shift+${position}`,
       },
       isAvailable: ({ state }) => pinnedTab(state) !== undefined,
       once: true,
@@ -1016,11 +1027,10 @@ export const COMMANDS: readonly Command[] = [
         comment:
           "Menu item in the Mail menu that opens Gmail's own settings in the selected profile's Gmail tab",
       }),
-    // v3's. Gmail's own keys use Ctrl with a comma, not with Shift too.
     shortcut: {
-      darwin: "CommandOrControl+Shift+,",
-      win32: "CommandOrControl+Shift+,",
-      linux: "CommandOrControl+Shift+,",
+      darwin: "Control+Command+,",
+      win32: "Control+Alt+Shift+,",
+      linux: "Control+Alt+Shift+,",
     },
     run: navigateTo(SETTINGS_HASH),
   },

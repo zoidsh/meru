@@ -331,8 +331,8 @@ test("Alt with the arrows moves a focused tab within its area, keeping focus, an
     shell.getByText(`${STAND_IN_TITLE}, position 2 of 3`)
   ).toHaveRole("status");
 
-  // A tile at the grid's start leaves Alt+Left to be Back on Windows and
-  // Linux; one that moves takes it.
+  // A tile at the grid's start leaves Alt+Left unprevented; one that
+  // moves takes it.
   await shell.evaluate(() => {
     globalThis.addEventListener("keydown", (event) => {
       Reflect.set(globalThis, "meruPrevented", event.defaultPrevented);

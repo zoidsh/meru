@@ -25,6 +25,8 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
+import { KEYS } from "./lib/keys.ts";
+import type { Key } from "./lib/keys.ts";
 import {
   findTitlebar,
   findWindowCard,
@@ -108,15 +110,13 @@ const ownWindowPage = async (app: ElectronApplication) => {
 };
 
 /**
- * Cmd or Ctrl with `keyCode`, and Shift with `shift`, in the page whose URL
- * or document whose name starts with `target`, as the system hands keys to
- * it, so its view hears them first; `plain` leaves out Cmd or Ctrl.
+ * `key` in the page whose URL or document whose name starts with `target`,
+ * as the system hands keys to it, so its view hears them first.
  */
 const press = (
   app: ElectronApplication,
   target: string,
-  keyCode: string,
-  { shift = false, plain = false } = {}
+  { keyCode, modifiers }: Key
 ) =>
   app.evaluate(
     ({ webContents }, request) => {
@@ -136,21 +136,8 @@ const press = (
         });
       }
     },
-    {
-      target,
-      keyCode,
-      modifiers: [
-        ...(plain ? [] : [isMacOS ? ("meta" as const) : ("control" as const)]),
-        ...(shift ? (["shift"] as const) : []),
-      ],
-    }
+    { target, keyCode, modifiers }
   );
-
-const pressShifted = (
-  app: ElectronApplication,
-  target: string,
-  keyCode: string
-) => press(app, target, keyCode, { shift: true });
 
 /**
  * Lets `document.hasFocus()` in the page say whether it holds Chromium's
@@ -455,7 +442,7 @@ test("Move to New Window puts the selected tab's page in a window of its own as 
   const drive = await findPage(app, standIn.driveUrl);
 
   await mark(drive);
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
 
   const windowFind = findParts(await findWindowFind(app));
 
@@ -562,7 +549,7 @@ test("Cmd or Ctrl+Shift+N in the page moves it; a click on its tab focuses that 
   );
 
   await mark(calendar);
-  await pressShifted(app, standIn.calendarUrl, "N");
+  await press(app, standIn.calendarUrl, KEYS.moveToNewWindow);
   await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
 
   // The suite's app is never active, so no window of it is the key one, and
@@ -581,7 +568,7 @@ test("Cmd or Ctrl+Shift+N in the page moves it; a click on its tab focuses that 
     "true"
   );
 
-  await pressShifted(app, standIn.calendarUrl, "M");
+  await press(app, standIn.calendarUrl, KEYS.moveToMainWindow);
   await expect.poll(() => ownWindowCount(app)).toBe(0);
   await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
     "aria-selected",
@@ -597,7 +584,7 @@ test("Cmd or Ctrl+Shift+N in the page moves it; a click on its tab focuses that 
   expect(await marked(calendar)).toBe(42);
 });
 
-test("Cmd or Ctrl+F in a tab's own window opens its find bar over that page's top right; it counts, steps, zooms the page, and Escape gives the focus back to that page, the main window staying behind", async ({
+test("Find's key in a tab's own window opens its find bar over that page's top right; it counts, steps, zooms the page, and Escape gives the focus back to that page, the main window staying behind", async ({
   launchApp,
   userDataDir,
   standIn,
@@ -610,11 +597,11 @@ test("Cmd or Ctrl+F in a tab's own window opens its find bar over that page's to
   const calendarHasFocus = await followRealFocus(calendar);
   const shellHasFocus = await followRealFocus(shell);
 
-  await pressShifted(app, standIn.calendarUrl, "N");
+  await press(app, standIn.calendarUrl, KEYS.moveToNewWindow);
   await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
   await expect.poll(calendarHasFocus).toBeTruthy();
 
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
 
   const document = await findWindowFind(app);
   const findHasFocus = await followRealFocus(document);
@@ -645,16 +632,16 @@ test("Cmd or Ctrl+F in a tab's own window opens its find bar over that page's to
   await expect(count).toHaveText(`2/${FIND_MATCHES}`);
   await field.press("Shift+Enter");
   await expect(count).toHaveText(`1/${FIND_MATCHES}`);
-  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "G");
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, KEYS.findNext);
   await expect(count).toHaveText(`2/${FIND_MATCHES}`);
 
-  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "=");
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, KEYS.zoomIn);
   await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0.5);
-  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "0");
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, KEYS.resetZoom);
   await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0);
   await expect(field).toBeFocused();
 
-  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "Escape", { plain: true });
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, KEYS.escape);
   await expect.poll(() => ownWindowFindOpen(app)).toBe(false);
   await expect.poll(() => document.isClosed()).toBe(true);
   await expect.poll(calendarHasFocus).toBeTruthy();
@@ -663,7 +650,7 @@ test("Cmd or Ctrl+F in a tab's own window opens its find bar over that page's to
   expect(await ownWindowCount(app)).toBe(1);
 
   // Opened again, the bar keeps its term, as the main window's does.
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
 
   const again = findParts(await findWindowFind(app));
 
@@ -696,9 +683,9 @@ test("the tab's own window coming forward gives the keys to its find bar while t
   const { app, calendar } = await launch(launchApp, userDataDir, standIn);
   const calendarHasFocus = await followRealFocus(calendar);
 
-  await pressShifted(app, standIn.calendarUrl, "N");
+  await press(app, standIn.calendarUrl, KEYS.moveToNewWindow);
   await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
 
   const document = await findWindowFind(app);
   const findHasFocus = await followRealFocus(document);
@@ -712,7 +699,7 @@ test("the tab's own window coming forward gives the keys to its find bar while t
   await expect.poll(findHasFocus).toBeTruthy();
   expect(await calendarHasFocus()).toBeFalsy();
 
-  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "Escape", { plain: true });
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, KEYS.escape);
   await expect.poll(() => ownWindowFindOpen(app)).toBe(false);
   await expect.poll(calendarHasFocus).toBeTruthy();
   await ownWindowComesForward(app);
@@ -771,7 +758,7 @@ test("closing the window by its control or putting its profile to sleep with its
       .getByRole("tablist", { name: "Tabs" })
       .getByRole("tab", { name: CALENDAR_TITLE, exact: true })
       .click();
-    await press(app, standIn.calendarUrl, "F");
+    await press(app, standIn.calendarUrl, KEYS.find);
 
     const document = await findWindowFind(app);
 
@@ -812,7 +799,7 @@ test("closing the window by its control or putting its profile to sleep with its
     .getByRole("tablist", { name: "Tabs" })
     .getByRole("tab", { name: DRIVE_TITLE, exact: true })
     .click();
-  await press(app, standIn.driveUrl, "F");
+  await press(app, standIn.driveUrl, KEYS.find);
 
   const second = await findWindowFind(app);
 
@@ -876,16 +863,16 @@ test("the shell's renderer lets go of the documents of find bars, Downloads card
     standIn
   );
 
-  await pressShifted(app, standIn.calendarUrl, "N");
+  await press(app, standIn.calendarUrl, KEYS.moveToNewWindow);
   await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
 
   const findOpen = async () => {
-    await press(app, standIn.calendarUrl, "F");
+    await press(app, standIn.calendarUrl, KEYS.find);
     // Its keys are heard once the shell has drawn it.
     await expect(findParts(await findWindowFind(app)).field).toBeFocused();
   };
   const findClose = async () => {
-    await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, "Escape", { plain: true });
+    await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, KEYS.escape);
     await expect.poll(() => ownWindowFindOpen(app)).toBe(false);
   };
 
@@ -927,7 +914,7 @@ test("the shell's renderer lets go of the documents of find bars, Downloads card
   const afterCard = await shellDocuments(shell);
 
   const windowOpen = async () => {
-    await pressShifted(app, standIn.calendarUrl, "N");
+    await press(app, standIn.calendarUrl, KEYS.moveToNewWindow);
     await expect.poll(() => ownWindowCount(app)).toBe(1);
     // Playwright holds a page the shell opens, and the shell's renderer
     // with it, until it has attached; a titlebar closed before then holds
@@ -935,7 +922,7 @@ test("the shell's renderer lets go of the documents of find bars, Downloads card
     await findTitlebar(app);
   };
   const windowClose = async () => {
-    await pressShifted(app, standIn.calendarUrl, "M");
+    await press(app, standIn.calendarUrl, KEYS.moveToMainWindow);
     await expect.poll(() => ownWindowCount(app)).toBe(0);
   };
 
@@ -996,9 +983,9 @@ test("a shell that lags behind main opens no titlebar for a window already gone,
       }
     }, 0);
   });
-  await pressShifted(app, standIn.calendarUrl, "N");
+  await press(app, standIn.calendarUrl, KEYS.moveToNewWindow);
   await expect.poll(() => ownWindowCount(app)).toBe(1);
-  await pressShifted(app, standIn.calendarUrl, "M");
+  await press(app, standIn.calendarUrl, KEYS.moveToMainWindow);
   await expect.poll(() => ownWindowCount(app)).toBe(0);
 
   // Answering at all says the shell is past its busy spell; answering
@@ -1013,7 +1000,7 @@ test("a shell that lags behind main opens no titlebar for a window already gone,
   expect(await titlebarsMade()).toBe(0);
 
   // A window still open gets its titlebar, as ever.
-  await pressShifted(app, standIn.calendarUrl, "N");
+  await press(app, standIn.calendarUrl, KEYS.moveToNewWindow);
   await findTitlebar(app);
   expect(await titlebarsMade()).toBe(1);
 });
@@ -1029,16 +1016,16 @@ test("moving a tab back to the main window with its find bar open closes the bar
     standIn
   );
 
-  await pressShifted(app, standIn.calendarUrl, "N");
+  await press(app, standIn.calendarUrl, KEYS.moveToNewWindow);
   await expect.poll(() => ownWindowPage(app)).toBe(calendar.url());
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
 
   const { field, count } = findParts(await findWindowFind(app));
 
   await field.pressSequentially(FIND_WORD);
   await expect(count).toHaveText(`1/${FIND_MATCHES}`);
 
-  await pressShifted(app, OWN_WINDOW_FIND_FRAME_PREFIX, "M");
+  await press(app, OWN_WINDOW_FIND_FRAME_PREFIX, KEYS.moveToMainWindow);
   await expect.poll(() => ownWindowCount(app)).toBe(0);
   await expect(tab(shell, CALENDAR_TITLE)).toHaveAttribute(
     "aria-selected",

@@ -14,6 +14,8 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
+import { KEYS } from "./lib/keys.ts";
+import type { Key } from "./lib/keys.ts";
 import type { StandIn } from "./lib/stand-in.ts";
 import {
   CALENDAR_TITLE,
@@ -23,8 +25,6 @@ import {
   NEXT_WEEK_PATH,
   THREAD_PATH,
 } from "./lib/stand-in.ts";
-
-const isMacOS = process.platform === "darwin";
 
 /** Gmail, Calendar, selected, and Drive, with `fields` added to the profile. */
 const seed = (userDataDir: string, standIn: StandIn, fields: object = {}) =>
@@ -58,15 +58,13 @@ const followRealFocus = async (page: Page) => {
 };
 
 /**
- * Cmd or Ctrl with `keyCode`, and Shift with `shift`, in the page whose URL
- * starts with `target`, or the overlay's view, as the system hands keys to it, so its view hears them first; `plain` leaves
- * out Cmd or Ctrl.
+ * `key` in the page whose URL starts with `target`, or the overlay's view,
+ * as the system hands keys to it, so its view hears them first.
  */
 const press = (
   app: ElectronApplication,
   target: string,
-  keyCode: string,
-  { shift = false, plain = false } = {}
+  { keyCode, modifiers }: Key
 ) =>
   app.evaluate(
     ({ webContents }, request) => {
@@ -86,14 +84,7 @@ const press = (
         });
       }
     },
-    {
-      target,
-      keyCode,
-      modifiers: [
-        ...(plain ? [] : [isMacOS ? ("meta" as const) : ("control" as const)]),
-        ...(shift ? (["shift"] as const) : []),
-      ],
-    }
+    { target, keyCode, modifiers }
   );
 
 /** The zoom level of the page whose URL starts with `target`, or the overlay's view. */
@@ -227,7 +218,7 @@ const SPLIT = {
   ],
 };
 
-test("Cmd or Ctrl+F opens the bar, its view exactly the bar's size, at the page's top right with its field focused; typing counts the matches, Enter and Shift+Enter step and wrap, an emptied field shows 0/0, and Escape closes it with focus back on the page", async ({
+test("Find's key opens the bar, its view exactly the bar's size, at the page's top right with its field focused; typing counts the matches, Enter and Shift+Enter step and wrap, an emptied field shows 0/0, and Escape closes it with focus back on the page", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -240,7 +231,7 @@ test("Cmd or Ctrl+F opens the bar, its view exactly the bar's size, at the page'
   const calendarHasFocus = await followRealFocus(calendar);
 
   await expect.poll(calendarHasFocus).toBeTruthy();
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
   await expect(field).toBeFocused();
   expect(await barCorner(app)).toStrictEqual(
     await pageCorner(app, standIn.calendarUrl)
@@ -283,9 +274,9 @@ test("Cmd or Ctrl+F opens the bar, its view exactly the bar's size, at the page'
   // A button gives the field its focus back, to go on typing.
   await expect(field).toBeFocused();
 
-  // Cmd or Ctrl+G in the field steps once, the overlay's view hearing it
+  // Find Next's key in the field steps once, the overlay's view hearing it
   // before the menu could.
-  await press(app, "overlay", "G");
+  await press(app, "overlay", KEYS.findNext);
   await expect(count).toHaveText(`3/${FIND_MATCHES}`);
   await delay(300);
   await expect(count).toHaveText(`3/${FIND_MATCHES}`);
@@ -295,13 +286,13 @@ test("Cmd or Ctrl+F opens the bar, its view exactly the bar's size, at the page'
   await field.pressSequentially("nowhere in it");
   await expect(count).toHaveText("0/0");
 
-  await press(app, "overlay", "Escape", { plain: true });
+  await press(app, "overlay", KEYS.escape);
   await expect(bar).toHaveCount(0);
   expect(await barShown(app)).toBeFalsy();
   await expect.poll(calendarHasFocus).toBeTruthy();
 });
 
-test("Find in the Edit menu opens the bar; a click in the page keeps it, Cmd or Ctrl+G and Shift with it step from the page, Find again puts the caret after the term, and once closed, Cmd or Ctrl+G opens it with the term remembered and goes on; a load searches again", async ({
+test("Find in the Edit menu opens the bar; a click in the page keeps it, Find Next's and Previous's keys step from the page, Find again puts the caret after the term, and once closed, Find Next's key opens it with the term remembered and goes on; a load searches again", async ({
   launchApp,
   standIn,
   userDataDir,
@@ -324,12 +315,12 @@ test("Find in the Edit menu opens the bar; a click in the page keeps it, Cmd or 
   await expect(bar).toBeVisible();
   // Chromium goes on from the click, above every match, so back wraps to
   // the last.
-  await press(app, standIn.calendarUrl, "G", { shift: true });
+  await press(app, standIn.calendarUrl, KEYS.findPrevious);
   await expect(count).toHaveText(`${FIND_MATCHES}/${FIND_MATCHES}`);
-  await press(app, standIn.calendarUrl, "G");
+  await press(app, standIn.calendarUrl, KEYS.findNext);
   await expect(count).toHaveText(`1/${FIND_MATCHES}`);
 
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
   await expect(field).toBeFocused();
   expect(
     await field.evaluate((input: HTMLInputElement) => [
@@ -342,7 +333,7 @@ test("Find in the Edit menu opens the bar; a click in the page keeps it, Cmd or 
   await expect(bar).toHaveCount(0);
   await expect.poll(calendarHasFocus).toBeTruthy();
 
-  await press(app, standIn.calendarUrl, "G");
+  await press(app, standIn.calendarUrl, KEYS.findNext);
   await expect(field).toHaveValue(FIND_WORD);
   await expect(count).toHaveText(new RegExp(`^[1-9]/${FIND_MATCHES}$`, "u"));
 
@@ -370,7 +361,7 @@ test("a move within the page, as Gmail opens a thread, searches again, and a fra
     standIn
   );
 
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
   await field.pressSequentially(FIND_WORD);
   await expect(count).toHaveText(`1/${FIND_MATCHES}`);
   await field.press("Enter");
@@ -405,7 +396,7 @@ test("the bar belongs to its tab: another tab hides it and opens its own empty, 
   );
   const calendarHasFocus = await followRealFocus(calendar);
 
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
   await field.pressSequentially(FIND_WORD);
   await expect(count).toHaveText(`1/${FIND_MATCHES}`);
   await field.press("Enter");
@@ -416,9 +407,9 @@ test("the bar belongs to its tab: another tab hides it and opens its own empty, 
   expect(await barShown(app)).toBeFalsy();
   await findPage(app, standIn.driveUrl);
   await expect.poll(() => findOffered(app)).toBe(true);
-  await press(app, standIn.driveUrl, "F");
+  await press(app, standIn.driveUrl, KEYS.find);
   await expect(field).toHaveValue("");
-  await press(app, "overlay", "Escape", { plain: true });
+  await press(app, "overlay", KEYS.escape);
   await expect(bar).toHaveCount(0);
 
   await clickMenuItem(app, "tab.previous");
@@ -443,7 +434,7 @@ test("in a split the bar searches the focused pane from its top right; focusing 
   );
   const drive = await findPage(app, standIn.driveUrl);
 
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
   await expect(field).toBeFocused();
   expect(
     near(await barCorner(app), await pageCorner(app, standIn.calendarUrl))
@@ -454,7 +445,7 @@ test("in a split the bar searches the focused pane from its top right; focusing 
   await drive.getByRole("heading", { name: DRIVE_TITLE }).click();
   await expect(bar).toHaveCount(0);
 
-  await press(app, standIn.driveUrl, "F");
+  await press(app, standIn.driveUrl, KEYS.find);
   await expect(field).toHaveValue("");
   await expect(count).toHaveText("0/0");
   expect(
@@ -476,21 +467,21 @@ test("with the find field focused, the zoom keys zoom the page under the bar, no
 }) => {
   const { app, field } = await launch(launchApp, userDataDir, standIn);
 
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
   await expect(field).toBeFocused();
 
-  await press(app, "overlay", "=");
+  await press(app, "overlay", KEYS.zoomIn);
   await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0.5);
   expect([
     await zoomOf(app, "overlay"),
     await zoomOf(app, "meru-app:"),
   ]).toStrictEqual([0, 0]);
 
-  await press(app, "overlay", "-");
+  await press(app, "overlay", KEYS.zoomOut);
   await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0);
-  await press(app, "overlay", "=");
+  await press(app, "overlay", KEYS.zoomIn);
   await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0.5);
-  await press(app, "overlay", "0");
+  await press(app, "overlay", KEYS.resetZoom);
   await expect.poll(() => zoomOf(app, standIn.calendarUrl)).toBe(0);
   await expect(field).toBeFocused();
 });
@@ -503,13 +494,13 @@ test("a tab put to sleep closes the bar and has no Find, nor does a page under N
   const { app, bar, field } = await launch(launchApp, userDataDir, standIn);
 
   await expect.poll(() => findOffered(app)).toBe(true);
-  await press(app, standIn.calendarUrl, "F");
+  await press(app, standIn.calendarUrl, KEYS.find);
   await expect(field).toBeFocused();
 
   await clickMenuItem(app, "tab.sleep");
   await expect(bar).toHaveCount(0);
   await expect.poll(() => findOffered(app)).toBe(false);
-  await press(app, "meru-app:", "F");
+  await press(app, "meru-app:", KEYS.find);
   await expect(bar).toHaveCount(0);
 
   await clickMenuItem(app, "tab.sleep");

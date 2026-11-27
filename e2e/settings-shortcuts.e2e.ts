@@ -42,8 +42,8 @@ const checkRows = async (page: Page, name: string) => {
     other: ["Ctrl,", "Control Comma"],
   });
   await expectKeys(row(card(page, "Edit"), "Find…"), {
-    mac: ["⌘F", "Command F"],
-    other: ["CtrlF", "Control F"],
+    mac: ["⌃⇧⌘F", "Control Shift Command F"],
+    other: ["F3", "F3"],
   });
   await expectKeys(row(card(page, "Tabs"), "New Tab…"), {
     mac: ["⌘T", "Command T"],
@@ -51,24 +51,29 @@ const checkRows = async (page: Page, name: string) => {
   });
   await expectKeys(row(card(page, "Tabs"), "Split Right"), {
     mac: ["⌥⌘N", "Option Command N"],
-    other: ["CtrlAltN", "Control Alt N"],
+    other: ["CtrlAltShiftV", "Control Alt Shift V"],
   });
   await expectKeys(row(card(page, "Tabs"), "Select Pinned Tab 1 to 9"), {
-    mac: ["⌃⇧9", "Control Shift 1 to Control Shift 9"],
-    other: ["CtrlShift9", "Control Shift 1 to Control Shift 9"],
+    mac: ["⌃⌥9", "Control Option 1 to Control Option 9"],
+    other: ["CtrlAltShift9", "Control Alt Shift 1 to Control Alt Shift 9"],
   });
   await expectKeys(row(card(page, "Window"), "Select Profile 1 to 9"), {
-    mac: ["⌘9", "Command 1 to Command 9"],
-    other:
-      process.platform === "linux"
-        ? ["Alt9", "Alt 1 to Alt 9"]
-        : ["Ctrl9", "Control 1 to Control 9"],
+    mac: ["⌃⌘9", "Control Command 1 to Control Command 9"],
+    other: ["Ctrl9", "Control 1 to Control 9"],
+  });
+  await expectKeys(row(card(page, "View"), "Downloads"), {
+    mac: ["⌃⇧J", "Control Shift J"],
+    other: ["AltShiftJ", "Alt Shift J"],
+  });
+  await expectKeys(row(card(page, "View"), "Back"), {
+    mac: ["⌃⌘[", "Control Command Left Bracket"],
+    other: ["CtrlAltLeft", "Control Alt Left Arrow"],
   });
 
-  const downloads = row(card(page, "View"), "Downloads");
+  const stop = row(card(page, "View"), "Stop");
 
-  await expect(downloads).toContainText("None");
-  await expect(downloads).toHaveAccessibleDescription("None");
+  await expect(stop).toContainText("None");
+  await expect(stop).toHaveAccessibleDescription("None");
 };
 
 test("sits first in Privacy & Security's group, a card per menu in the menu bar's order and the built-in keys last", async ({
@@ -159,6 +164,18 @@ test.describe("shots", () => {
     };
 
     await shoot("settings-shortcuts");
+
+    for (const menu of ["View", "Tabs", "Window"]) {
+      // oxlint-disable-next-line no-await-in-loop -- one card after another
+      await card(page, menu).evaluate((element) => {
+        element.scrollIntoView({ block: "start" });
+        // Which scrolls the window too, which never scrolls by itself.
+        document.scrollingElement?.scrollTo(0, 0);
+      });
+      // oxlint-disable-next-line no-await-in-loop -- one card after another
+      await shoot(`settings-shortcuts-${menu.toLowerCase()}`);
+    }
+
     await card(page, "Built-in shortcuts").scrollIntoViewIfNeeded();
     await shoot("settings-shortcuts-bottom");
   });

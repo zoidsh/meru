@@ -13,6 +13,7 @@ import {
   test,
   writeState,
 } from "./lib/app.ts";
+import { KEYS } from "./lib/keys.ts";
 import {
   addProfileInSettings,
   askedRemovals,
@@ -323,33 +324,23 @@ test("cancelling the confirmation keeps the profile", async ({
   expect(await readProfileIds(userDataDir)).toHaveLength(2);
 });
 
-/** Presses Cmd, or Ctrl or Alt, and `key` in the page at `url`, as the system hands keys to it. */
+/** Presses Select Profile `position`'s key in the page at `url`, as the system hands keys to it. */
 const pressShortcutInPage = (
   app: ElectronApplication,
   url: string,
-  key: string
+  position: number
 ) =>
   app.evaluate(
-    ({ webContents }, { pageUrl, keyCode, platform }) => {
+    ({ webContents }, { pageUrl, keyCode, modifiers }) => {
       const page = webContents
         .getAllWebContents()
         .find((candidate) => candidate.getURL().startsWith(pageUrl));
-      // As the registry's profile shortcuts are on each platform.
-      const modifiers: Record<string, "meta" | "alt"> = {
-        darwin: "meta",
-        linux: "alt",
-      };
-      const modifier = modifiers[platform] ?? "control";
 
       for (const type of ["keyDown", "keyUp"] as const) {
-        page?.sendInputEvent({
-          type,
-          keyCode,
-          modifiers: [modifier],
-        });
+        page?.sendInputEvent({ type, keyCode, modifiers });
       }
     },
-    { pageUrl: url, keyCode: key, platform: process.platform }
+    { pageUrl: url, ...KEYS.profile(position) }
   );
 
 test("at a narrow width with many profiles, the row scrolls with an arrow over each clipped end, a profile chosen by its shortcut scrolls into view clear of the fades, a name of the longest length is cut short, and the title bar keeps room to drag", async ({
@@ -391,7 +382,7 @@ test("at a narrow width with many profiles, the row scrolls with an arrow over e
   await expect(scrollRight).toBeVisible();
   await expect(scrollLeft).toHaveCount(0);
 
-  await pressShortcutInPage(app, standIn.url, "9");
+  await pressShortcutInPage(app, standIn.url, 9);
 
   await expect(ninth).toHaveAttribute("aria-pressed", "true");
   await expect(scrollLeft).toBeVisible();

@@ -24,6 +24,7 @@ import {
   writeSettings,
   writeState,
 } from "./lib/app.ts";
+import { KEYS } from "./lib/keys.ts";
 import { openSection, openSettings, switchNamed } from "./lib/settings.ts";
 import {
   THEMES,
@@ -288,14 +289,14 @@ test("the free version refuses each way to open, move, split or bookmark a tab, 
   const overlay = await findOverlayDocument(app);
   const launcher = overlay.getByRole("dialog", { name: "New tab" });
 
-  for (const [keyCode, modifiers] of [
-    ["T", [command]],
-    ["Tab", ["control"]],
-    ["N", [command, "alt"]],
-    ["D", [command]],
-    ["N", [command, "shift"]],
-    ["W", [command, "shift"]],
-  ] as const) {
+  for (const { keyCode, modifiers } of [
+    KEYS.newTab,
+    KEYS.nextTab,
+    KEYS.splitRight,
+    KEYS.bookmark,
+    KEYS.moveToNewWindow,
+    KEYS.closeTab,
+  ]) {
     // oxlint-disable-next-line no-await-in-loop -- one key after another
     await press(app, standIn.url, keyCode, [...modifiers]);
   }

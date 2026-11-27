@@ -78,6 +78,13 @@ const spokenKey = (key: string, platform: Platform): string | undefined => {
           "The right arrow key, as a screen reader says it in a keyboard shortcut",
       });
     }
+    case "down": {
+      return t({
+        message: "Down Arrow",
+        comment:
+          "The down arrow key, as a screen reader says it in a keyboard shortcut",
+      });
+    }
     case "plus": {
       return t({
         message: "Plus",
