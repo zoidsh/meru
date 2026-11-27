@@ -55,25 +55,34 @@ interface Failure {
 
 /**
  * Removes `target`; where that fails, as for a file another process still
- * holds, removes what it holds one by one, so one held file keeps itself
- * alone. Answers what stayed.
+ * holds, removes what a folder holds one by one, so one held file keeps
+ * itself alone. A link is never followed, so nothing it points to outside
+ * the folder is touched. Answers what stayed.
  */
-const removeAll = (files: UserDataFiles, target: string): Failure[] => {
+const removeAll = (
+  files: UserDataFiles,
+  target: string,
+  folder: boolean
+): Failure[] => {
   try {
     files.remove(target);
 
     return [];
   } catch (error) {
-    let names: string[];
+    if (!folder) {
+      return [{ path: target, error }];
+    }
+
+    let entries: ReturnType<UserDataFiles["list"]>;
 
     try {
-      names = files.list(target);
+      entries = files.list(target);
     } catch {
       return [{ path: target, error }];
     }
 
-    const left = names.flatMap((name) =>
-      removeAll(files, path.join(target, name))
+    const left = entries.flatMap((entry) =>
+      removeAll(files, path.join(target, entry.name), entry.folder)
     );
 
     if (left.length > 0) {
@@ -215,10 +224,12 @@ export const wipeAfterReset = ({
 
   const failures = files
     .list(userDataPath)
-    .filter(isWiped)
-    .flatMap((name) => removeAll(files, path.join(userDataPath, name)));
+    .filter((entry) => isWiped(entry.name))
+    .flatMap((entry) =>
+      removeAll(files, path.join(userDataPath, entry.name), entry.folder)
+    );
 
-  failures.push(...removeAll(files, marker));
+  failures.push(...removeAll(files, marker, false));
 
   log("meru-reset-wiped", { kept: failures.length });
 

@@ -6,8 +6,12 @@ import { existsSync, readdirSync, rmSync } from "node:fs";
  */
 export interface UserDataFiles {
   exists: (path: string) => boolean;
-  /** The names in a folder; throws for a file or a folder that is not there. */
-  list: (path: string) => string[];
+  /**
+   * What a folder holds, each with whether it is a folder itself; a link,
+   * a Windows junction included, never is. Throws for a file or a folder
+   * that is not there.
+   */
+  list: (path: string) => { name: string; folder: boolean }[];
   /** A file, or a folder with all it holds; nothing when it is not there. */
   remove: (path: string) => void;
 }
@@ -21,7 +25,11 @@ const RETRIES = { maxRetries: 4, retryDelay: 100 };
 
 export const nodeUserDataFiles: UserDataFiles = {
   exists: existsSync,
-  list: (path) => readdirSync(path),
+  list: (path) =>
+    readdirSync(path, { withFileTypes: true }).map((entry) => ({
+      name: entry.name,
+      folder: entry.isDirectory(),
+    })),
   remove: (path) => {
     rmSync(path, { recursive: true, force: true, ...RETRIES });
   },

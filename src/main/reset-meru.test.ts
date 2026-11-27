@@ -1,4 +1,11 @@
-import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -294,5 +301,56 @@ describe("the wipe after a reset", () => {
     await expect(tree()).resolves.toStrictEqual(
       [...KEPT, "Partitions/work/Cookies"].toSorted()
     );
+  });
+
+  describe("a link to a folder outside", () => {
+    let outside: string;
+
+    beforeEach(async () => {
+      outside = await mkdtemp(path.join(tmpdir(), "meru-reset-outside-"));
+      await writeFile(path.join(outside, "thesis.docx"), "mine");
+    });
+
+    afterEach(async () => {
+      await rm(outside, { recursive: true, force: true });
+    });
+
+    it("is never followed when it will not go, and is logged as kept", async () => {
+      await put(RESET_MARKER);
+
+      const link = path.join(folder, "Partitions", "work", "Documents");
+
+      // A junction, which Windows makes without the right to make links;
+      // elsewhere the type is ignored and it is a link to a folder.
+      await symlink(outside, link, "junction");
+
+      const holding: UserDataFiles = {
+        ...nodeUserDataFiles,
+        remove: (target) => {
+          if (link.startsWith(target)) {
+            throw Object.assign(
+              new Error(`EPERM: not permitted, '${target}'`),
+              {
+                code: "EPERM",
+              }
+            );
+          }
+
+          nodeUserDataFiles.remove(target);
+        },
+      };
+
+      expect(wipe(holding)).toStrictEqual({
+        ran: true,
+        lines: [
+          "meru-reset-wiped kept=1",
+          "reset-delete-failed path=<data>/Partitions/work/Documents code=EPERM",
+        ],
+      });
+      await expect(readdir(outside)).resolves.toStrictEqual(["thesis.docx"]);
+      await expect(
+        readdir(path.join(folder, "Partitions", "work"))
+      ).resolves.toStrictEqual(["Documents"]);
+    });
   });
 });
