@@ -64,8 +64,19 @@ export type FieldValue = Scrubbed | number | boolean | Error | undefined;
 
 /** Each field a value of a known kind, or a string fixed in the source. */
 export type Checked<F> = {
-  [K in keyof F]: F[K] extends FieldValue ? F[K] : Fixed<F[K]>;
+  [K in keyof F]: F[K] extends FieldValue
+    ? F[K]
+    : Fixed<Exclude<F[K], undefined>> | Extract<F[K], undefined>;
 };
+
+/** A fixed name of lowercase words joined by dashes: `tab-load-failed`. */
+export type EventName<N> = [Fixed<N>] extends [never]
+  ? never
+  : N extends `${string} ${string}`
+    ? never
+    : N extends Lowercase<N & string>
+      ? N
+      : never;
 
 /**
  * Writes one event: its fixed name, then its fields. A string that is not
@@ -76,7 +87,7 @@ export type Log = <
   const N extends string,
   const F extends Record<string, unknown> = Record<never, never>,
 >(
-  name: Fixed<N>,
+  name: EventName<N>,
   fields?: Checked<F>
 ) => void;
 
@@ -134,7 +145,7 @@ const urlText = (url: string) => {
 };
 
 /** A URL's host alone (`mail.google.com`), or "another site". */
-export const host = (url: string | URL | undefined) =>
+const hostField = (url: string | URL | undefined) =>
   scrubbed(() => (url === undefined ? "none" : urlText(String(url))));
 
 const placeOf = (context: LogContext, profileId: string) => {
@@ -150,7 +161,7 @@ const profileText = (context: LogContext, profileId: string) => {
 };
 
 /** A profile by its place in the row: "profile 2". */
-export const profile = (profileId: string) =>
+const profileField = (profileId: string) =>
   scrubbed((context) => profileText(context, profileId));
 
 const KNOWN_APPS: ReadonlySet<string> = new Set(APP_IDS);
@@ -171,7 +182,7 @@ const tabText = (context: LogContext, { profileId, tabId }: TabKey) => {
  * A tab by its profile's place and its own, with its app: "profile 1 tab 2
  * calendar". `key` may be `tabKey`'s `profile/tab`.
  */
-export const tab = (key: TabKey | string) => {
+const tabField = (key: TabKey | string) => {
   const parsed =
     typeof key === "string"
       ? {
@@ -187,20 +198,40 @@ export const tab = (key: TabKey | string) => {
  * A path of Meru's own, as a store's file; the home folder written as `~`.
  * Never a download's or a folder the person chose.
  */
-export const path = (file: string) => scrubbed(() => file);
+const pathField = (file: string) => scrubbed(() => file);
 
 /**
  * An error code as Chromium or Node names it (`ERR_NAME_NOT_RESOLVED`,
  * `ENOENT`); anything else shaped otherwise is not written.
  */
-export const code = (value: string | number | undefined) =>
+const codeField = (value: string | number | undefined) =>
   scrubbed(() =>
     typeof value === "number" || /^[A-Z][A-Z0-9_]{1,63}$/u.test(value ?? "")
       ? String(value)
       : "other"
   );
 
-const describeError = (error: unknown) => {
+/**
+ * A word Meru, Chromium or a server made, as a language tag, a command's id
+ * or a version; never one a person typed, which may be as short.
+ */
+const tokenField = (value: string | undefined) =>
+  scrubbed(() =>
+    value !== undefined && /^[\w.:@+-]{1,64}$/u.test(value) ? value : "other"
+  );
+
+/** What Meru's own files and its stacks end with, which no host does. */
+const FILE_ENDINGS =
+  "json|log|txt|js|cjs|mjs|ts|tsx|html|css|map|node|asar|app|exe|dll|so|dylib|plist|png|ico|icns|svg|wasm";
+
+// A bare host, as Node's `getaddrinfo ENOTFOUND bank.example` gives one;
+// only in an error's text, since Meru's own ids are dotted words too.
+const BARE_HOST = new RegExp(
+  String.raw`(?<![\w.~/\\@-])(?:[a-z0-9-]+\.)+(?!(?:${FILE_ENDINGS})\b)[a-z]{2,}\b(?![\w/\\-])`,
+  "gu"
+);
+
+const errorText = (error: unknown) => {
   if (!(error instanceof Error)) {
     return typeof error === "string" ? error : "a value that is no error";
   }
@@ -215,13 +246,18 @@ const describeError = (error: unknown) => {
   return `${name}${error.message}${suffix}`;
 };
 
+const describeError = (error: unknown) =>
+  errorText(error).replaceAll(BARE_HOST, (match) =>
+    isKnownHost(match) ? match : OTHER_SITE
+  );
+
 /** Whatever a `catch` caught, as its name, message and code. */
-export const failure = (error: unknown) => scrubbed(() => describeError(error));
+const failureField = (error: unknown) => scrubbed(() => describeError(error));
 
 const STACK_FRAMES = 8;
 
 /** As `failure`, with the first frames of its stack. */
-export const stack = (error: unknown) =>
+const stackField = (error: unknown) =>
   scrubbed(() => {
     const frames =
       error instanceof Error && error.stack !== undefined
@@ -236,10 +272,6 @@ export const stack = (error: unknown) =>
 
 const escapeRegExp = (text: string) =>
   text.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);
-
-/** What Meru's own files and its stacks end with, which no host does. */
-const FILE_ENDINGS =
-  "json|log|txt|js|cjs|mjs|ts|tsx|html|css|map|node|asar|app|exe|dll|so|dylib|plist|png|ico|icns|svg|wasm";
 
 const SCRUBS: readonly [RegExp, (match: string) => string][] = [
   [/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>()[\]{}`,]*/giu, urlText],
@@ -256,13 +288,6 @@ const SCRUBS: readonly [RegExp, (match: string) => string][] = [
   // Shaped as a license key or a token: groups of four or more joined by
   // dashes, holding a digit.
   [/\b(?=[a-z0-9-]*\d)[a-z0-9]{4,}(?:-[a-z0-9]{4,}){2,}\b/giu, () => "a key"],
-  [
-    new RegExp(
-      String.raw`(?<![\w.~/\\-])(?:[a-z0-9-]+\.)+(?!(?:${FILE_ENDINGS})\b)[a-z]{2,}\b(?![\w/\\-])`,
-      "gu"
-    ),
-    (match) => (isKnownHost(match) ? match : OTHER_SITE),
-  ],
 ];
 
 /**
@@ -382,6 +407,21 @@ export const formatRunLine = (
     ].join(" "),
     context
   );
+
+/**
+ * The scrubbers, the only way a value of the run reaches a field:
+ * `log("tab-load-failed", { tab: scrub.tab(key), error: scrub.error(error) })`.
+ */
+export const scrub = {
+  host: hostField,
+  profile: profileField,
+  tab: tabField,
+  path: pathField,
+  code: codeField,
+  token: tokenField,
+  error: failureField,
+  stack: stackField,
+};
 
 const NEWLINE = 0x0a;
 

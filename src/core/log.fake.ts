@@ -30,5 +30,19 @@ export const recordedLog = (
   return { log, events, lines };
 };
 
+/** A log that puts each line, as `recordedLog` makes it, into `into`. */
+export const recordInto = (
+  into: unknown[],
+  context: Partial<LogContext> = {},
+  prefix = ""
+): Log => {
+  const recorded = recordedLog(context);
+
+  return ((name: string, fields?: Record<string, unknown>) => {
+    (recorded.log as (name: string, fields?: unknown) => void)(name, fields);
+    into.push(`${prefix}${recorded.lines.at(-1) ?? ""}`);
+  }) as Log;
+};
+
 /** For a test that reads nothing of what was logged. */
 export const silentLog: Log = noop;

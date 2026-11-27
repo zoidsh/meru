@@ -4,6 +4,9 @@ import { formatLine, formatRunLine } from "#core/log.ts";
 import type { Log, LogContext, RunInfo } from "#core/log.ts";
 import type { LogFile } from "#platform/log-file.ts";
 
+/** Where in the user data folder the log is. */
+export const LOG_FILE = "logs/main.log";
+
 /** How long a line waits in memory before it is written with the rest. */
 export const FLUSH_AFTER = 1000;
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { failure, host, profile } from "#core/log.ts";
+import { scrub } from "#core/log.ts";
 import { newProfile } from "#core/state.ts";
 import { fakeLogFile } from "#platform/log-file.fake.ts";
 
@@ -41,7 +41,7 @@ describe("the logger", () => {
       electron: "45.2.3",
     });
     logger.log("page-load-failed", {
-      host: host("https://mail.google.com/mail/u/0/#inbox"),
+      host: scrub.host("https://mail.google.com/mail/u/0/#inbox"),
     });
 
     expect(echoed).toHaveLength(2);
@@ -59,7 +59,7 @@ describe("the logger", () => {
     const { echoed, logger } = setup();
 
     logger.follow(() => [newProfile("a", "Work"), newProfile("b", "Home")]);
-    logger.log("profile-added", { profile: profile("b") });
+    logger.log("profile-added", { profile: scrub.profile("b") });
 
     expect(echoed[0]).toContain('profile="profile 2"');
   });
@@ -90,7 +90,7 @@ describe("the logger", () => {
   it("never throws or rejects when the file cannot be written", async () => {
     const { logger, echoed } = setup(true);
 
-    logger.log("store-unreadable", { error: failure(new Error("disk")) });
+    logger.log("store-unreadable", { error: scrub.error(new Error("disk")) });
     logger.flushSync();
     logger.log("store-unreadable");
     await logger.flush();

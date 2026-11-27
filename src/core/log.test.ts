@@ -2,18 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { recordedLog } from "./log.fake.ts";
 import {
-  code,
-  failure,
   formatLine,
   formatRunLine,
-  host,
   isKnownHost,
   keepNewerHalf,
-  path,
-  profile,
+  scrub,
   scrubText,
-  stack,
-  tab,
 } from "./log.ts";
 import type { LogContext } from "./log.ts";
 import { newProfile } from "./state.ts";
@@ -79,7 +73,7 @@ describe("the scrubbers", () => {
   ])(
     "write %s as its host alone, or what kind of URL it is",
     (url, written) => {
-      expect(line({ url: host(url) })).toBe(
+      expect(line({ url: scrub.host(url) })).toBe(
         `1970-01-01T00:00:00.000Z event ${written}`
       );
     }
@@ -103,12 +97,12 @@ describe("the scrubbers", () => {
 
   it("name a profile and a tab by their places, never their names or titles", () => {
     const text = line({
-      first: profile("first-id"),
-      second: profile("second-id"),
-      gone: profile("removed-id"),
-      gmail: tab({ profileId: "second-id", tabId: "gmail" }),
-      calendar: tab("second-id/t2"),
-      closed: tab("second-id/t9"),
+      first: scrub.profile("first-id"),
+      second: scrub.profile("second-id"),
+      gone: scrub.profile("removed-id"),
+      gmail: scrub.tab({ profileId: "second-id", tabId: "gmail" }),
+      calendar: scrub.tab("second-id/t2"),
+      closed: scrub.tab("second-id/t9"),
     });
 
     expect(text).toBe(
@@ -140,18 +134,18 @@ describe("the scrubbers", () => {
     expect(
       formatLine(
         new Date(0),
-        { name: "event", fields: { file: path(file) } },
+        { name: "event", fields: { file: scrub.path(file) } },
         { ...context, home }
       )
     ).toBe(`1970-01-01T00:00:00.000Z event ${written}`);
   });
 
   it("keep an error code only in the shape Chromium and Node give one", () => {
-    expect(line({ code: code("ERR_NAME_NOT_RESOLVED") })).toContain(
+    expect(line({ code: scrub.code("ERR_NAME_NOT_RESOLVED") })).toContain(
       "code=ERR_NAME_NOT_RESOLVED"
     );
-    expect(line({ code: code(-105) })).toContain("code=-105");
-    expect(line({ code: code("Ada's file") })).toContain("code=other");
+    expect(line({ code: scrub.code(-105) })).toContain("code=-105");
+    expect(line({ code: scrub.code("Ada's file") })).toContain("code=other");
   });
 
   it("scrub what an error carries", () => {
@@ -162,9 +156,9 @@ describe("the scrubbers", () => {
       { code: "ENOENT" }
     );
     const text = line({
-      error: failure(error),
+      error: scrub.error(error),
       raw: error,
-      trace: stack(error),
+      trace: scrub.stack(error),
     });
 
     expectClean(text);
@@ -178,6 +172,8 @@ describe("the scrubbers", () => {
     const name = ["Ada", "Lovelace"].join(" ");
 
     log("tab-closed", { reason: "crashed", count: 2, ok: true });
+    // @ts-expect-error -- a name is lowercase words joined by dashes
+    log("Tab did not load");
     // @ts-expect-error -- a string made at run time is no event name
     log(name);
     // @ts-expect-error -- nor a template with a placeholder
@@ -192,6 +188,7 @@ describe("the scrubbers", () => {
     expect(lines[0]).toBe("tab-closed reason=crashed count=2 ok=true");
     // What got past the types with a cast is not written either.
     expect(lines.slice(1).join("\n")).not.toContain("Ada");
+    expect(lines[1]).toBe("unnamed-event");
   });
 });
 
@@ -215,11 +212,6 @@ describe("the net under every line", () => {
       "the key a key",
     ],
     ["a UUID", "id 3f2b1c9e-0a4d-4f1e-9c2b-7d8e6f5a4b3c", "id a key"],
-    [
-      "a host outside Meru's pages",
-      "ENOTFOUND bank.example.org",
-      "ENOTFOUND another site",
-    ],
     ["the home folder", "at /Users/ada/projects/x", "at ~/…"],
     [
       "another user's folder",
@@ -246,6 +238,7 @@ describe("the net under every line", () => {
       "at Object.focus (index.js:12:3)",
       "saved state.json and main.log, Meru.app 4.2.0-beta.3",
       "ERR_NAME_NOT_RESOLVED (-105)",
+      "command-refused command=inbox.toggle",
     ]) {
       expect(scrubText(text, context)).toBe(text);
     }
