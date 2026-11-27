@@ -102,6 +102,14 @@ const activate = (app: ElectronApplication) =>
     KEY
   );
 
+/** Each value the test build's login item was asked to take, in order. */
+const loginItemCalls = (app: ElectronApplication) =>
+  app.evaluate(
+    () =>
+      (Reflect.get(globalThis, "meruTestLoginItem") as { calls: boolean[] })
+        .calls
+  );
+
 const openAdvanced = async (app: ElectronApplication) => {
   const page = await openSettings(app);
 
@@ -185,17 +193,32 @@ test("Reset Meru asks first, then removes the license, ends the app with the rel
     output.push(chunk.toString());
   });
   await confirmRemovals(first, true);
+  // Held, so the login item can be read before the app ends.
+  await first.evaluate(({ app: electronApp }) => {
+    Reflect.set(globalThis, "meruTestExit", electronApp.exit.bind(electronApp));
+    electronApp.exit = () => {
+      Reflect.set(globalThis, "meruTestExited", true);
+    };
+  });
+  await resetButton(page).click();
+  await expect
+    .poll(() => first.evaluate(() => Reflect.get(globalThis, "meruTestExited")))
+    .toBe(true);
+  expect(await loginItemCalls(first)).toStrictEqual(
+    process.platform === "linux" ? [] : [false]
+  );
 
   const closed = first.waitForEvent("close");
 
-  await resetButton(page)
-    .click()
-    .catch((error: unknown) => {
-      // The app can end before the click answers.
-      if (!String(error).includes("has been closed")) {
-        throw error;
-      }
-    });
+  await first.evaluate(() => {
+    const exit = Reflect.get(globalThis, "meruTestExit") as (
+      code: number
+    ) => void;
+
+    setTimeout(() => {
+      exit(0);
+    }, 0);
+  });
   await closed;
 
   expect(output.join("")).toContain("meruTestRelaunch: relaunch");

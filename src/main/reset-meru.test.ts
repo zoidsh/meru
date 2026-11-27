@@ -24,6 +24,7 @@ const resetWith = ({
   licensed = false,
   licenseRemoved = true,
   markerWritten = true,
+  loginItemTurnsOff = true,
 } = {}) => {
   const steps: string[] = [];
   const lines: string[] = [];
@@ -38,6 +39,15 @@ const resetWith = ({
       steps.push("remove license");
 
       return Promise.resolve(licenseRemoved);
+    },
+    turnOffOpenAtLogin: () => {
+      steps.push("open at login off");
+
+      if (!loginItemTurnsOff) {
+        throw Object.assign(new Error("EPERM: operation not permitted"), {
+          code: "EPERM",
+        });
+      }
     },
     writeMarker: () => {
       steps.push("write marker");
@@ -85,17 +95,34 @@ describe(createResetMeru, () => {
     expect(lines).toStrictEqual([]);
   });
 
-  it("removes the license, then writes the marker, then relaunches", async () => {
+  it("removes the license, turns Open at login off, writes the marker, then relaunches", async () => {
     const { reset, steps, lines } = resetWith({ licensed: true });
 
     await expect(reset()).resolves.toBe("resetting");
     expect(steps).toStrictEqual([
       expect.stringContaining("This also removes your Meru Pro license"),
       "remove license",
+      "open at login off",
       "write marker",
       "relaunch",
     ]);
     expect(lines).toStrictEqual(["meru-reset-confirmed"]);
+  });
+
+  it("goes on when Open at login will not turn off, and logs it", async () => {
+    const { reset, steps, lines } = resetWith({ loginItemTurnsOff: false });
+
+    await expect(reset()).resolves.toBe("resetting");
+    expect(steps.slice(1)).toStrictEqual([
+      "remove license",
+      "open at login off",
+      "write marker",
+      "relaunch",
+    ]);
+    expect(lines).toStrictEqual([
+      "meru-reset-confirmed",
+      "meru-reset-login-item-failed code=EPERM",
+    ]);
   });
 
   it("stops before the marker when the license could not be removed", async () => {
@@ -113,7 +140,11 @@ describe(createResetMeru, () => {
     const { reset, steps, lines } = resetWith({ markerWritten: false });
 
     await expect(reset()).resolves.toBe("failed");
-    expect(steps.slice(1)).toStrictEqual(["remove license", "write marker"]);
+    expect(steps.slice(1)).toStrictEqual([
+      "remove license",
+      "open at login off",
+      "write marker",
+    ]);
     expect(lines).toStrictEqual([
       "meru-reset-confirmed",
       "meru-reset-failed step=marker code=ENOSPC",

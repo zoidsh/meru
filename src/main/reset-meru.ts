@@ -130,6 +130,11 @@ export interface ResetMeruDeps {
   hasLicense: () => boolean;
   /** Answers whether the license is gone from the file. */
   removeLicense: () => Promise<boolean>;
+  /**
+   * The system holds Open at login, not `settings.json`, so the next launch
+   * would not turn it off as it does every setting.
+   */
+  turnOffOpenAtLogin: () => void;
   writeMarker: () => Promise<void>;
   /** Quits, and starts Meru again once this run has exited. */
   relaunch: () => void;
@@ -137,16 +142,18 @@ export interface ResetMeruDeps {
 }
 
 /**
- * Asks, then removes the license and leaves the marker for the next launch,
- * which wipes the rest, and relaunches. Nothing else is deleted while Meru
- * runs, so no store or session writes itself back at quit. Stops before the
- * relaunch when the license or the marker could not be written.
+ * Asks, then removes the license, turns Open at login off and leaves the
+ * marker for the next launch, which wipes the rest, and relaunches. Nothing
+ * else is deleted while Meru runs, so no store or session writes itself back
+ * at quit. Stops before the relaunch when the license or the marker could not
+ * be written; a login item that will not turn off does not stop it.
  */
 export const createResetMeru =
   ({
     confirm,
     hasLicense,
     removeLicense,
+    turnOffOpenAtLogin,
     writeMarker,
     relaunch,
     log,
@@ -162,6 +169,13 @@ export const createResetMeru =
       log("meru-reset-failed", { step: "license" });
 
       return "failed";
+    }
+
+    // A login item left on is no reason to keep the person's data.
+    try {
+      turnOffOpenAtLogin();
+    } catch (error) {
+      log("meru-reset-login-item-failed", { code: scrub.code(error) });
     }
 
     try {

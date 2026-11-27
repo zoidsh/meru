@@ -197,9 +197,12 @@ export const wireSettingsWindow = ({
   });
 
   const picker = folderPicker();
+  // One for the General page and the reset, since the suite's records on a
+  // global.
+  const loginItem = systemLoginItem();
   const general = createGeneralPage({
     platform,
-    loginItem: systemLoginItem(),
+    loginItem,
     mailHandler: systemMailHandler(platform),
     settings,
     files: downloadFiles,
@@ -259,6 +262,12 @@ export const wireSettingsWindow = ({
     },
     hasLicense: () => entitlement.snapshot().licenseKey !== null,
     removeLicense: entitlement.removeLicense,
+    // Linux has none.
+    turnOffOpenAtLogin: () => {
+      if (platform !== "linux") {
+        loginItem.set(false);
+      }
+    },
     writeMarker: () =>
       createTextFile(path.join(lifecycle.userDataPath, RESET_MARKER)).write(""),
     relaunch: appRelaunch(lifecycle),
