@@ -121,5 +121,20 @@ export const wireOwnWindows = ({
     }
   };
 
-  return { ownWindows, showOwnWindow, revealGmail };
+  /**
+   * Opens a tab, bringing it forward as Move to New Window does where Open
+   * Google apps in starts it in a window of its own; that window is placed
+   * as the change is committed.
+   */
+  const openTab: Profiles["openTab"] = async (profileId, ...rest) => {
+    const opened = await profiles.openTab(profileId, ...rest);
+
+    if (opened?.ownWindow) {
+      showOwnWindow({ profileId, tabId: opened.tabId });
+    }
+
+    return opened;
+  };
+
+  return { ownWindows, showOwnWindow, revealGmail, openTab };
 };

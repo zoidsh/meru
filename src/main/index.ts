@@ -455,7 +455,7 @@ const start = async () => {
     log,
   });
 
-  const { ownWindows, showOwnWindow, revealGmail } = wireOwnWindows({
+  const { ownWindows, showOwnWindow, revealGmail, openTab } = wireOwnWindows({
     log,
     apps,
     isMacOS,
@@ -562,18 +562,7 @@ const start = async () => {
     network,
     senders,
     state: profiles.get,
-    // A tab Open Google apps in starts in a window of its own comes forward
-    // as Move to New Window brings it; its window is placed as the change
-    // is committed.
-    openTab: async (profileId, ...rest) => {
-      const opened = await profiles.openTab(profileId, ...rest);
-
-      if (opened?.ownWindow) {
-        showOwnWindow({ profileId, tabId: opened.tabId });
-      }
-
-      return opened;
-    },
+    openTab,
     selectTab: profiles.selectTab,
     closeTab: profiles.closeTab,
     newId,
