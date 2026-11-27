@@ -52,7 +52,18 @@ const fills = (locator: Locator) =>
 
 /** The page's own colour, which the tint never takes, as the theme gives it. */
 const pageColor = (page: Page) =>
-  page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  page.evaluate(() => {
+    const probe = document.createElement("span");
+
+    probe.style.backgroundColor = "var(--background)";
+    document.body.append(probe);
+
+    const color = getComputedStyle(probe).backgroundColor;
+
+    probe.remove();
+
+    return color;
+  });
 
 const PAGE_COLOR: Record<TonalTheme, string> = {
   light: "oklch(1 0 0)",
@@ -178,6 +189,197 @@ test("the palette follows the Theme setting, against the system's theme either w
       .poll(drawn)
       .toStrictEqual([tone("amber", theme, "shell"), PAGE_COLOR[theme]]);
   }
+});
+
+type Painted = { window: number; top: number[] }[];
+
+/**
+ * From the launch on, the colour near the top of every frame each window's
+ * page paints, in `[red, green, blue]`, and the windows already showing when
+ * this began, whose first frames it missed. A tab's own window has no page of
+ * its own, only clear views over its colour.
+ */
+const watchPaints = (app: ElectronApplication) =>
+  app.evaluate(({ app: electron, BrowserWindow }) => {
+    const painted: Painted = [];
+    const late: number[] = [];
+    const watch = (window: Electron.BrowserWindow) => {
+      if (window.isVisible()) {
+        late.push(window.id);
+      }
+
+      const subscribe = () => {
+        window.webContents.beginFrameSubscription((image) => {
+          const { width, height } = image.getSize();
+          const [contentWidth = width] = window.getContentSize();
+          const scale = width / contentWidth;
+          const at =
+            (Math.round(3 * scale) * width + Math.round(width / 2)) * 4;
+
+          if (height > 0) {
+            // BGRA.
+            painted.push({
+              window: window.id,
+              top: [...image.toBitmap().subarray(at, at + 3)].toReversed(),
+            });
+          }
+        });
+      };
+
+      // A subscription takes only once the page has a renderer.
+      if (window.webContents.getURL() === "") {
+        window.webContents.once("did-start-loading", subscribe);
+      } else {
+        subscribe();
+      }
+    };
+
+    for (const window of BrowserWindow.getAllWindows()) {
+      watch(window);
+    }
+    electron.on("browser-window-created", (_event, window) => {
+      watch(window);
+    });
+    Reflect.set(globalThis, "meruTestPainted", { painted, late });
+  });
+
+/** What `watchPaints` saw of the main window, if it ran, and each window's colour. */
+const readPaints = (app: ElectronApplication) =>
+  app.evaluate(({ BaseWindow, BrowserWindow }, shellUrl) => {
+    const { painted, late } = (Reflect.get(globalThis, "meruTestPainted") as
+      | { painted: Painted; late: number[] }
+      | undefined) ?? { painted: [], late: [] };
+    const shell = BrowserWindow.getAllWindows().find((window) =>
+      window.webContents.getURL().startsWith(shellUrl)
+    );
+
+    return {
+      late: late.includes(shell?.id ?? -1),
+      main: painted.filter(({ window }) => window === shell?.id),
+      // A tab's own window is a BaseWindow.
+      colors: BaseWindow.getAllWindows().map((window) => ({
+        main: window.id === shell?.id,
+        color: window.getBackgroundColor().slice(0, 7).toLowerCase(),
+      })),
+    };
+  }, SHELL_URL);
+
+/** Each window's own colour, the main window's first. */
+const windowColors = async (app: ElectronApplication) => {
+  const { colors } = await readPaints(app);
+
+  return {
+    main: colors.find(({ main }) => main)?.color,
+    own: colors.filter(({ main }) => !main).map(({ color }) => color),
+  };
+};
+
+const shellTone = (name: ProfileColorName, theme: TonalTheme) =>
+  tonalTokens(paletteColor(name), theme).shell;
+
+const near = (rgb: number[], hex: string, dim = 1) =>
+  rgb.every(
+    (channel, index) =>
+      Math.abs(
+        channel -
+          Number.parseInt(hex.slice(1 + index * 2, 3 + index * 2), 16) * dim
+      ) <= 3
+  );
+
+/**
+ * Whether every frame is `hex`, or the same darkened by the veil Chromium
+ * draws while Playwright holds a new page at its first line, which no one
+ * outside a test ever sees.
+ */
+const allPainted = (frames: Painted, hex: string) =>
+  frames.some(({ top }) => near(top, hex)) &&
+  frames.every(({ top }) => near(top, hex) || near(top, hex, 0.65));
+
+for (const tint of [true, false]) {
+  test(`every frame the main window paints from its first, and a tab's own window, is the frame's colour, ${tint ? "the profile's tonal shell" : "the grey untinted"}, never a white page first`, async ({
+    launchApp,
+    standIn,
+    userDataDir,
+  }) => {
+    // Main's theme and the pages' the same, as Playwright emulates light.
+    await writeSettings(userDataDir, { theme: "light", profileTint: tint });
+    await writeState(userDataDir, twoProfiles(standIn));
+
+    const app = await launchApp();
+
+    await watchPaints(app);
+
+    const shell = await findPage(app, SHELL_URL);
+
+    await expect(titlebarOf(shell)).toBeVisible();
+    await findTitlebar(app);
+    // Frames go on arriving; a few after the titlebar shows are enough.
+    await delay(500);
+
+    const paints = await readPaints(app);
+    const [main, own] = tint
+      ? [shellTone("amber", "light"), shellTone("blue", "light")]
+      : ["#ebebeb", "#ebebeb"];
+
+    expect(paints.late).toBe(false);
+    expect(await windowColors(app)).toStrictEqual({ main, own: [own] });
+    expect(
+      allPainted(paints.main, main),
+      JSON.stringify(paints.main.map(({ top }) => top))
+    ).toBe(true);
+  });
+}
+
+test("each window's own colour follows the selected profile, the theme and the setting", async ({
+  launchApp,
+  standIn,
+  userDataDir,
+}) => {
+  await writeSettings(userDataDir, { theme: "light" });
+  await writeState(userDataDir, twoProfiles(standIn));
+
+  const app = await launchApp();
+  const shell = await findPage(app, SHELL_URL);
+
+  await findTitlebar(app);
+
+  const set = (key: string, value: unknown) =>
+    app.evaluate(
+      async (_electron, [name, to]) => {
+        const settings = Reflect.get(globalThis, "meruTestSettings") as {
+          set: (key: string, value: unknown) => Promise<void>;
+        };
+
+        await settings.set(name as string, to);
+      },
+      [key, value]
+    );
+  const colors = () => windowColors(app);
+
+  await expect.poll(colors).toStrictEqual({
+    main: shellTone("amber", "light"),
+    own: [shellTone("blue", "light")],
+  });
+
+  await titlebarOf(shell)
+    .getByRole("group", { name: "Profiles" })
+    .getByRole("button", { name: /^Home/u })
+    .click();
+  await expect.poll(colors).toStrictEqual({
+    main: shellTone("blue", "light"),
+    own: [shellTone("blue", "light")],
+  });
+
+  await set("theme", "dark");
+  await expect.poll(colors).toStrictEqual({
+    main: shellTone("blue", "dark"),
+    own: [shellTone("blue", "dark")],
+  });
+
+  await set("profileTint", false);
+  await expect
+    .poll(colors)
+    .toStrictEqual({ main: "#1d1d1d", own: ["#1d1d1d"] });
 });
 
 test("Tint with profile color off leaves the frame and the cards over it shadcn's greys, the frame's muted text today's", async ({

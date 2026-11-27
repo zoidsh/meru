@@ -169,10 +169,9 @@ const open = ({
 } = {}) => {
   const fake = createFakeWindow();
   const created: WindowOptions[] = [];
-  let isDark = false;
-  let themeChanged: (() => void) | undefined;
+  let color = "#ebebeb";
 
-  createShellWindow({
+  const { recolor } = createShellWindow({
     windows: {
       create: (options) => {
         created.push(options);
@@ -191,20 +190,15 @@ const open = ({
     isMacOS,
     background,
     atLaunch,
-    theme: {
-      isDark: () => isDark,
-      onChange: (listener) => {
-        themeChanged = listener;
-      },
-    },
+    backgroundColor: () => color,
   });
 
   return {
     ...fake,
     options: created[0],
-    turnDark: () => {
-      isDark = true;
-      themeChanged?.();
+    paint: (next: string) => {
+      color = next;
+      recolor();
     },
   };
 };
@@ -269,14 +263,20 @@ describe(createShellWindow, () => {
     });
   });
 
-  it("opens in the light shell grey and takes the dark one with the theme", () => {
+  it("opens in the frame's colour and paints the window again only when that changes", () => {
     const shell = open();
 
     expect(shell.options?.backgroundColor).toBe("#ebebeb");
 
-    shell.turnDark();
+    shell.paint("#ebebeb");
+    shell.paint("#d7e3ff");
+    shell.paint("#d7e3ff");
+    shell.paint("#222a3c");
 
-    expect(shell.calls).toStrictEqual(["setBackgroundColor #1d1d1d"]);
+    expect(shell.calls).toStrictEqual([
+      "setBackgroundColor #d7e3ff",
+      "setBackgroundColor #222a3c",
+    ]);
   });
 
   it("takes the shell grey the shell paints, light and dark", async () => {

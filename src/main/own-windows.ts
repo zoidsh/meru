@@ -23,8 +23,8 @@ export interface OwnWindowsDeps {
   isMacOS: boolean;
   /** Reveals a window without activating the app or taking focus. */
   background: boolean;
-  /** The shell grey as the theme has it now. */
-  backgroundColor: () => string;
+  /** The frame's colour for the tab's window as the theme and the tint have it now. */
+  backgroundColor: (key: TabKey) => string;
   /** Closes the tab, as closing its window does, as Close Tab would. */
   closeTab: (key: TabKey) => Promise<unknown>;
   saveBounds: (key: TabKey, bounds: Rectangle) => Promise<unknown>;
@@ -52,6 +52,8 @@ interface Entry {
   /** The view of its card, Downloads or another, over the page while one is open there. */
   card: OverlayView | undefined;
   saveBounds: ReturnType<typeof keepBounds>;
+  /** The colour last given the window. */
+  color: string;
 }
 
 const describe = (error: unknown) =>
@@ -195,6 +197,7 @@ export const createOwnWindows = ({
 
   const create = (key: TabKey): Entry => {
     const tab = findTab(state(), key);
+    const color = backgroundColor(key);
     const window = windows.create(
       openingOptions({
         displays,
@@ -203,7 +206,7 @@ export const createOwnWindows = ({
         minimumSize: MINIMUM_SIZE,
         title: titleOf(key),
         isMacOS,
-        backgroundColor: backgroundColor(),
+        backgroundColor: color,
       })
     );
     const entry: Entry = {
@@ -212,6 +215,7 @@ export const createOwnWindows = ({
       titlebar: undefined,
       find: undefined,
       card: undefined,
+      color,
       saveBounds: keepBounds(window, (bounds) => {
         save(key, bounds);
       }),
@@ -348,10 +352,15 @@ export const createOwnWindows = ({
         entry.window.setTitle(titleOf(entry.key));
       }
     },
-    /** Paints each window in the shell grey as the theme has it now. */
+    /** Paints each window in its frame's colour as it is now, where that changed. */
     recolor: () => {
       for (const entry of entries.values()) {
-        entry.window.setBackgroundColor(backgroundColor());
+        const color = backgroundColor(entry.key);
+
+        if (color !== entry.color) {
+          entry.color = color;
+          entry.window.setBackgroundColor(color);
+        }
       }
     },
     /** Told when a window's content area changes size, which its page follows. */

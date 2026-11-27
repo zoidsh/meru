@@ -1,18 +1,17 @@
 import type { App } from "#core/apps.ts";
-import { windowBackground } from "#core/shell-grey.ts";
 import { gmailOwnWindow } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { createAppLifecycle } from "#platform/app.ts";
 import type { createContextMenus } from "#platform/context-menu.ts";
 import type { createDisplays } from "#platform/displays.ts";
 import { createOwnWindowFactory } from "#platform/own-window.ts";
-import type { createTheme } from "#platform/theme.ts";
 
 import type { Focus, FocusTarget } from "../focus.ts";
 import { createOwnWindows } from "../own-windows.ts";
 import type { Profiles } from "../profiles.ts";
 import type { createShellWindow } from "../shell-window.ts";
 import { revealWindow } from "../windows.ts";
+import type { wireFrameColors } from "./frame-colors.ts";
 
 /** The longest a quit waits for the last writes of the stores. */
 const QUIT_WAIT_MS = 3000;
@@ -39,7 +38,7 @@ export const wireOwnWindows = ({
   lifecycle,
   contextMenus,
   displays,
-  theme,
+  frameColors,
   shell,
   profiles,
   storesSettled,
@@ -52,7 +51,10 @@ export const wireOwnWindows = ({
   lifecycle: ReturnType<typeof createAppLifecycle>;
   contextMenus: ReturnType<typeof createContextMenus>;
   displays: ReturnType<typeof createDisplays>;
-  theme: ReturnType<typeof createTheme>;
+  frameColors: Pick<
+    ReturnType<typeof wireFrameColors>,
+    "ownWindow" | "onChange"
+  >;
   shell: ReturnType<typeof createShellWindow>;
   profiles: Profiles;
   storesSettled: () => Promise<unknown>;
@@ -65,7 +67,7 @@ export const wireOwnWindows = ({
     state: profiles.get,
     isMacOS,
     background,
-    backgroundColor: () => windowBackground(theme.isDark()),
+    backgroundColor: frameColors.ownWindow,
     closeTab: profiles.closeTab,
     saveBounds: profiles.setOwnWindowBounds,
     // Keys go to its find bar while that is open, else its page, as in the
@@ -77,7 +79,7 @@ export const wireOwnWindows = ({
     log: console.error,
   });
 
-  theme.onChange(ownWindows.recolor);
+  frameColors.onChange(ownWindows.recolor);
   profiles.onChange(ownWindows.retitle);
   // Before the windows close, so closing them leaves their tabs where they are.
   lifecycle.onBeforeQuit(ownWindows.markQuitting);

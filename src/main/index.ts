@@ -58,6 +58,7 @@ import {
   wireComposeWindows,
 } from "./wiring/email-links.ts";
 import { wireFind } from "./wiring/find.ts";
+import { wireFrameColors } from "./wiring/frame-colors.ts";
 import { wireGmail } from "./wiring/gmail.ts";
 import { wireHardwareAcceleration } from "./wiring/hardware-acceleration.ts";
 import { wireIdleSleep } from "./wiring/idle-sleep.ts";
@@ -211,6 +212,12 @@ const start = async () => {
   followThemeSetting({ theme, settings });
 
   const displays = createDisplays();
+  const frameColors = wireFrameColors({
+    theme,
+    settings,
+    profiles,
+    trialChoice,
+  });
   const shell = createShellWindow({
     // The trial-ended screen shows whatever Open in the background says:
     // until the person chooses, no tray or Dock item of Meru's can bring it.
@@ -228,8 +235,10 @@ const start = async () => {
     preloadPath: path.join(import.meta.dirname, "preload-shell.cjs"),
     isMacOS,
     background,
-    theme,
+    backgroundColor: frameColors.mainWindow,
   });
+
+  frameColors.onChange(shell.recolor);
 
   const senders = createSenderRegistry();
 
@@ -394,7 +403,7 @@ const start = async () => {
     lifecycle,
     contextMenus,
     displays,
-    theme,
+    frameColors,
     shell,
     profiles,
     storesSettled,

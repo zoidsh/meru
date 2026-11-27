@@ -1,10 +1,8 @@
 import type { LaunchWindow } from "#core/launch-window.ts";
 import { isShellDocument } from "#core/overlay.ts";
 import type { Platform } from "#core/platform.ts";
-import { windowBackground } from "#core/shell-grey.ts";
 import { closeHides } from "#core/tray.ts";
 import type { Displays } from "#platform/displays.ts";
-import type { Theme } from "#platform/theme.ts";
 import type { AppWindow, WindowFactory } from "#platform/window.ts";
 
 import { openingOptions } from "./windows.ts";
@@ -19,7 +17,8 @@ export interface ShellWindowDeps {
   background: boolean;
   /** As `launchWindow` decides; hidden, it shows once something reveals it. */
   atLaunch: LaunchWindow;
-  theme: Pick<Theme, "isDark" | "onChange">;
+  /** The frame's colour as the theme, the tint and the selected profile have it now. */
+  backgroundColor: () => string;
 }
 
 const DEFAULT_SIZE = { width: 1280, height: 800 };
@@ -35,7 +34,8 @@ const MINIMUM_SIZE = { width: 540, height: 375 };
  * Opens the shell window and shows it once its page can paint, unless Open in
  * the background keeps it hidden or minimized: on `ready-to-show`, or on
  * `did-finish-load` where that comes first, since on Wayland `ready-to-show`
- * sometimes never fires.
+ * sometimes never fires. The window is the frame's colour, which shows
+ * through the shell's page until it draws, and `recolor` paints it again.
  */
 export const createShellWindow = ({
   windows,
@@ -46,7 +46,7 @@ export const createShellWindow = ({
   isMacOS,
   background,
   atLaunch,
-  theme,
+  backgroundColor,
 }: ShellWindowDeps) => {
   const window = windows.create({
     // Where the main window was is not kept: it opens at its default size.
@@ -57,16 +57,23 @@ export const createShellWindow = ({
       minimumSize: MINIMUM_SIZE,
       title,
       isMacOS,
-      backgroundColor: windowBackground(theme.isDark()),
+      backgroundColor: backgroundColor(),
     }),
     preloadPath,
     contentUrl: url,
     isShellDocument,
   });
 
-  theme.onChange(() => {
-    window.setBackgroundColor(windowBackground(theme.isDark()));
-  });
+  let painted = backgroundColor();
+
+  const recolor = () => {
+    const color = backgroundColor();
+
+    if (color !== painted && !window.isDestroyed()) {
+      painted = color;
+      window.setBackgroundColor(color);
+    }
+  };
 
   let isShown = false;
 
@@ -99,7 +106,7 @@ export const createShellWindow = ({
   window.once("ready-to-show", showOnce);
   window.once("did-finish-load", showOnce);
 
-  return { window, load: () => window.loadURL(url) };
+  return { window, load: () => window.loadURL(url), recolor };
 };
 
 export interface HideOnCloseDeps {

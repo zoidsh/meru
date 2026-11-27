@@ -528,4 +528,18 @@ describe(createOwnWindows, () => {
       "color #222222",
     ]);
   });
+
+  it("paints a window again only when its colour changed", () => {
+    const { windows, created, setColor } = setup();
+
+    windows.open(CALENDAR);
+    windows.recolor();
+    setColor("#222222");
+    windows.recolor();
+    windows.recolor();
+
+    expect(
+      created[0]?.calls.filter((call) => call.startsWith("color"))
+    ).toStrictEqual(["color #222222"]);
+  });
 });
