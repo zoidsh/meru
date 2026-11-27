@@ -223,13 +223,19 @@ ipcRenderer.on(GMAIL_CHANNELS.watchSent, (_event, watch: unknown) => {
         root: document,
         isVisible: (element) => element.checkVisibility(),
         // A hidden window paints no frames, and main hides one as it sends
-        // while it waits for the notice to go.
+        // while it waits for the notice to go. Its visibility state is no
+        // guide on Linux, so a timer races the frame everywhere.
         beforePaint: (look) => {
-          if (document.visibilityState === "visible") {
-            requestAnimationFrame(look);
-          } else {
-            setTimeout(look, HIDDEN_CHECK_MS);
-          }
+          let looked = false;
+          const once = () => {
+            if (!looked) {
+              looked = true;
+              look();
+            }
+          };
+
+          requestAnimationFrame(once);
+          setTimeout(once, HIDDEN_CHECK_MS);
         },
       },
       (notice) => {
