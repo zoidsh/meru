@@ -8,6 +8,8 @@ import type { State } from "#core/state.ts";
 import type { TabKey } from "#core/tabs.ts";
 import type { ContextMenuItem } from "#platform/context-menu.ts";
 
+import { COMMANDS } from "./commands.ts";
+import { commandAccelerator } from "./context-menu.ts";
 import { createTabMenu } from "./tab-menu.ts";
 
 const initial: State = {
@@ -90,11 +92,7 @@ const setup = ({
     window: menuWindow("main", popups),
     ownWindow: (each) =>
       each.tabId === "w" ? menuWindow("own", popups) : undefined,
-    accelerator: (command) =>
-      ({
-        "tab.close": "CommandOrControl+W",
-        "tab.reload": "CommandOrControl+R",
-      })[command],
+    accelerator: commandAccelerator(COMMANDS, "linux"),
     bookmarks: {
       bookmarked: (each) => (each.tabId === "gmail" ? undefined : bookmarked),
       toggle: async (each, announce) => {
@@ -188,22 +186,22 @@ describe(createTabMenu, () => {
     expect(labels(popups[0])).toStrictEqual([
       "Sleep",
       "—",
-      "Reload CommandOrControl+R",
+      "Reload F5",
       "Duplicate",
       "Copy URL",
       "Open in Default Browser",
       "—",
       "Pin",
-      "Bookmark Tab",
+      "Bookmark Tab Control+Alt+Shift+D",
       "—",
-      "Split Right",
-      "Split Down",
-      "Maximize Pane (off)",
+      "Split Right Control+Alt+Shift+V",
+      "Split Down Control+Alt+Shift+Down",
+      "Maximize Pane (off) Control+Alt+Shift+Enter",
       "Separate from Split (off)",
       "—",
-      "Move to New Window",
+      "Move to New Window CommandOrControl+Shift+N",
       "—",
-      "Close Tab CommandOrControl+W",
+      "Close Tab CommandOrControl+Shift+W",
       "Close Other Tabs",
       "Close Tabs Below",
     ]);
@@ -347,7 +345,11 @@ describe(createTabMenu, () => {
       [
         "own",
         { x: 760, y: 40 },
-        ["Move to Main Window", "Copy URL", "Open in Default Browser"],
+        [
+          "Move to Main Window CommandOrControl+Shift+M",
+          "Copy URL",
+          "Open in Default Browser",
+        ],
       ]
     );
     expect([
@@ -378,7 +380,7 @@ describe(createTabMenu, () => {
     menu.openOwnWindow({ ...at("w"), x: 760, y: 40 });
 
     expect(labels(popups.at(-1))).toStrictEqual([
-      "Move to Main Window",
+      "Move to Main Window CommandOrControl+Shift+M",
       "Copy URL",
       "Open in Default Browser (off)",
     ]);
