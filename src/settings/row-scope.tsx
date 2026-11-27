@@ -95,7 +95,7 @@ export const OverrideCaption = ({
         : t({
             message: `Set for ${name} only. For all profiles, it's ${appValue}.`,
             comment:
-              "Caption under a Settings row in a profile's scope while the profile sets its own value; {name} is the profile, {appValue} the value set under All profiles, such as On, Chime or 22:00–07:00 every day",
+              "Caption under a Settings row in a profile's scope while the profile sets its own value; {name} is the profile, {appValue} the value set under All profiles, such as On, Welcome or 22:00–07:00 every day",
           })}
     </FieldDescription>
   );

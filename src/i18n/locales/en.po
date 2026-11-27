@@ -2730,7 +2730,7 @@ msgstr "Separate from Split"
 msgid "Services"
 msgstr "Services"
 
-#. Caption under a Settings row in a profile's scope while the profile sets its own value; {name} is the profile, {appValue} the value set under All profiles, such as On, Chime or 22:00–07:00 every day
+#. Caption under a Settings row in a profile's scope while the profile sets its own value; {name} is the profile, {appValue} the value set under All profiles, such as On, Welcome or 22:00–07:00 every day
 #: src/settings/row-scope.tsx
 msgid "Set for {name} only. For all profiles, it's {appValue}."
 msgstr "Set for {name} only. For all profiles, it's {appValue}."
