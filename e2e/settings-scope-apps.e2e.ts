@@ -229,7 +229,7 @@ test("Tabs & Google Apps has scopes: a profile's switch and Manage… set its ow
   // Sleep is the app's alone, so a profile's scope leaves it out.
   await expect(page.getByRole("group", { name: "Sleep" })).toHaveCount(0);
   await expect(manage(page)).toHaveAccessibleDescription("1 Google app");
-  await expect(page.getByText("Same as All profiles.")).toHaveCount(2);
+  await expect(page.getByText("Same as All profiles.")).toHaveCount(3);
 
   // With no list of its own, Work's starts from the app's.
   await manage(page).click();
@@ -275,7 +275,7 @@ test("Tabs & Google Apps has scopes: a profile's switch and Manage… set its ow
     .click();
   await expect(switchNamed(page, IN_MERU)).toBeChecked();
   await expect(manage(page)).toHaveAccessibleDescription("1 Google app");
-  await expect(page.getByText("Same as All profiles.")).toHaveCount(2);
+  await expect(page.getByText("Same as All profiles.")).toHaveCount(3);
   await expect.poll(() => storedKey(userDataDir, "profiles")).toBeUndefined();
   expect(await storedKey(userDataDir, "appsInDefaultBrowser")).toStrictEqual([
     "meet",
